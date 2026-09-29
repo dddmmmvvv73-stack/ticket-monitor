@@ -690,11 +690,13 @@ var PREFS_KEY = "ticketmonitor.prototype.table";
 function loadPrefs() { try { return JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch (e) { return {}; } }
 function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify({ hidden: S.hidden, widths: S.widths })); } catch (e) { /* хранилище недоступно — настройки живут до перезагрузки */ } }
 var prefs = loadPrefs();
+// На экранах уже 1600px «Цены» скрыты по умолчанию — иначе таблица шире экрана. Вернуть можно в «Столбцах».
+function defaultHidden() { return window.innerWidth < 1600 ? ["prices"] : []; }
 
 // ---------------------------------------------------------------- состояние
 var S = { view: "events", city: "Владимир", period: "all", from: null, to: null, q: "", tab: "all", venue: "", sphere: "",
   sort: "date", desc: false, sel: null, dim: "sphere", measure: "count",
-  hidden: prefs.hidden || [], widths: prefs.widths || {}, colsOpen: false,
+  hidden: prefs.hidden || defaultHidden(), widths: prefs.widths || {}, colsOpen: false,
   calOpen: false, calMonth: "2026-10-01", pickFrom: null, pickTo: null };
 
 // ---------------------------------------------------------------- утилиты
@@ -870,6 +872,20 @@ function sortKey(e) {
 }
 function visibleCols() { return COLS.filter(function (c) { return S.hidden.indexOf(c.id) < 0; }); }
 function colW(c) { return S.widths[c.id] || c.w; }
+// Таблица подстраивается под ширину раздела: если не помещается, сжимаются столбцы, которые не меняли вручную,
+// в этом порядке и не уже минимума. «Заполняемость» не сжимается — иначе обрежется «занято … из … · осталось …».
+var FIT_ORDER = [["title", 200], ["niche", 124], ["venue", 104], ["date", 96], ["gross", 100], ["revenue", 100], ["prices", 104]];
+function fittedWidths(cols) {
+  var w = {}, total = 0, view = $("view"), pad = parseFloat(getComputedStyle(view).paddingLeft) || 0;
+  cols.forEach(function (c) { w[c.id] = colW(c); total += w[c.id]; });
+  var over = total - (view.clientWidth - 2 * pad);
+  FIT_ORDER.forEach(function (f) {
+    if (over <= 0 || !(f[0] in w) || S.widths[f[0]]) return;
+    var cut = Math.min(over, w[f[0]] - f[1]);
+    if (cut > 0) { w[f[0]] -= cut; over -= cut; }
+  });
+  return w;
+}
 
 var CELL = {
   date: function (e) { var d = dparts(e.date), w = d.weekend ? " wknd" : ""; return '<div class="d-day' + w + '">' + d.day + ' ' + d.mon + '</div><div class="d-sub' + w + '">' + d.wd + ', ' + e.time + '</div>'; },
@@ -899,7 +915,7 @@ function renderEvents() {
   var base = eventsBase();
   var list = base.filter(FILTERS[S.tab]).sort(function (a, b) { var x = sortKey(a), y = sortKey(b); return (x < y ? -1 : x > y ? 1 : 0) * (S.desc ? -1 : 1); });
   var cols = visibleCols();
-  var totalW = cols.reduce(function (s, c) { return s + colW(c); }, 0);
+  var fitW = fittedWidths(cols), totalW = cols.reduce(function (s, c) { return s + fitW[c.id]; }, 0);
   var tabs = [["all", "Все"], ["risk", "Под риском"], ["fresh", "Новые за 7 дней"], ["nogenre", "Без жанра"]];
   var spheres = []; data.forEach(function (e) { if (spheres.indexOf(e.sphere) < 0) spheres.push(e.sphere); });
 
@@ -927,7 +943,7 @@ function renderEvents() {
       var hidden = S.hidden.indexOf(c.id) >= 0;
       return '<label class="' + (c.lock ? "locked" : "") + '"><input type="checkbox" data-colvis="' + c.id + '"' + (hidden ? "" : " checked") + (c.lock ? " disabled" : "") + '>' + c.label + (c.lock ? '<span class="muted" style="margin-left:auto;font-size:12px">всегда</span>' : '') + '</label>';
     }).join("") +
-    '<div style="border-top:1px solid var(--line-soft);margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;align-items:center"><span class="sub" style="margin:0">Ширину меняйте, потянув за линию в заголовке</span></div>' +
+    '<div style="border-top:1px solid var(--line-soft);margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;align-items:center"><span class="sub" style="margin:0">Ширину меняйте, потянув за линию в заголовке. На узком экране таблица сама сжимает «Мероприятие» и «Нишу»' + (window.innerWidth < 1600 ? ', а «Цены» по умолчанию скрыты' : '') + '.</span></div>' +
     '<button class="btn-ghost" data-action="reset-cols" style="margin-top:10px;width:100%">Вернуть столбцы и ширину как было</button></div>' : '';
 
   return head("Мероприятия", S.city + " · " + periodLabel() + " · показано " + list.length + " из " + data.filter(inPeriod).length, ADD_BTN) +
@@ -937,7 +953,7 @@ function renderEvents() {
     '<select class="chip-select" data-filter="sphere" aria-label="Сфера"><option value="">Сфера: все</option>' + spheres.map(function (v) { return '<option' + (S.sphere === v ? " selected" : "") + '>' + esc(v) + '</option>'; }).join("") + '</select>' +
     '<div class="pop-anchor cols-anchor"><button class="chip-btn" data-action="cols" aria-expanded="' + S.colsOpen + '" style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M6 2.5v11M10 2.5v11"/></svg>Столбцы' + (S.hidden.length ? ' <span class="cnt">−' + S.hidden.length + '</span>' : '') + '</button>' + colsPop + '</div>' +
   '</div>' +
-  '<section class="card ev-card-table"><table class="ev-table" id="evTable" style="width:' + totalW + 'px"><colgroup>' + cols.map(function (c) { return '<col data-col="' + c.id + '" style="width:' + colW(c) + 'px">'; }).join("") + '</colgroup><thead><tr>' + thead + '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' + empty + '</section>' +
+  '<section class="card ev-card-table"><table class="ev-table" id="evTable" style="width:' + totalW + 'px"><colgroup>' + cols.map(function (c) { return '<col data-col="' + c.id + '" style="width:' + fitW[c.id] + 'px">'; }).join("") + '</colgroup><thead><tr>' + thead + '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' + empty + '</section>' +
   '<div class="m-list">' + mobile + (list.length ? "" : empty) + '</div>';
 }
 
@@ -2054,13 +2070,16 @@ document.addEventListener("mousedown", function (ev) {
 document.addEventListener("mousemove", function (ev) {
   if (!drag) return;
   var w = Math.max(64, Math.round(drag.w + ev.clientX - drag.x));
-  drag.col.style.width = w + "px"; S.widths[drag.id] = w;
-  drag.table.style.width = visibleCols().reduce(function (s, c) { return s + colW(c); }, 0) + "px";
+  drag.col.style.width = w + "px"; S.widths[drag.id] = w; drag.moved = true;
+  var sum = 0; drag.table.querySelectorAll("col").forEach(function (col) { sum += parseFloat(col.style.width) || 0; });
+  drag.table.style.width = sum + "px";
 });
 document.addEventListener("mouseup", function () {
   if (!drag) return;
   drag.handle.classList.remove("active"); document.body.classList.remove("resizing");
-  drag = null; savePrefs();
+  var moved = drag.moved; drag = null; savePrefs();
+  // Остальные столбцы подстраиваются под новую ширину. Простой клик не перерисовывает — иначе не сработает двойной клик «вернуть»
+  if (moved) render();
 });
 document.addEventListener("dblclick", function (ev) {
   var h = ev.target.closest && ev.target.closest("[data-resize]");
@@ -2117,7 +2136,7 @@ $("view").addEventListener("click", function (ev) {
   else if (t.hasAttribute("data-sort")) { var k = t.getAttribute("data-sort"); S.desc = S.sort === k ? !S.desc : k !== "date"; S.sort = k; render(); }
   else if (t.hasAttribute("data-set")) { S[t.getAttribute("data-set")] = t.getAttribute("data-val"); render(); }
   else if (t.getAttribute("data-action") === "cols") { ev.stopPropagation(); S.colsOpen = !S.colsOpen; S.colsAnim = S.colsOpen; render(); }
-  else if (t.getAttribute("data-action") === "reset-cols") { S.hidden = []; S.widths = {}; savePrefs(); render(); }
+  else if (t.getAttribute("data-action") === "reset-cols") { S.hidden = defaultHidden(); S.widths = {}; savePrefs(); render(); }
   else if (t.getAttribute("data-action") === "add") openEditor(null);
   else if (t.hasAttribute("data-open")) openDrawer(+t.getAttribute("data-open"));
   else if (t.hasAttribute("data-i")) openDrawer(+t.getAttribute("data-i"));
@@ -2135,6 +2154,8 @@ var VIEWS = ["overview", "niches", "events", "sales", "dynamics", "venues", "arc
 if (VIEWS.indexOf(location.hash.slice(1)) >= 0) S.view = location.hash.slice(1);
 // Кнопки «назад/вперёд» браузера переключают разделы
 S.enter = true;  // первый показ страницы тоже с анимацией
+var fitTimer = null;
+window.addEventListener("resize", function () { if (S.view !== "events") return; clearTimeout(fitTimer); fitTimer = setTimeout(render, 150); });
 window.addEventListener("hashchange", function () {
   var v = location.hash.slice(1);
   if (VIEWS.indexOf(v) >= 0 && v !== S.view) { S.view = v; S.enter = true; closeDrawer(); render(); }
