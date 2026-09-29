@@ -412,8 +412,8 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
   .kpis, .grid-3, .insights { grid-template-columns: minmax(0, 1fr); }  /* minmax(0, …): длинные строки без переноса не распирают колонку */
   .kpis > div { border-right: 0; border-bottom: 1px solid var(--line); }
   .span-2 { grid-column: auto; }
-  .vbar { grid-template-columns: 1fr; gap: 6px; }
-  .niche-grid { grid-template-columns: 1fr !important; }
+  .vbar { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .niche-grid { grid-template-columns: minmax(0, 1fr) !important; }
   .ev-card-table, .cols-anchor { display: none; }
   .m-list { display: flex; flex-direction: column; gap: 10px; }
   .m-item { all: unset; display: block; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; cursor: pointer; }
@@ -422,24 +422,25 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
   .bottom-nav button[aria-current="page"] { color: var(--ink); font-weight: 600; }
   .drawer { width: 100vw; padding: 20px 16px 28px; }
   .kgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .form-grid { grid-template-columns: 1fr; }
+  .form-grid { grid-template-columns: minmax(0, 1fr); }
   .cal { width: calc(100vw - 32px); }
-  .cal-body { grid-template-columns: 1fr; }
+  .cal-body { grid-template-columns: minmax(0, 1fr); }
   .cal-body > div:last-child { display: none; }
-  .set-grid { grid-template-columns: 1fr; }
+  .set-grid { grid-template-columns: minmax(0, 1fr); }
   .src-row { grid-template-columns: minmax(0, 1fr) auto 36px; gap: 8px 12px; }
   .src-row .src-stat { grid-column: 1; grid-row: 2; }
   .city-row { grid-template-columns: minmax(0, 1fr) auto; }
   .city-row .sub { grid-column: 1 / -1; }
   .city-row .soon-tag { grid-row: 1; grid-column: 2; justify-self: end; }
   .toast { bottom: 88px; }
-  .hall-grid { grid-template-columns: 1fr; }
+  .toolbar .seg { max-width: 100%; overflow-x: auto; }  /* переключатели разрезов на узком телефоне прокручиваются, а не распирают страницу */
+  .hall-grid { grid-template-columns: minmax(0, 1fr); }
   .niche-row { grid-template-columns: 110px minmax(0, 1fr) 28px; }
   .more-sheet:not([hidden]) { display: flex; flex-direction: column; position: fixed; right: 8px; bottom: 80px; z-index: 21; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: rgba(17, 12, 46, 0.12) 0 12px 45px 0; padding: 6px; min-width: 200px; }
   .more-sheet button { border: 0; background: none; text-align: left; height: 44px; padding: 0 14px; border-radius: 8px; font-size: 15px; color: var(--ink-2); }
   .more-sheet button[aria-current="page"] { background: var(--soot); color: #fff; font-weight: 500; }
-  .dyn-grid { grid-template-columns: 1fr !important; }
-  .kpis.k4 { grid-template-columns: 1fr 1fr; }
+  .dyn-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .kpis.k4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .kpis.k4 > div:nth-child(odd) { border-right: 1px solid var(--line); }
   .sale-row { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 16px; }
   .sale-row > div:first-child { grid-row: 1 / span 2; }
@@ -448,7 +449,7 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
   .sale-row .sale-sum { grid-column: 2; grid-row: 2; }
   .sale-row .chev { display: none; }
   .sale-group-head { padding: 16px 16px 12px; }
-  .kv { grid-template-columns: 1fr; gap: 2px; }
+  .kv { grid-template-columns: minmax(0, 1fr); gap: 2px; }
   .kv dd { margin-bottom: 10px; }
 }
 </style>
@@ -466,7 +467,7 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
     <button class="nav-item" data-view="sales"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3.5 1.8h9v12.4l-1.8-1.1-1.8 1.1-1.9-1.1-1.8 1.1-1.7-1.1z"/><path d="M6 5.5h4M6 8.5h4"/></svg>История продаж</button>
     <button class="nav-item" data-view="dynamics"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 13l4-5 3 3 5-7"/></svg>Динамика продаж</button>
     <button class="nav-item" data-view="venues"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 14V6l6-4 6 4v8M6 14v-4h4v4"/></svg>Площадки и залы</button>
-    <div class="nav-item soon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2.5" width="12" height="3.5" rx="1"/><path d="M3 6v7.5h10V6M6.5 9h3"/></svg>Архив<span class="soon-tag">скоро</span></div>
+    <button class="nav-item" data-view="archive"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2.5" width="12" height="3.5" rx="1"/><path d="M3 6v7.5h10V6M6.5 9h3"/></svg>Архив</button>
     <div style="flex-grow:1"></div>
     <button class="nav-item" data-view="settings"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg>Настройки</button>
   </nav>
@@ -503,7 +504,7 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
 <nav class="bottom-nav" aria-label="Разделы">
   <button data-view="overview">Обзор</button><button data-view="events">События</button><button data-view="sales">Продажи</button><button data-view="venues">Залы</button><button type="button" id="moreBtn" aria-expanded="false" aria-controls="moreSheet">Ещё</button>
 </nav>
-<div class="more-sheet" id="moreSheet" hidden><button data-view="niches">Ниши</button><button data-view="dynamics">Динамика продаж</button><button data-view="settings">Настройки</button></div>
+<div class="more-sheet" id="moreSheet" hidden><button data-view="niches">Ниши</button><button data-view="dynamics">Динамика продаж</button><button data-view="archive">Архив</button><button data-view="settings">Настройки</button></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <div class="drawer-veil" id="veil"></div>
@@ -1047,7 +1048,8 @@ function drawerView(e) {
         salesInDrawer(e) + '<div class="dyn-empty"><span>Фактический график появится после сборов в разные дни.</span></div>' + paceHtml(e) + '</section>' +
       '<section><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><h3 style="font-weight:500;font-size:15px">Зал по рядам</h3>' + (zones ? '<div class="legend"><span><i class="sw" style="background:#1d6fae"></i>занято</span><span><i class="sw" style="background:#c1e1f7"></i>свободно</span></div>' : '') + '</div>' + hall + '</section>' +
     '</div>' +
-    '<section><h3 style="font-weight:500;font-size:15px;margin-bottom:8px">Приезжал раньше</h3><div class="note">Архив копится с этого сезона — здесь появятся прошлые приезды с итогами продаж.</div></section>' +
+    '<section><h3 style="font-weight:500;font-size:15px;margin-bottom:8px">Другие даты и приезды</h3>' + otherDates(e) +
+      '<div class="note" style="margin-top:10px">Прошлые приезды с итогами продаж появятся здесь из архива — он копится с 29 сент.</div></section>' +
     link;
 }
 
@@ -1269,6 +1271,76 @@ $("view").addEventListener("click", function (ev) {
   openDrawer(+t.getAttribute("data-sale"));  // карточка открывается поверх истории, раздел не меняется
 });
 $("view").addEventListener("change", function (ev) { if (ev.target.id === "salesVenue") { S.salesVenue = ev.target.value; render(); $("salesVenue").focus(); } });
+
+// ---------------------------------------------------------------- Архив и повторные приезды
+// Одно мероприятие в разные даты и на разных площадках: название без кавычек и слов «спектакль», «балет»…
+// В приложении связку уточняет нейросеть или ручная правка — одинаковое название ещё не значит одну постановку.
+function showKey(t) {
+  return String(t || "").toLowerCase().replace(/ё/g, "е").replace(/[«»"'“”„]/g, "")
+    .replace(/^(спектакль|мюзикл|балет|шоу|группа|концерт)\s+/, "").replace(/\s+/g, " ").trim();
+}
+function repeatGroups(list) {
+  var g = {};
+  list.forEach(function (e) { var k = showKey(e.title); (g[k] = g[k] || []).push(e); });
+  return Object.keys(g).filter(function (k) { return g[k].length > 1; }).map(function (k) { return g[k].sort(function (a, b) { return (a.date + a.time) < (b.date + b.time) ? -1 : 1; }); })
+    .sort(function (a, b) { return b.length - a.length; });
+}
+function evLine(e, attr) {
+  var d = dparts(e.date);
+  return '<button class="hall-link" ' + attr + '="' + e.i + '"><span class="hl-name" style="min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(e.venue) + ' · <span class="' + (d.weekend ? "wknd" : "") + '">' + d.wd + ', ' + d.day + ' ' + d.mon + '</span>, ' + esc(e.time) + '</span>' +
+    '<span class="sub num nowrap" style="margin:0">' + (e.gross ? "заполн. " + fill(e) + "%" : esc(e.priceText || "без онлайн-продажи")) + '</span></button>';
+}
+function otherDates(e) {
+  var k = showKey(e.title), same = ALL.filter(function (x) { return x !== e && x.i !== e.i && showKey(x.title) === k; })
+    .sort(function (a, b) { return (a.date + a.time) < (b.date + b.time) ? -1 : 1; });
+  if (!same.length) return '<p class="sub" style="margin:0">Других дат в текущей афише нет.</p>';
+  var venues = {}; same.concat([e]).forEach(function (x) { venues[x.venue] = true; });
+  var shown = same.slice(0, 6);
+  return '<p class="sub" style="margin:0 0 4px">В афише ещё ' + same.length + ' ' + plural(same.length, "дата", "даты", "дат") + (Object.keys(venues).length > 1 ? ' — на разных площадках; проверьте, одна ли это постановка' : '') + '</p>' +
+    shown.map(function (x) { return evLine(x, "data-other-ev"); }).join("") +
+    (same.length > shown.length ? '<p class="sub">и ещё ' + (same.length - shown.length) + '</p>' : '');
+}
+function renderArchive() {
+  var data = cityData();
+  var soon = data.filter(function (e) { return e.date <= addDays(TODAY, 7); }).sort(function (a, b) { return (a.date + a.time) < (b.date + b.time) ? -1 : 1; });
+  var firstSold = data.filter(function (e) { return e.gross; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; })[0];
+  var groups = repeatGroups(data), repeatDates = groups.reduce(function (s, g) { return s + g.length; }, 0);
+  var cols = ["Дата", "Площадка", "Мероприятие", "Ниша", "Итог: заполняемость", "Выручка", "Как продавалось"];
+  return head("Архив", "Прошедшие мероприятия с итогами продаж · копится с 29 сент.") +
+    '<section class="card kpis k4" aria-label="Архив">' +
+      '<div><div class="kpi-label">В архиве</div><div class="kpi-value num">0</div><div class="sub">прошедших мероприятий пока нет</div></div>' +
+      '<div><div class="kpi-label">Первое попадёт</div><div class="kpi-value">' + (soon[0] ? human(soon[0].date) : "—") + '</div><div class="sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (soon[0] ? esc(soon[0].title) : "") + '</div></div>' +
+      '<div><div class="kpi-label">Первое с продажами</div><div class="kpi-value">' + (firstSold ? human(firstSold.date) : "—") + '</div><div class="sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (firstSold ? esc(firstSold.title) + ' · сейчас ' + fill(firstSold) + '%' : "") + '</div></div>' +
+      '<div><div class="kpi-label">Повторы в афише</div><div class="kpi-value num">' + groups.length + '</div><div class="sub">' + plural(groups.length, "название", "названия", "названий") + ' в ' + repeatDates + ' датах</div></div>' +
+    '</section>' +
+    '<section class="card"><div class="toolbar" style="padding:16px 24px 0"><label class="pill search" style="height:36px;max-width:320px;flex-grow:1;opacity:0.6"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#78716c" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input type="search" placeholder="Поиск по архиву" disabled aria-label="Поиск по архиву"></label>' +
+      '<select class="chip-select" disabled aria-label="Ниша"><option>Ниша: все</option></select><select class="chip-select" disabled aria-label="Площадка"><option>Площадка: все</option></select><select class="chip-select" disabled aria-label="Город"><option>Город: все</option></select></div>' +
+      '<div style="overflow-x:auto"><table class="zone-table" style="margin:12px 24px 0;width:calc(100% - 48px)"><thead><tr>' + cols.map(function (c) { return '<th>' + c + '</th>'; }).join("") + '</tr></thead></table></div>' +
+      '<div class="empty" style="border:0"><h2>Архив пока пуст</h2><p style="margin:0 auto;max-width:560px">Мероприятие попадает сюда на следующий день после даты — с итогом по последнему сбору перед началом. ' +
+        (soon[0] ? 'Первым будет «' + esc(soon[0].title) + '», ' + human(soon[0].date) + '.' : '') + '</p></div></section>' +
+    '<div class="set-grid">' +
+      '<section class="card card-pad"><h2>Скоро попадут в архив</h2><p class="sub">Мероприятия ближайших 7 дней и их заполняемость сейчас</p>' +
+        '<div style="margin-top:8px">' + soon.map(function (e) {
+          var d = dparts(e.date);
+          return '<button class="hall-link" data-arch-ev="' + e.i + '"><span class="hl-name" style="min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span class="' + (d.weekend ? "wknd" : "") + '">' + d.day + ' ' + d.mon + '</span> · ' + esc(e.title) + '</span><span class="sub num nowrap" style="margin:0">' + esc(e.venue) + ' · ' + (e.gross ? fill(e) + "%" : "без продажи") + '</span></button>';
+        }).join("") + '</div></section>' +
+      '<section class="card card-pad"><h2>Что сохраняется</h2><p class="sub">По каждому мероприятию — итог на дату и то, как к нему шли продажи</p><ul class="steps" style="list-style:disc;margin-top:12px">' +
+        '<li><b>Итог</b> по последнему сбору перед началом: заполняемость, выручка, вал, средний билет.</li>' +
+        '<li><b>Как продавалось</b> — подтверждённые продажи по дням и кривая «продано за N дней до события».</li>' +
+        '<li><b>Цены</b>: от и до, скидки и подорожания по ходу продаж.</li>' +
+        '<li><b>Ниша, площадка, зал</b> и схема зала на последний сбор.</li>' +
+        '<li>Сырые данные сборов не удаляются — любую цифру можно пересчитать задним числом.</li></ul></section>' +
+    '</div>' +
+    '<section class="card card-pad"><h2>Повторные приезды</h2><p class="sub">Архив связывает приезды одного артиста или спектакля — так в карточке появится «Приезжал раньше: как продавался в прошлый раз». Уже сейчас в афише есть повторы:</p>' +
+      '<div class="set-grid" style="margin-top:12px">' + groups.map(function (g) {
+        var venues = {}; g.forEach(function (x) { venues[x.venue] = true; }); var vn = Object.keys(venues);
+        return '<div><div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><b style="font-weight:500">' + esc(g[0].title) + '</b><span class="sub num" style="margin:0">' + g.length + ' ' + plural(g.length, "дата", "даты", "дат") + '</span></div>' +
+          (vn.length > 1 ? '<div class="callout warn" style="margin-top:6px;padding:6px 10px">На двух площадках: ' + esc(vn.join(" и ")) + '. Одинаковое название — не всегда одна постановка: в приложении связку подтвердит нейросеть или вы.</div>' : '') +
+          g.slice(0, 4).map(function (x) { return evLine(x, "data-arch-ev"); }).join("") + (g.length > 4 ? '<p class="sub">и ещё ' + (g.length - 4) + '</p>' : '') + '</div>';
+      }).join("") + '</div></section>';
+}
+$("view").addEventListener("click", function (ev) { var t = ev.target.closest("[data-arch-ev]"); if (t) openDrawer(+t.getAttribute("data-arch-ev")); });
+$("drawer").addEventListener("click", function (ev) { var t = ev.target.closest("[data-other-ev]"); if (t) openDrawer(+t.getAttribute("data-other-ev")); });
 
 // ---------------------------------------------------------------- Динамика продаж
 // Цвет площадки на графиках — категориальная пара, проверена dataviz/validate_palette (светлая тема, все пары: PASS)
@@ -2009,12 +2081,12 @@ document.addEventListener("focusout", function (ev) { if (ev.target.classList &&
 // ---------------------------------------------------------------- рендер и события
 function render() {
   document.querySelectorAll("[data-view]").forEach(function (b) { if (b.getAttribute("data-view") === S.view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
-  if (["niches", "dynamics", "settings"].indexOf(S.view) >= 0) $("moreBtn").setAttribute("aria-current", "page"); else $("moreBtn").removeAttribute("aria-current");
+  if (["niches", "dynamics", "archive", "settings"].indexOf(S.view) >= 0) $("moreBtn").setAttribute("aria-current", "page"); else $("moreBtn").removeAttribute("aria-current");
   $("moreSheet").hidden = true; $("moreBtn").setAttribute("aria-expanded", "false");
   document.querySelectorAll("#period button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-p") === S.period)); });
   $("dateLabel").textContent = S.period === "custom" ? rangeLabel(S.from, S.to) : "Даты";
   $("dateBtn").style.borderColor = S.period === "custom" ? "var(--soot)" : "";
-  $("view").innerHTML = S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? renderVenues() : S.view === "dynamics" ? renderDynamics() : renderEvents();
+  $("view").innerHTML = S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? renderVenues() : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : renderEvents();
   $("view").classList.toggle("enter", !!S.enter); S.enter = false; S.colsAnim = false;
   renderCal();
 }
@@ -2059,7 +2131,7 @@ $("view").addEventListener("change", function (ev) {
     savePrefs(); render();
   }
 });
-var VIEWS = ["overview", "niches", "events", "sales", "dynamics", "venues", "settings"];
+var VIEWS = ["overview", "niches", "events", "sales", "dynamics", "venues", "archive", "settings"];
 if (VIEWS.indexOf(location.hash.slice(1)) >= 0) S.view = location.hash.slice(1);
 // Кнопки «назад/вперёд» браузера переключают разделы
 S.enter = true;  // первый показ страницы тоже с анимацией
