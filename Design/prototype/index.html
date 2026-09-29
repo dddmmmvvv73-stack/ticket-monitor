@@ -20,6 +20,7 @@
   --canvas: #fafaf9; --card: #ffffff; --line: #e8e6e5; --line-soft: #f0efed; --line-strong: #d6d3d1;
   --ink: #0c0a09; --ink-2: #44403c; --ink-3: #57534e; --muted: #78716c; --ash: #a8a29e;
   --soot: #1c1917; --cta: #3ba6f1; --cta-edge: #3398e1;
+  --focus: #1d6fae;  /* кольцо фокуса: 5,33:1 на белом (голубой --cta давал 2,65:1 — ниже 3:1) */
   --data: #1d6fae; --data-dark: #104a78; --data-light: #7ab9e8; --wash: #c1e1f7; --wash-2: #dcebf8; --row-sel: #eef6fd;
   --risk: #b91c1c; --risk-bg: #fdeaea; --risk-bar: #d03b3b; --ok: #0ca30c; --weekend: #b91c1c;
   --good: #166534; --good-bg: #e6f4ea; --good-bar: #15803d;
@@ -34,7 +35,7 @@ button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 a { color: var(--data); text-decoration: none; }
 a:hover { color: var(--data-dark); }
-:focus-visible { outline: 2px solid var(--cta); outline-offset: 2px; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .num { font-variant-numeric: tabular-nums; }
 .muted { color: var(--muted); }
 h1, h2, h3 { margin: 0; font-family: var(--display); }
@@ -60,6 +61,8 @@ button.pill:hover { border-color: var(--line-strong); }
 .seg button[aria-pressed="true"] { background: var(--soot); color: #fff; font-weight: 500; }
 .search { flex-grow: 1; max-width: 360px; }
 .search input { border: 0; outline: none; background: transparent; width: 100%; }
+/* Поле и список внутри «таблетки» без своей рамки — кольцо фокуса рисует сама таблетка */
+.pill:has(:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
 .status { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); white-space: nowrap; border: 0; background: none; padding: 0; }
 button.status:hover { color: var(--ink); }
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
@@ -77,7 +80,11 @@ button.status:hover { color: var(--ink); }
 .span-2 { grid-column: span 2; }
 .list { list-style: none; margin: 12px 0 0; padding: 0; }
 .list li { padding: 10px 0; border-top: 1px solid var(--line-soft); }
+.list-btn { all: unset; box-sizing: border-box; display: block; width: 100%; cursor: pointer; border-radius: 4px; }
+.list-btn:hover .lb-title { color: var(--data); }
+.list-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .badge-risk { font-size: 12px; font-weight: 600; color: var(--risk); background: var(--risk-bg); border-radius: 9999px; padding: 1px 8px; white-space: nowrap; }
+.badge-good { font-size: 12px; font-weight: 600; color: var(--good); background: var(--good-bg); border-radius: 9999px; padding: 1px 8px; white-space: nowrap; }
 .badge-new { font-size: 12px; font-weight: 600; color: var(--data-dark); background: var(--wash-2); border-radius: 9999px; padding: 1px 8px; white-space: nowrap; }
 .legend { display: flex; gap: 16px; font-size: 12px; color: var(--ink-3); align-items: center; }
 .legend span { display: inline-flex; align-items: center; gap: 6px; }
@@ -144,7 +151,8 @@ button.status:hover { color: var(--ink); }
 .toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .chip-btn { height: 36px; padding: 0 14px; border-radius: 9999px; border: 1px solid var(--line); background: var(--card); color: var(--ink-2); font-size: 13px; }
 .chip-btn[aria-pressed="true"] { background: var(--soot); border-color: var(--soot); color: #fff; font-weight: 500; }
-.chip-btn .cnt { opacity: 0.7; margin-left: 4px; }
+.chip-btn .cnt { color: var(--muted); margin-left: 4px; }  /* не opacity: полупрозрачный текст давал 4,32:1 */
+.chip-btn[aria-pressed="true"] .cnt { color: #d6d3d1; }
 .chip-select { height: 36px; padding: 0 34px 0 14px; border-radius: 9999px; border: 1px solid var(--line); background: var(--card) var(--chevron) no-repeat right 14px center; color: var(--ink-2); font-size: 13px; appearance: none; -webkit-appearance: none; -moz-appearance: none; cursor: pointer; }
 .cols-pop { width: 280px; }
 .cols-pop label { display: flex; align-items: center; gap: 10px; padding: 7px 4px; font-size: 14px; border-radius: 6px; cursor: pointer; }
@@ -167,15 +175,18 @@ button.status:hover { color: var(--ink); }
 .resizer:hover::before, .resizing .resizer.active::before { width: 2px; background: var(--cta); }
 .resizing, .resizing * { cursor: col-resize !important; user-select: none; }
 .info { display: inline-flex; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line-strong); font-size: 10px; align-items: center; justify-content: center; color: var(--muted); cursor: help; position: relative; flex-shrink: 0; }
+.info::after { content: ""; position: absolute; inset: -4px; }  /* мишень 24×24 при видимом кружке 16px */
 .info-pop { position: fixed; z-index: 60; width: 280px; background: var(--ink); color: #fff; font-size: 12px; line-height: 1.45; padding: 8px 10px; border-radius: 8px; pointer-events: none; }
 .ev-table tbody tr { border-top: 1px solid var(--line-soft); cursor: pointer; }
 .ev-table tbody tr:hover { background: #fbfaf9; }
 .ev-table tbody tr.sel { background: var(--row-sel); }
+/* На выделенной строке серый --muted даёт 4,39:1 — подписи темнее */
+.ev-table tbody tr.sel .d-sub:not(.wknd), .ev-table tbody tr.sel .sub2, .sale-row.sel .sub { color: var(--ink-3); }
 .ev-table td { padding: 10px; vertical-align: middle; overflow: hidden; }
 .d-day { font-family: var(--display); font-size: 17px; line-height: 1.1; white-space: nowrap; }
 .d-sub, .sub2 { font-size: 12px; color: var(--muted); }
 .ev-title { all: unset; cursor: pointer; font-weight: 500; display: block; }
-.ev-title:focus-visible { outline: 2px solid var(--cta); outline-offset: 2px; border-radius: 4px; }
+.ev-title:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
 .ev-badges { display: flex; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
 .fillwrap { display: inline-flex; flex-direction: column; gap: 3px; max-width: 100%; }
 .fillbar { display: flex; align-items: center; gap: 8px; }
@@ -188,7 +199,8 @@ button.status:hover { color: var(--ink); }
 /* Карточка поверх таблицы — шире на широких экранах */
 .drawer-veil { position: fixed; inset: 0; background: rgba(12, 10, 9, 0.12); z-index: 30; opacity: 0; pointer-events: none; transition: opacity 0.18s ease-out; }
 .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 480px; width: min(880px, max(480px, 42vw)); max-width: 100vw; background: var(--card); border-left: 1px solid var(--line); box-shadow: rgba(17, 12, 46, 0.12) -12px 0 45px 0; z-index: 31; overflow: auto; padding: 24px 32px 32px; display: flex; flex-direction: column; gap: 22px; transform: translateX(100%); visibility: hidden; transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0.22s; }
-.drawer > * { flex-shrink: 0; }  /* панель прокручивается, а не сжимает блоки по высоте */
+.drawer > * { flex-shrink: 0; }
+.drawer[hidden] { display: none; }  /* закрытая карточка за краем экрана не должна расширять страницу */  /* панель прокручивается, а не сжимает блоки по высоте */
 .drawer.open { transform: none; visibility: visible; transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
 .drawer-veil.open { opacity: 1; pointer-events: auto; }
 @media (prefers-reduced-motion: reduce) { .drawer, .drawer.open, .drawer-veil { transition: none; } }
@@ -210,11 +222,11 @@ button.status:hover { color: var(--ink); }
 /* Форма редактирования / добавления */
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
 .form-grid .full { grid-column: 1 / -1; }
-.form-grid h4 { grid-column: 1 / -1; margin: 8px 0 -4px; font-family: var(--display); font-weight: 500; font-size: 15px; }
+.form-grid h3 { grid-column: 1 / -1; margin: 8px 0 -4px; font-family: var(--display); font-weight: 500; font-size: 15px; }
 .field label { display: block; font-size: 12px; color: var(--ink-3); margin-bottom: 4px; }
 .field input, .field select { width: 100%; height: 40px; border: 1px solid var(--line-strong); border-radius: 8px; padding: 0 12px; background: var(--card); }
 .field select { appearance: none; -webkit-appearance: none; background: var(--card) var(--chevron) no-repeat right 12px center; padding-right: 32px; }
-.field input:focus, .field select:focus { outline: none; border-color: var(--cta); box-shadow: 0 0 0 2px rgba(59, 166, 241, 0.25); }
+.field input:focus-visible, .field select:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--focus); }
 .field .hint { font-size: 12px; color: var(--muted); margin-top: 3px; }
 .field.bad input { border-color: var(--risk-bar); }
 .field .err { font-size: 12px; color: var(--risk); margin-top: 3px; }
@@ -231,6 +243,13 @@ button.status:hover { color: var(--ink); }
 .hall-row .bar { display: flex; gap: 1px; height: 7px; }
 .note { font-size: 13px; color: var(--ink-3); border: 1px dashed var(--line-strong); border-radius: 10px; padding: 14px 16px; }
 .m-list { display: none; }
+.m-item { all: unset; box-sizing: border-box; display: block; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; cursor: pointer; }
+.m-item:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* 821–1279px: даже со сжатыми столбцами таблица не помещается (нужно от 1276px) — мероприятия карточками в две колонки */
+@media (max-width: 1279px) and (min-width: 821px) {
+  .ev-card-table, .cols-anchor { display: none; }
+  .m-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-items: start; }
+}
 .bottom-nav { display: none; }
 .more-sheet { display: none; }
 
@@ -258,7 +277,7 @@ button.status:hover { color: var(--ink); }
 .toggle-track::after { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(12, 10, 9, 0.25); transition: transform 150ms var(--ease); }
 .toggle input:checked + .toggle-track { background: var(--soot); }
 .toggle input:checked + .toggle-track::after { transform: translateX(16px); }
-.toggle input:focus-visible + .toggle-track { outline: 2px solid var(--cta); outline-offset: 2px; }
+.toggle input:focus-visible + .toggle-track { outline: 2px solid var(--focus); outline-offset: 2px; }
 .toggle input:disabled, .toggle input:disabled + .toggle-track { opacity: 0.45; cursor: default; }
 /* Журнал */
 .log { list-style: none; margin: 12px 0 0; padding: 0; max-height: 440px; overflow: auto; border-top: 1px solid var(--line-soft); }
@@ -283,7 +302,7 @@ button.status:hover { color: var(--ink); }
 .ok-badge { font-size: 12px; font-weight: 600; color: var(--good); background: var(--good-bg); border-radius: 9999px; padding: 1px 8px; white-space: nowrap; }
 .inline-field { display: flex; gap: 8px; flex-wrap: wrap; }
 .inline-field input { flex: 1 1 240px; min-width: 0; height: 40px; border: 1px solid var(--line-strong); border-radius: 8px; padding: 0 12px; background: var(--card); }
-.inline-field input:focus { outline: none; border-color: var(--cta); box-shadow: 0 0 0 2px rgba(59, 166, 241, 0.25); }
+.inline-field input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--focus); }
 .inline-field.bad input { border-color: var(--risk-bar); }
 .cls-bars { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
 .cls-bar { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 12px; align-items: center; font-size: 13px; }
@@ -308,7 +327,7 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
 .sale-row { all: unset; box-sizing: border-box; width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 280px 96px 104px 14px; gap: 16px; align-items: center; padding: 12px 24px; border-top: 1px solid var(--line-soft); cursor: pointer; }
 .sale-row:hover { background: #fbfaf9; }
 .sale-row.sel { background: var(--row-sel); }
-.sale-row:focus-visible { outline: 2px solid var(--cta); outline-offset: -2px; }
+.sale-row:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
 .sale-plus { font-weight: 600; color: var(--data); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .sale-sum { text-align: right; font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .sale-row .chev { color: var(--ash); }
@@ -318,7 +337,7 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
 .niche-row .bar { height: 8px; border-radius: 9999px; background: var(--data-light); }
 .hall-link { all: unset; box-sizing: border-box; display: flex; justify-content: space-between; align-items: baseline; gap: 12px; width: 100%; padding: 9px 0; border-top: 1px solid var(--line-soft); cursor: pointer; font-size: 14px; }
 .hall-link:hover .hl-name { color: var(--data); }
-.hall-link:focus-visible { outline: 2px solid var(--cta); outline-offset: 2px; border-radius: 4px; }
+.hall-link:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
 .hall-grid { display: grid; grid-template-columns: minmax(0, 1.45fr) minmax(300px, 1fr); gap: 20px; align-items: start; }
 .hall-map svg { display: block; width: 100%; height: auto; }
 .hall-map circle:hover { stroke: #0c0a09; stroke-width: 2.5; }
@@ -338,9 +357,16 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
 .chart [data-ct]:focus { outline: none; }
 .chart [data-ct]:focus-visible .dot, .chart [data-ct]:hover .dot { stroke: #0c0a09; }
 .zone-table.wrap td { white-space: normal; }
+.scroll-x { overflow-x: auto; max-width: 100%; }
 .pace-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line-soft); font-size: 13px; }
 .pace-row .track2 { height: 10px; border-radius: 0 4px 4px 0; }
 .key { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+
+/* Подтверждение необратимых действий — нативный <dialog>: фокус внутри, Esc закрывает, фон недоступен */
+.confirm { border: 1px solid var(--line); border-radius: 12px; padding: 22px 24px 18px; width: min(440px, calc(100vw - 32px)); box-shadow: rgba(17, 12, 46, 0.18) 0 12px 45px 0; }
+.confirm::backdrop { background: rgba(12, 10, 9, 0.24); }
+.confirm h2 { font-weight: 500; font-size: 18px; }
+.confirm .form-actions { border-top: 0; padding-top: 16px; }
 
 /* Короткое сообщение внизу экрана */
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 8px); max-width: min(560px, calc(100vw - 32px)); background: var(--soot); color: #fff; font-size: 13px; line-height: 1.45; padding: 10px 16px; border-radius: 12px; box-shadow: rgba(17, 12, 46, 0.18) 0 12px 32px 0; z-index: 70; opacity: 0; pointer-events: none; transition: opacity 180ms var(--ease), transform 180ms var(--ease); }
@@ -361,7 +387,7 @@ button, .pill, .chip-select, .nav-item, .cal-day, .m-item, .kgrid > div {
   .cal-months button:not([aria-pressed="true"]):hover { border-color: var(--line-strong); color: var(--ink); }
   .m-item:hover { border-color: var(--line-strong); }
 }
-button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
+button:active:not(:disabled), a.pill:active { transform: scale(0.96); }
 .nav-item:active { transform: scale(0.985); }
 .ev-title:active { transform: none; }
 
@@ -416,7 +442,7 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
   .niche-grid { grid-template-columns: minmax(0, 1fr) !important; }
   .ev-card-table, .cols-anchor { display: none; }
   .m-list { display: flex; flex-direction: column; gap: 10px; }
-  .m-item { all: unset; display: block; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; cursor: pointer; }
+
   .bottom-nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; height: 72px; padding: 6px 6px 16px; background: var(--card); border-top: 1px solid var(--line); z-index: 20; }
   .bottom-nav button { border: 0; background: none; font-size: 11px; color: var(--ink-3); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
   .bottom-nav button[aria-current="page"] { color: var(--ink); font-weight: 600; }
@@ -433,6 +459,8 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
   .city-row .sub { grid-column: 1 / -1; }
   .city-row .soon-tag { grid-row: 1; grid-column: 2; justify-self: end; }
   .toast { bottom: 88px; }
+  input, select, textarea, .chip-select { font-size: 16px; }
+  .chip-select { max-width: 100%; text-overflow: ellipsis; }  /* длинное название площадки не расширяет страницу; в раскрытом списке видно целиком */  /* меньше 16px — iPhone увеличивает страницу при фокусе */
   .toolbar .seg { max-width: 100%; overflow-x: auto; }  /* переключатели разрезов на узком телефоне прокручиваются, а не распирают страницу */
   .hall-grid { grid-template-columns: minmax(0, 1fr); }
   .niche-row { grid-template-columns: 110px minmax(0, 1fr) 28px; }
@@ -472,7 +500,7 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
     <button class="nav-item" data-view="settings"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg>Настройки</button>
   </nav>
 
-  <div class="main">
+  <main class="main">
     <header class="top">
       <label class="pill" title="Город">
         <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 14s5-4.3 5-8A5 5 0 0 0 3 6c0 3.7 5 8 5 8z"/><circle cx="8" cy="6" r="1.8"/></svg>
@@ -498,17 +526,21 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
       <button class="btn-cta" id="runBtn" type="button">Собрать сейчас</button>
     </header>
     <div id="view" class="view"></div>
-  </div>
+  </main>
 </div>
 
 <nav class="bottom-nav" aria-label="Разделы">
-  <button data-view="overview">Обзор</button><button data-view="events">События</button><button data-view="sales">Продажи</button><button data-view="venues">Залы</button><button type="button" id="moreBtn" aria-expanded="false" aria-controls="moreSheet">Ещё</button>
+  <button data-view="overview">Обзор</button><button data-view="events">Афиша</button><button data-view="sales">Продажи</button><button data-view="venues">Залы</button><button type="button" id="moreBtn" aria-expanded="false" aria-controls="moreSheet">Ещё</button>
 </nav>
 <div class="more-sheet" id="moreSheet" hidden><button data-view="niches">Ниши</button><button data-view="dynamics">Динамика продаж</button><button data-view="archive">Архив</button><button data-view="settings">Настройки</button></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<dialog class="confirm" id="confirmDlg" aria-labelledby="cdTitle" aria-describedby="cdText">
+  <h2 id="cdTitle"></h2><p id="cdText" class="sub"></p>
+  <div class="form-actions"><button class="btn-danger" id="cdOk" type="button"></button><button class="btn-ghost" id="cdCancel" type="button" autofocus>Отмена</button></div>
+</dialog>
 
 <div class="drawer-veil" id="veil"></div>
-<aside class="drawer" id="drawer" aria-label="Карточка мероприятия" aria-hidden="true"></aside>
+<div class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Карточка мероприятия" aria-hidden="true" hidden></div>
 <div class="info-pop" id="infoPop" hidden></div>
 
 <script>
@@ -754,8 +786,8 @@ function inPeriod(e) {
 }
 function cityData() { return S.city === "Все города" ? ALL : ALL.filter(function (e) { return e.city === S.city; }); }
 function heat(v, max) {
-  if (v == null || max <= 0) return { bg: "#f5f5f4", fg: "#a8a29e" };
-  if (v === 0) return { bg: "#f5f5f4", fg: "#78716c" };
+  if (v == null || max <= 0) return { bg: "#f5f5f4", fg: "#57534e" };  /* #57534e на #f5f5f4 — 6,9:1 */
+  if (v === 0) return { bg: "#f5f5f4", fg: "#57534e" };
   var i = Math.min(HEAT.length - 1, Math.floor(v / max * (HEAT.length - 0.001)));
   return { bg: HEAT[i], fg: i >= 4 ? "#ffffff" : "#0c0a09" };
 }
@@ -773,7 +805,7 @@ function periodLabel() {
 
 function cityEmpty() {
   var c = CITIES.filter(function (x) { return x.name === S.city; })[0];
-  if (!c || c.ready) return '<div class="empty"><h2>Мероприятий нет</h2><p style="margin:0">Попробуйте другой город или добавьте своё событие.</p></div>';
+  if (!c || c.ready) return '<div class="empty"><h2>Мероприятий нет</h2><p style="margin:0">Попробуйте другой город или добавьте своё мероприятие.</p></div>';
   return '<div class="empty"><h2>' + esc(S.city) + ' — данных пока нет</h2>' +
     '<p style="margin:0 auto;max-width:520px">Источник найден: <b>' + esc(c.source) + '</b> — тот же билетный движок, что у vladimirkoncert.ru, поэтому подключается без новой разработки. ' + esc(c.note) + (/\.$/.test(c.note) ? '' : '.') + '</p>' +
     '<p class="muted" style="margin-top:10px;font-size:13px">Подключение — в разделе «Настройки → Площадки». После первого сбора здесь появятся мероприятия, ниши и выручка.</p></div>';
@@ -786,7 +818,7 @@ function venuesOf(list, limit) {
 function head(title, sub, action) {
   return '<div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap"><div><h1>' + esc(title) + '</h1><p>' + esc(sub) + '</p></div>' + (action || '') + '</div>';
 }
-var ADD_BTN = '<button class="btn-dark" data-action="add" style="height:40px;padding:0 18px;display:inline-flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>Добавить событие</button>';
+var ADD_BTN = '<button class="btn-dark" data-action="add" style="height:40px;padding:0 18px;display:inline-flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>Добавить мероприятие</button>';
 
 // ---------------------------------------------------------------- Обзор
 function renderOverview() {
@@ -817,10 +849,10 @@ function renderOverview() {
         var d = c.to - c.from, up = d > 0;
         return '<li class="change"><span class="change-sign" style="background:' + (up ? "#dcebf8" : "#f5f5f4") + ';color:' + (up ? "#104a78" : "#57534e") + '" aria-hidden="true">' + (up ? "+" : "−") + '</span>' +
           '<div style="flex-grow:1;min-width:0"><div style="font-weight:500">' + esc(c.title) + '</div><div class="sub" style="margin:0">' + c.venue + ' · ' + c.date + '</div></div>' +
-          '<div style="text-align:right"><div class="num" style="font-weight:500">' + (up ? "+" : "−") + Math.abs(d) + ' мест</div><div class="sub num" style="margin:0">занято ' + c.from + ' → ' + c.to + '</div></div></li>';
+          '<div style="text-align:right"><div class="num" style="font-weight:500">' + (up ? "+" : "−") + Math.abs(d) + ' ' + plural(Math.abs(d), "место", "места", "мест") + '</div><div class="sub num" style="margin:0">занято ' + c.from + ' → ' + c.to + '</div></div></li>';
       }).join("") + '<li class="muted">Новых мероприятий и изменений цен не было</li></ul></section>' +
     '<section class="card card-pad"><h2>Под риском</h2><p class="sub">До даты меньше 3 недель, зал заполнен меньше чем на 40%</p><ul class="list">' +
-      risk.map(function (e) { return '<li><div style="display:flex;justify-content:space-between;gap:10px"><span style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(e.title) + '</span><span class="badge-risk num">' + fill(e) + '%</span></div><div class="sub" style="margin:0">' + e.venue + ' · ' + human(e.date) + '</div></li>'; }).join("") +
+      risk.map(function (e) { return '<li><button class="list-btn" data-open="' + e.i + '" title="' + esc(e.title) + '"><div style="display:flex;justify-content:space-between;gap:10px"><span class="lb-title" style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(e.title) + '</span><span class="badge-risk num">' + fill(e) + '%</span></div><div class="sub" style="margin:0">' + e.venue + ' · ' + human(e.date) + '</div></button></li>'; }).join("") +
     '</ul></section>' +
   '</div>' +
   '<div class="grid-3">' +
@@ -833,8 +865,8 @@ function renderOverview() {
       }).join("") + '</div></section>' +
     '<section class="card card-pad"><h2>Ближайшие 7 дней</h2><ul class="list">' + soon.map(function (e) {
         var d = dparts(e.date);
-        return '<li style="display:flex;gap:12px;align-items:center"><div style="width:40px;text-align:center;line-height:1.15"' + (d.weekend ? ' class="wknd"' : '') + '><div style="font-family:var(--display);font-size:18px">' + d.day + '</div><div class="d-sub' + (d.weekend ? ' wknd' : '') + '">' + d.mon + '</div></div>' +
-          '<div style="min-width:0"><div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(e.title) + '</div><div class="sub" style="margin:0">' + e.venue + ' · ' + (e.gross ? "заполн. " + fill(e) + "%" : e.priceText) + '</div></div></li>';
+        return '<li><button class="list-btn" data-open="' + e.i + '" title="' + esc(e.title) + '" style="display:flex;gap:12px;align-items:center"><div style="width:40px;text-align:center;line-height:1.15"' + (d.weekend ? ' class="wknd"' : '') + '><div style="font-family:var(--display);font-size:18px">' + d.day + '</div><div class="d-sub' + (d.weekend ? ' wknd' : '') + '">' + d.mon + '</div></div>' +
+          '<div style="min-width:0"><div class="lb-title" style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(e.title) + '</div><div class="sub" style="margin:0">' + e.venue + ' · ' + (e.gross ? "заполн. " + fill(e) + "%" : e.priceText) + '</div></div></button></li>';
       }).join("") + '</ul></section>' +
   '</div>';
 }
@@ -879,7 +911,7 @@ function renderNiches() {
     '<div class="seg" role="group" aria-label="Мера">' + segBtns([["count", "Мероприятий"], ["fill", "Заполняемость"], ["revenue", "Выручка"]], measure, "measure") + '</div>' +
     '<div style="flex-grow:1"></div><div class="legend">меньше <span style="gap:2px">' + HEAT.map(function (h) { return '<i class="sw" style="width:18px;height:12px;background:' + h + '"></i>'; }).join("") + '</span> больше</div></div>' +
   '<div class="niche-grid" style="display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:20px;align-items:start">' +
-    '<section class="card" style="padding:8px 0;overflow:auto"><table class="heat-table"><thead><tr><th scope="col">' + dimLabel + '</th>' + vcols.map(function (v) { return '<th scope="col" style="width:96px" title="' + esc(v) + '">' + esc(v) + '</th>'; }).join("") + '<th scope="col" style="width:96px">Всего</th><th scope="col" style="width:170px;text-align:left;padding-right:22px">Ниша</th></tr></thead><tbody>' +
+    '<section class="card" style="padding:8px 0;overflow:auto" tabindex="0" role="region" aria-label="Тепловая карта: ' + dimLabel.toLowerCase() + ' по площадкам"><table class="heat-table"><thead><tr><th scope="col">' + dimLabel + '</th>' + vcols.map(function (v) { return '<th scope="col" style="width:96px" title="' + esc(v) + '">' + esc(v) + '</th>'; }).join("") + '<th scope="col" style="width:96px">Всего</th><th scope="col" style="width:170px;text-align:left;padding-right:22px">Ниша</th></tr></thead><tbody>' +
       rows.map(function (r) { return '<tr><th scope="row">' + esc(r.name) + '</th>' + r.by.map(function (x) { return cell(x, maxV); }).join("") + cell(r.all, maxA, true) + '<td style="padding-right:22px">' + tag(r) + '</td></tr>'; }).join("") +
     '</tbody></table>' + (zero.length ? '<div class="note" style="margin:12px 22px 8px"><b style="color:var(--ink)">Без мероприятий (' + zero.length + '):</b> ' + esc(zero.join(", ")) + '</div>' : '') + '</section>' +
     '<section class="card card-pad"><h2>Плотность по месяцам</h2><p class="sub" style="margin-bottom:14px">Где конкуренты сталкиваются датами</p>' +
@@ -927,9 +959,9 @@ var CELL = {
   venue: function (e) { return '<div style="font-weight:500;overflow:hidden;text-overflow:ellipsis" class="nowrap" title="' + esc(e.venue) + '">' + esc(e.venue) + '</div><div class="sub2">' + esc(e.city) + '</div>'; },
   title: function (e) {
     var risk = isRisk(e);
-    var badges = (risk ? '<span class="badge-risk">под риском</span>' : '') + (e.pushkin ? '<span class="badge-new">Пушкинская карта</span>' : '') +
+    var badges = (risk ? '<span class="badge-risk">под риском</span>' : status(e) === "good" ? '<span class="badge-good">продаётся хорошо</span>' : '') + (e.pushkin ? '<span class="badge-new">Пушкинская карта</span>' : '') +
       (yaOf(e) ? '<span class="badge-edit">Яндекс Афиша</span>' : '') +
-      (e.custom ? '<span class="badge-edit">своё событие</span>' : e.edited ? '<span class="badge-edit">изменено вручную</span>' : '');
+      (e.custom ? '<span class="badge-edit">своё мероприятие</span>' : e.edited ? '<span class="badge-edit">изменено вручную</span>' : '');
     return '<button class="ev-title" data-open="' + e.i + '">' + esc(e.title) + '</button>' + (badges ? '<div class="ev-badges">' + badges + '</div>' : '');
   },
   niche: function (e) { return '<div style="font-size:13px;line-height:1.35">' + esc(e.sphere) + '</div><div class="sub2">' + (e.genre ? esc(e.genre) : "жанр не определён") + '</div>'; },
@@ -969,7 +1001,7 @@ function renderEvents() {
   var mobile = list.map(function (e) {
     var d = dparts(e.date), f = fill(e);
     return '<button class="m-item" data-open="' + e.i + '"><div class="d-sub"><span class="' + (d.weekend ? "wknd" : "") + '">' + d.day + ' ' + d.mon + ', ' + d.wd + '</span>' + timeText(e) + ' · ' + e.venue + '</div>' +
-      '<div style="font-weight:500;margin:2px 0 8px">' + esc(e.title) + '</div>' +
+      '<div style="font-weight:500;margin:2px 0 8px">' + esc(e.title) + (isRisk(e) ? ' <span class="badge-risk">под риском</span>' : status(e) === "good" ? ' <span class="badge-good">продаётся хорошо</span>' : '') + '</div>' +
       (e.gross ? '<div class="fillbar"><div class="track"><div style="width:' + f + '%;background:' + barColor(e) + '"></div></div><span class="pct">' + f + '%</span></div>' +
         '<div class="sub2 num" style="margin-top:4px">' + money(e.revenue) + ' из ' + money(e.gross) + ' · ' + prices(e) + '</div>' : '<div class="sub2">вход ' + esc(e.priceText) + '</div>') + '</button>';
   }).join("");
@@ -1013,7 +1045,7 @@ function paceAxis(e, days, x, yBase) {
     var color = k.off === 0 ? "#0c0a09" : d.weekend ? "#b91c1c" : "#78716c", anchor = "middle";
     return '<line x1="' + k.px + '" x2="' + k.px + '" y1="' + yBase + '" y2="' + (yBase + 4) + '" stroke="#d6d3d1"/>' +
       '<text x="' + k.px + '" y="' + (yBase + 16) + '" font-size="11" fill="' + color + '" text-anchor="' + anchor + '"' + (k.off === 0 ? ' font-weight="600"' : '') + '>' + d.day + '</text>' +
-      (showMonth ? '<text x="' + k.px + '" y="' + (yBase + 29) + '" font-size="10" fill="#a8a29e" text-anchor="' + anchor + '">' + d.mon + '</text>' : '');
+      (showMonth ? '<text x="' + k.px + '" y="' + (yBase + 29) + '" font-size="10" fill="#78716c" text-anchor="' + anchor + '">' + d.mon + '</text>' : '');
   }).join("");
 }
 function paceHtml(e) {
@@ -1082,7 +1114,7 @@ function drawerView(e) {
     (status(e) === "risk" ? '<span class="chip" style="background:var(--risk-bg);border-color:var(--risk-bg);color:var(--risk)">Под риском</span>' : '') +
     (status(e) === "good" ? '<span class="chip" style="background:var(--good-bg);border-color:var(--good-bg);color:var(--good)">Продаётся хорошо</span>' : '');
   var editNote = e.custom
-    ? '<div class="note" style="border-style:solid;background:var(--canvas)">Своё событие — добавлено вручную. Парсер его не обновляет.</div>'
+    ? '<div class="note" style="border-style:solid;background:var(--canvas)">Своё мероприятие — добавлено вручную. Парсер его не обновляет.</div>'
     : e.edited ? '<div class="note" style="border-style:solid;background:var(--canvas);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">Данные исправлены вручную ' + esc(e.edited) + '. Новые сборы их не перезапишут.<button class="btn-ghost" data-drawer="revert">Вернуть данные парсера</button></div>' : '';
   var blocks = e.gross
     ? '<div class="kgrid">' +
@@ -1095,7 +1127,7 @@ function drawerView(e) {
       '</div>'
     : '<div class="note">Вход ' + esc(e.priceText || "без онлайн-продажи") + ' — заполняемость, вал и выручка не считаются. Если данные есть, их можно вписать через карандаш.</div>';
   var hall = zones ? hallRows(zones)
-    : '<div class="note">' + (e.custom ? "Для своего события схемы зала нет." : yaOf(e) ? "Схема зала с Яндекс Афиши есть в сохранённых снимках — разбивка по рядам появится после переноса мониторинга." : "Схемы зала нет — у мероприятия нет онлайн-продажи.") + '</div>';
+    : '<div class="note">' + (e.custom ? "Для своего мероприятия схемы зала нет." : yaOf(e) ? "Схема зала с Яндекс Афиши есть в сохранённых снимках — разбивка по рядам появится после переноса мониторинга." : "Схемы зала нет — у мероприятия нет онлайн-продажи.") + '</div>';
   var link = e.link ? '<a href="' + esc(e.link) + '" target="_blank" rel="noopener" class="pill" style="justify-content:center;height:44px;color:var(--ink);font-weight:500">Открыть это мероприятие на ' + esc(e.link.replace(/^https?:\/\//, "").split("/")[0]) + ' ↗</a>' : '';
 
   return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div class="sub" style="margin:0">' + esc(e.venue) + ' · ' + esc(e.city) + ' · <span class="' + (d.weekend ? "wknd" : "") + '">' + d.wd + ', ' + d.day + ' ' + d.mon + ' ' + d.y + '</span>' + esc(timeText(e) || ", время сеанса не сохранено") + '</div>' +
@@ -1113,43 +1145,43 @@ function drawerView(e) {
     link;
 }
 
-// Форма: правка мероприятия или своё событие (e = null)
+// Форма: правка мероприятия или своё мероприятие (e = null)
 function drawerForm(e, errors, isNew) {
   e = e || { city: S.city !== "Все города" ? S.city : "Владимир", date: "", time: "19:00", pushkin: false };
   errors = errors || {};
   var val = function (k) { return e[k] == null ? "" : esc(e[k]); };
   var field = function (k, label, type, hint, cls) {
-    return '<div class="field ' + (cls || "") + (errors[k] ? " bad" : "") + '"><label for="f-' + k + '">' + label + '</label><input id="f-' + k + '" name="' + k + '" type="' + (type || "text") + '" value="' + val(k) + '"' + (type === "number" ? ' min="0" step="1" inputmode="numeric"' : '') + '>' +
-      (errors[k] ? '<div class="err">' + errors[k] + '</div>' : hint ? '<div class="hint">' + hint + '</div>' : '') + '</div>';
+    return '<div class="field ' + (cls || "") + (errors[k] ? " bad" : "") + '"><label for="f-' + k + '">' + label + '</label><input id="f-' + k + '" name="' + k + '" type="' + (type || "text") + '" value="' + val(k) + '"' + (type === "number" ? ' min="0" step="1" inputmode="numeric"' : '') + (errors[k] ? ' aria-invalid="true" aria-describedby="err-' + k + '"' : '') + '>' +
+      (errors[k] ? '<div class="err" id="err-' + k + '">' + errors[k] + '</div>' : hint ? '<div class="hint">' + hint + '</div>' : '') + '</div>';
   };
   var select = function (k, label, options, allowEmpty) {
     return '<div class="field"><label for="f-' + k + '">' + label + '</label><select id="f-' + k + '" name="' + k + '">' + (allowEmpty ? '<option value="">— не указано —</option>' : '') +
       options.map(function (o) { return '<option' + (o === e[k] ? " selected" : "") + '>' + esc(o) + '</option>'; }).join("") + '</select></div>';
   };
   var knownVenues = []; ALL.forEach(function (x) { if (knownVenues.indexOf(x.venue) < 0) knownVenues.push(x.venue); });
-  return '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2 style="font-weight:400;font-size:26px;letter-spacing:-0.02em">' + (isNew ? "Новое событие" : "Редактирование") + '</h2>' +
+  return '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2 style="font-weight:400;font-size:26px;letter-spacing:-0.02em">' + (isNew ? "Новое мероприятие" : "Редактирование") + '</h2>' +
       '<button class="icon-btn" data-drawer="' + (isNew ? "close" : "cancel") + '" aria-label="Закрыть без сохранения"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button></div>' +
-    '<p class="sub" style="margin:-10px 0 0">' + (isNew ? "Своё мероприятие появится в таблице и в аналитике с меткой «своё событие»." : "Исправленные значения заменят данные парсера и сохранятся при следующих сборах. Исходные данные можно вернуть в любой момент.") + '</p>' +
+    '<p class="sub" style="margin:-10px 0 0">' + (isNew ? "Своё мероприятие появится в таблице и в аналитике с меткой «своё мероприятие»." : "Исправленные значения заменят данные парсера и сохранятся при следующих сборах. Исходные данные можно вернуть в любой момент.") + '</p>' +
     '<form id="evForm" class="form-grid" novalidate>' +
-      '<h4>Основное</h4>' +
+      '<h3>Основное</h3>' +
       field("title", "Название", "text", "", "full") +
       field("date", "Дата", "date") + field("time", "Время", "time") +
       select("city", "Город", CITIES.map(function (c) { return c.name; })) +
-      '<div class="field' + (errors.venue ? " bad" : "") + '"><label for="f-venue">Площадка</label><input id="f-venue" name="venue" list="venues-list" value="' + val("venue") + '"><datalist id="venues-list">' + knownVenues.map(function (v) { return '<option value="' + esc(v) + '">'; }).join("") + '</datalist>' + (errors.venue ? '<div class="err">' + errors.venue + '</div>' : '') + '</div>' +
-      '<h4>Ниша</h4>' +
+      '<div class="field' + (errors.venue ? " bad" : "") + '"><label for="f-venue">Площадка</label><input id="f-venue" name="venue" list="venues-list" value="' + val("venue") + '"' + (errors.venue ? ' aria-invalid="true" aria-describedby="err-venue"' : '') + '><datalist id="venues-list">' + knownVenues.map(function (v) { return '<option value="' + esc(v) + '">'; }).join("") + '</datalist>' + (errors.venue ? '<div class="err" id="err-venue">' + errors.venue + '</div>' : '') + '</div>' +
+      '<h3>Ниша</h3>' +
       select("sphere", "Сфера", TAX.sphere, true) + select("format", "Формат", TAX.format, true) +
       select("genre", "Жанр", TAX.genre, true) +
       '<div class="field" style="display:flex;align-items:flex-end"><label class="check" style="margin:0 0 10px"><input type="checkbox" name="pushkin"' + (e.pushkin ? " checked" : "") + '> Пушкинская карта</label></div>' +
-      '<h4>Билеты и деньги</h4>' +
+      '<h3>Билеты и деньги</h3>' +
       field("sellable", "Мест в продаже", "number") + field("taken", "Занято (продано)", "number") +
       field("pmin", "Цена от, ₽", "number") + field("pmax", "Цена до, ₽", "number") +
       field("gross", "Вал, ₽", "number", "Пусто — посчитаем: места × средняя цена") + field("revenue", "Выручка, ₽", "number", "Пусто — посчитаем: занято × средняя цена") +
       field("priceText", "Если онлайн-продажи нет", "text", "Например: «по пригласительным»", "full") +
       field("link", "Ссылка на мероприятие", "url", "", "full") +
     '</form>' +
-    '<div class="form-actions"><button class="btn-dark" data-drawer="save">' + (isNew ? "Добавить событие" : "Сохранить") + '</button>' +
+    '<div class="form-actions"><button class="btn-dark" data-drawer="save">' + (isNew ? "Добавить мероприятие" : "Сохранить") + '</button>' +
       '<button class="btn-ghost" data-drawer="' + (isNew ? "close" : "cancel") + '">Отмена</button><div style="flex-grow:1"></div>' +
-      (!isNew && e.custom ? '<button class="btn-danger" data-drawer="delete">Удалить событие</button>' : '') +
+      (!isNew && e.custom ? '<button class="btn-danger" data-drawer="delete">Удалить мероприятие</button>' : '') +
       (!isNew && e.edited ? '<button class="btn-ghost" data-drawer="revert">Вернуть данные парсера</button>' : '') + '</div>';
 }
 
@@ -1174,12 +1206,23 @@ function readForm() {
   return { data: out, errors: errors };
 }
 
+// askConfirm("Удалить ключ?", "Пояснение", "Удалить ключ", fn): кнопка называет действие, а не «OK»
+function askConfirm(title, text, okLabel, onOk) {
+  var d = $("confirmDlg");
+  $("cdTitle").textContent = title; $("cdText").textContent = text; $("cdOk").textContent = okLabel;
+  $("cdOk").onclick = function () { d.close(); onOk(); };
+  $("cdCancel").onclick = function () { d.close(); };
+  d.showModal();
+}
 var lastFocus = null;
+// Пока открыта карточка, страница под ней недоступна: Tab не уходит за карточку, программа чтения не видит фон
+function setBackgroundInert(on) { document.querySelectorAll(".shell, .bottom-nav, #moreSheet").forEach(function (el) { el.inert = on; }); }
 function showDrawer(html) {
   var dr = $("drawer");
   dr.innerHTML = html; dr.scrollTop = 0;
-  if (!dr.classList.contains("open")) lastFocus = document.activeElement;
+  if (!dr.classList.contains("open")) { lastFocus = document.activeElement; dr.hidden = false; void dr.offsetWidth; }  // reflow — чтобы выезд анимировался
   dr.classList.add("open"); dr.setAttribute("aria-hidden", "false"); $("veil").classList.add("open");
+  setBackgroundInert(true);
   var first = dr.querySelector("input, button"); if (first) first.focus();
 }
 function findEvent(i) { return ALL.filter(function (x) { return x.i === i; })[0]; }
@@ -1194,6 +1237,8 @@ function openEditor(i) { S.editing = true; S.sel = i; showDrawer(drawerForm(i ==
 function closeDrawer() {
   if (!$("drawer").classList.contains("open")) return;
   $("drawer").classList.remove("open"); $("drawer").setAttribute("aria-hidden", "true"); $("veil").classList.remove("open");
+  setTimeout(function () { if (!$("drawer").classList.contains("open")) $("drawer").hidden = true; }, 240);  // после анимации закрытия
+  setBackgroundInert(false);
   S.editing = false;
   if (lastFocus && lastFocus.focus) lastFocus.focus();
 }
@@ -1207,17 +1252,22 @@ $("drawer").addEventListener("click", function (ev) {
   else if (act === "cancel") openDrawer(i);
   else if (act === "revert") { delete EDITS.byId[i]; saveEdits(); rebuild(); render(); openDrawer(i); }
   else if (act === "delete") {
-    if (!confirm("Удалить своё событие? Это действие нельзя отменить.")) return;
-    EDITS.custom = EDITS.custom.filter(function (c) { return c.i !== i; }); saveEdits(); rebuild(); closeDrawer(); render();
+    askConfirm("Удалить своё мероприятие?", "Его нельзя будет вернуть.", "Удалить мероприятие", function () {
+      EDITS.custom = EDITS.custom.filter(function (c) { return c.i !== i; }); saveEdits(); rebuild(); closeDrawer(); render();
+    });
   }
   else if (act === "save") {
     var r = readForm();
-    if (Object.keys(r.errors).length) { showDrawer(drawerForm(Object.assign({}, i == null ? {} : findEvent(i), r.data), r.errors, i == null)); return; }
-    if (i == null || !findEvent(i)) {                                   // своё событие
+    if (Object.keys(r.errors).length) {
+      showDrawer(drawerForm(Object.assign({}, i == null ? {} : findEvent(i), r.data), r.errors, i == null));
+      $("drawer").querySelector('[aria-invalid="true"]').focus();  // фокус на первую ошибку — её текст прочитается через aria-describedby
+      return;
+    }
+    if (i == null || !findEvent(i)) {                                   // своё мероприятие
       var id = EDITS.nextId++;
       EDITS.custom.push(Object.assign({ i: id, v: "", created: stamp() }, r.data));
       i = id;
-    } else if (findEvent(i).custom) {                                  // правка своего события
+    } else if (findEvent(i).custom) {                                  // правка своего мероприятия
       EDITS.custom = EDITS.custom.map(function (c) { return c.i === i ? Object.assign({}, c, r.data) : c; });
     } else {                                                           // правка спарсенного: храним только отличия
       var base = BASE[i], diff = {};
@@ -1374,13 +1424,13 @@ function renderArchive() {
   return head("Архив", "Прошедшие мероприятия с итогами продаж · копится с 29 сент.") +
     '<section class="card kpis k4" aria-label="Архив">' +
       '<div><div class="kpi-label">В архиве</div><div class="kpi-value num">0</div><div class="sub">прошедших мероприятий пока нет</div></div>' +
-      '<div><div class="kpi-label">Первое попадёт</div><div class="kpi-value">' + (soon[0] ? human(soon[0].date) : "—") + '</div><div class="sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (soon[0] ? esc(soon[0].title) : "") + '</div></div>' +
-      '<div><div class="kpi-label">Первое с продажами</div><div class="kpi-value">' + (firstSold ? human(firstSold.date) : "—") + '</div><div class="sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (firstSold ? esc(firstSold.title) + ' · сейчас ' + fill(firstSold) + '%' : "") + '</div></div>' +
+      '<div><div class="kpi-label">Первое попадёт</div><div class="kpi-value">' + (soon[0] ? human(soon[0].date) : "—") + '</div><div class="sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"' + (soon[0] ? ' title="' + esc(soon[0].title) + '"' : '') + '>' + (soon[0] ? esc(soon[0].title) : "") + '</div></div>' +
+      '<div><div class="kpi-label">Первое с продажами</div><div class="kpi-value">' + (firstSold ? human(firstSold.date) : "—") + '</div><div class="sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis"' + (firstSold ? ' title="' + esc(firstSold.title) + '"' : '') + '>' + (firstSold ? esc(firstSold.title) + ' · сейчас ' + fill(firstSold) + '%' : "") + '</div></div>' +
       '<div><div class="kpi-label">Повторы в афише</div><div class="kpi-value num">' + groups.length + '</div><div class="sub">' + plural(groups.length, "название", "названия", "названий") + ' в ' + repeatDates + ' датах</div></div>' +
     '</section>' +
     '<section class="card"><div class="toolbar" style="padding:16px 24px 0"><label class="pill search" style="height:36px;max-width:320px;flex-grow:1;opacity:0.6"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#78716c" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg><input type="search" placeholder="Поиск по архиву" disabled aria-label="Поиск по архиву"></label>' +
       '<select class="chip-select" disabled aria-label="Ниша"><option>Ниша: все</option></select><select class="chip-select" disabled aria-label="Площадка"><option>Площадка: все</option></select><select class="chip-select" disabled aria-label="Город"><option>Город: все</option></select></div>' +
-      '<div style="overflow-x:auto"><table class="zone-table" style="margin:12px 24px 0;width:calc(100% - 48px)"><thead><tr>' + cols.map(function (c) { return '<th>' + c + '</th>'; }).join("") + '</tr></thead></table></div>' +
+      '<div class="scroll-x" tabindex="0" role="region" aria-label="Колонки архива"><table class="zone-table" style="margin:12px 24px 0;width:calc(100% - 48px)"><thead><tr>' + cols.map(function (c) { return '<th>' + c + '</th>'; }).join("") + '</tr></thead></table></div>' +
       '<div class="empty" style="border:0"><h2>Архив пока пуст</h2><p style="margin:0 auto;max-width:560px">Мероприятие попадает сюда на следующий день после даты — с итогом по последнему сбору перед началом. ' +
         (soon[0] ? 'Первым будет «' + esc(soon[0].title) + '», ' + human(soon[0].date) + '.' : '') + '</p></div></section>' +
     '<div class="set-grid">' +
@@ -1443,6 +1493,11 @@ function salesBarsSvg() {
         (last ? '<path d="' + barPath(bx, yy, bw, hh, 4) + '" fill="' + VENUE_COLOR[v] + '"/>' : '<rect x="' + bx + '" y="' + yy + '" width="' + bw + '" height="' + hh + '" fill="' + VENUE_COLOR[v] + '"/>') + '</g>';
       acc += x.by[v].n;
     });
+    // Сколько мест у каждой площадки — подписью справа от своего сегмента (раньше было только во всплывающей подсказке)
+    var labels = [], acc2 = 0;
+    stack.forEach(function (v) { var mid = (y(acc2) + y(acc2 + x.by[v].n)) / 2; acc2 += x.by[v].n; labels.push({ y: mid + 4, t: x.by[v].n }); });
+    for (var q = labels.length - 2; q >= 0; q--) if (labels[q].y - labels[q + 1].y < 13) labels[q + 1].y = labels[q].y - 13;
+    out += labels.map(function (l) { return '<text x="' + (bx + bw + 6) + '" y="' + l.y + '" font-size="11" fill="#57534e">' + l.t + '</text>'; }).join("");
     var perHour = x.mins ? x.n / (x.mins / 60) : 0;
     return out + '<text x="' + (bx + bw / 2) + '" y="' + (y(x.n) - 8) + '" font-size="12" font-weight="600" fill="#0c0a09" text-anchor="middle">' + x.n + '</text>' +
       '<text x="' + (bx + bw / 2) + '" y="' + (H - pb + 18) + '" font-size="12" fill="#0c0a09" text-anchor="middle" font-weight="500">' + x.g.at + '</text>' +
@@ -1452,7 +1507,7 @@ function salesBarsSvg() {
   var nx = pl + 24 + groups.length * (bw + gap), next = hhmm(LAST_AT + S.cfg.interval);
   var slot = '<rect x="' + nx + '" y="' + y(max * 0.35) + '" width="' + bw + '" height="' + (y(0) - y(max * 0.35)) + '" fill="none" stroke="#d6d3d1" stroke-dasharray="4 4" rx="4"/>' +
     '<text x="' + (nx + bw / 2) + '" y="' + (H - pb + 18) + '" font-size="12" fill="#78716c" text-anchor="middle">' + next + '</text>' +
-    '<text x="' + (nx + bw / 2) + '" y="' + (H - pb + 33) + '" font-size="11" fill="#a8a29e" text-anchor="middle">следующий сбор</text>';
+    '<text x="' + (nx + bw / 2) + '" y="' + (H - pb + 33) + '" font-size="11" fill="#78716c" text-anchor="middle">следующий сбор</text>';
   return '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Подтверждённые продажи по сборам: ' + groups.map(function (x) { return x.g.at + " — " + x.n; }).join(", ") + '">' + grid + bars + slot + '</svg>';
 }
 function scatterSvg(list) {
@@ -1523,9 +1578,9 @@ function renderDynamics() {
     '<section class="card card-pad"><div class="card-head"><div><h2>Заполняемость и дата события</h2><p class="sub">Каждая точка — мероприятие с онлайн-продажей. Чем правее, тем дальше дата. Нажмите на точку, чтобы открыть карточку.</p></div></div>' +
       (list.length ? scatterSvg(list) : '<div class="empty" style="border:0"><h2>Нет мероприятий с онлайн-продажей</h2><p style="margin:0">Измените период или площадку.</p></div>') +
       (insight ? '<div class="callout">' + insight + '</div>' : '') +
-      '<table class="zone-table wrap" style="margin-top:14px"><thead><tr><th>До события</th><th>Мероприятий</th><th>Заполняемость</th><th>Под риском</th></tr></thead><tbody>' +
+      '<div class="scroll-x" tabindex="0" role="region" aria-label="Заполняемость по срокам до события"><table class="zone-table wrap" style="margin-top:14px"><thead><tr><th>До события</th><th>Мероприятий</th><th>Заполняемость</th><th>Под риском</th></tr></thead><tbody>' +
         buckets.map(function (b) { return '<tr><td>' + b.label + '</td><td>' + b.n + '</td><td>' + (b.fill == null ? "—" : b.fill + "%") + '</td><td>' + (b.risk ? '<span class="badge-risk">' + b.risk + '</span>' : "—") + '</td></tr>'; }).join("") +
-      '</tbody></table>' +
+      '</tbody></table></div>' +
     '</section>' +
     '<div class="dyn-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
       '<section class="card card-pad"><h2>Цены и места</h2><p class="sub">Скидки, подорожания и освободившиеся места с начала слежения</p><ul class="list">' +
@@ -1619,7 +1674,7 @@ function venueCard(n, list, all) {
   var sph = {}; list.forEach(function (e) { var k = e.sphere || "Не определено"; sph[k] = (sph[k] || 0) + 1; });
   var top = Object.keys(sph).sort(function (a, b) { return sph[b] - sph[a]; }).slice(0, 4), maxS = top.length ? sph[top[0]] : 1;
   var halls = HALLS.filter(function (h) { return h.venue === n; });
-  return '<section class="card card-pad"><div class="card-head"><div><h2>' + esc(n) + '</h2><p class="sub">' + esc(S.city === "Все города" ? (list[0] || all[0]).city : S.city) + ' · ' + esc(VENUE_SOURCE[n] || (all.some(function (e) { return yaOf(e); }) ? "Яндекс Афиша, мероприятия по ссылке" : "своё событие, добавлено вручную")) + '</p></div></div>' +
+  return '<section class="card card-pad"><div class="card-head"><div><h2>' + esc(n) + '</h2><p class="sub">' + esc(S.city === "Все города" ? (list[0] || all[0]).city : S.city) + ' · ' + esc(VENUE_SOURCE[n] || (all.some(function (e) { return yaOf(e); }) ? "Яндекс Афиша, мероприятия по ссылке" : "своё мероприятие, добавлено вручную")) + '</p></div></div>' +
     '<div class="facts" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
       '<div><span class="sub" style="margin:0">Мероприятий</span><b class="num">' + list.length + '</b><span class="sub" style="margin:0">' + m.length + ' с онлайн-продажей</span></div>' +
       '<div><span class="sub" style="margin:0">Заполняемость</span><b class="num">' + (SL ? Math.round(T / SL * 100) + "%" : "—") + '</b><span class="sub" style="margin:0">' + (SL ? num(T) + ' из ' + num(SL) + ' мест' : 'нет онлайн-продажи') + '</span></div>' +
@@ -1654,7 +1709,7 @@ function hallSection(halls) {
     return (named.length > 1 ? named[0].row + "–" + named[named.length - 1].row : named[0].row) + extra;
   };
   var members = hallMembers(h);
-  return '<div id="hallSec" class="page-head" style="margin-top:8px"><h1 style="font-size:26px">Залы и бронь</h1><p>Зал — группа похожих рассадок площадки: места совпадают минимум на 80%. Схема и цены — по последнему мероприятию зала.</p></div>' +
+  return '<div id="hallSec" class="page-head" style="margin-top:8px"><h2 style="font-weight:400;font-size:26px;line-height:1.2;letter-spacing:-0.025em">Залы и бронь</h2><p>Зал — группа похожих рассадок площадки: места совпадают минимум на 80%. Схема и цены — по последнему мероприятию зала.</p></div>' +
     '<div class="opt-row" role="group" aria-label="Зал">' + halls.map(function (x) { return '<button class="chip-btn" data-hall="' + x.id + '" aria-pressed="' + (x.id === h.id) + '">' + esc(hallLabel(x)) + '<span class="cnt num">' + x.seats + '</span></button>'; }).join("") + '</div>' +
     '<div class="hall-grid">' +
       '<section class="card card-pad hall-map"><div class="card-head"><div><h2>' + esc(hallLabel(h)) + '</h2><p class="sub">' + num(h.seats) + ' мест · по мероприятию «' + esc(h.sample[0]) + '», ' + human(h.sample[1]) + ' ' + h.sample[1].slice(0, 4) + '</p></div>' +
@@ -1859,7 +1914,7 @@ function setCollect() {
   '</div>' +
   '<section class="card card-pad"><div class="card-head"><div><h2>Журнал</h2><p class="sub">Что делал сбор и нейросеть — новые записи сверху</p></div>' +
     '<div class="opt-row">' + fchip("all", "Все", lines.length) + fchip("run", "Начало и итог", null) + fchip("warn", "Ошибки", warnCount) + '</div></div>' +
-    '<ol class="log">' + logHtml + '</ol></section>';
+    '<ol class="log" tabindex="0" aria-label="Журнал сбора, новые записи сверху">' + logHtml + '</ol></section>';
 }
 
 // Мероприятия по ссылке с Яндекс Афиши — бывший «Мониторинг билетов» (static/index.html)
@@ -1876,8 +1931,8 @@ function yaSourcesCard() {
       '<button class="icon-btn" data-sa="ya-remove" data-sv="' + k + '" aria-label="Убрать ' + esc(y.title) + '" title="Убрать ссылку"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button></li>';
   }).join("");
   return '<section class="card card-pad"><div class="card-head"><div><h2>Мероприятия по ссылке · Яндекс Афиша</h2><p class="sub">Отдельные мероприятия в любом городе. Попадают в общую афишу с меткой «Яндекс Афиша» — с той же карточкой, историей продаж и архивом.</p></div></div>' +
-    '<div class="inline-field' + (S.yaErr ? ' bad' : '') + '" style="margin-top:12px"><input id="yaUrl" type="url" placeholder="https://afisha.yandex.ru/город/theatre_show/…" aria-label="Ссылка на мероприятие на Яндекс Афише"><button class="btn-dark" data-sa="ya-add" style="height:40px">Следить</button></div>' +
-    (S.yaErr ? '<div class="sub" style="color:var(--risk)">' + S.yaErr + '</div>' : '<p class="sub">Вставьте ссылку на страницу мероприятия. Название, площадку и дату программа возьмёт со страницы.</p>') +
+    '<div class="inline-field' + (S.yaErr ? ' bad' : '') + '" style="margin-top:12px"><input id="yaUrl" type="url" placeholder="https://afisha.yandex.ru/город/theatre_show/…" aria-label="Ссылка на мероприятие на Яндекс Афише"' + (S.yaErr ? ' aria-invalid="true" aria-describedby="yaErr"' : '') + '><button class="btn-dark" data-sa="ya-add" style="height:40px">Следить</button></div>' +
+    (S.yaErr ? '<div class="sub" id="yaErr" style="color:var(--risk)">' + S.yaErr + '</div>' : '<p class="sub">Вставьте ссылку на страницу мероприятия. Название, площадку и дату программа возьмёт со страницы.</p>') +
     '<ul class="src-list">' + rows + '</ul>' +
     '<div class="field-label">Как часто проверять</div><div class="opt-row">' + YA_FREQ.map(function (f) { return '<button class="chip-btn" data-sa="ya-freq" data-sv="' + f[0] + '" aria-pressed="' + (S.yaFreq === f[0]) + '">' + f[1] + '</button>'; }).join("") + '</div>' +
     '<div class="callout warn">Старый мониторинг не запускался с 21 авг. — цифры этих мероприятий устарели. Страница Яндекс Афиши открывается в браузере: проверка медленнее, чем у vladimirkoncert.ru. Раз в минуту — только для самых важных мероприятий.</div>' +
@@ -1975,21 +2030,21 @@ function setExport() {
   var sh = S.cfg.sheets, draft = S.sheetsDraft != null ? S.sheetsDraft : sh.url;
   return '<div class="set-grid">' +
     '<section class="card card-pad"><div class="card-head"><h2>Google Таблица</h2>' + (sh.url ? '<span class="ok-badge">Подключена</span>' : '<span class="badge-edit">Не подключена</span>') + '</div>' +
-      '<p class="sub">При выгрузке лист «Конкуренты» перезаписывается целиком — с вашими правками и своими событиями.</p>' +
+      '<p class="sub">При выгрузке лист «Конкуренты» перезаписывается целиком — с вашими правками и своими мероприятиями.</p>' +
       '<div class="field-label"><label for="sheetsUrl">Ссылка на веб-приложение Apps Script</label></div>' +
-      '<div class="inline-field' + (S.sheetsErr ? ' bad' : '') + '"><input id="sheetsUrl" type="url" value="' + esc(draft) + '" placeholder="https://script.google.com/macros/s/…/exec">' +
+      '<div class="inline-field' + (S.sheetsErr ? ' bad' : '') + '"><input id="sheetsUrl" type="url" value="' + esc(draft) + '" placeholder="https://script.google.com/macros/s/…/exec"' + (S.sheetsErr ? ' aria-invalid="true" aria-describedby="sheetsErr"' : '') + '>' +
         '<button class="btn-dark" data-sa="sheets-save" style="height:40px">Сохранить</button></div>' +
-      (S.sheetsErr ? '<div class="sub" style="color:var(--risk)">' + S.sheetsErr + '</div>' : '') +
+      (S.sheetsErr ? '<div class="sub" id="sheetsErr" style="color:var(--risk)">' + S.sheetsErr + '</div>' : '') +
       '<div style="margin-top:14px">' + toggle("sheets-auto", sh.auto, "Выгружать после каждого сбора", "", !sh.url) + '</div>' +
       '<div class="act-row"><button class="btn-ghost" data-sa="sheets-now"' + (sh.url ? "" : " disabled") + '>Выгрузить сейчас</button></div>' +
       how("sheets", "Как получить ссылку — один раз, около 3 минут",
         '<ol class="steps"><li>Откройте нужную Google Таблицу → «Расширения» → «Apps Script».</li><li>Удалите всё в редакторе, вставьте код ниже и сохраните.</li><li>«Развернуть» → «Новое развертывание» → «Веб-приложение». Запуск от имени: «Я», доступ: «Все». Разрешите доступ к таблице.</li><li>Скопируйте ссылку веб-приложения — она заканчивается на <code>/exec</code> — и вставьте сюда.</li></ol>' +
-        '<pre class="code">' + esc(APPS_SCRIPT) + '</pre>' +
+        '<pre class="code" tabindex="0" aria-label="Код Apps Script">' + esc(APPS_SCRIPT) + '</pre>' +
         '<div class="act-row" style="margin-top:8px"><button class="btn-ghost" data-sa="copy">Скопировать код</button></div>' +
         '<div class="callout warn">Ссылку не публикуйте: любой, у кого она есть, может записать данные в эту таблицу.</div>', !sh.url) +
     '</section>' +
     '<section class="card card-pad"><h2>Файл CSV</h2>' +
-      '<p class="sub">Открывается в Excel и Numbers. 32 столбца: площадка, зал, ниша, цены, места, заполняемость, вал, выручка, подтверждённые продажи, ссылки. С вашими правками и своими событиями.</p>' +
+      '<p class="sub">Открывается в Excel и Numbers. 32 столбца: площадка, зал, ниша, цены, места, заполняемость, вал, выручка, подтверждённые продажи, ссылки. С вашими правками и своими мероприятиями.</p>' +
       '<div style="margin-top:14px">' + toggle("past", S.cfg.csvPast, "Включить прошедшие мероприятия") + '</div>' +
       '<div class="act-row"><button class="btn-dark" data-sa="csv">Скачать CSV</button></div>' +
     '</section>' +
@@ -2025,8 +2080,9 @@ $("view").addEventListener("click", function (ev) {
   else if (a === "logf") { S.logFilter = v; rerender(same); }
   else if (a === "remove") {
     var s = c.sources[+v];
-    if (!confirm("Убрать площадку «" + s.name + "»? Уже собранные мероприятия и их история сохранятся.")) return;
-    c.sources.splice(+v, 1); rerender("#venueAdd"); toast("Площадка «" + s.name + "» убрана из сбора.");
+    askConfirm("Убрать площадку «" + s.name + "»?", "Уже собранные мероприятия и их история сохранятся.", "Убрать площадку", function () {
+      c.sources.splice(+v, 1); rerender("#venueAdd"); toast("Площадка «" + s.name + "» убрана из сбора.");
+    });
   }
   else if (a === "add") {
     var id = $("venueAdd").value;
@@ -2038,8 +2094,9 @@ $("view").addEventListener("click", function (ev) {
   else if (a === "ya-freq") { S.yaFreq = v; rerender(same); }
   else if (a === "ya-remove") {
     var r = S.yaList[+v];
-    if (!confirm("Перестать следить за «" + r.y.title + "»? Уже собранные данные сохранятся.")) return;
-    S.yaList.splice(+v, 1); rerender("#yaUrl"); toast("«" + r.y.title + "» убрано из слежения.");
+    askConfirm("Перестать следить за «" + r.y.title + "»?", "Уже собранные данные сохранятся.", "Перестать следить", function () {
+      S.yaList.splice(+v, 1); rerender("#yaUrl"); toast("«" + r.y.title + "» убрано из слежения.");
+    });
   }
   else if (a === "ya-add") {
     var url = $("yaUrl").value.trim(), m = /^https:\/\/afisha\.yandex\.ru\/([a-z-]+)\/[a-z_]+\/([a-z0-9-]+)/.exec(url);
@@ -2057,8 +2114,9 @@ $("view").addEventListener("click", function (ev) {
     rerender('[data-sa="key-edit"]'); toast("Ключ сохранён.");
   }
   else if (a === "key-del") {
-    if (!confirm("Удалить ключ? Нейросеть перестанет доклассифицировать мероприятия, пока вы не вставите новый.")) return;
-    c.ai[c.ai.provider === "gigachat" ? "gigaKey" : "claudeKey"] = false; rerender('[data-sa="key-edit"]');
+    askConfirm("Удалить ключ?", "Нейросеть перестанет доклассифицировать мероприятия, пока вы не вставите новый.", "Удалить ключ", function () {
+      c.ai[c.ai.provider === "gigachat" ? "gigaKey" : "claudeKey"] = false; rerender('[data-sa="key-edit"]');
+    });
   }
   else if (a === "test") toast("В прототипе проверка не выполняется. Последняя настоящая проверка — 29 сент., 18:54: подключение работает.");
   else if (a === "reclass") toast("В приложении нейросеть получит 32 мероприятия без жанра. В прототипе запрос не отправляется.");
@@ -2211,7 +2269,7 @@ $("q").addEventListener("input", function () { S.q = this.value; if (S.view !== 
 document.querySelectorAll("[data-view]").forEach(function (b) { b.addEventListener("click", function () { if (S.view !== b.getAttribute("data-view")) S.enter = true; S.view = b.getAttribute("data-view"); location.hash = S.view; render(); window.scrollTo(0, 0); }); });
 $("veil").addEventListener("click", closeDrawer);
 document.addEventListener("keydown", function (ev) {
-  if (ev.key !== "Escape") return;
+  if (ev.key !== "Escape" || $("confirmDlg").open) return;
   if (S.calOpen) { S.calOpen = false; renderCal(); return; }
   if (S.colsOpen) { S.colsOpen = false; render(); return; }
   closeDrawer();
