@@ -30,7 +30,7 @@ from main import (
     BASE_DIR, CONFIG_DIR, DATA_DIR,
     load_json, save_json,
     state_path, processed_path, raw_snapshot_path, geometry_path,
-    is_event_finished, get_or_fetch_geometry,
+    is_event_finished, get_or_fetch_geometry, rotate_raw,
 )
 
 app = Flask(__name__, static_folder=str(BASE_DIR / "static"))
@@ -374,6 +374,9 @@ def competitors_export_sheets():
 
 
 if __name__ == "__main__":
+    compressed, freed = rotate_raw()
+    if compressed:
+        print(f"Сжато старых сырых снимков: {compressed}, освобождено {freed / 1024 / 1024:.0f} МБ.")
     collector.start_scheduler()
     Timer(1.0, lambda: webbrowser.open("http://127.0.0.1:5050")).start()
     app.run(port=5050, debug=False, threaded=True)

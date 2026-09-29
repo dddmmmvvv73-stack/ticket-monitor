@@ -1,14 +1,14 @@
 [
   {
     "city": "Владимир",
-    "enabled": false,
+    "enabled": true,
     "id": "odk33",
     "name": "ОДКиИ (odk33.ru)",
     "type": "odk33"
   },
   {
     "city": "Владимирская обл.",
-    "enabled": false,
+    "enabled": true,
     "id": "vk-1",
     "name": "Арт Холл",
     "type": "vladimirkoncert",

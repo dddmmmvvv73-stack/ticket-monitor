@@ -19,6 +19,9 @@
    Работает вечно (до Ctrl+C), сам засыпает между проверками и печатает
    в терминал, что происходит на каждом шаге — удобно, когда хочется
    визуально убедиться, что скрипт не завис, а реально работает.
+
+Сырые снимки старше 14 дней сжимаются в gzip автоматически (после каждой
+проверки и при старте app.py). Вручную: python3 main.py --rotate
 """
 
 from __future__ import annotations
@@ -69,6 +72,39 @@ def geometry_path(event_id: str) -> Path:
 def raw_snapshot_path(event_id: str, ts: datetime) -> Path:
     stamp = ts.strftime("%Y-%m-%d_%H%M%S")
     return DATA_DIR / "raw" / event_id / f"{stamp}.json"
+
+
+RAW_KEEP_DAYS = 14  # сколько дней сырые снимки лежат несжатыми
+
+
+def rotate_raw(keep_days: int = RAW_KEEP_DAYS) -> tuple[int, int]:
+    """
+    Сжимает в gzip сырые снимки старше keep_days (снимок ~2,3 МБ → ~30 КБ).
+    Ничего не удаляет: любой снимок можно распаковать (gunzip) для пересчёта.
+    Возвращает (сколько файлов сжато, сколько байт освобождено).
+    """
+    import gzip
+    import os
+
+    cutoff = time.time() - keep_days * 86400
+    compressed = freed = 0
+    for path in sorted((DATA_DIR / "raw").glob("*/*.json")):
+        stat = path.stat()
+        if stat.st_mtime >= cutoff:
+            continue
+        gz_path = path.with_suffix(".json.gz")
+        data = path.read_bytes()
+        with gzip.open(gz_path, "wb") as dst:
+            dst.write(data)
+        with gzip.open(gz_path, "rb") as check:  # оригинал удаляем, только если копия читается байт в байт
+            if check.read() != data:
+                gz_path.unlink()
+                continue
+        os.utime(gz_path, (stat.st_atime, stat.st_mtime))  # дата снимка сохраняется
+        freed += stat.st_size - gz_path.stat().st_size
+        path.unlink()
+        compressed += 1
+    return compressed, freed
 
 
 def should_check_now(state: dict) -> bool:
@@ -184,6 +220,8 @@ def run_once() -> None:
         except Exception as e:
             print(f'[{event["id"]}] Ошибка: {e}')
 
+    rotate_raw()  # старые сырые снимки — в gzip, чтобы папка data не разрасталась
+
 
 def main_loop() -> None:
     print(
@@ -203,7 +241,10 @@ def main_loop() -> None:
 
 
 if __name__ == "__main__":
-    if "--loop" in sys.argv:
+    if "--rotate" in sys.argv:
+        n, freed = rotate_raw()
+        print(f"Сжато снимков: {n}, освобождено {freed / 1024 / 1024:.0f} МБ.")
+    elif "--loop" in sys.argv:
         main_loop()
     else:
         run_once()
