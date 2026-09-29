@@ -1,0 +1,27 @@
+# Проверка: доступны ли сайты-источники и GigaChat с серверов GitHub (они за рубежом).
+# Запускается вручную: gh workflow run check-access.yml
+name: Проверка доступа к источникам
+
+on:
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Откуда запускаемся
+        run: curl -sS --max-time 10 https://ipinfo.io/json | grep -E '"(ip|city|country|org)"' || true
+      - name: Сайты и сервисы
+        run: |
+          check() {
+            code=$(curl -sS -o /dev/null -w "%{http_code} за %{time_total} с" --max-time 25 -A "Mozilla/5.0" "$@" 2>&1) || true
+            echo "$code  ←  ${@: -1}"
+          }
+          check https://odk33.ru/afisha/
+          check https://vladimirkoncert.ru/
+          check https://vladimirkoncert.ru/shows/event/11600
+          check https://gu-st.ru/content/Other/doc/russian_trusted_root_ca.cer
+          check -k -X POST https://ngw.devices.sberbank.ru:9443/api/v2/oauth
+          check -k https://gigachat.devices.sberbank.ru/api/v1/models
+          check https://afisha.yandex.ru/vladimir
