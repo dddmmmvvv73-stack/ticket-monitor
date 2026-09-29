@@ -232,6 +232,7 @@ button.status:hover { color: var(--ink); }
 .note { font-size: 13px; color: var(--ink-3); border: 1px dashed var(--line-strong); border-radius: 10px; padding: 14px 16px; }
 .m-list { display: none; }
 .bottom-nav { display: none; }
+.more-sheet { display: none; }
 
 /* ---------- Настройки ---------- */
 .set-wrap { max-width: 1080px; display: flex; flex-direction: column; gap: 20px; }
@@ -329,6 +330,18 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
 .zone-table th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; padding: 6px 8px 6px 0; }
 .zone-table td { padding: 7px 8px 7px 0; border-top: 1px solid var(--line-soft); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
+/* ---------- Динамика продаж ---------- */
+.dyn-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.chart { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { font-family: var(--ui); }
+.chart [data-ct] { cursor: pointer; }
+.chart [data-ct]:focus { outline: none; }
+.chart [data-ct]:focus-visible .dot, .chart [data-ct]:hover .dot { stroke: #0c0a09; }
+.zone-table.wrap td { white-space: normal; }
+.pace-row { display: grid; grid-template-columns: 96px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line-soft); font-size: 13px; }
+.pace-row .track2 { height: 10px; border-radius: 0 4px 4px 0; }
+.key { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+
 /* Короткое сообщение внизу экрана */
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 8px); max-width: min(560px, calc(100vw - 32px)); background: var(--soot); color: #fff; font-size: 13px; line-height: 1.45; padding: 10px 16px; border-radius: 12px; box-shadow: rgba(17, 12, 46, 0.18) 0 12px 32px 0; z-index: 70; opacity: 0; pointer-events: none; transition: opacity 180ms var(--ease), transform 180ms var(--ease); }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
@@ -373,6 +386,22 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
+/* ---------- Ноутбук: шапка в две строки ----------
+   На ширине до 1320px город, период, даты, поиск, статус и кнопка не помещаются в одну строку —
+   поиск уходит во вторую строку, шапка перестаёт прилипать (иначе съедает высоту экрана). */
+@media (max-width: 1320px) and (min-width: 821px) {
+  .top { height: auto; padding: 12px 32px; flex-wrap: wrap; position: static; }
+  .search { max-width: none; order: 5; flex-basis: 100%; }
+  .ev-table thead th { top: 0; }
+}
+@media (max-width: 1180px) and (min-width: 821px) {
+  /* Главные цифры: две колонки, выручка рынка — на всю ширину; линии между ячейками — зазором */
+  .kpis, .kpis.k4 { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; background: var(--line); overflow: hidden; }
+  .kpis > div { border-right: 0 !important; background: var(--card); }
+  .kpis:not(.k4) > div:first-child { grid-column: 1 / -1; }
+  .niche-grid { grid-template-columns: minmax(0, 1fr) !important; }
+}
+
 /* ---------- Телефон ---------- */
 @media (max-width: 820px) {
   .side { display: none; }
@@ -380,7 +409,7 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
   .search { max-width: none; order: 5; flex-basis: 100%; }
   .status, .top .spacer { display: none; }
   .view { padding: 20px 16px 110px; }
-  .kpis, .grid-3, .insights { grid-template-columns: 1fr; }
+  .kpis, .grid-3, .insights { grid-template-columns: minmax(0, 1fr); }  /* minmax(0, …): длинные строки без переноса не распирают колонку */
   .kpis > div { border-right: 0; border-bottom: 1px solid var(--line); }
   .span-2 { grid-column: auto; }
   .vbar { grid-template-columns: 1fr; gap: 6px; }
@@ -388,7 +417,7 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
   .ev-card-table, .cols-anchor { display: none; }
   .m-list { display: flex; flex-direction: column; gap: 10px; }
   .m-item { all: unset; display: block; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; cursor: pointer; }
-  .bottom-nav { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; height: 72px; padding: 6px 6px 16px; background: var(--card); border-top: 1px solid var(--line); z-index: 20; }
+  .bottom-nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; height: 72px; padding: 6px 6px 16px; background: var(--card); border-top: 1px solid var(--line); z-index: 20; }
   .bottom-nav button { border: 0; background: none; font-size: 11px; color: var(--ink-3); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
   .bottom-nav button[aria-current="page"] { color: var(--ink); font-weight: 600; }
   .drawer { width: 100vw; padding: 20px 16px 28px; }
@@ -406,7 +435,10 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
   .toast { bottom: 88px; }
   .hall-grid { grid-template-columns: 1fr; }
   .niche-row { grid-template-columns: 110px minmax(0, 1fr) 28px; }
-  .bottom-nav button { font-size: 10px; }
+  .more-sheet:not([hidden]) { display: flex; flex-direction: column; position: fixed; right: 8px; bottom: 80px; z-index: 21; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: rgba(17, 12, 46, 0.12) 0 12px 45px 0; padding: 6px; min-width: 200px; }
+  .more-sheet button { border: 0; background: none; text-align: left; height: 44px; padding: 0 14px; border-radius: 8px; font-size: 15px; color: var(--ink-2); }
+  .more-sheet button[aria-current="page"] { background: var(--soot); color: #fff; font-weight: 500; }
+  .dyn-grid { grid-template-columns: 1fr !important; }
   .kpis.k4 { grid-template-columns: 1fr 1fr; }
   .kpis.k4 > div:nth-child(odd) { border-right: 1px solid var(--line); }
   .sale-row { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 16px; }
@@ -432,7 +464,7 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
     <button class="nav-item" data-view="niches"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 2h3v3H2zM6.5 2h3v3h-3zM11 2h3v3h-3zM2 6.5h3v3H2zM6.5 6.5h3v3h-3zM2 11h3v3H2z"/></svg>Ниши</button>
     <button class="nav-item" data-view="events"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg>Мероприятия</button>
     <button class="nav-item" data-view="sales"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3.5 1.8h9v12.4l-1.8-1.1-1.8 1.1-1.9-1.1-1.8 1.1-1.7-1.1z"/><path d="M6 5.5h4M6 8.5h4"/></svg>История продаж</button>
-    <div class="nav-item soon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 13l4-5 3 3 5-7"/></svg>Динамика продаж<span class="soon-tag">скоро</span></div>
+    <button class="nav-item" data-view="dynamics"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 13l4-5 3 3 5-7"/></svg>Динамика продаж</button>
     <button class="nav-item" data-view="venues"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 14V6l6-4 6 4v8M6 14v-4h4v4"/></svg>Площадки и залы</button>
     <div class="nav-item soon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2.5" width="12" height="3.5" rx="1"/><path d="M3 6v7.5h10V6M6.5 9h3"/></svg>Архив<span class="soon-tag">скоро</span></div>
     <div style="flex-grow:1"></div>
@@ -469,8 +501,9 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
 </div>
 
 <nav class="bottom-nav" aria-label="Разделы">
-  <button data-view="overview">Обзор</button><button data-view="niches">Ниши</button><button data-view="events">События</button><button data-view="sales">Продажи</button><button data-view="venues">Залы</button><button data-view="settings">Настройки</button>
+  <button data-view="overview">Обзор</button><button data-view="events">События</button><button data-view="sales">Продажи</button><button data-view="venues">Залы</button><button type="button" id="moreBtn" aria-expanded="false" aria-controls="moreSheet">Ещё</button>
 </nav>
+<div class="more-sheet" id="moreSheet" hidden><button data-view="niches">Ниши</button><button data-view="dynamics">Динамика продаж</button><button data-view="settings">Настройки</button></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <div class="drawer-veil" id="veil"></div>
@@ -1237,6 +1270,151 @@ $("view").addEventListener("click", function (ev) {
 });
 $("view").addEventListener("change", function (ev) { if (ev.target.id === "salesVenue") { S.salesVenue = ev.target.value; render(); $("salesVenue").focus(); } });
 
+// ---------------------------------------------------------------- Динамика продаж
+// Цвет площадки на графиках — категориальная пара, проверена dataviz/validate_palette (светлая тема, все пары: PASS)
+var VENUE_COLOR = { "ОДКиИ": "#1d6fae", "Арт Холл": "#eb6834" };
+// Слежение: первый сбор со схемами залов у площадки и последний сбор (29.09)
+var TRACK_FROM = { "ОДКиИ": 19 * 60 + 31, "Арт Холл": 19 * 60 + 20 }, LAST_AT = 23 * 60 + 56;
+// Изменения с начала слежения (history/): освободившиеся места и цены
+var DYN_FREED = [{ id: 11500, at: "23:56", prev: "22:50", from: 222, to: 205 }];
+var DYN_PRICE = [];
+S.dynVenue = "";
+function minutesOf(hhmmStr) { var p = hhmmStr.split(":"); return +p[0] * 60 + +p[1]; }
+function hoursText(min) { var h = Math.floor(min / 60), m = min % 60; return (h ? h + " ч " : "") + (m ? m + " мин" : ""); }
+function venueOk(v) { return !S.dynVenue || v === S.dynVenue; }
+// Прямоугольник со скруглённым верхом — конец столбика, основание остаётся прямым
+function barPath(x, y, w, h, r) { r = Math.min(r, h, w / 2); return "M" + x + "," + (y + h) + "V" + (y + r) + "Q" + x + "," + y + " " + (x + r) + "," + y + "H" + (x + w - r) + "Q" + (x + w) + "," + y + " " + (x + w) + "," + (y + r) + "V" + (y + h) + "Z"; }
+function salesBarsSvg() {
+  var groups = SALES.slice().reverse().map(function (g) {
+    var by = {}; g.items.forEach(function (it) { var e = saleEvent(it); if (!e || !venueOk(e.venue)) return; var x = saleSum(it); by[e.venue] = by[e.venue] || { n: 0, r: 0 }; by[e.venue].n += x.n; by[e.venue].r += x.r; });
+    var n = 0, r = 0; Object.keys(by).forEach(function (v) { n += by[v].n; r += by[v].r; });
+    var prevEnd = g.prev.split("–").pop();
+    return { g: g, by: by, n: n, r: r, mins: minutesOf(g.at) - minutesOf(prevEnd) };
+  });
+  var W = 560, H = 230, pl = 36, pb = 52, pt = 24, bw = 72, gap = 64;
+  var max = Math.max.apply(null, groups.map(function (x) { return x.n; }).concat([5]));
+  max = Math.ceil(max / 10) * 10;  // деления оси — целые: 0, половина, максимум
+  var y = function (v) { return pt + (1 - v / max) * (H - pt - pb); };
+  var grid = [0, max / 2, max].map(function (v) { return '<line x1="' + pl + '" x2="' + W + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="' + (v ? "#f0efed" : "#d6d3d1") + '"/><text x="' + (pl - 8) + '" y="' + (y(v) + 4) + '" font-size="11" fill="#78716c" text-anchor="end">' + v + '</text>'; }).join("");
+  var bars = groups.map(function (x, k) {
+    var bx = pl + 24 + k * (bw + gap), base = y(0), out = "", order = ["ОДКиИ", "Арт Холл"];
+    var stack = order.filter(function (v) { return x.by[v]; }), acc = 0;
+    stack.forEach(function (v, j) {
+      var top = y(acc + x.by[v].n), last = j === stack.length - 1;
+      var yy = top, hh = y(acc) - top - (j ? 2 : 0);
+      out += '<g data-ct="' + esc(v + ": " + x.by[v].n + " " + plural(x.by[v].n, "место", "места", "мест") + " на " + num(x.by[v].r) + " ₽ · сбор " + x.g.at) + '">' +
+        (last ? '<path d="' + barPath(bx, yy, bw, hh, 4) + '" fill="' + VENUE_COLOR[v] + '"/>' : '<rect x="' + bx + '" y="' + yy + '" width="' + bw + '" height="' + hh + '" fill="' + VENUE_COLOR[v] + '"/>') + '</g>';
+      acc += x.by[v].n;
+    });
+    var perHour = x.mins ? x.n / (x.mins / 60) : 0;
+    return out + '<text x="' + (bx + bw / 2) + '" y="' + (y(x.n) - 8) + '" font-size="12" font-weight="600" fill="#0c0a09" text-anchor="middle">' + x.n + '</text>' +
+      '<text x="' + (bx + bw / 2) + '" y="' + (H - pb + 18) + '" font-size="12" fill="#0c0a09" text-anchor="middle" font-weight="500">' + x.g.at + '</text>' +
+      '<text x="' + (bx + bw / 2) + '" y="' + (H - pb + 33) + '" font-size="11" fill="#78716c" text-anchor="middle">за ' + hoursText(x.mins) + '</text>' +
+      '<text x="' + (bx + bw / 2) + '" y="' + (H - pb + 47) + '" font-size="11" fill="#78716c" text-anchor="middle">≈ ' + perHour.toFixed(1).replace(".", ",") + ' в час</text>';
+  }).join("");
+  var nx = pl + 24 + groups.length * (bw + gap), next = hhmm(LAST_AT + S.cfg.interval);
+  var slot = '<rect x="' + nx + '" y="' + y(max * 0.35) + '" width="' + bw + '" height="' + (y(0) - y(max * 0.35)) + '" fill="none" stroke="#d6d3d1" stroke-dasharray="4 4" rx="4"/>' +
+    '<text x="' + (nx + bw / 2) + '" y="' + (H - pb + 18) + '" font-size="12" fill="#78716c" text-anchor="middle">' + next + '</text>' +
+    '<text x="' + (nx + bw / 2) + '" y="' + (H - pb + 33) + '" font-size="11" fill="#a8a29e" text-anchor="middle">следующий сбор</text>';
+  return '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Подтверждённые продажи по сборам: ' + groups.map(function (x) { return x.g.at + " — " + x.n; }).join(", ") + '">' + grid + bars + slot + '</svg>';
+}
+function scatterSvg(list) {
+  var W = 900, H = 330, pl = 44, pr = 16, pt = 14, pb = 40;
+  var maxD = Math.max.apply(null, list.map(daysLeft).concat([30])); maxD = Math.ceil(maxD / 30) * 30;
+  var x = function (d) { return pl + d / maxD * (W - pl - pr); }, y = function (v) { return pt + (1 - v / 100) * (H - pt - pb); };
+  var out = '<rect x="' + x(0) + '" y="' + y(40) + '" width="' + (x(21) - x(0)) + '" height="' + (y(0) - y(40)) + '" fill="#fdeaea"/>' +
+    '<text x="' + (x(0) + 6) + '" y="' + (y(40) + 14) + '" font-size="11" fill="#b91c1c">под риском</text>';
+  [0, 20, 40, 60, 80, 100].forEach(function (v) { out += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="' + (v ? "#f0efed" : "#d6d3d1") + '"/><text x="' + (pl - 8) + '" y="' + (y(v) + 4) + '" font-size="11" fill="#78716c" text-anchor="end">' + v + '%</text>'; });
+  for (var d = 0; d <= maxD; d += 30) out += '<text x="' + x(d) + '" y="' + (H - pb + 18) + '" font-size="11" fill="#78716c" text-anchor="middle">' + d + '</text>';
+  out += '<text x="' + (W - pr) + '" y="' + (H - 4) + '" font-size="11" fill="#78716c" text-anchor="end">дней до события →</text>';
+  out += list.map(function (e) {
+    var dl = daysLeft(e), f = fill(e), dd = dparts(e.date);
+    var tip = e.title + " · " + e.venue + ", " + dd.day + " " + dd.mon + " · заполнено " + f + "% · через " + dl + " дн.";
+    return '<g data-ct="' + esc(tip) + '" data-dyn-ev="' + e.i + '" tabindex="0" role="button" aria-label="' + esc(tip) + ', открыть карточку">' +
+      '<circle cx="' + x(dl) + '" cy="' + y(f) + '" r="11" fill="transparent"/>' +
+      '<circle class="dot" cx="' + x(dl) + '" cy="' + y(f) + '" r="5" fill="' + (VENUE_COLOR[e.venue] || "#78716c") + '" stroke="#ffffff" stroke-width="2"/></g>';
+  }).join("");
+  return '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="group" aria-label="Заполняемость и дней до события: ' + list.length + ' мероприятий">' + out + '</svg>';
+}
+function renderDynamics() {
+  var data = cityData();
+  if (!data.length) return head("Динамика продаж", S.city) + cityEmpty();
+  var t = { n: 0, r: 0 }, byV = {};
+  SALES.forEach(function (g) { g.items.forEach(function (it) { var e = saleEvent(it); if (!e || !venueOk(e.venue)) return; var x = saleSum(it); t.n += x.n; t.r += x.r; byV[e.venue] = byV[e.venue] || { n: 0, r: 0 }; byV[e.venue].n += x.n; byV[e.venue].r += x.r; }); });
+  var venues = Object.keys(TRACK_FROM).filter(venueOk);
+  var spanMin = Math.max.apply(null, venues.map(function (v) { return LAST_AT - TRACK_FROM[v]; }));
+  var freed = DYN_FREED.map(function (c) { var b = BASE.filter(function (x) { return x.link === "https://vladimirkoncert.ru/shows/event/" + c.id; })[0]; return { c: c, e: b && (findEvent(b.i) || b) }; }).filter(function (x) { return x.e && venueOk(x.e.venue); });
+  var freedN = freed.reduce(function (s, x) { return s + x.c.from - x.c.to; }, 0);
+  var list = data.filter(inPeriod).filter(function (e) { return e.gross && venueOk(e.venue); });
+  var buckets = [[0, 21, "до 3 недель"], [22, 45, "3–6 недель"], [46, 90, "1,5–3 месяца"], [91, 9999, "больше 3 месяцев"]].map(function (b) {
+    var l = list.filter(function (e) { var d = daysLeft(e); return d >= b[0] && d <= b[1]; }), T = 0, SL = 0;
+    l.forEach(function (e) { T += e.taken; SL += e.sellable; });
+    return { label: b[2], n: l.length, fill: SL ? Math.round(T / SL * 100) : null, risk: l.filter(isRisk).length };
+  });
+  var near = buckets[0], far = buckets[3];
+  var insight = near.fill != null && far.fill != null
+    ? (near.fill > far.fill ? "Ближе к дате залы заполнены сильнее: " + near.fill + "% у мероприятий в ближайшие 3 недели против " + far.fill + "% у тех, что через 3 месяца и позже."
+      : "Мероприятия в ближайшие 3 недели заполнены на " + near.fill + "% — не больше, чем дальние (" + far.fill + "%): ближние даты продаются слабо.")
+    : "";
+  var nextSold = data.filter(function (e) { return e.gross; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; })[0];
+  var maxR = Math.max.apply(null, venues.map(function (v) { return byV[v] ? byV[v].n : 0; }).concat([1]));
+  return head("Динамика продаж", "Как меняются продажи во времени · слежение с 29 сент., 19:20 · сборов со сравнением: " + SALES.length) +
+    '<div class="toolbar"><select class="chip-select" id="dynVenue" aria-label="Площадка"><option value="">Площадка: все</option>' + Object.keys(TRACK_FROM).map(function (v) { return '<option' + (S.dynVenue === v ? " selected" : "") + '>' + v + '</option>'; }).join("") + '</select>' +
+      '<div style="flex-grow:1"></div><div class="legend">' + Object.keys(TRACK_FROM).filter(venueOk).map(function (v) { return '<span><i class="key" style="background:' + VENUE_COLOR[v] + '"></i>' + v + '</span>'; }).join("") + '</div></div>' +
+    '<section class="card kpis k4" aria-label="Темп с начала слежения">' +
+      '<div><div class="kpi-label">Темп продаж</div><div class="kpi-value num">≈ ' + (t.n / (spanMin / 60)).toFixed(1).replace(".", ",") + '</div><div class="sub">мест в час · ' + t.n + ' за ' + hoursText(spanMin) + '</div></div>' +
+      '<div><div class="kpi-label">Выручка в час</div><div class="kpi-value">' + money(Math.round(t.r / (spanMin / 60))) + '</div><div class="sub num">' + num(t.r) + ' ₽ с начала слежения</div></div>' +
+      '<div><div class="kpi-label">Освободилось мест</div><div class="kpi-value num">' + freedN + '</div><div class="sub">возвраты или снятая бронь · ' + freed.length + ' ' + plural(freed.length, "мероприятие", "мероприятия", "мероприятий") + '</div></div>' +
+      '<div><div class="kpi-label">Изменений цен</div><div class="kpi-value num">' + DYN_PRICE.length + '</div><div class="sub">скидок и подорожаний не было</div></div>' +
+    '</section>' +
+    '<div class="dyn-grid">' +
+      '<section class="card card-pad"><div class="card-head"><div><h2>Продажи по сборам</h2><p class="sub">Подтверждённые продажи: сколько мест купили между соседними сборами</p></div></div>' +
+        '<div style="max-width:560px;margin-top:10px">' + salesBarsSvg() + '</div>' +
+        '<p class="sub">Сборы идут раз в час, поэтому пока видно время внутри одного вечера. Через несколько дней здесь будут продажи по дням и неделям.</p></section>' +
+      '<section class="card card-pad"><h2>Темп по площадкам</h2><p class="sub">С начала слежения</p>' +
+        venues.map(function (v) {
+          var x = byV[v] || { n: 0, r: 0 }, span = LAST_AT - TRACK_FROM[v];
+          return '<div class="pace-row"><span><i class="key" style="background:' + VENUE_COLOR[v] + '"></i>' + v + '</span><div><div class="track2" style="width:' + (x.n / maxR * 100).toFixed(1) + '%;background:' + VENUE_COLOR[v] + '"></div></div>' +
+            '<span class="num" style="text-align:right"><b style="font-weight:600">' + x.n + ' ' + plural(x.n, "место", "места", "мест") + '</b> · ' + num(x.r) + ' ₽<br><span class="sub" style="margin:0">≈ ' + (x.n / (span / 60)).toFixed(1).replace(".", ",") + ' в час за ' + hoursText(span) + '</span></span></div>';
+        }).join("") +
+        '<button class="link-btn" data-go="sales" style="margin-top:10px">Какие мероприятия продались →</button></section>' +
+    '</div>' +
+    '<section class="card card-pad"><div class="card-head"><div><h2>Заполняемость и дата события</h2><p class="sub">Каждая точка — мероприятие с онлайн-продажей. Чем правее, тем дальше дата. Нажмите на точку, чтобы открыть карточку.</p></div></div>' +
+      (list.length ? scatterSvg(list) : '<div class="empty" style="border:0"><h2>Нет мероприятий с онлайн-продажей</h2><p style="margin:0">Измените период или площадку.</p></div>') +
+      (insight ? '<div class="callout">' + insight + '</div>' : '') +
+      '<table class="zone-table wrap" style="margin-top:14px"><thead><tr><th>До события</th><th>Мероприятий</th><th>Заполняемость</th><th>Под риском</th></tr></thead><tbody>' +
+        buckets.map(function (b) { return '<tr><td>' + b.label + '</td><td>' + b.n + '</td><td>' + (b.fill == null ? "—" : b.fill + "%") + '</td><td>' + (b.risk ? '<span class="badge-risk">' + b.risk + '</span>' : "—") + '</td></tr>'; }).join("") +
+      '</tbody></table>' +
+    '</section>' +
+    '<div class="dyn-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
+      '<section class="card card-pad"><h2>Цены и места</h2><p class="sub">Скидки, подорожания и освободившиеся места с начала слежения</p><ul class="list">' +
+        freed.map(function (x) {
+          var d = dparts(x.e.date);
+          return '<li class="change"><span class="change-sign" style="background:#f5f5f4;color:#57534e" aria-hidden="true">−</span><div style="flex-grow:1;min-width:0"><button class="link-btn" data-dyn-ev="' + x.e.i + '" style="font-size:14px;font-weight:500;color:var(--ink);text-align:left">' + esc(x.e.title) + '</button><div class="sub" style="margin:0">' + esc(x.e.venue) + ' · ' + d.day + ' ' + d.mon + ' · сбор ' + x.c.at + '</div></div>' +
+            '<div style="text-align:right"><div class="num" style="font-weight:500">−' + (x.c.from - x.c.to) + ' мест</div><div class="sub num" style="margin:0">занято ' + x.c.from + ' → ' + x.c.to + '</div></div></li>';
+        }).join("") +
+        '<li class="muted">Изменений цен не было — ни скидок, ни подорожаний.</li></ul>' +
+        '<p class="sub">Освободившиеся места — это возвраты или бронь, которую площадка сняла. По схеме зала их не различить.</p></section>' +
+      '<section class="card card-pad"><h2>Как продаются похожие мероприятия</h2><p class="sub">Кривые «продано за N дней до события» — сравнение, например, всех спектаклей Арт Холла</p>' +
+        '<div class="dyn-empty" style="height:150px;margin-top:14px"><span>Появятся, когда пройдут первые мероприятия со схемой зала' + (nextSold ? ': ближайшее — «' + esc(nextSold.title) + '», ' + human(nextSold.date) : '') + '.</span></div>' +
+        '<p class="sub">Для кривой нужна история продаж мероприятия до самой даты. Она копится с 29 сент. при каждом сборе.</p></section>' +
+    '</div>';
+}
+$("view").addEventListener("click", function (ev) { var t = ev.target.closest("[data-dyn-ev]"); if (t) openDrawer(+t.getAttribute("data-dyn-ev")); });
+$("view").addEventListener("keydown", function (ev) { var t = ev.target.closest && ev.target.closest("g[data-dyn-ev]"); if (t && (ev.key === "Enter" || ev.key === " ")) { ev.preventDefault(); openDrawer(+t.getAttribute("data-dyn-ev")); } });
+$("view").addEventListener("change", function (ev) { if (ev.target.id === "dynVenue") { S.dynVenue = ev.target.value; render(); $("dynVenue").focus(); } });
+// Подсказка у отметок на графиках: у курсора, а при фокусе с клавиатуры — у самой отметки
+function chartTip(el, cx, cy) {
+  var pop = $("infoPop"); pop.textContent = el.getAttribute("data-ct"); pop.hidden = false;
+  pop.style.left = Math.max(8, Math.min(window.innerWidth - 296, cx + 12)) + "px"; pop.style.top = (cy + 16) + "px";
+}
+document.addEventListener("mousemove", function (ev) { var t = ev.target.closest && ev.target.closest("[data-ct]"); if (t) chartTip(t, ev.clientX, ev.clientY); });
+document.addEventListener("mouseout", function (ev) { if (ev.target.closest && ev.target.closest("[data-ct]")) $("infoPop").hidden = true; });
+document.addEventListener("focusin", function (ev) { var t = ev.target.closest && ev.target.closest("[data-ct]"); if (t) { var r = t.getBoundingClientRect(); chartTip(t, r.left, r.bottom - 8); } });
+document.addEventListener("focusout", function (ev) { if (ev.target.closest && ev.target.closest("[data-ct]")) $("infoPop").hidden = true; });
+$("moreBtn").addEventListener("click", function (ev) { ev.stopPropagation(); var sh = $("moreSheet"); sh.hidden = !sh.hidden; this.setAttribute("aria-expanded", String(!sh.hidden)); });
+document.addEventListener("click", function (ev) { if (!ev.target.closest("#moreSheet,#moreBtn")) { $("moreSheet").hidden = true; $("moreBtn").setAttribute("aria-expanded", "false"); } });
+
 // ---------------------------------------------------------------- Площадки и залы
 var BUSY = ["#e3eef8", "#c1e1f7", "#7ab9e8", "#3b8fd1", "#1d6fae", "#104a78"];  // как часто место занято: 0 → 100%
 var RESERVE_FILL = "#1c1917", SERIES_FILL = "#78716c", NO_PRICE_FILL = "#e7e5e4";
@@ -1831,10 +2009,12 @@ document.addEventListener("focusout", function (ev) { if (ev.target.classList &&
 // ---------------------------------------------------------------- рендер и события
 function render() {
   document.querySelectorAll("[data-view]").forEach(function (b) { if (b.getAttribute("data-view") === S.view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+  if (["niches", "dynamics", "settings"].indexOf(S.view) >= 0) $("moreBtn").setAttribute("aria-current", "page"); else $("moreBtn").removeAttribute("aria-current");
+  $("moreSheet").hidden = true; $("moreBtn").setAttribute("aria-expanded", "false");
   document.querySelectorAll("#period button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-p") === S.period)); });
   $("dateLabel").textContent = S.period === "custom" ? rangeLabel(S.from, S.to) : "Даты";
   $("dateBtn").style.borderColor = S.period === "custom" ? "var(--soot)" : "";
-  $("view").innerHTML = S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? renderVenues() : renderEvents();
+  $("view").innerHTML = S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? renderVenues() : S.view === "dynamics" ? renderDynamics() : renderEvents();
   $("view").classList.toggle("enter", !!S.enter); S.enter = false; S.colsAnim = false;
   renderCal();
 }
@@ -1879,7 +2059,7 @@ $("view").addEventListener("change", function (ev) {
     savePrefs(); render();
   }
 });
-var VIEWS = ["overview", "niches", "events", "sales", "venues", "settings"];
+var VIEWS = ["overview", "niches", "events", "sales", "dynamics", "venues", "settings"];
 if (VIEWS.indexOf(location.hash.slice(1)) >= 0) S.view = location.hash.slice(1);
 // Кнопки «назад/вперёд» браузера переключают разделы
 S.enter = true;  // первый показ страницы тоже с анимацией
