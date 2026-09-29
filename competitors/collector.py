@@ -30,14 +30,13 @@ from collections import defaultdict, deque
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+from competitors import edits
 from competitors import odk33
 from competitors import seatmap
 from competitors import vladimirkoncert as vk
 from competitors.classifier import FIELDS, classify_rows, title_key
+from competitors.storage import BASE_DIR, CONFIG_DIR, DATA_DIR, load_json, save_json
 
-BASE_DIR = Path(__file__).resolve().parent.parent
-CONFIG_DIR = BASE_DIR / "config"
-DATA_DIR = BASE_DIR / "data" / "competitors"
 
 SOURCES_FILE = CONFIG_DIR / "competitors.json"
 SETTINGS_FILE = CONFIG_DIR / "settings.json"
@@ -77,21 +76,6 @@ MONEY_FIELDS = (
 
 
 # ---------------------------------------------------------------- хранение
-
-def load_json(path: Path, default):
-    if not path.exists():
-        return default
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
-def save_json(path: Path, data) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_suffix(path.suffix + ".tmp")
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-    tmp.replace(path)  # атомарная замена — интерфейс не прочитает полузаписанный файл
-
 
 def load_sources() -> list[dict]:
     return load_json(SOURCES_FILE, DEFAULT_SOURCES)
@@ -583,8 +567,10 @@ EXPORT_HEADER = [
 
 
 def visible_events(include_past: bool = False) -> list[dict]:
+    """Мероприятия для интерфейса и выгрузки: данные парсера + ручные правки и свои события."""
     today = date.today().isoformat()
-    rows = [r for r in load_events().values() if include_past or not r.get("date") or r["date"] >= today]
+    rows = [r for r in edits.apply(load_events().values())
+            if include_past or not r.get("date") or r["date"] >= today]
     return sorted(rows, key=lambda r: (r.get("date") or "9999", r.get("time") or "", r["title"]))
 
 

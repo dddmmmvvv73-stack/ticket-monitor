@@ -21,7 +21,8 @@ from threading import Timer
 from flask import Flask, jsonify, request, send_file, Response
 
 from alerts import check_alerts
-from competitors import collector
+from competitors import collector, edits
+from competitors.api import bp as app_api
 from competitors import vladimirkoncert
 from competitors.classifier import FORMATS, GENRES, SPHERES
 from processor import process_snapshot
@@ -34,6 +35,7 @@ from main import (
 )
 
 app = Flask(__name__, static_folder=str(BASE_DIR / "static"))
+app.register_blueprint(app_api)
 
 EVENTS_FILE = CONFIG_DIR / "events.json"
 EXCLUSIONS_FILE = CONFIG_DIR / "exclusions.json"
@@ -344,7 +346,7 @@ def analytics_page():
 
 @app.route("/api/analytics")
 def analytics_data():
-    events = list(collector.load_events().values())
+    events = edits.apply(collector.load_events().values())  # с ручными правками и своими событиями
     sales = collector.sales_by_day()
     for e in events:
         e["sales_by_day"] = sales.get(collector.seat_state_path(e["uid"]).stem, {})
