@@ -622,6 +622,7 @@ var VENUE = { "О": "ОДКиИ", "А": "Арт Холл" };
 // Города: данные есть только по Владимиру; остальные — найденные источники, ещё не подключённые
 var CITIES = [
   { name: "Владимир", ready: true },
+  { name: "Нижний Новгород", ready: true, note: "мероприятия по ссылке с Яндекс Афиши" },
   { name: "Иваново", source: "ivanovokoncert.ru", note: "13 площадок: филармония, драмтеатр, музыкальный театр, ЦКиО и др." },
   { name: "Кинешма", source: "ivanovokoncert.ru", note: "Кинешемский драматический театр продаёт билеты через ивановский сайт" },
   { name: "Кострома", source: "kostromakoncert.ru", note: "3 площадки: КВЦ «Губернский», Дом музыки, ЦК «Майский»" },
@@ -659,6 +660,34 @@ var BASE = EV.map(function (r, i) {
     sphere: r[4], format: r[5], genre: r[6], pmin: r[7], pmax: r[8], taken: r[9], sellable: r[10],
     gross: r[11], revenue: r[12], pushkin: !!r[13], priceText: r[14], link: link };
 });
+// Мероприятия по ссылке с Яндекс Афиши — старый мониторинг (main.py): config/events.json + data/processed/*.json.
+// Название, площадка, дата и ниша — со страницы мероприятия на Яндекс Афише (запрос 30.09); цифры — последняя проверка.
+// «Занято» = мест в продаже − свободно; выручка — занятые места × цена ряда (как у конкурентов). Время сеанса не сохранялось.
+var YA = [
+  { id: "povod-ostatsia", title: "Повод остаться", venue: "Театр оперы и балета им. Пушкина", city: "Нижний Новгород", date: "2026-10-26", sphere: "Театр", format: "Спектакль", genre: "Драма",
+    pmin: 1800, pmax: 8000, taken: 84, sellable: 1178, gross: 5786500, revenue: 464600, active: true, checks: 586, first: "20 авг., 14:24", last: "21 авг., 15:19",
+    url: "https://afisha.yandex.ru/nizhny-novgorod/theatre_show/povod-ostatsia" },
+  { id: "dvoe-na-kacheliakh", title: "Двое на качелях", venue: "МТС Live Холл", city: "Нижний Новгород", date: "2026-12-01", sphere: "Театр", format: "Спектакль", genre: "",
+    pmin: 2000, pmax: 4800, taken: 65, sellable: 1107, gross: 3836022, revenue: 204422, active: false, checks: 2, first: "20 авг., 14:41", last: "20 авг., 15:01",
+    url: "https://afisha.yandex.ru/nizhny-novgorod/theatre_show/dvoe-na-kacheliakh" },
+  { id: "ty-gde-to-riadom", title: "Ты где-то рядом", venue: "МТС Live Холл", city: "Нижний Новгород", date: "2026-12-07", sphere: "Театр", format: "Спектакль", genre: "",
+    pmin: 2000, pmax: 7500, taken: 202, sellable: 1426, gross: 7095092, revenue: 1024092, active: false, checks: 3, first: "20 авг., 14:35", last: "20 авг., 14:59",
+    url: "https://afisha.yandex.ru/nizhny-novgorod/theatre_show/ty-gde-to-riadom-prodiuserskii-tsentr-fiodor-dobronravov" }
+];
+// Ссылки, у которых на Яндекс Афише сейчас нет будущих дат, — в афишу не попадают, видны только в настройках
+var YA_PAST = [
+  { id: "korolshut-krasnoe-sormovo", title: "Хорошо, что выжил… Жаль, что из ума", city: "Нижний Новгород", active: false, checks: 4, last: "20 авг., 14:58",
+    url: "https://afisha.yandex.ru/nizhny-novgorod/theatre_show/khorosho-chto-vyzhil-zhal-chto-iz-uma" },
+  { id: "maiakovskii-liubov-piotr-dranga", title: "Маяковский. Любовь", city: "Нижний Новгород", active: false, checks: 4, last: "20 авг., 15:02",
+    url: "https://afisha.yandex.ru/nizhny-novgorod/performance/maiakovskii-liubov-piotr-dranga" }
+];
+YA.forEach(function (y) {
+  BASE.push({ i: BASE.length, title: y.title, v: "Я", venue: y.venue, city: y.city, date: y.date, time: "", sphere: y.sphere, format: y.format, genre: y.genre,
+    pmin: y.pmin, pmax: y.pmax, taken: y.taken, sellable: y.sellable, gross: y.gross, revenue: y.revenue, pushkin: false, priceText: "", link: y.url, ya: y });
+});
+function yaOf(e) { return !e.custom && BASE[e.i] && BASE[e.i].ya; }
+function timeText(e) { return e.time ? ", " + e.time : ""; }
+function inCity(e) { return S.city === "Все города" || e.city === S.city; }
 var EDITS_KEY = "ticketmonitor.prototype.edits";
 var EDIT_FIELDS = ["title", "date", "time", "city", "venue", "sphere", "format", "genre", "pmin", "pmax", "sellable", "taken", "gross", "revenue", "pushkin", "priceText", "link"];
 function loadEdits() { try { var x = JSON.parse(localStorage.getItem(EDITS_KEY)); return x && x.byId ? x : { byId: {}, custom: [], nextId: 10000 }; } catch (e) { return { byId: {}, custom: [], nextId: 10000 }; } }
@@ -749,6 +778,11 @@ function cityEmpty() {
     '<p style="margin:0 auto;max-width:520px">Источник найден: <b>' + esc(c.source) + '</b> — тот же билетный движок, что у vladimirkoncert.ru, поэтому подключается без новой разработки. ' + esc(c.note) + (/\.$/.test(c.note) ? '' : '.') + '</p>' +
     '<p class="muted" style="margin-top:10px;font-size:13px">Подключение — в разделе «Настройки → Площадки». После первого сбора здесь появятся мероприятия, ниши и выручка.</p></div>';
 }
+// Площадки в данных — по числу мероприятий, самые крупные первыми
+function venuesOf(list, limit) {
+  var c = {}; list.forEach(function (e) { c[e.venue] = (c[e.venue] || 0) + 1; });
+  return Object.keys(c).sort(function (a, b) { return c[b] - c[a]; }).slice(0, limit || 99);
+}
 function head(title, sub, action) {
   return '<div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap"><div><h1>' + esc(title) + '</h1><p>' + esc(sub) + '</p></div>' + (action || '') + '</div>';
 }
@@ -762,7 +796,7 @@ function renderOverview() {
   var sum = function (l, k) { return l.reduce(function (s, e) { return s + (e[k] || 0); }, 0); };
   var G = sum(m, "gross"), R = sum(m, "revenue"), T = sum(m, "taken"), SL = sum(m, "sellable");
   var share = G ? Math.round(R / G * 100) : 0;
-  var venues = ["Арт Холл", "ОДКиИ"].map(function (n) {
+  var venues = venuesOf(m).map(function (n) {
     var v = m.filter(function (e) { return e.venue === n; });
     return { n: n, c: v.length, g: sum(v, "gross"), r: sum(v, "revenue"), t: sum(v, "taken"), s: sum(v, "sellable") };
   });
@@ -775,7 +809,7 @@ function renderOverview() {
     '<div><div class="kpi-label">Заполняемость</div><div class="kpi-value">' + (SL ? Math.round(T / SL * 100) : 0) + '%</div><div class="sub">' + num(T) + ' из ' + num(SL) + ' мест</div></div>' +
     '<div><div class="kpi-label">Средний билет</div><div class="kpi-value">' + (T ? num(Math.round(R / T)) + " ₽" : "—") + '</div><div class="sub">по занятым местам</div></div>' +
     '<div><div class="kpi-label">В продаже</div><div class="kpi-value">' + m.length + '</div><div class="sub">со схемой зала · ещё ' + (p.length - m.length) + ' без продажи</div></div>' +
-    '<div><div class="kpi-label">Подтверждённые продажи</div><div class="kpi-value">' + money(salesTotals().r) + '</div><div class="sub"><button class="link-btn" data-go="sales">' + salesTotals().n + ' ' + plural(salesTotals().n, "место", "места", "мест") + ' с 29 сент. · история →</button></div></div>' +
+    '<div><div class="kpi-label">Подтверждённые продажи</div><div class="kpi-value">' + money(salesTotals().r) + '</div><div class="sub"><button class="link-btn" data-go="sales">' + salesTotals().n + ' ' + plural(salesTotals().n, "место", "места", "мест") + ' с начала слежения · история →</button></div></div>' +
   '</section>' +
   '<div class="grid-3">' +
     '<section class="card card-pad span-2"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2>Что изменилось</h2><span class="sub" style="margin:0">сбор 29 сент., 22:50 → 23:56</span></div><ul class="list">' +
@@ -812,13 +846,14 @@ function renderNiches() {
   var fut = data.filter(inPeriod), dim = S.dim, measure = S.measure;
   if (!fut.length) return head("Ниши", S.city + " · " + periodLabel()) + '<div class="empty"><h2>За выбранные даты мероприятий нет</h2><p style="margin:0">Выберите другой период.</p></div>';
   var keyOf = function (e) { return e[dim] || "Не определено"; };
+  var vcols = venuesOf(fut, 4);  // столбцы тепловой карты — до 4 крупнейших площадок, остальные входят во «Всего»
   var names = []; fut.forEach(function (e) { if (names.indexOf(keyOf(e)) < 0) names.push(keyOf(e)); });
   var zero = TAX[dim].filter(function (t) { return names.indexOf(t) < 0; });
   var st = function (l) { var m = l.filter(function (e) { return e.gross; }), t = 0, s = 0, r = 0; m.forEach(function (e) { t += e.taken; s += e.sellable; r += e.revenue; }); return { n: l.length, mapped: m.length, fill: s ? Math.round(t / s * 100) : null, rev: r }; };
-  var rows = names.map(function (n) { var c = fut.filter(function (e) { return keyOf(e) === n; }); return { name: n, o: st(c.filter(function (e) { return e.v === "О"; })), a: st(c.filter(function (e) { return e.v === "А"; })), all: st(c) }; }).sort(function (x, y) { return y.all.n - x.all.n; });
+  var rows = names.map(function (n) { var c = fut.filter(function (e) { return keyOf(e) === n; }); return { name: n, by: vcols.map(function (v) { return st(c.filter(function (e) { return e.venue === v; })); }), all: st(c) }; }).sort(function (x, y) { return y.all.n - x.all.n; });
   var val = function (s) { return measure === "count" ? s.n : measure === "fill" ? s.fill : s.rev; };
   var txt = function (s) { return measure === "count" ? String(s.n) : measure === "fill" ? (s.fill == null ? "—" : s.fill + "%") : (s.rev ? money(s.rev).replace("\u00a0₽", "") : "—"); };
-  var maxV = Math.max.apply(null, rows.map(function (r) { return Math.max(val(r.o) || 0, val(r.a) || 0); }).concat([1]));
+  var maxV = Math.max.apply(null, rows.map(function (r) { return Math.max.apply(null, r.by.map(function (x) { return val(x) || 0; }).concat([0])); }).concat([1]));
   var maxA = Math.max.apply(null, rows.map(function (r) { return val(r.all) || 0; }).concat([1]));
   var total = fut.length;
   var cell = function (s, max, bold) { var h = heat(val(s), max); return '<td><div class="cell" style="background:' + h.bg + ';color:' + h.fg + ';font-weight:' + (bold ? 600 : 400) + '">' + txt(s) + '</div></td>'; };
@@ -844,8 +879,8 @@ function renderNiches() {
     '<div class="seg" role="group" aria-label="Мера">' + segBtns([["count", "Мероприятий"], ["fill", "Заполняемость"], ["revenue", "Выручка"]], measure, "measure") + '</div>' +
     '<div style="flex-grow:1"></div><div class="legend">меньше <span style="gap:2px">' + HEAT.map(function (h) { return '<i class="sw" style="width:18px;height:12px;background:' + h + '"></i>'; }).join("") + '</span> больше</div></div>' +
   '<div class="niche-grid" style="display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:20px;align-items:start">' +
-    '<section class="card" style="padding:8px 0;overflow:auto"><table class="heat-table"><thead><tr><th scope="col">' + dimLabel + '</th><th scope="col" style="width:96px">ОДКиИ</th><th scope="col" style="width:96px">Арт Холл</th><th scope="col" style="width:96px">Всего</th><th scope="col" style="width:170px;text-align:left;padding-right:22px">Ниша</th></tr></thead><tbody>' +
-      rows.map(function (r) { return '<tr><th scope="row">' + esc(r.name) + '</th>' + cell(r.o, maxV) + cell(r.a, maxV) + cell(r.all, maxA, true) + '<td style="padding-right:22px">' + tag(r) + '</td></tr>'; }).join("") +
+    '<section class="card" style="padding:8px 0;overflow:auto"><table class="heat-table"><thead><tr><th scope="col">' + dimLabel + '</th>' + vcols.map(function (v) { return '<th scope="col" style="width:96px" title="' + esc(v) + '">' + esc(v) + '</th>'; }).join("") + '<th scope="col" style="width:96px">Всего</th><th scope="col" style="width:170px;text-align:left;padding-right:22px">Ниша</th></tr></thead><tbody>' +
+      rows.map(function (r) { return '<tr><th scope="row">' + esc(r.name) + '</th>' + r.by.map(function (x) { return cell(x, maxV); }).join("") + cell(r.all, maxA, true) + '<td style="padding-right:22px">' + tag(r) + '</td></tr>'; }).join("") +
     '</tbody></table>' + (zero.length ? '<div class="note" style="margin:12px 22px 8px"><b style="color:var(--ink)">Без мероприятий (' + zero.length + '):</b> ' + esc(zero.join(", ")) + '</div>' : '') + '</section>' +
     '<section class="card card-pad"><h2>Плотность по месяцам</h2><p class="sub" style="margin-bottom:14px">Где конкуренты сталкиваются датами</p>' +
       '<div class="months d-sub"><span></span>' + ["окт", "ноя", "дек", "янв", "фев", "мар"].map(function (m) { return '<span style="text-align:center">' + m + '</span>'; }).join("") + '</div>' +
@@ -888,11 +923,12 @@ function fittedWidths(cols) {
 }
 
 var CELL = {
-  date: function (e) { var d = dparts(e.date), w = d.weekend ? " wknd" : ""; return '<div class="d-day' + w + '">' + d.day + ' ' + d.mon + '</div><div class="d-sub' + w + '">' + d.wd + ', ' + e.time + '</div>'; },
-  venue: function (e) { return '<div style="font-weight:500" class="nowrap">' + e.venue + '</div><div class="sub2">' + e.city + '</div>'; },
+  date: function (e) { var d = dparts(e.date), w = d.weekend ? " wknd" : ""; return '<div class="d-day' + w + '">' + d.day + ' ' + d.mon + '</div><div class="d-sub' + w + '">' + d.wd + timeText(e) + '</div>'; },
+  venue: function (e) { return '<div style="font-weight:500;overflow:hidden;text-overflow:ellipsis" class="nowrap" title="' + esc(e.venue) + '">' + esc(e.venue) + '</div><div class="sub2">' + esc(e.city) + '</div>'; },
   title: function (e) {
     var risk = isRisk(e);
     var badges = (risk ? '<span class="badge-risk">под риском</span>' : '') + (e.pushkin ? '<span class="badge-new">Пушкинская карта</span>' : '') +
+      (yaOf(e) ? '<span class="badge-edit">Яндекс Афиша</span>' : '') +
       (e.custom ? '<span class="badge-edit">своё событие</span>' : e.edited ? '<span class="badge-edit">изменено вручную</span>' : '');
     return '<button class="ev-title" data-open="' + e.i + '">' + esc(e.title) + '</button>' + (badges ? '<div class="ev-badges">' + badges + '</div>' : '');
   },
@@ -932,7 +968,7 @@ function renderEvents() {
   }).join("");
   var mobile = list.map(function (e) {
     var d = dparts(e.date), f = fill(e);
-    return '<button class="m-item" data-open="' + e.i + '"><div class="d-sub"><span class="' + (d.weekend ? "wknd" : "") + '">' + d.day + ' ' + d.mon + ', ' + d.wd + '</span> ' + e.time + ' · ' + e.venue + '</div>' +
+    return '<button class="m-item" data-open="' + e.i + '"><div class="d-sub"><span class="' + (d.weekend ? "wknd" : "") + '">' + d.day + ' ' + d.mon + ', ' + d.wd + '</span>' + timeText(e) + ' · ' + e.venue + '</div>' +
       '<div style="font-weight:500;margin:2px 0 8px">' + esc(e.title) + '</div>' +
       (e.gross ? '<div class="fillbar"><div class="track"><div style="width:' + f + '%;background:' + barColor(e) + '"></div></div><span class="pct">' + f + '%</span></div>' +
         '<div class="sub2 num" style="margin-top:4px">' + money(e.revenue) + ' из ' + money(e.gross) + ' · ' + prices(e) + '</div>' : '<div class="sub2">вход ' + esc(e.priceText) + '</div>') + '</button>';
@@ -1030,6 +1066,14 @@ function hallRows(zones) {
     }).join("") + '<div class="sub" style="margin:0">Длина полосы — число мест в ряду. «Занято» здесь включает бронь площадки. Наведите на ряд, чтобы увидеть цифры.</div></div>';
 }
 
+// Источник и свежесть данных у мероприятия по ссылке
+function yaNote(e) {
+  var y = yaOf(e); if (!y) return "";
+  return '<div class="note" style="border-style:solid;background:var(--canvas)"><b style="color:var(--ink);font-weight:500">Яндекс Афиша · мероприятие по ссылке.</b> ' +
+    'Проверок: ' + y.checks + ', с ' + y.first + ' по ' + y.last + '. <span style="color:var(--risk)">Данные устарели — старый мониторинг не запускался с 21 авг.</span> ' +
+    'В приложении проверка пойдёт по расписанию вместе со сбором конкурентов.</div>';
+}
+
 function drawerView(e) {
   var d = dparts(e.date), f = fill(e), zones = !e.custom && ROWS[vkId(BASE[e.i].link)];
   var chips = [e.sphere, e.format].filter(Boolean).map(function (c) { return '<span class="chip">' + esc(c) + '</span>'; }).join("") +
@@ -1051,14 +1095,14 @@ function drawerView(e) {
       '</div>'
     : '<div class="note">Вход ' + esc(e.priceText || "без онлайн-продажи") + ' — заполняемость, вал и выручка не считаются. Если данные есть, их можно вписать через карандаш.</div>';
   var hall = zones ? hallRows(zones)
-    : '<div class="note">' + (e.custom ? "Для своего события схемы зала нет." : "Схемы зала нет — у мероприятия нет онлайн-продажи.") + '</div>';
+    : '<div class="note">' + (e.custom ? "Для своего события схемы зала нет." : yaOf(e) ? "Схема зала с Яндекс Афиши есть в сохранённых снимках — разбивка по рядам появится после переноса мониторинга." : "Схемы зала нет — у мероприятия нет онлайн-продажи.") + '</div>';
   var link = e.link ? '<a href="' + esc(e.link) + '" target="_blank" rel="noopener" class="pill" style="justify-content:center;height:44px;color:var(--ink);font-weight:500">Открыть это мероприятие на ' + esc(e.link.replace(/^https?:\/\//, "").split("/")[0]) + ' ↗</a>' : '';
 
-  return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div class="sub" style="margin:0">' + esc(e.venue) + ' · ' + esc(e.city) + ' · <span class="' + (d.weekend ? "wknd" : "") + '">' + d.wd + ', ' + d.day + ' ' + d.mon + ' ' + d.y + '</span>, ' + esc(e.time) + '</div>' +
+  return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div class="sub" style="margin:0">' + esc(e.venue) + ' · ' + esc(e.city) + ' · <span class="' + (d.weekend ? "wknd" : "") + '">' + d.wd + ', ' + d.day + ' ' + d.mon + ' ' + d.y + '</span>' + esc(timeText(e) || ", время сеанса не сохранено") + '</div>' +
       '<div style="display:flex;gap:8px"><button class="icon-btn" data-drawer="edit" aria-label="Редактировать мероприятие" title="Редактировать"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M11 2.5l2.5 2.5L6 12.5 3 13l.5-3z"/><path d="M9.5 4l2.5 2.5"/></svg></button>' +
       '<button class="icon-btn" data-drawer="close" aria-label="Закрыть карточку"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button></div></div>' +
     '<div><h2 style="font-weight:400;font-size:28px;line-height:1.2;letter-spacing:-0.02em">' + esc(e.title) + '</h2><div class="chips">' + chips + '</div></div>' +
-    editNote + blocks +
+    editNote + yaNote(e) + blocks +
     '<div class="drawer-cols">' +
       '<section style="display:flex;flex-direction:column;gap:12px"><h3 style="font-weight:500;font-size:15px">Динамика продаж</h3>' +
         salesInDrawer(e) + '<div class="dyn-empty"><span>Фактический график появится после сборов в разные дни.</span></div>' + paceHtml(e) + '</section>' +
@@ -1205,6 +1249,10 @@ var SALES = [
     { id: 11159, seats: [[3, "3", ["15", "16"], 3100]] },
     { id: 11459, seats: [[2, "27", ["14", "15"], 2600]] },
     { id: 11799, seats: [[1, "1", ["17", "18"], 1000]] }
+  ] },
+  // Яндекс Афиша, «Повод остаться»: старый мониторинг проверял раз в минуту (data/processed, sold_today_details)
+  { day: "20 августа", label: "20 августа · Яндекс Афиша", sub: "проверки раз в минуту · продажи в 16:54, 16:57, 22:06 и 23:03", src: "yandex", items: [
+    { ya: "povod-ostatsia", seats: [["Партер", "1", ["24", "25"], 7500], ["Партер", "5", ["15"], 8000], ["Партер", "28", ["13", "14", "15"], 2000]] }
   ] }
 ];
 S.salesVenue = "";
@@ -1217,15 +1265,15 @@ function placesText(list) {
 }
 function seatText(it) {
   var zone = null;
-  return it.seats.map(function (x) { var z = x[0] !== zone ? "зона " + x[0] + ", " : ""; zone = x[0]; return z + "ряд " + x[1] + ": " + placesText(x[2]); }).join("; ");
+  return it.seats.map(function (x) { var z = x[0] !== zone ? (typeof x[0] === "number" ? "зона " + x[0] : x[0]) + ", " : ""; zone = x[0]; return z + "ряд " + x[1] + ": " + placesText(x[2]); }).join("; ");
 }
 function saleEvent(it) {
-  var b = BASE.filter(function (x) { return x.link === "https://vladimirkoncert.ru/shows/event/" + it.id; })[0];
+  var b = BASE.filter(function (x) { return it.ya ? x.ya && x.ya.id === it.ya : x.link === "https://vladimirkoncert.ru/shows/event/" + it.id; })[0];
   return b && (findEvent(b.i) || b);
 }
 function salesTotals() {
   var t = { n: 0, r: 0, ev: {} };
-  SALES.forEach(function (g) { g.items.forEach(function (it) { var s = saleSum(it); t.n += s.n; t.r += s.r; t.ev[it.id] = true; }); });
+  SALES.forEach(function (g) { g.items.forEach(function (it) { var e = saleEvent(it); if (!e || !inCity(e)) return; var s = saleSum(it); t.n += s.n; t.r += s.r; t.ev[it.id || it.ya] = true; }); });
   t.events = Object.keys(t.ev).length;
   return t;
 }
@@ -1239,27 +1287,27 @@ function salesInDrawer(e) {
   var list = salesOf(e);
   if (!list.length) return '<div class="note">С начала слежения подтверждённых продаж не было.</div>';
   return '<div class="pace"><b style="font-weight:500">Подтверждённые продажи</b><ul class="list" style="margin-top:6px">' + list.map(function (x) {
-      return '<li style="display:flex;justify-content:space-between;gap:12px"><div style="min-width:0"><div>' + x.g.day + ', сбор ' + x.g.at + '</div><div class="sub" style="margin:0">' + seatText(x.it) + '</div></div>' +
+      return '<li style="display:flex;justify-content:space-between;gap:12px"><div style="min-width:0"><div>' + (x.g.label || x.g.day + ', сбор ' + x.g.at) + '</div><div class="sub" style="margin:0">' + seatText(x.it) + '</div></div>' +
         '<div style="text-align:right"><div class="sale-plus">+' + x.s.n + ' ' + plural(x.s.n, "место", "места", "мест") + '</div><div class="sub num" style="margin:0">' + num(x.s.r) + '\u00a0₽</div></div></li>';
     }).join("") + '</ul></div>';
 }
 function renderSales() {
   var t = salesTotals();
-  var venues = []; SALES.forEach(function (g) { g.items.forEach(function (it) { var e = saleEvent(it); if (e && venues.indexOf(e.venue) < 0) venues.push(e.venue); }); });
+  var venues = []; SALES.forEach(function (g) { g.items.forEach(function (it) { var e = saleEvent(it); if (e && inCity(e) && venues.indexOf(e.venue) < 0) venues.push(e.venue); }); });
   var groups = SALES.map(function (g) {
     var rows = g.items.map(function (it) { return { it: it, e: saleEvent(it), s: saleSum(it) }; })
-      .filter(function (x) { return x.e && (!S.salesVenue || x.e.venue === S.salesVenue); })
+      .filter(function (x) { return x.e && inCity(x.e) && (!S.salesVenue || x.e.venue === S.salesVenue); })
       .sort(function (a, b) { return b.s.r - a.s.r; });
     var gn = 0, gr = 0; rows.forEach(function (x) { gn += x.s.n; gr += x.s.r; });
     if (!rows.length) return "";
-    return '<section class="card"><div class="sale-group-head"><div><h2>' + g.day + ', сбор в ' + g.at + '</h2><p class="sub" style="margin:2px 0 0">' + g.trigger + ' · по сравнению со сбором ' + g.prev + '</p></div>' +
+    return '<section class="card"><div class="sale-group-head"><div><h2>' + (g.label || g.day + ', сбор в ' + g.at) + '</h2><p class="sub" style="margin:2px 0 0">' + (g.sub || g.trigger + ' · по сравнению со сбором ' + g.prev) + '</p></div>' +
       '<div class="num" style="font-weight:500">' + gn + ' ' + plural(gn, "место", "места", "мест") + ' · ' + num(gr) + '\u00a0₽</div></div>' +
       '<ul class="sale-list">' + rows.map(function (x) {
         var d = dparts(x.e.date);
         var on = S.sel === x.e.i && $("drawer").classList.contains("open");
         return '<li><button class="sale-row' + (on ? ' sel' : '') + '" data-sale="' + x.e.i + '" aria-label="' + esc(x.e.title) + ': продано ' + x.s.n + ', открыть карточку">' +
           '<div style="min-width:0"><div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(x.e.title) + '</div>' +
-            '<div class="sub" style="margin:0">' + esc(x.e.venue) + ' · <span class="' + (d.weekend ? "wknd" : "") + '">' + d.wd + ', ' + d.day + ' ' + d.mon + '</span>, ' + esc(x.e.time) + '</div></div>' +
+            '<div class="sub" style="margin:0">' + esc(x.e.venue) + ' · <span class="' + (d.weekend ? "wknd" : "") + '">' + d.wd + ', ' + d.day + ' ' + d.mon + '</span>' + esc(timeText(x.e)) + '</div></div>' +
           '<div class="sub sr-seats" style="margin:0">' + seatText(x.it) + '</div>' +
           '<div class="sale-plus">+' + x.s.n + ' ' + plural(x.s.n, "место", "места", "мест") + '</div>' +
           '<div class="sale-sum">' + num(x.s.r) + '\u00a0₽</div>' +
@@ -1267,16 +1315,17 @@ function renderSales() {
         '</button></li>';
       }).join("") + '</ul></section>';
   }).join("");
-  return head("История продаж", "Какие мероприятия продались между сборами · слежение с 29 сент., 19:20") +
+  var mapped = cityData().filter(function (e) { return e.gross; }).length;
+  return head("История продаж", "Какие мероприятия продались между проверками · " + S.city) +
     '<section class="card kpis k4" aria-label="Итог с начала слежения">' +
       '<div><div class="kpi-label">Продано мест</div><div class="kpi-value num">' + t.n + '</div><div class="sub">подтверждённые продажи</div></div>' +
       '<div><div class="kpi-label">На сумму</div><div class="kpi-value">' + money(t.r) + '</div><div class="sub num">' + num(t.r) + '\u00a0₽ по цене ряда</div></div>' +
       '<div><div class="kpi-label">Средний билет</div><div class="kpi-value num">' + num(Math.round(t.r / t.n)) + '\u00a0₽</div><div class="sub">по проданным местам</div></div>' +
-      '<div><div class="kpi-label">Мероприятий с продажами</div><div class="kpi-value num">' + t.events + '</div><div class="sub">из 93 со схемой зала</div></div>' +
+      '<div><div class="kpi-label">Мероприятий с продажами</div><div class="kpi-value num">' + t.events + '</div><div class="sub">из ' + mapped + ' со схемой зала</div></div>' +
     '</section>' +
     '<div class="toolbar"><select class="chip-select" id="salesVenue" aria-label="Площадка"><option value="">Площадка: все</option>' + venues.map(function (v) { return '<option' + (S.salesVenue === v ? " selected" : "") + '>' + esc(v) + '</option>'; }).join("") + '</select>' +
       '<div style="flex-grow:1"></div><span class="sub" style="margin:0">Нажмите на мероприятие, чтобы открыть карточку</span></div>' +
-    (groups || '<div class="empty"><h2>На этой площадке продаж пока не было</h2><p style="margin:0">Выберите другую площадку.</p></div>') +
+    (groups || '<div class="empty"><h2>Подтверждённых продаж пока нет</h2><p style="margin:0">Выберите другую площадку или город.</p></div>') +
     '<div class="note">Как считается: место было свободно в прошлом сборе и стало занятым в следующем — по схемам залов на vladimirkoncert.ru. ' +
       'Первый сбор (19:20–19:31) — точка отсчёта, продажи до него не видны. Чем чаще сборы, тем точнее видно, когда продались места. Возвратов пока не было.</div>';
 }
@@ -1373,7 +1422,7 @@ function venueOk(v) { return !S.dynVenue || v === S.dynVenue; }
 // Прямоугольник со скруглённым верхом — конец столбика, основание остаётся прямым
 function barPath(x, y, w, h, r) { r = Math.min(r, h, w / 2); return "M" + x + "," + (y + h) + "V" + (y + r) + "Q" + x + "," + y + " " + (x + r) + "," + y + "H" + (x + w - r) + "Q" + (x + w) + "," + y + " " + (x + w) + "," + (y + r) + "V" + (y + h) + "Z"; }
 function salesBarsSvg() {
-  var groups = SALES.slice().reverse().map(function (g) {
+  var groups = SALES.filter(function (g) { return !g.src; }).reverse().map(function (g) {
     var by = {}; g.items.forEach(function (it) { var e = saleEvent(it); if (!e || !venueOk(e.venue)) return; var x = saleSum(it); by[e.venue] = by[e.venue] || { n: 0, r: 0 }; by[e.venue].n += x.n; by[e.venue].r += x.r; });
     var n = 0, r = 0; Object.keys(by).forEach(function (v) { n += by[v].n; r += by[v].r; });
     var prevEnd = g.prev.split("–").pop();
@@ -1428,8 +1477,8 @@ function renderDynamics() {
   var data = cityData();
   if (!data.length) return head("Динамика продаж", S.city) + cityEmpty();
   var t = { n: 0, r: 0 }, byV = {};
-  SALES.forEach(function (g) { g.items.forEach(function (it) { var e = saleEvent(it); if (!e || !venueOk(e.venue)) return; var x = saleSum(it); t.n += x.n; t.r += x.r; byV[e.venue] = byV[e.venue] || { n: 0, r: 0 }; byV[e.venue].n += x.n; byV[e.venue].r += x.r; }); });
-  var venues = Object.keys(TRACK_FROM).filter(venueOk);
+  SALES.filter(function (g) { return !g.src; }).forEach(function (g) { g.items.forEach(function (it) { var e = saleEvent(it); if (!e || !venueOk(e.venue) || !inCity(e)) return; var x = saleSum(it); t.n += x.n; t.r += x.r; byV[e.venue] = byV[e.venue] || { n: 0, r: 0 }; byV[e.venue].n += x.n; byV[e.venue].r += x.r; }); });
+  var venues = Object.keys(TRACK_FROM).filter(function (v) { return venueOk(v) && data.some(function (e) { return e.venue === v; }); });
   var spanMin = Math.max.apply(null, venues.map(function (v) { return LAST_AT - TRACK_FROM[v]; }));
   var freed = DYN_FREED.map(function (c) { var b = BASE.filter(function (x) { return x.link === "https://vladimirkoncert.ru/shows/event/" + c.id; })[0]; return { c: c, e: b && (findEvent(b.i) || b) }; }).filter(function (x) { return x.e && venueOk(x.e.venue); });
   var freedN = freed.reduce(function (s, x) { return s + x.c.from - x.c.to; }, 0);
@@ -1446,7 +1495,11 @@ function renderDynamics() {
     : "";
   var nextSold = data.filter(function (e) { return e.gross; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; })[0];
   var maxR = Math.max.apply(null, venues.map(function (v) { return byV[v] ? byV[v].n : 0; }).concat([1]));
-  return head("Динамика продаж", "Как меняются продажи во времени · слежение с 29 сент., 19:20 · сборов со сравнением: " + SALES.length) +
+  if (!venues.length) return head("Динамика продаж", S.city) +
+    '<div class="empty"><h2>Темп продаж здесь пока не считается</h2><p style="margin:0 auto;max-width:560px">В этом городе только мероприятия по ссылке с Яндекс Афиши. Их проверял старый мониторинг — последний раз 21 авг. ' +
+    'После переноса они будут проверяться по расписанию, и здесь появятся темп и продажи по дням.</p></div>' +
+    '<section class="card card-pad"><h2>Заполняемость и дата события</h2><p class="sub">По последней проверке</p>' + scatterSvg(data.filter(inPeriod).filter(function (e) { return e.gross; })) + '</section>';
+  return head("Динамика продаж", "Как меняются продажи во времени · слежение с 29 сент., 19:20 · сборов со сравнением: " + SALES.filter(function (g) { return !g.src; }).length) +
     '<div class="toolbar"><select class="chip-select" id="dynVenue" aria-label="Площадка"><option value="">Площадка: все</option>' + Object.keys(TRACK_FROM).map(function (v) { return '<option' + (S.dynVenue === v ? " selected" : "") + '>' + v + '</option>'; }).join("") + '</select>' +
       '<div style="flex-grow:1"></div><div class="legend">' + Object.keys(TRACK_FROM).filter(venueOk).map(function (v) { return '<span><i class="key" style="background:' + VENUE_COLOR[v] + '"></i>' + v + '</span>'; }).join("") + '</div></div>' +
     '<section class="card kpis k4" aria-label="Темп с начала слежения">' +
@@ -1566,7 +1619,7 @@ function venueCard(n, list, all) {
   var sph = {}; list.forEach(function (e) { var k = e.sphere || "Не определено"; sph[k] = (sph[k] || 0) + 1; });
   var top = Object.keys(sph).sort(function (a, b) { return sph[b] - sph[a]; }).slice(0, 4), maxS = top.length ? sph[top[0]] : 1;
   var halls = HALLS.filter(function (h) { return h.venue === n; });
-  return '<section class="card card-pad"><div class="card-head"><div><h2>' + esc(n) + '</h2><p class="sub">' + esc(S.city === "Все города" ? (list[0] || all[0]).city : S.city) + ' · ' + esc(VENUE_SOURCE[n] || "своё событие, добавлено вручную") + '</p></div></div>' +
+  return '<section class="card card-pad"><div class="card-head"><div><h2>' + esc(n) + '</h2><p class="sub">' + esc(S.city === "Все города" ? (list[0] || all[0]).city : S.city) + ' · ' + esc(VENUE_SOURCE[n] || (all.some(function (e) { return yaOf(e); }) ? "Яндекс Афиша, мероприятия по ссылке" : "своё событие, добавлено вручную")) + '</p></div></div>' +
     '<div class="facts" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
       '<div><span class="sub" style="margin:0">Мероприятий</span><b class="num">' + list.length + '</b><span class="sub" style="margin:0">' + m.length + ' с онлайн-продажей</span></div>' +
       '<div><span class="sub" style="margin:0">Заполняемость</span><b class="num">' + (SL ? Math.round(T / SL * 100) + "%" : "—") + '</b><span class="sub" style="margin:0">' + (SL ? num(T) + ' из ' + num(SL) + ' мест' : 'нет онлайн-продажи') + '</span></div>' +
@@ -1583,7 +1636,7 @@ function venueCard(n, list, all) {
     }).join("") : '') +
   '</section>';
 }
-function hallSection() {
+function hallSection(halls) {
   var h = hallById(S.hall), cfg = S.hallCfg[h.id], canAuto = h.events >= 3;
   var reserved = 0, manualSeats = 0;
   h.seat.forEach(function (s) { var f = seatFlag(h, s); if (f) reserved++; if (f === "manual") manualSeats++; });
@@ -1602,7 +1655,7 @@ function hallSection() {
   };
   var members = hallMembers(h);
   return '<div id="hallSec" class="page-head" style="margin-top:8px"><h1 style="font-size:26px">Залы и бронь</h1><p>Зал — группа похожих рассадок площадки: места совпадают минимум на 80%. Схема и цены — по последнему мероприятию зала.</p></div>' +
-    '<div class="opt-row" role="group" aria-label="Зал">' + HALLS.map(function (x) { return '<button class="chip-btn" data-hall="' + x.id + '" aria-pressed="' + (x.id === h.id) + '">' + esc(hallLabel(x)) + '<span class="cnt num">' + x.seats + '</span></button>'; }).join("") + '</div>' +
+    '<div class="opt-row" role="group" aria-label="Зал">' + halls.map(function (x) { return '<button class="chip-btn" data-hall="' + x.id + '" aria-pressed="' + (x.id === h.id) + '">' + esc(hallLabel(x)) + '<span class="cnt num">' + x.seats + '</span></button>'; }).join("") + '</div>' +
     '<div class="hall-grid">' +
       '<section class="card card-pad hall-map"><div class="card-head"><div><h2>' + esc(hallLabel(h)) + '</h2><p class="sub">' + num(h.seats) + ' мест · по мероприятию «' + esc(h.sample[0]) + '», ' + human(h.sample[1]) + ' ' + h.sample[1].slice(0, 4) + '</p></div>' +
         '<div class="seg" role="group" aria-label="Что показать"><button data-hmode="busy" aria-pressed="' + (S.hallMode === "busy") + '">Как часто занято</button><button data-hmode="price" aria-pressed="' + (S.hallMode === "price") + '">Цены</button></div></div>' +
@@ -1646,9 +1699,11 @@ function renderVenues() {
   var p = data.filter(inPeriod), names = [];
   data.forEach(function (e) { if (names.indexOf(e.venue) < 0) names.push(e.venue); });
   names.sort(function (a, b) { return (VENUE_SOURCE[b] ? 1 : 0) - (VENUE_SOURCE[a] ? 1 : 0); });
-  return head("Площадки и залы", S.city + " · " + periodLabel() + " · " + names.length + " " + plural(names.length, "площадка", "площадки", "площадок") + ", " + HALLS.length + " рассадки залов") +
+  var halls = HALLS.filter(function (h) { return names.indexOf(h.venue) >= 0; });
+  if (halls.length && !halls.some(function (h) { return h.id === S.hall; })) S.hall = halls[0].id;
+  return head("Площадки и залы", S.city + " · " + periodLabel() + " · " + names.length + " " + plural(names.length, "площадка", "площадки", "площадок") + (halls.length ? ", " + halls.length + " " + plural(halls.length, "рассадка", "рассадки", "рассадок") + " залов" : "")) +
     '<div class="set-grid">' + names.map(function (n) { return venueCard(n, p.filter(function (e) { return e.venue === n; }), data.filter(function (e) { return e.venue === n; })); }).join("") + '</div>' +
-    hallSection();
+    (halls.length ? hallSection(halls) : '<div class="note">Схем залов для этого города пока нет: у мероприятий по ссылке схема сохранена в снимках Яндекс Афиши и появится после переноса мониторинга.</div>');
 }
 $("view").addEventListener("click", function (ev) {
   if (S.view !== "venues") return;
@@ -1807,6 +1862,28 @@ function setCollect() {
     '<ol class="log">' + logHtml + '</ol></section>';
 }
 
+// Мероприятия по ссылке с Яндекс Афиши — бывший «Мониторинг билетов» (static/index.html)
+S.yaList = YA.concat(YA_PAST).map(function (y) { return { y: y, on: y.active, past: YA_PAST.indexOf(y) >= 0 }; });
+S.yaFreq = "collect"; S.yaErr = "";
+var YA_FREQ = [["collect", "вместе со сбором конкурентов"], ["15", "каждые 15 мин"], ["1", "раз в минуту — как раньше"]];
+function yaSourcesCard() {
+  var rows = S.yaList.map(function (r, k) {
+    var y = r.y, fillP = y.sellable ? Math.round(y.taken / y.sellable * 100) : null;
+    var when = r.past ? "на Яндекс Афише нет будущих дат" : y.date ? human(y.date) + " " + y.date.slice(0, 4) : "дата появится после первой проверки";
+    return '<li class="src-row' + (r.on ? '' : ' is-off') + '"><div style="min-width:0"><div class="src-name">' + esc(y.title) + '</div><div class="sub" style="margin:0">' + esc([y.venue, y.city, when].filter(Boolean).join(" · ")) + '</div></div>' +
+      '<div class="src-stat">' + (y.checks ? '<div class="num" style="font-weight:500">' + (fillP != null ? 'занято ' + fillP + '%' : 'проверок: ' + y.checks) + '</div><div class="sub" style="margin:0">последняя проверка ' + y.last + '</div>' : '<span class="sub" style="margin:0">ещё не проверялось</span>') + '</div>' +
+      toggle("ya:" + k, r.on, "", (r.on ? "Не проверять " : "Проверять ") + y.title, r.past) +
+      '<button class="icon-btn" data-sa="ya-remove" data-sv="' + k + '" aria-label="Убрать ' + esc(y.title) + '" title="Убрать ссылку"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button></li>';
+  }).join("");
+  return '<section class="card card-pad"><div class="card-head"><div><h2>Мероприятия по ссылке · Яндекс Афиша</h2><p class="sub">Отдельные мероприятия в любом городе. Попадают в общую афишу с меткой «Яндекс Афиша» — с той же карточкой, историей продаж и архивом.</p></div></div>' +
+    '<div class="inline-field' + (S.yaErr ? ' bad' : '') + '" style="margin-top:12px"><input id="yaUrl" type="url" placeholder="https://afisha.yandex.ru/город/theatre_show/…" aria-label="Ссылка на мероприятие на Яндекс Афише"><button class="btn-dark" data-sa="ya-add" style="height:40px">Следить</button></div>' +
+    (S.yaErr ? '<div class="sub" style="color:var(--risk)">' + S.yaErr + '</div>' : '<p class="sub">Вставьте ссылку на страницу мероприятия. Название, площадку и дату программа возьмёт со страницы.</p>') +
+    '<ul class="src-list">' + rows + '</ul>' +
+    '<div class="field-label">Как часто проверять</div><div class="opt-row">' + YA_FREQ.map(function (f) { return '<button class="chip-btn" data-sa="ya-freq" data-sv="' + f[0] + '" aria-pressed="' + (S.yaFreq === f[0]) + '">' + f[1] + '</button>'; }).join("") + '</div>' +
+    '<div class="callout warn">Старый мониторинг не запускался с 21 авг. — цифры этих мероприятий устарели. Страница Яндекс Афиши открывается в браузере: проверка медленнее, чем у vladimirkoncert.ru. Раз в минуту — только для самых важных мероприятий.</div>' +
+    '<p class="sub">Закрытые ряды площадки («административные места» старого мониторинга) — теперь в «Площадки и залы» → «Бронь зала», как у всех площадок. Сейчас они нигде не заданы.</p>' +
+  '</section>';
+}
 function setSources() {
   var c = S.cfg;
   var rows = c.sources.map(function (s, k) {
@@ -1821,13 +1898,14 @@ function setSources() {
     return '<option value="' + v[0] + '"' + (added || odk ? " disabled" : "") + '>' + esc(v[1]) + (added ? " — уже собирается" : odk ? " — собирается через odk33.ru" : "") + '</option>';
   }).join("");
   var free = VK_VENUES.filter(function (v) { return v[0] !== ODK_VENUE_ID && !c.sources.some(function (s) { return s.venueId === v[0]; }); }).length;
-  return '<section class="card card-pad"><div class="card-head"><div><h2>Откуда считаются продажи</h2><p class="sub">Сейчас — один сайт для обеих площадок</p></div>' +
+  return '<section class="card card-pad"><div class="card-head"><div><h2>Откуда считаются продажи</h2><p class="sub">vladimirkoncert.ru — для площадок Владимира; Яндекс Афиша — для мероприятий по ссылке</p></div>' +
       '<a class="pill" href="https://vladimirkoncert.ru" target="_blank" rel="noopener" style="height:36px;color:var(--ink);font-weight:500">vladimirkoncert.ru ↗</a></div>' +
       '<dl class="kv">' +
         '<dt>Что это</dt><dd>Билетный сайт, через который продают билеты ОДКиИ и Арт Холл.</dd>' +
         '<dt>Что берём</dt><dd>Схему зала каждого сеанса: какие места свободны, какие заняты, цену каждого ряда. Проданных билетов сайт не показывает.</dd>' +
         '<dt>Занято</dt><dd>Места, которые нельзя купить: проданные, пригласительные и квоты других касс — оценка сверху. Постоянная бронь площадки вычитается.</dd>' +
         '<dt>Подтверждённые продажи</dt><dd>Место было свободно в прошлом сборе и стало занятым — точная цифра, копится с 29 сент. <button class="link-btn" data-go="sales">История продаж →</button></dd>' +
+        '<dt>Яндекс Афиша</dt><dd>Для мероприятий по ссылке — та же схема зала, но с afisha.yandex.ru. Страница открывается в браузере, поэтому проверка медленнее.</dd>' +
         '<dt>Не учитывается</dt><dd>7 мероприятий ОДКиИ без онлайн-продажи — вход по пригласительным и клубные вечера.</dd>' +
       '</dl></section>' +
     '<section class="card card-pad"><div class="card-head"><div><h2>Владимир и область</h2><p class="sub">Откуда собираются афиши. Выключенная площадка не опрашивается, но её мероприятия и история сохраняются.</p></div></div>' +
@@ -1836,12 +1914,13 @@ function setSources() {
       '<button class="btn-dark" data-sa="add" style="height:40px">Добавить</button></div>' +
       '<p class="sub" style="margin-top:10px">У каждой площадки собираются все сеансы, цены и схема зала. Каждая новая площадка удлиняет сбор.</p>' +
     '</section>' +
+    yaSourcesCard() +
     '<section class="card card-pad"><div class="card-head"><div><h2>Другие города</h2><p class="sub">Сайты на том же билетном движке, что vladimirkoncert.ru — подключаются без новой разработки. Это этап 2 плана.</p></div></div>' +
       '<div style="margin-top:10px">' + CITIES.filter(function (x) { return !x.ready; }).map(function (x) {
         return '<div class="city-row"><div style="font-weight:500">' + esc(x.name) + '</div><div class="sub" style="margin:0">' + esc(x.source) + ' — ' + esc(x.note) + '</div><span class="soon-tag" style="margin:0">скоро</span></div>';
       }).join("") + '</div>' +
     '</section>' +
-    '<div class="note">Бронь залов — места, которые площадка не продаёт, — переедет в раздел «Площадки и залы».</div>';
+    '<div class="note">Бронь залов — места, которые площадка не продаёт, — в разделе <button class="link-btn" data-go="venues" style="font-size:13px">«Площадки и залы» →</button></div>';
 }
 
 function setAi() {
@@ -1956,6 +2035,19 @@ $("view").addEventListener("click", function (ev) {
     c.sources.push({ name: name, afisha: "vladimirkoncert.ru", venueId: id, on: true, n: null, removable: true });
     rerender("#venueAdd"); toast("«" + name + "» добавлена. Мероприятия появятся после следующего сбора.");
   }
+  else if (a === "ya-freq") { S.yaFreq = v; rerender(same); }
+  else if (a === "ya-remove") {
+    var r = S.yaList[+v];
+    if (!confirm("Перестать следить за «" + r.y.title + "»? Уже собранные данные сохранятся.")) return;
+    S.yaList.splice(+v, 1); rerender("#yaUrl"); toast("«" + r.y.title + "» убрано из слежения.");
+  }
+  else if (a === "ya-add") {
+    var url = $("yaUrl").value.trim(), m = /^https:\/\/afisha\.yandex\.ru\/([a-z-]+)\/[a-z_]+\/([a-z0-9-]+)/.exec(url);
+    S.yaErr = m ? "" : "Нужна ссылка на страницу мероприятия: https://afisha.yandex.ru/город/раздел/название";
+    if (m) S.yaList.push({ y: { id: m[2], title: m[2].replace(/-/g, " "), city: "", url: url, checks: 0 }, on: true, past: false });
+    rerender("#yaUrl");
+    if (m) toast("Ссылка добавлена. Название, площадку и дату приложение возьмёт со страницы при первой проверке.");
+  }
   else if (a === "provider") { c.ai.provider = v; S.keyEdit = false; rerender(same); }
   else if (a === "key-edit") { S.keyEdit = true; rerender("#keyInput"); }
   else if (a === "key-cancel") { S.keyEdit = false; rerender('[data-sa="key-edit"]'); }
@@ -1990,6 +2082,7 @@ $("view").addEventListener("change", function (ev) {
   var c = S.cfg;
   if (k === "auto") c.auto = ev.target.checked;
   else if (k.indexOf("src:") === 0) c.sources[+k.slice(4)].on = ev.target.checked;
+  else if (k.indexOf("ya:") === 0) S.yaList[+k.slice(3)].on = ev.target.checked;
   else if (k === "model") c.ai.model = ev.target.value;
   else if (k === "scope") c.ai.scope = ev.target.value;
   else if (k === "sheets-auto") c.sheets.auto = ev.target.checked;
