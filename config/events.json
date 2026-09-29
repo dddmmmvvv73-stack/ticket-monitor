@@ -1,0 +1,36 @@
+[
+  {
+    "id": "korolshut-krasnoe-sormovo",
+    "url": "https://afisha.yandex.ru/nizhny-novgorod/theatre_show/khorosho-chto-vyzhil-zhal-chto-iz-uma",
+    "venue": "dk-krasnoe-sormovo",
+    "active": false
+  },
+  {
+    "id": "povod-ostatsia",
+    "url": "https://afisha.yandex.ru/nizhny-novgorod/theatre_show/povod-ostatsia?source=selection-events&rubricCode=main&refererSurface=filter",
+    "venue": "povod-ostatsia",
+    "title": "Povod ostatsia",
+    "active": true
+  },
+  {
+    "id": "ty-gde-to-riadom-prodiuserskii-tsentr-fiodor-dobronravov",
+    "url": "https://afisha.yandex.ru/nizhny-novgorod/theatre_show/ty-gde-to-riadom-prodiuserskii-tsentr-fiodor-dobronravov?source=selection-events&rubricCode=main&refererSurface=filter",
+    "venue": "ty-gde-to-riadom-prodiuserskii-tsentr-fiodor-dobronravov",
+    "title": "Ty gde to riadom prodiuserskii tsentr fiodor dobronravov",
+    "active": false
+  },
+  {
+    "id": "dvoe-na-kacheliakh",
+    "url": "https://afisha.yandex.ru/nizhny-novgorod/theatre_show/dvoe-na-kacheliakh?source=selection-events&filterDict=multiFilter%3D2.theatre&rubricCode=main&refererSurface=filter",
+    "venue": "dvoe-na-kacheliakh",
+    "title": "Dvoe na kacheliakh",
+    "active": false
+  },
+  {
+    "id": "maiakovskii-liubov-piotr-dranga",
+    "url": "https://afisha.yandex.ru/nizhny-novgorod/performance/maiakovskii-liubov-piotr-dranga?source=selection-events&rubricCode=main&refererSurface=filter",
+    "venue": "maiakovskii-liubov-piotr-dranga",
+    "title": "Maiakovskii liubov piotr dranga",
+    "active": false
+  }
+]

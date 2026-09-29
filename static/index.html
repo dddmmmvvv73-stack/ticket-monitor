@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мониторинг билетов</title>
+<style>
+  :root {
+    --bg: #F6F6F3;
+    --surface: #FFFFFF;
+    --ink: #1C1C1A;
+    --ink-2: #5B5B56;
+    --ink-3: #8C8B84;
+    --border: #E3E2DC;
+    --accent: #1F4B3F;
+    --accent-hover: #163931;
+    --accent-tint: #E7EFEC;
+    --success: #2F7A4F;
+    --success-tint: #E7F3EB;
+    --warning: #B8842B;
+    --warning-tint: #FBF1E1;
+    --danger: #B23B3B;
+    --danger-tint: #FAEBEB;
+    --radius: 10px;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); line-height: 1.5;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  header.app-header { margin-bottom: 28px; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+  .tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; }
+  .tabs a { font-size: 13px; padding: 7px 14px; border-radius: 7px; color: var(--ink-2); text-decoration: none; }
+  .tabs a.active { background: var(--accent); color: #fff; }
+  header.app-header h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  header.app-header p { color: var(--ink-2); font-size: 14px; margin: 0; }
+
+  .panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 22px; margin-bottom: 20px;
+  }
+  .panel h2 { font-size: 15px; font-weight: 500; margin: 0 0 14px; }
+
+  .source-list { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 4px; }
+  .source-chip {
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px;
+    font-size: 13px; display: flex; align-items: center; gap: 8px; background: var(--bg);
+  }
+  .source-chip.active { border-color: var(--accent); background: var(--accent-tint); color: var(--accent); font-weight: 500; }
+  .source-chip.disabled { color: var(--ink-3); }
+  .source-chip .tag {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em;
+    background: var(--border); color: var(--ink-2); border-radius: 4px; padding: 2px 6px;
+  }
+
+  textarea {
+    width: 100%; min-height: 96px; border: 1px solid var(--border); border-radius: 8px;
+    padding: 12px 14px; font-family: var(--sans); font-size: 14px; color: var(--ink);
+    resize: vertical; background: var(--bg);
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  .hint { font-size: 12px; color: var(--ink-3); margin-top: 6px; }
+
+  .row-actions { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+
+  button.primary {
+    background: var(--accent); color: #fff; border: none; border-radius: 8px;
+    padding: 11px 20px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: var(--sans);
+  }
+  button.primary:hover { background: var(--accent-hover); }
+  button.primary:disabled { background: var(--ink-3); cursor: default; }
+
+  button.secondary {
+    background: transparent; color: var(--accent); border: 1px solid var(--accent);
+    border-radius: 8px; padding: 10px 16px; font-size: 13px; cursor: pointer; font-family: var(--sans);
+  }
+  button.secondary:hover { background: var(--accent-tint); }
+
+  button.link {
+    background: none; border: none; color: var(--accent); font-size: 13px;
+    cursor: pointer; padding: 0; font-family: var(--sans); text-decoration: underline;
+  }
+
+  #progress { font-size: 13px; color: var(--ink-2); }
+
+  .results-header {
+    display: flex; justify-content: space-between; align-items: center; margin: 28px 0 14px;
+  }
+  .results-header h2 { font-size: 16px; font-weight: 500; margin: 0; }
+
+  .event-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; margin-bottom: 14px; animation: fadein 0.25s ease;
+  }
+  @keyframes fadein { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+  .event-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+  .event-title { font-size: 15px; font-weight: 500; margin: 0 0 2px; }
+  .event-url { font-size: 12px; color: var(--ink-3); word-break: break-all; }
+
+  .badges { display: flex; gap: 6px; flex-wrap: wrap; }
+  .badge { font-size: 12px; border-radius: 6px; padding: 4px 9px; font-weight: 500; white-space: nowrap; }
+  .badge.success { background: var(--success-tint); color: var(--success); }
+  .badge.warning { background: var(--warning-tint); color: var(--warning); }
+  .badge.danger  { background: var(--danger-tint);  color: var(--danger); }
+  .badge.neutral { background: var(--bg); color: var(--ink-2); border: 1px solid var(--border); }
+
+  .stubs { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+  .stub {
+    border-left: 2px dashed var(--border); padding: 2px 0 2px 12px; min-width: 110px;
+  }
+  .stub .label { font-size: 11px; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.03em; }
+  .stub .value { font-family: var(--mono); font-size: 18px; color: var(--ink); margin-top: 2px; }
+  .stub-gross { border-left-color: var(--accent); }
+  .gross-note { font-size: 12px; color: var(--ink-3); margin-top: 8px; }
+  .gross-note b { color: var(--ink-2); }
+
+  .yesterday-line {
+    margin-top: 14px; font-size: 13px; color: var(--ink-2);
+    background: var(--bg); border-radius: 8px; padding: 9px 12px;
+  }
+  .yesterday-line b { color: var(--ink); font-family: var(--mono); }
+
+  .card-footer { margin-top: 14px; display: flex; justify-content: flex-end; }
+
+  .price-map { margin-top: 14px; font-size: 13px; }
+  .price-map summary {
+    cursor: pointer; color: var(--accent); font-weight: 500; list-style: none;
+  }
+  .price-map summary::-webkit-details-marker { display: none; }
+  .price-map summary::before { content: "▸ "; }
+  .price-map[open] summary::before { content: "▾ "; }
+  .price-map-body {
+    margin-top: 10px; border: 1px solid var(--border); border-radius: 8px;
+    overflow: hidden; max-height: 220px; overflow-y: auto;
+  }
+  .price-row {
+    display: flex; justify-content: space-between; padding: 7px 12px;
+    border-bottom: 1px solid var(--border); font-size: 13px;
+  }
+  .price-row:last-child { border-bottom: none; }
+  .price-row-value { font-family: var(--mono); color: var(--ink-2); }
+  .price-map-empty { color: var(--ink-3); font-size: 12px; }
+
+  .error-line { color: var(--danger); font-size: 13px; margin-top: 6px; }
+
+  .chart-section { margin-top: 18px; }
+  .chart-section-title {
+    font-size: 11px; color: var(--ink-3); text-transform: uppercase;
+    letter-spacing: 0.03em; margin-bottom: 8px;
+  }
+  .chart-loading, .chart-empty { font-size: 12px; color: var(--ink-3); padding: 6px 0 2px; }
+  .chart-wrap { position: relative; }
+  .chart-svg { width: 100%; height: auto; display: block; overflow: visible; cursor: crosshair; }
+  .chart-axis { stroke: var(--border); stroke-width: 1; }
+  .chart-axis-label { font-size: 9px; fill: var(--ink-3); font-family: var(--mono); }
+  .chart-area { opacity: 0.95; }
+  .chart-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  .chart-cursor-line { stroke: var(--ink-3); stroke-width: 1; stroke-dasharray: 3 3; opacity: 0; }
+  .chart-cursor-dot { fill: var(--accent); stroke: #fff; stroke-width: 2; opacity: 0; }
+  .chart-x-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-3); margin-top: 6px; }
+  .chart-tooltip {
+    position: absolute; top: 0; left: 0; transform: translate(-50%, -100%);
+    background: var(--ink); color: #fff; font-size: 12px; line-height: 1.5; padding: 8px 11px;
+    border-radius: 8px; white-space: nowrap; pointer-events: none; z-index: 5; opacity: 0;
+    transition: opacity 0.1s ease; box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+  }
+  .chart-tooltip b { font-family: var(--mono); font-weight: 500; }
+  .chart-tooltip .tt-date { color: var(--ink-3); font-size: 11px; margin-bottom: 2px; }
+
+  .empty-state {
+    text-align: center; padding: 40px 20px; color: var(--ink-3); font-size: 14px;
+  }
+
+  /* Модалка администрирования */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(28,28,26,0.45);
+    display: none; align-items: center; justify-content: center; padding: 20px; z-index: 10;
+  }
+  .modal-backdrop.open { display: flex; }
+  .modal {
+    background: var(--surface); border-radius: 14px; padding: 24px; max-width: 440px; width: 100%;
+    max-height: 86vh; overflow-y: auto;
+  }
+  .modal h3 { font-size: 16px; font-weight: 500; margin: 0 0 4px; }
+  .modal .sub { font-size: 13px; color: var(--ink-2); margin: 0 0 18px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; }
+  .field input[type=text], .field input[type=number] {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px;
+    font-size: 14px; font-family: var(--sans); background: var(--bg);
+  }
+  .row-inline { display: flex; gap: 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip {
+    background: var(--accent-tint); color: var(--accent); border-radius: 6px;
+    padding: 5px 8px; font-size: 12px; display: flex; align-items: center; gap: 6px;
+  }
+  .chip button { background: none; border: none; color: var(--accent); cursor: pointer; font-size: 13px; padding: 0; }
+  .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="app-header">
+    <div>
+      <h1>Мониторинг билетов</h1>
+      <p>Отслеживание продаж на конкурентных площадках</p>
+    </div>
+    <nav class="tabs">
+      <a href="/" class="active">Мониторинг Яндекс Афиши</a>
+      <a href="/competitors">Конкуренты</a>
+      <a href="/analytics">Аналитика рынка</a>
+    </nav>
+  </header>
+
+  <section class="panel">
+    <h2>Источник</h2>
+    <div class="source-list">
+      <div class="source-chip active">Яндекс Афиша</div>
+      <div class="source-chip disabled">Афиша.ру <span class="tag">скоро</span></div>
+      <div class="source-chip disabled">Кассир.ру <span class="tag">скоро</span></div>
+      <div class="source-chip disabled">Ticketland <span class="tag">скоро</span></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Мероприятия для проверки</h2>
+    <textarea id="urlsInput" placeholder="Вставь ссылки на события, одна на строку.
+Если хочешь объединить несколько событий на одной площадке (для настройки административных мест общим списком) — допиши через запятую название площадки:
+https://afisha.yandex.ru/..., ДК Красное Сормово"></textarea>
+    <div class="hint">Ссылка должна вести на страницу конкретного события с выбранным сеансом.</div>
+    <div class="row-actions">
+      <button class="primary" id="parseBtn">Начать парсинг</button>
+      <span id="progress"></span>
+    </div>
+  </section>
+
+  <div class="results-header">
+    <h2>Результаты</h2>
+    <button class="secondary" id="exportBtn">Скачать CSV</button>
+  </div>
+
+  <div id="results">
+    <div class="empty-state" id="emptyState">Пока нет данных — вставь ссылки выше и нажми «Начать парсинг».</div>
+  </div>
+
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal">
+    <h3>Административные места</h3>
+    <p class="sub" id="modalVenueLabel">Места, которые площадка не продаёт онлайн — резерв для сотрудников, касса и т.п.</p>
+
+    <div class="field">
+      <label>Сколько мест держит площадка для себя (если точный список неизвестен)</label>
+      <input type="number" id="reservedCount" min="0" value="0">
+    </div>
+
+    <div class="field">
+      <label>Или укажи конкретные ряды целиком</label>
+      <div class="row-inline">
+        <input type="text" id="rowLevel" placeholder="Уровень, напр. Партер">
+        <input type="text" id="rowNumber" placeholder="Номер ряда">
+        <button class="secondary" id="addRowBtn" type="button">Добавить</button>
+      </div>
+      <div class="chips" id="rowChips"></div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="secondary" id="closeModalBtn" type="button">Отмена</button>
+      <button class="primary" id="saveModalBtn" type="button">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const state = {
+  events: {},     // event_id -> последний результат
+  excludedRows: [], // текущие ряды в открытой модалке
+  activeVenue: null,
+};
+
+const el = (id) => document.getElementById(id);
+
+function parseUrlsInput(text) {
+  return text.split('\n')
+    .map(l => l.trim())
+    .filter(Boolean)
+    .map(line => {
+      const [url, venue] = line.split(',').map(s => s && s.trim());
+      return { url, venue: venue || null };
+    });
+}
+
+function statusBadges(record, sinceYesterday) {
+  const badges = [];
+  const ratio = record.sellable_total ? record.sellable_available / record.sellable_total : 0;
+
+  if (record.discounts_detected && record.discounts_detected.length) {
+    badges.push('<span class="badge warning">Скидка активна</span>');
+  }
+  if (ratio > 0 && ratio <= 0.1) {
+    badges.push('<span class="badge danger">Почти распродано</span>');
+  } else if (sinceYesterday && sinceYesterday.sold > 0) {
+    badges.push('<span class="badge success">Продажи идут</span>');
+  } else {
+    badges.push('<span class="badge neutral">Без изменений</span>');
+  }
+  if (record.sale_status && record.sale_status !== 'available') {
+    badges.push(`<span class="badge neutral">${record.sale_status}</span>`);
+  }
+  return badges.join('');
+}
+
+function renderPriceMap(priceMapByRow) {
+  const entries = Object.entries(priceMapByRow || {});
+  if (!entries.length) {
+    return `<div class="price-map"><div class="price-map-empty">Нет данных по ценам — либо все места в наличии распроданы, либо пока не было ни одного свободного места для этого замера.</div></div>`;
+  }
+  const rows = entries.map(([rowKey, prices]) => {
+    const priceText = prices.length === 1
+      ? `${prices[0].toLocaleString('ru-RU')} ₽`
+      : `${prices[0].toLocaleString('ru-RU')}–${prices[prices.length - 1].toLocaleString('ru-RU')} ₽`;
+    return `<div class="price-row"><span>${rowKey}</span><span class="price-row-value">${priceText}</span></div>`;
+  }).join('');
+  return `<details class="price-map">
+    <summary>Цены по рядам (${entries.length})</summary>
+    <div class="price-map-body">${rows}</div>
+  </details>`;
+}
+
+function moneyLine(record) {
+  const gp = Math.round(record.gross_confidence_ratio * 100);
+  const rp = Math.round(record.revenue_confidence_ratio * 100);
+  const methodNote = record.gross_method === 'geometry'
+    ? 'точный расчёт по местам'
+    : 'резервный расчёт по рядам (геометрия зала недоступна)';
+  return `<div class="gross-note">Вал: точность <b>${gp}%</b> · Выручка: точность <b>${rp}%</b> — ${methodNote}.</div>`;
+}
+
+function renderCard(data) {
+  const { event_id, title, url, venue, record, since_yesterday, error } = data;
+
+  if (error) {
+    return `<div class="event-card">
+      <div class="event-title">${url}</div>
+      <div class="error-line">${error}</div>
+    </div>`;
+  }
+
+  const yesterdayLine = since_yesterday
+    ? `<div class="yesterday-line">С ${since_yesterday.since_date}: продано <b>${since_yesterday.sold}</b> мест, выручка <b>+${since_yesterday.revenue.toLocaleString('ru-RU')} ₽</b></div>`
+    : `<div class="yesterday-line">Первый день слежения за этим событием — сравнение появится завтра.</div>`;
+
+  return `<div class="event-card" data-event-id="${event_id}" data-venue="${venue}">
+    <div class="event-top">
+      <div>
+        <div class="event-title">${title}</div>
+        <div class="event-url">${url}</div>
+      </div>
+      <div class="badges">${statusBadges(record, since_yesterday)}</div>
+    </div>
+
+    <div class="stubs">
+      <div class="stub"><div class="label">Всего мест</div><div class="value">${record.sellable_total}</div></div>
+      <div class="stub"><div class="label">Свободно</div><div class="value">${record.sellable_available}</div></div>
+      <div class="stub"><div class="label">Продано</div><div class="value">${record.sellable_sold_cumulative}</div></div>
+      <div class="stub"><div class="label">Выручка, ₽</div><div class="value">${record.revenue_actual.toLocaleString('ru-RU')}</div></div>
+      <div class="stub stub-gross"><div class="label">Вал, ₽</div><div class="value">${record.gross_total.toLocaleString('ru-RU')}</div></div>
+    </div>
+    ${moneyLine(record)}
+
+    <div class="chart-section" id="chart-${event_id}">
+      <div class="chart-section-title">Динамика продаж</div>
+      <div class="chart-loading">Загружаю историю…</div>
+    </div>
+
+    ${yesterdayLine}
+
+    ${renderPriceMap(record.price_map_by_row)}
+
+    <div class="card-footer">
+      <button class="link" onclick="openAdminModal('${venue}')">Административные места этой площадки</button>
+    </div>
+  </div>`;
+}
+
+function renderResults() {
+  const items = Object.values(state.events);
+  el('emptyState').style.display = items.length ? 'none' : 'block';
+  const container = el('results');
+  const cardsHtml = items.map(renderCard).join('');
+  container.innerHTML = (items.length ? '' : '<div class="empty-state" id="emptyState">Пока нет данных — вставь ссылки выше и нажми «Начать парсинг».</div>') + cardsHtml;
+
+  items.forEach(item => {
+    if (!item.error && item.event_id) loadChartForEvent(item.event_id);
+  });
+}
+
+function fmtDateTime(iso) {
+  const d = new Date(iso);
+  if (isNaN(d)) return iso;
+  return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function buildSalesChart(eventId, history) {
+  if (!history || history.length < 2) {
+    return '<div class="chart-empty">Пока только одна проверка — график появится после следующего запуска.</div>';
+  }
+
+  // Разрежаем, если проверок очень много (например, cron раз в минуту) —
+  // график должен оставаться быстрым и читаемым, не десятками точек.
+  let points = history;
+  const MAX_POINTS = 120;
+  if (points.length > MAX_POINTS) {
+    const step = (points.length - 1) / (MAX_POINTS - 1);
+    const sampled = [];
+    for (let i = 0; i < MAX_POINTS; i++) sampled.push(points[Math.round(i * step)]);
+    points = sampled;
+  }
+
+  const W = 600, H = 170, padL = 4, padR = 4, padT = 14, padB = 4;
+  const innerW = W - padL - padR, innerH = H - padT - padB;
+
+  const parsed = points.map(r => ({
+    t: new Date(r.timestamp).getTime(),
+    sold: r.sellable_sold_cumulative,
+    revenue: r.revenue_actual,
+    timestamp: r.timestamp,
+    date: r.date,
+  }));
+
+  const minT = parsed[0].t, maxT = parsed[parsed.length - 1].t;
+  const spanT = Math.max(maxT - minT, 1);
+  const maxSold = Math.max(...parsed.map(p => p.sold), 1);
+
+  const xAt = (t) => padL + ((t - minT) / spanT) * innerW;
+  const yAt = (v) => padT + innerH - (v / maxSold) * innerH;
+
+  const coords = parsed.map(p => [xAt(p.t), yAt(p.sold)]);
+  const linePts = coords.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  const baseY = (padT + innerH).toFixed(1);
+  const areaPts = `${padL.toFixed(1)},${baseY} ${linePts} ${coords[coords.length - 1][0].toFixed(1)},${baseY}`;
+
+  const gid = `chartGrad-${eventId}`;
+  const first = parsed[0], last = parsed[parsed.length - 1];
+
+  return `
+    <div class="chart-wrap" data-event-id="${eventId}">
+      <svg viewBox="0 0 ${W} ${H}" class="chart-svg" preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" style="stop-color:var(--accent); stop-opacity:0.28"/>
+            <stop offset="100%" style="stop-color:var(--accent); stop-opacity:0.02"/>
+          </linearGradient>
+        </defs>
+        <line x1="${padL}" y1="${baseY}" x2="${W - padR}" y2="${baseY}" class="chart-axis" />
+        <polygon points="${areaPts}" class="chart-area" fill="url(#${gid})" />
+        <polyline points="${linePts}" class="chart-line" />
+        <text x="${W - padR}" y="${padT - 3}" text-anchor="end" class="chart-axis-label">${maxSold.toLocaleString('ru-RU')} мест</text>
+        <line class="chart-cursor-line" x1="0" y1="${padT}" x2="0" y2="${baseY}" />
+        <circle class="chart-cursor-dot" r="4" cx="0" cy="0" />
+      </svg>
+      <div class="chart-x-labels">
+        <span>${fmtDateTime(first.timestamp)}</span>
+        <span>${fmtDateTime(last.timestamp)}</span>
+      </div>
+      <div class="chart-tooltip"></div>
+    </div>
+  `;
+}
+
+function attachChartInteractivity(wrapEl, history) {
+  let points = history;
+  const MAX_POINTS = 120;
+  if (points.length > MAX_POINTS) {
+    const step = (points.length - 1) / (MAX_POINTS - 1);
+    const sampled = [];
+    for (let i = 0; i < MAX_POINTS; i++) sampled.push(points[Math.round(i * step)]);
+    points = sampled;
+  }
+
+  const W = 600, H = 170, padL = 4, padR = 4, padT = 14, padB = 4;
+  const innerW = W - padL - padR, innerH = H - padT - padB;
+  const parsed = points.map(r => ({
+    t: new Date(r.timestamp).getTime(),
+    sold: r.sellable_sold_cumulative,
+    revenue: r.revenue_actual,
+    soldToday: r.sold_today_count,
+    revenueToday: r.revenue_today,
+    timestamp: r.timestamp,
+  }));
+  const minT = parsed[0].t, maxT = parsed[parsed.length - 1].t;
+  const spanT = Math.max(maxT - minT, 1);
+  const maxSold = Math.max(...parsed.map(p => p.sold), 1);
+  const xAt = (t) => padL + ((t - minT) / spanT) * innerW;
+  const yAt = (v) => padT + innerH - (v / maxSold) * innerH;
+
+  const svg = wrapEl.querySelector('.chart-svg');
+  const cursorLine = wrapEl.querySelector('.chart-cursor-line');
+  const cursorDot = wrapEl.querySelector('.chart-cursor-dot');
+  const tooltip = wrapEl.querySelector('.chart-tooltip');
+  if (!svg) return;
+
+  function showAt(index) {
+    const p = parsed[index];
+    const x = xAt(p.t), y = yAt(p.sold);
+    cursorLine.setAttribute('x1', x); cursorLine.setAttribute('x2', x);
+    cursorLine.style.opacity = 1;
+    cursorDot.setAttribute('cx', x); cursorDot.setAttribute('cy', y);
+    cursorDot.style.opacity = 1;
+
+    const revenueSign = p.revenueToday > 0 ? '+' : '';
+    const soldSign = p.soldToday > 0 ? '+' : '';
+    tooltip.innerHTML = `
+      <div class="tt-date">${fmtDateTime(p.timestamp)}</div>
+      Продано: <b>${p.sold.toLocaleString('ru-RU')}</b>${p.soldToday ? ` (${soldSign}${p.soldToday})` : ''}<br>
+      Выручка: <b>${Math.round(p.revenue).toLocaleString('ru-RU')} ₽</b>${p.revenueToday ? ` (${revenueSign}${Math.round(p.revenueToday).toLocaleString('ru-RU')} ₽)` : ''}
+    `;
+    const pxFraction = x / W;
+    tooltip.style.left = `${pxFraction * 100}%`;
+    tooltip.style.top = `${(y / H) * 100}%`;
+    tooltip.style.opacity = 1;
+  }
+
+  function hide() {
+    cursorLine.style.opacity = 0;
+    cursorDot.style.opacity = 0;
+    tooltip.style.opacity = 0;
+  }
+
+  svg.addEventListener('mousemove', (e) => {
+    const rect = svg.getBoundingClientRect();
+    const relX = ((e.clientX - rect.left) / rect.width) * W;
+    let nearest = 0, best = Infinity;
+    for (let i = 0; i < parsed.length; i++) {
+      const d = Math.abs(xAt(parsed[i].t) - relX);
+      if (d < best) { best = d; nearest = i; }
+    }
+    showAt(nearest);
+  });
+  svg.addEventListener('mouseleave', hide);
+}
+
+async function loadChartForEvent(eventId) {
+  const container = el(`chart-${eventId}`);
+  if (!container) return;
+  try {
+    const res = await fetch(`/api/history/${encodeURIComponent(eventId)}`);
+    const history = await res.json();
+    container.innerHTML = `<div class="chart-section-title">Динамика продаж</div>${buildSalesChart(eventId, history)}`;
+    const wrap = container.querySelector('.chart-wrap');
+    if (wrap) attachChartInteractivity(wrap, history);
+  } catch (e) {
+    container.innerHTML = `<div class="chart-section-title">Динамика продаж</div><div class="chart-empty">Не удалось загрузить историю.</div>`;
+  }
+}
+
+async function startParsing() {
+  const entries = parseUrlsInput(el('urlsInput').value);
+  if (!entries.length) return;
+
+  el('parseBtn').disabled = true;
+
+  for (let i = 0; i < entries.length; i++) {
+    el('progress').textContent = `Проверяю ${i + 1} из ${entries.length}...`;
+    try {
+      const res = await fetch('/api/parse_one', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(entries[i]),
+      });
+      const data = await res.json();
+      const key = data.event_id || entries[i].url;
+      state.events[key] = data;
+    } catch (e) {
+      state.events[entries[i].url] = { url: entries[i].url, error: 'Не удалось связаться с локальным сервером.' };
+    }
+    renderResults();
+  }
+
+  el('progress').textContent = 'Готово.';
+  el('parseBtn').disabled = false;
+}
+
+function openAdminModal(venue) {
+  state.activeVenue = venue;
+  el('modalVenueLabel').textContent = `Площадка: ${venue}`;
+  fetch(`/api/admin_rows?venue=${encodeURIComponent(venue)}`)
+    .then(r => r.json())
+    .then(data => {
+      el('reservedCount').value = data.reserved_seats_count || 0;
+      state.excludedRows = data.excluded_rows || [];
+      renderRowChips();
+      el('modalBackdrop').classList.add('open');
+    });
+}
+
+function renderRowChips() {
+  el('rowChips').innerHTML = state.excludedRows.map((r, i) =>
+    `<span class="chip">${r.level ? r.level + ' / ' : ''}ряд ${r.row}<button onclick="removeRowChip(${i})">×</button></span>`
+  ).join('');
+}
+
+function removeRowChip(i) {
+  state.excludedRows.splice(i, 1);
+  renderRowChips();
+}
+
+el('addRowBtn').addEventListener('click', () => {
+  const row = el('rowNumber').value.trim();
+  if (!row) return;
+  state.excludedRows.push({ level: el('rowLevel').value.trim() || null, row });
+  el('rowNumber').value = '';
+  renderRowChips();
+});
+
+el('closeModalBtn').addEventListener('click', () => el('modalBackdrop').classList.remove('open'));
+
+el('saveModalBtn').addEventListener('click', () => {
+  fetch('/api/admin_rows', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      venue: state.activeVenue,
+      reserved_seats_count: Number(el('reservedCount').value) || 0,
+      excluded_rows: state.excludedRows,
+      excluded_seat_ids: [],
+    }),
+  }).then(() => el('modalBackdrop').classList.remove('open'));
+});
+
+el('parseBtn').addEventListener('click', startParsing);
+el('exportBtn').addEventListener('click', () => { window.location.href = '/api/export.csv'; });
+</script>
+</body>
+</html>

@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Анализ рынка — прототип</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Onest:wght@400;500&display=swap" rel="stylesheet">
+<!--
+  Прототип интерфейса (стиль — Design/Reference, адаптирован под рабочий инструмент).
+  Данные — реальный снимок 29.09.2026 по Владимиру (ОДКиИ + Арт Холл). Открывается двойным кликом.
+  Цвета проверены: tastemaker check_contrast (все текстовые пары ≥ 4.5:1, красный выходных #b91c1c — 6.47:1),
+  dataviz validate_palette (#1d6fae / #7ab9e8 — ordinal, PASS).
+  Настройки таблицы (скрытые столбцы, ширины) хранятся в localStorage этого браузера.
+-->
+<style>
+:root {
+  --canvas: #fafaf9; --card: #ffffff; --line: #e8e6e5; --line-soft: #f0efed; --line-strong: #d6d3d1;
+  --ink: #0c0a09; --ink-2: #44403c; --ink-3: #57534e; --muted: #78716c; --ash: #a8a29e;
+  --soot: #1c1917; --cta: #3ba6f1; --cta-edge: #3398e1;
+  --data: #1d6fae; --data-dark: #104a78; --data-light: #7ab9e8; --wash: #c1e1f7; --wash-2: #dcebf8; --row-sel: #eef6fd;
+  --risk: #b91c1c; --risk-bg: #fdeaea; --risk-bar: #d03b3b; --ok: #0ca30c; --weekend: #b91c1c;
+  --good: #166534; --good-bg: #e6f4ea; --good-bar: #15803d;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --display: Onest, system-ui, sans-serif; --ui: 'Golos Text', system-ui, sans-serif;
+  --chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12' fill='none' stroke='%2378716c' stroke-width='1.6'%3E%3Cpath d='M3 4.5l3 3 3-3'/%3E%3C/svg%3E");
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--canvas); color: var(--ink); font-family: var(--ui); font-size: 14px; line-height: 1.5; }
+button, input, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+a { color: var(--data); text-decoration: none; }
+a:hover { color: var(--data-dark); }
+:focus-visible { outline: 2px solid var(--cta); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.muted { color: var(--muted); }
+h1, h2, h3 { margin: 0; font-family: var(--display); }
+
+/* ---------- Каркас ---------- */
+.shell { display: flex; min-height: 100vh; }
+.side { width: 252px; flex-shrink: 0; border-right: 1px solid var(--line); padding: 20px 14px; display: flex; flex-direction: column; gap: 4px; position: sticky; top: 0; height: 100vh; }
+.brand { display: flex; align-items: center; gap: 10px; padding: 4px 10px 20px; font-family: var(--display); font-weight: 500; font-size: 15px; }
+.nav-item { display: flex; align-items: center; gap: 10px; height: 40px; padding: 0 12px; border-radius: 9999px; color: var(--ink-2); border: 0; background: none; width: 100%; text-align: left; white-space: nowrap; }
+.nav-item svg { flex-shrink: 0; }
+.nav-item:hover { background: #f2f1ef; color: var(--ink); }
+.nav-item[aria-current="page"] { background: var(--soot); color: #fff; font-weight: 500; }
+.nav-item.soon { color: var(--muted); cursor: default; }
+.nav-item.soon:hover { background: none; }
+.soon-tag { margin-left: auto; font-size: 11px; border: 1px solid var(--line); border-radius: 9999px; padding: 0 7px; }
+.main { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; }
+.top { height: 64px; flex-shrink: 0; padding: 0 32px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; position: sticky; top: 0; background: var(--canvas); z-index: 10; }
+.pill { height: 40px; padding: 0 16px; border-radius: 9999px; border: 1px solid var(--line); background: var(--card); display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+button.pill:hover { border-color: var(--line-strong); }
+.pill select { border: 0; background: transparent; outline: none; appearance: none; -webkit-appearance: none; padding-right: 4px; cursor: pointer; }
+.seg { display: inline-flex; height: 40px; padding: 3px; border: 1px solid var(--line); border-radius: 9999px; background: var(--card); }
+.seg button { border: 0; background: transparent; color: var(--ink-2); padding: 0 14px; border-radius: 9999px; white-space: nowrap; }
+.seg button[aria-pressed="true"] { background: var(--soot); color: #fff; font-weight: 500; }
+.search { flex-grow: 1; max-width: 360px; }
+.search input { border: 0; outline: none; background: transparent; width: 100%; }
+.status { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); white-space: nowrap; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+.btn-cta { height: 40px; padding: 0 18px; border-radius: 9999px; border: 1px solid var(--cta-edge); background: var(--cta); color: var(--ink); font-weight: 500; white-space: nowrap; }
+.btn-ghost { height: 36px; padding: 0 14px; border-radius: 9999px; border: 1px solid var(--line); background: var(--card); color: var(--ink-2); font-size: 13px; }
+.btn-dark { height: 36px; padding: 0 16px; border-radius: 9999px; border: 1px solid var(--soot); background: var(--soot); color: #fff; font-size: 13px; font-weight: 500; }
+.view { padding: 28px 32px 40px; display: flex; flex-direction: column; gap: 20px; }
+.page-head h1 { font-weight: 400; font-size: 32px; line-height: 1.2; letter-spacing: -0.025em; }
+.page-head p { margin: 4px 0 0; color: var(--muted); }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+.card-pad { padding: 20px 24px; }
+.card h2 { font-weight: 500; font-size: 17px; }
+.sub { font-size: 13px; color: var(--muted); margin: 4px 0 0; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.span-2 { grid-column: span 2; }
+.list { list-style: none; margin: 12px 0 0; padding: 0; }
+.list li { padding: 10px 0; border-top: 1px solid var(--line-soft); }
+.badge-risk { font-size: 12px; font-weight: 600; color: var(--risk); background: var(--risk-bg); border-radius: 9999px; padding: 1px 8px; white-space: nowrap; }
+.badge-new { font-size: 12px; font-weight: 600; color: var(--data-dark); background: var(--wash-2); border-radius: 9999px; padding: 1px 8px; white-space: nowrap; }
+.legend { display: flex; gap: 16px; font-size: 12px; color: var(--ink-3); align-items: center; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.empty { border: 1px dashed var(--line-strong); border-radius: 12px; padding: 40px 24px; text-align: center; color: var(--ink-3); background: var(--card); }
+.empty h2 { color: var(--ink); font-weight: 400; font-size: 22px; margin-bottom: 6px; }
+.wknd { color: var(--weekend) !important; }
+
+/* Всплывающие панели (календарь, столбцы) */
+.pop-anchor { position: relative; }
+.popover { position: absolute; top: calc(100% + 8px); left: 0; z-index: 40; background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: rgba(17, 12, 46, 0.12) 0 12px 45px 0; padding: 16px; }
+.popover.right { left: auto; right: 0; }
+
+/* Календарь */
+.cal { width: 600px; }
+.cal-months { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.cal-months button { height: 32px; padding: 0 12px; border-radius: 9999px; border: 1px solid var(--line); background: var(--card); font-size: 13px; color: var(--ink-2); }
+.cal-months button[aria-pressed="true"] { background: var(--soot); border-color: var(--soot); color: #fff; }
+.cal-body { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; font-family: var(--display); font-size: 15px; }
+.cal-nav { width: 32px; height: 32px; border-radius: 9999px; border: 1px solid var(--line); background: var(--card); display: inline-flex; align-items: center; justify-content: center; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.cal-wd { font-size: 11px; color: var(--muted); text-align: center; padding: 4px 0; }
+.cal-day { height: 36px; border: 0; background: none; border-radius: 8px; font-size: 13px; font-variant-numeric: tabular-nums; position: relative; }
+.cal-day:hover { background: #f2f1ef; }
+.cal-day.in { background: var(--wash-2); border-radius: 0; }
+.cal-day.edge { background: var(--soot); color: #fff !important; border-radius: 8px; }
+.cal-day.has::after { content: ""; position: absolute; left: 50%; bottom: 5px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--data); }
+.cal-day.edge.has::after { background: #fff; }
+.cal-day.out { visibility: hidden; }
+.cal-foot { display: flex; align-items: center; gap: 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
+.cal-foot .sel-text { flex-grow: 1; font-size: 13px; color: var(--ink-3); }
+
+/* ---------- Обзор ---------- */
+.kpis { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr 1fr; }
+.kpis > div { padding: 22px 24px; border-right: 1px solid var(--line); }
+.kpis > div:last-child { border-right: 0; }
+.kpi-label { font-size: 13px; color: var(--muted); }
+.kpi-value { font-family: var(--display); font-size: 30px; line-height: 1.2; margin-top: 6px; }
+.kpi-hero { font-size: 44px; line-height: 1.1; letter-spacing: -0.02em; }
+.meter { height: 6px; border-radius: 9999px; background: var(--wash); margin-top: 12px; overflow: hidden; }
+.meter > div { height: 100%; background: var(--data); }
+.change { display: flex; align-items: center; gap: 14px; }
+.change-sign { width: 32px; height: 32px; flex-shrink: 0; border-radius: 9999px; display: flex; align-items: center; justify-content: center; font-weight: 600; }
+.vbar { display: grid; grid-template-columns: 160px minmax(0, 1fr) 200px; gap: 16px; align-items: center; }
+.stack { display: flex; gap: 2px; height: 20px; }
+
+/* ---------- Ниши ---------- */
+.insights { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; }
+.insights .card { padding: 18px 22px; }
+.insight-v { font-family: var(--display); font-size: 22px; margin-top: 4px; }
+.heat-table { width: 100%; border-collapse: collapse; }
+.heat-table th { font-size: 12px; font-weight: 500; color: var(--muted); padding: 10px 6px; text-align: center; }
+.heat-table th:first-child { text-align: left; padding-left: 22px; }
+.heat-table tbody th { text-align: left; font-size: 14px; font-weight: 500; color: var(--ink); padding: 5px 12px 5px 22px; }
+.heat-table tbody tr { border-top: 1px solid var(--line-soft); }
+.heat-table td { padding: 4px 3px; }
+.cell { height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-variant-numeric: tabular-nums; }
+.tag { display: inline-block; font-size: 12px; font-weight: 500; border-radius: 9999px; padding: 2px 10px; border: 1px solid var(--line); }
+.months { display: grid; grid-template-columns: minmax(0, 1fr) repeat(6, 40px); gap: 4px; align-items: center; }
+.mcell { height: 30px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-variant-numeric: tabular-nums; }
+
+/* ---------- Мероприятия ---------- */
+.toolbar { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.chip-btn { height: 36px; padding: 0 14px; border-radius: 9999px; border: 1px solid var(--line); background: var(--card); color: var(--ink-2); font-size: 13px; }
+.chip-btn[aria-pressed="true"] { background: var(--soot); border-color: var(--soot); color: #fff; font-weight: 500; }
+.chip-btn .cnt { opacity: 0.7; margin-left: 4px; }
+.chip-select { height: 36px; padding: 0 34px 0 14px; border-radius: 9999px; border: 1px solid var(--line); background: var(--card) var(--chevron) no-repeat right 14px center; color: var(--ink-2); font-size: 13px; appearance: none; -webkit-appearance: none; -moz-appearance: none; cursor: pointer; }
+.cols-pop { width: 280px; }
+.cols-pop label { display: flex; align-items: center; gap: 10px; padding: 7px 4px; font-size: 14px; border-radius: 6px; cursor: pointer; }
+.cols-pop label:hover { background: #f5f5f4; }
+.cols-pop input { width: 16px; height: 16px; accent-color: #1c1917; }
+.cols-pop label.locked { color: var(--muted); cursor: default; }
+
+.ev-card-table { width: -webkit-fit-content; width: fit-content; max-width: none; }
+.ev-table { border-collapse: collapse; table-layout: fixed; }
+.ev-table thead th { position: sticky; top: 64px; background: var(--card); z-index: 3; font-size: 12px; font-weight: 500; color: var(--muted); text-align: left; padding: 12px 10px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; overflow: visible; }
+.ev-table thead th:first-child { border-top-left-radius: 12px; }
+.ev-table thead th:last-child { border-top-right-radius: 12px; }
+.ev-table th.r, .ev-table td.r { text-align: right; }
+.ev-table th .th-in { display: flex; align-items: center; gap: 4px; overflow: hidden; }
+.ev-table th.r .th-in { justify-content: flex-end; }
+.sort-btn { border: 0; background: none; padding: 0; color: inherit; font-weight: 500; display: inline-flex; align-items: center; gap: 4px; }
+.sort-btn:hover { color: var(--ink); }
+.resizer { position: absolute; top: 6px; bottom: 6px; right: -4px; width: 9px; cursor: col-resize; z-index: 4; display: flex; justify-content: center; }
+.resizer::before { content: ""; width: 1px; height: 100%; background: var(--line); transition: background 0.12s; }
+.resizer:hover::before, .resizing .resizer.active::before { width: 2px; background: var(--cta); }
+.resizing, .resizing * { cursor: col-resize !important; user-select: none; }
+.info { display: inline-flex; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line-strong); font-size: 10px; align-items: center; justify-content: center; color: var(--muted); cursor: help; position: relative; flex-shrink: 0; }
+.info-pop { position: fixed; z-index: 60; width: 280px; background: var(--ink); color: #fff; font-size: 12px; line-height: 1.45; padding: 8px 10px; border-radius: 8px; pointer-events: none; }
+.ev-table tbody tr { border-top: 1px solid var(--line-soft); cursor: pointer; }
+.ev-table tbody tr:hover { background: #fbfaf9; }
+.ev-table tbody tr.sel { background: var(--row-sel); }
+.ev-table td { padding: 10px; vertical-align: middle; overflow: hidden; }
+.d-day { font-family: var(--display); font-size: 17px; line-height: 1.1; white-space: nowrap; }
+.d-sub, .sub2 { font-size: 12px; color: var(--muted); }
+.ev-title { all: unset; cursor: pointer; font-weight: 500; display: block; }
+.ev-title:focus-visible { outline: 2px solid var(--cta); outline-offset: 2px; border-radius: 4px; }
+.ev-badges { display: flex; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
+.fillwrap { display: inline-flex; flex-direction: column; gap: 3px; max-width: 100%; }
+.fillbar { display: flex; align-items: center; gap: 8px; }
+.fillbar .track { flex-grow: 1; height: 6px; border-radius: 9999px; background: #e7e5e4; overflow: hidden; }
+.fillbar .track > div { height: 100%; }
+.fillbar .pct { font-weight: 500; font-variant-numeric: tabular-nums; min-width: 34px; text-align: right; }
+.money-main { font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.nowrap { white-space: nowrap; }
+
+/* Карточка поверх таблицы — шире на широких экранах */
+.drawer-veil { position: fixed; inset: 0; background: rgba(12, 10, 9, 0.12); z-index: 30; opacity: 0; pointer-events: none; transition: opacity 0.18s ease-out; }
+.drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 480px; width: min(880px, max(480px, 42vw)); max-width: 100vw; background: var(--card); border-left: 1px solid var(--line); box-shadow: rgba(17, 12, 46, 0.12) -12px 0 45px 0; z-index: 31; overflow: auto; padding: 24px 32px 32px; display: flex; flex-direction: column; gap: 22px; transform: translateX(100%); visibility: hidden; transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0.22s; }
+.drawer > * { flex-shrink: 0; }  /* панель прокручивается, а не сжимает блоки по высоте */
+.drawer.open { transform: none; visibility: visible; transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1); }
+.drawer-veil.open { opacity: 1; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) { .drawer, .drawer.open, .drawer-veil { transition: none; } }
+.icon-btn { width: 36px; height: 36px; border-radius: 9999px; border: 1px solid var(--line); background: var(--card); display: inline-flex; align-items: center; justify-content: center; color: var(--ink-2); flex-shrink: 0; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.chip { font-size: 12px; border-radius: 9999px; padding: 2px 10px; border: 1px solid var(--line); }
+/* Блоки цифр: ровно 3 × 2, без пустых ячеек при любой ширине */
+.kgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.kgrid > div { padding: 16px 18px; background: var(--card); min-width: 0; }
+.kgrid .kpi-value { font-size: 26px; margin-top: 2px; line-height: 1.15; }
+.drawer { container-type: inline-size; }
+@container (max-width: 640px) { .kgrid > div { padding: 14px; } .kgrid .kpi-value { font-size: 21px; } }
+.drawer-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 22px 28px; align-items: start; }
+.pace { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.pace-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin-top: 12px; }
+.pace-facts b { display: block; font-family: var(--display); font-weight: 400; font-size: 20px; }
+.badge-edit { font-size: 12px; font-weight: 500; color: var(--ink-3); background: #f0efed; border-radius: 9999px; padding: 1px 8px; white-space: nowrap; }
+
+/* Форма редактирования / добавления */
+.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; }
+.form-grid .full { grid-column: 1 / -1; }
+.form-grid h4 { grid-column: 1 / -1; margin: 8px 0 -4px; font-family: var(--display); font-weight: 500; font-size: 15px; }
+.field label { display: block; font-size: 12px; color: var(--ink-3); margin-bottom: 4px; }
+.field input, .field select { width: 100%; height: 40px; border: 1px solid var(--line-strong); border-radius: 8px; padding: 0 12px; background: var(--card); }
+.field select { appearance: none; -webkit-appearance: none; background: var(--card) var(--chevron) no-repeat right 12px center; padding-right: 32px; }
+.field input:focus, .field select:focus { outline: none; border-color: var(--cta); box-shadow: 0 0 0 2px rgba(59, 166, 241, 0.25); }
+.field .hint { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.field.bad input { border-color: var(--risk-bar); }
+.field .err { font-size: 12px; color: var(--risk); margin-top: 3px; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.check input { width: 16px; height: 16px; accent-color: #1c1917; }
+.form-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding-top: 14px; border-top: 1px solid var(--line-soft); }
+.btn-danger { height: 36px; padding: 0 14px; border-radius: 9999px; border: 1px solid #f3c9b3; background: var(--card); color: var(--risk); font-size: 13px; }
+.dyn-empty { height: 110px; border-radius: 10px; background: var(--canvas); border: 1px solid var(--line-soft); position: relative; display: flex; align-items: center; justify-content: center; text-align: center; padding: 0 24px; }
+.dyn-empty::before { content: ""; position: absolute; left: 16px; right: 16px; bottom: 22px; border-top: 1px solid var(--line-strong); }
+.dyn-empty span { position: relative; background: var(--canvas); padding: 0 6px; font-size: 13px; color: var(--ink-3); }
+.hall-row { display: flex; align-items: center; gap: 6px; }
+.hall-row .n { width: 18px; font-size: 10px; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+.hall-row .wrap { flex-grow: 1; display: flex; justify-content: center; }
+.hall-row .bar { display: flex; gap: 1px; height: 7px; }
+.note { font-size: 13px; color: var(--ink-3); border: 1px dashed var(--line-strong); border-radius: 10px; padding: 14px 16px; }
+.m-list { display: none; }
+.bottom-nav { display: none; }
+
+/* ---------- Анимации ----------
+   Короткие (120–220 мс), ease-out, только цвет/тень/transform — интерфейс остаётся быстрым.
+   Наведение — только для устройств с мышью. При «уменьшить движение» в системе всё выключено. */
+button, .pill, .chip-select, .nav-item, .cal-day, .m-item, .kgrid > div {
+  transition: background-color 150ms var(--ease), border-color 150ms var(--ease), color 150ms var(--ease), transform 120ms var(--ease);
+}
+@media (hover: hover) {
+  .btn-cta:hover { background: #2f9ae6; box-shadow: 0 4px 14px rgba(59, 166, 241, 0.35); }
+  .btn-dark:hover { background: #2c2825; }
+  .btn-ghost:hover, .chip-btn:not([aria-pressed="true"]):hover, .chip-select:hover, button.pill:hover, a.pill:hover, .icon-btn:hover { border-color: var(--line-strong); background-color: #fbfaf9; }
+  .seg button:not([aria-pressed="true"]):hover { background: #f2f1ef; color: var(--ink); }
+  .btn-danger:hover { background: var(--risk-bg); }
+  .cal-months button:not([aria-pressed="true"]):hover { border-color: var(--line-strong); color: var(--ink); }
+  .m-item:hover { border-color: var(--line-strong); }
+}
+button:active:not(:disabled), a.pill:active { transform: scale(0.97); }
+.nav-item:active { transform: scale(0.985); }
+.ev-title:active { transform: none; }
+
+@keyframes pop-in { from { opacity: 0; transform: translateY(-4px) scale(0.98); } to { opacity: 1; transform: none; } }
+.cal:not([hidden]), .popover.anim { animation: pop-in 160ms var(--ease); transform-origin: top left; }
+.popover.right.anim { transform-origin: top right; }
+
+@keyframes fade-up { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.view.enter > * { animation: fade-up 220ms var(--ease) both; }
+.view.enter > *:nth-child(2) { animation-delay: 30ms; }
+.view.enter > *:nth-child(3) { animation-delay: 60ms; }
+.view.enter > *:nth-child(n+4) { animation-delay: 90ms; }
+.drawer.open > * { animation: fade-up 200ms var(--ease) both; }
+.drawer.open > *:nth-child(n+3) { animation-delay: 40ms; }
+
+/* Полосы «вырастают» один раз при входе в раздел — показ данных, а не отклик на клик */
+@keyframes grow { from { transform: scaleX(0.2); opacity: 0; } to { transform: scaleX(1); opacity: 1; } }
+.view.enter .track > div, .view.enter .stack > div, .view.enter .meter > div { transform-origin: left center; animation: grow 300ms var(--ease) both; }
+.drawer.open .meter > div { transform-origin: left center; animation: grow 300ms var(--ease) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Телефон ---------- */
+@media (max-width: 820px) {
+  .side { display: none; }
+  .top { height: auto; padding: 12px 16px; flex-wrap: wrap; position: static; }
+  .search { max-width: none; order: 5; flex-basis: 100%; }
+  .status, .top .spacer { display: none; }
+  .view { padding: 20px 16px 110px; }
+  .kpis, .grid-3, .insights { grid-template-columns: 1fr; }
+  .kpis > div { border-right: 0; border-bottom: 1px solid var(--line); }
+  .span-2 { grid-column: auto; }
+  .vbar { grid-template-columns: 1fr; gap: 6px; }
+  .niche-grid { grid-template-columns: 1fr !important; }
+  .ev-card-table, .cols-anchor { display: none; }
+  .m-list { display: flex; flex-direction: column; gap: 10px; }
+  .m-item { all: unset; display: block; background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; cursor: pointer; }
+  .bottom-nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; height: 72px; padding: 6px 6px 16px; background: var(--card); border-top: 1px solid var(--line); z-index: 20; }
+  .bottom-nav button { border: 0; background: none; font-size: 11px; color: var(--ink-3); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+  .bottom-nav button[aria-current="page"] { color: var(--ink); font-weight: 600; }
+  .drawer { width: 100vw; padding: 20px 16px 28px; }
+  .kgrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .form-grid { grid-template-columns: 1fr; }
+  .cal { width: calc(100vw - 32px); }
+  .cal-body { grid-template-columns: 1fr; }
+  .cal-body > div:last-child { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="side" aria-label="Разделы">
+    <div class="brand">
+      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="2" y="12" width="4" height="8" rx="1" fill="#0c0a09"/><rect x="9" y="7" width="4" height="13" rx="1" fill="#0c0a09"/><rect x="16" y="2" width="4" height="18" rx="1" fill="#3ba6f1"/></svg>
+      Анализ рынка
+    </div>
+    <button class="nav-item" data-view="overview"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Обзор</button>
+    <button class="nav-item" data-view="niches"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 2h3v3H2zM6.5 2h3v3h-3zM11 2h3v3h-3zM2 6.5h3v3H2zM6.5 6.5h3v3h-3zM2 11h3v3H2z"/></svg>Ниши</button>
+    <button class="nav-item" data-view="events"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg>Мероприятия</button>
+    <div class="nav-item soon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 13l4-5 3 3 5-7"/></svg>Динамика продаж<span class="soon-tag">скоро</span></div>
+    <div class="nav-item soon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 14V6l6-4 6 4v8M6 14v-4h4v4"/></svg>Площадки и залы<span class="soon-tag">скоро</span></div>
+    <div class="nav-item soon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2.5" width="12" height="3.5" rx="1"/><path d="M3 6v7.5h10V6M6.5 9h3"/></svg>Архив<span class="soon-tag">скоро</span></div>
+    <div style="flex-grow:1"></div>
+    <div class="nav-item soon"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg>Настройки</div>
+  </nav>
+
+  <div class="main">
+    <header class="top">
+      <label class="pill" title="Город">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 14s5-4.3 5-8A5 5 0 0 0 3 6c0 3.7 5 8 5 8z"/><circle cx="8" cy="6" r="1.8"/></svg>
+        <select id="city" aria-label="Город"></select>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#78716c" stroke-width="1.6" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg>
+      </label>
+      <div class="seg" role="group" aria-label="Период" id="period">
+        <button data-p="30">30 дней</button><button data-p="90">90 дней</button><button data-p="all">Сезон</button>
+      </div>
+      <div class="pop-anchor">
+        <button class="pill" id="dateBtn" type="button" aria-haspopup="dialog" aria-expanded="false">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg>
+          <span id="dateLabel">Даты</span>
+        </button>
+        <div class="popover cal" id="cal" role="dialog" aria-label="Выбор дат" hidden></div>
+      </div>
+      <label class="pill search">
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#78716c" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>
+        <input id="q" type="search" placeholder="Мероприятие, артист, площадка" aria-label="Поиск">
+      </label>
+      <div class="spacer" style="flex-grow:1"></div>
+      <div class="status"><span class="dot" aria-hidden="true"></span>Собрано 29 сент., 19:31</div>
+      <button class="btn-cta" type="button">Собрать сейчас</button>
+    </header>
+    <div id="view" class="view"></div>
+  </div>
+</div>
+
+<nav class="bottom-nav" aria-label="Разделы">
+  <button data-view="overview">Обзор</button><button data-view="niches">Ниши</button><button data-view="events">Мероприятия</button><button type="button" disabled>Ещё</button>
+</nav>
+
+<div class="drawer-veil" id="veil"></div>
+<aside class="drawer" id="drawer" aria-label="Карточка мероприятия" aria-hidden="true"></aside>
+<div class="info-pop" id="infoPop" hidden></div>
+
+<script>
+// ---------------------------------------------------------------- данные (снимок 29.09.2026)
+// [название, площадка, дата, время, сфера, формат, жанр, цена от, цена до, занято, мест в продаже, вал, выручка,
+//  Пушкинская, цена текстом, ссылка: номер сеанса vladimirkoncert.ru или адрес страницы odk33.ru]
+var EV = [
+["Открытие творческого сезона «Фабрика талантов»","О","2026-09-30","18:30","Разговорный жанр","Творческая встреча","",null,null,null,null,null,null,0,"по пригласительным","otkryitie-tvorcheskogo-sezona-fabrika-talantov"],
+["Бал-концерт «Осенний вальс»","О","2026-10-02","18:30","Музыка","Концерт","Классическая музыка",null,null,null,null,null,null,0,"по пригласительным","bal-konczert-osennij-vals1"],
+["«Осенний листопад»","О","2026-10-07","17:30","Литература / поэзия","Литературный вечер","",null,null,null,null,null,null,0,"для участников клуба","osennij-listopad"],
+["Спектакль «Ночной гость»","О","2026-10-09","19:00","Театр","Спектакль","Драма",2000,3700,430,742,2356600,1395000,0,"",10908],
+["Мюзикл «Путешествие Маленького принца»","О","2026-10-15","19:00","Театр","Мюзикл","",1400,2700,57,742,1692700,137900,0,"",11432],
+["«Алиса в городе чудес»","О","2026-10-17","15:00","Танец","Танцевальное представление","Современная хореография",450,600,211,742,416550,124650,1,"",11620],
+["«Романтика осени»","О","2026-10-18","14:00","Литература / поэзия","Литературный вечер","",null,null,null,null,null,null,0,"для участников клуба","romantika-oseni"],
+["Балет «Кармен»","О","2026-10-18","18:00","Танец","Балет","Классическая хореография",1700,2900,214,742,1943500,566300,0,"",11153],
+["«Голос эпохи»","О","2026-10-20","14:00","Музыка","Концерт","Эстрада",null,null,null,null,null,null,0,"для участников клуба","golos-epoxi"],
+["Творческий вечер Екатерины Волковой","О","2026-10-22","18:30","Разговорный жанр","Творческая встреча","",600,1500,57,742,839500,84900,1,"",11753],
+["«Струны души»","О","2026-10-25","15:00","Музыка","Концерт","",null,null,null,null,null,null,0,"для участников клуба","strunyi-dushi"],
+["Виктор Чаусов","О","2026-10-27","13:00","Музыка","Концерт","Поп",null,null,null,null,null,null,0,"для участников клуба","viktor-chausov"],
+["Александр Малинин","О","2026-10-29","19:00","Музыка","Концерт","Шансон",2100,5100,269,742,3104700,1104400,0,"",11159],
+["Хор Сретенского монастыря","О","2026-10-30","19:00","Музыка","Концерт","Классическая музыка",2700,4700,506,742,2724000,1844200,0,"",11244],
+["Спектакль «Опасные игры»","О","2026-11-07","18:00","Театр","Спектакль","Драма",2100,5700,96,742,3219500,452400,0,"",11569],
+["Владимир Куклачев «Волшебные кошки»","О","2026-11-08","12:00","Детские","Спектакль","",1500,2900,263,742,1844823,670423,0,"",11324],
+["«Песня сквозь века»","О","2026-11-12","18:00","Театр","Музыкальный спектакль","Эстрада",700,1350,101,742,833800,123300,1,"",11757],
+["Марина Девятова","О","2026-11-19","19:00","Музыка","Концерт","Эстрада",2100,4100,153,742,2555700,542100,0,"",11452],
+["Валерий Сёмин «Неужели 60?!»","О","2026-11-22","18:00","Музыка","Концерт","Эстрада",2800,5000,448,742,3033800,1889000,0,"",10956],
+["Спектакль «Мужчина с доставкой на дом»","О","2026-11-26","19:00","Театр","Спектакль","Комедия",2000,4000,27,742,2554700,103800,0,"",11680],
+["Сергей Трофимов","О","2026-11-30","19:00","Музыка","Концерт","Рок",2700,5700,245,742,3658100,1189100,0,"",11128],
+["Олег Митяев","О","2026-12-03","19:00","Музыка","Концерт","",2000,4600,70,742,2601600,247400,0,"",11502],
+["«Лукоморье»","О","2026-12-23","11:00","Детские","Музыкальное шоу","",1000,1000,296,742,742000,296000,1,"",11790],
+["«Лукоморье»","О","2026-12-24","11:00","Детские","Музыкальное шоу","",1000,1000,289,742,742000,289000,1,"",11791],
+["«Лукоморье»","О","2026-12-24","14:00","Детские","Музыкальное шоу","",1000,1000,240,742,742000,240000,1,"",11792],
+["«Лукоморье»","О","2026-12-25","11:00","Детские","Музыкальное шоу","",1000,1000,352,742,742000,352000,1,"",11793],
+["«Лукоморье»","О","2026-12-25","14:00","Детские","Музыкальное шоу","",1000,1000,242,742,742000,242000,1,"",11794],
+["«Лукоморье»","О","2026-12-26","11:00","Детские","Музыкальное шоу","",1300,1300,217,742,964600,282100,1,"",11795],
+["«Лукоморье»","О","2026-12-26","14:00","Детские","Музыкальное шоу","",1300,1300,219,742,964600,284700,1,"",11796],
+["«Лукоморье»","О","2026-12-27","14:00","Детские","Музыкальное шоу","",1300,1300,283,742,964600,367900,1,"",11797],
+["«Лукоморье»","О","2026-12-28","11:00","Детские","Музыкальное шоу","",1000,1000,275,742,742000,275000,1,"",11798],
+["«Лукоморье»","О","2026-12-28","14:00","Детские","Музыкальное шоу","",1000,1000,215,742,742000,215000,1,"",11799],
+["«Лукоморье»","О","2026-12-29","11:00","Детские","Музыкальное шоу","",1000,1000,248,742,742000,248000,1,"",11800],
+["«Лукоморье»","О","2026-12-29","14:00","Детские","Музыкальное шоу","",1000,1000,221,742,742000,221000,1,"",11801],
+["«Лукоморье»","О","2027-01-02","14:00","Детские","Музыкальное шоу","",1300,1300,223,742,964600,289900,1,"",11802],
+["«Лукоморье»","О","2027-01-03","11:00","Детские","Музыкальное шоу","",1300,1300,218,742,964600,283400,1,"",11803],
+["«Лукоморье»","О","2027-01-03","14:00","Детские","Музыкальное шоу","",1300,1300,228,742,964600,296400,1,"",11804],
+["Балет «Щелкунчик»","О","2027-01-05","17:00","Танец","Балет","Классическая хореография",2000,3200,100,742,2121100,284900,0,"",11747],
+["Балет «Щелкунчик»","О","2027-01-07","17:00","Танец","Балет","Классическая хореография",2200,3200,12,742,2174900,38400,0,"",11512],
+["Спектакль «Ирония наследства»","О","2027-01-08","18:00","Театр","Спектакль","Комедия",2100,4200,106,742,2681200,385400,0,"",11719],
+["Ярослав Сумишевский","О","2027-01-10","18:00","Музыка","Концерт","Эстрада",2300,5400,127,742,3068200,464600,0,"",11612],
+["Спектакль «Анна Каренина»","О","2027-01-29","19:00","Театр","Спектакль","Роман",2000,3900,96,742,2384400,305600,0,"",11829],
+["Балет «Спящая красавица»","О","2027-02-06","17:00","Танец","Балет","Классическая хореография",1600,2400,23,742,1597600,54600,0,"",11513],
+["Щенячий дозор","А","2026-10-02","18:00","Детские","Спектакль","",1000,2200,238,759,1276200,422700,0,"",10969],
+["Илья Раевский. Сольный стендап","А","2026-10-04","19:00","Комедия и юмор","Стендап","Стендап",2000,4200,404,759,2013000,927800,0,"",11559],
+["Хор Русского Рока при свечах. CAGMO","А","2026-10-09","19:00","Музыка","Концерт","Классическая музыка",2500,5900,253,759,2515900,814300,0,"",11566],
+["Спектакль «Запчасти для счастья»","А","2026-10-17","19:00","Театр","Спектакль","Комедия",2000,4700,473,759,2779919,1756219,0,"",10885],
+["Алексей Архиповский","А","2026-10-18","19:00","Музыка","Концерт","Классическая музыка",2400,5400,606,759,2490600,1973200,0,"",11459],
+["Спектакль «Старомодная комедия»","А","2026-10-22","19:00","Театр","Спектакль","Комедия",1000,3700,487,759,1486200,961600,0,"",11546],
+["Александр Маршал","А","2026-10-28","19:00","Музыка","Концерт","Рок",2700,6450,431,767,3360090,1828290,0,"",10114],
+["Спектакль «Моя жена лгунья. Наше время»","А","2026-10-29","19:00","Театр","Спектакль","Комедия",1200,3200,174,759,1712300,382300,0,"",11500],
+["Группа «Ява» — хиты «Сектора Газа»","А","2026-10-30","19:00","Музыка","Концерт","Рок",2200,4000,8,759,2407400,24400,0,"",11545],
+["Света","А","2026-10-31","19:00","Музыка","Концерт","Поп",2700,5700,332,371,1625600,1431300,0,"",11099],
+["Спектакль «Папа в паутине»","А","2026-11-01","19:00","Театр","Спектакль","Комедия",1400,3700,126,358,886700,318500,0,"",11170],
+["Мюзикл «Кабаре»","А","2026-11-03","19:00","Театр","Мюзикл","",2100,4600,209,759,2700700,705200,0,"",11451],
+["Валентин Сидоров","А","2026-11-04","19:00","Комедия и юмор","Стендап","Стендап",1800,4200,87,759,2046600,257400,0,"",11168],
+["Алексей Петрухин","А","2026-11-07","19:00","Музыка","Концерт","Шансон",1700,3900,20,759,2222800,52200,0,"",11098],
+["Спектакль «Сублимация любви»","А","2026-11-08","18:00","Театр","Спектакль","",1700,5200,111,759,2465300,357700,0,"",11454],
+["Спектакль «Палата бизнес-класса»","А","2026-11-09","19:00","Театр","Спектакль","Комедия",1700,5200,166,807,2946648,641148,0,"",11173],
+["Елена Ваенга","А","2026-11-10","19:00","Музыка","Концерт","Эстрада",3700,10200,249,720,4305500,1408300,0,"",11178],
+["Спектакль «Любовь на бис»","А","2026-11-11","19:00","Театр","Спектакль","Мелодрама",1700,5200,20,759,2689000,78000,0,"",11756],
+["Группа «Кипелов»","А","2026-11-12","19:00","Музыка","Концерт","Метал",3700,7700,328,375,2448067,2110667,0,"",11424],
+["Симфония Майкла Джексона при свечах. CAGMO","А","2026-11-13","19:00","Музыка","Концерт","Классическая музыка",2100,5900,280,759,2491300,871800,0,"",10621],
+["Мюзикл «Парфюмер»","А","2026-11-14","18:00","Театр","Мюзикл","",2100,3950,398,720,2209900,1206400,0,"",10351],
+["Toly Summer","А","2026-11-15","18:00","Музыка","Концерт","Поп",2000,3800,139,207,669800,464200,0,"",11840],
+["Шоу под дождём «Мужчина vs Женщина»","А","2026-11-18","19:00","Шоу","Шоу","Комедия",2600,4200,695,759,2629019,2416819,0,"",10898],
+["Игорь Саруханов","А","2026-11-20","19:00","Музыка","Концерт","Поп",2400,4700,161,759,2633200,569300,0,"",10948],
+["Симфонические хиты. Concord Orchestra","А","2026-11-21","19:00","Музыка","Концерт","Классическая музыка",2400,4600,184,759,2682000,630400,0,"",11120],
+["Балет «Щелкунчик»","А","2026-11-22","17:00","Танец","Балет","Классическая хореография",1300,2600,13,759,1566700,30200,0,"",11752],
+["Александр Серов","А","2026-11-23","19:00","Музыка","Концерт","Эстрада",3700,9200,89,759,4342800,459800,0,"",11422],
+["Стендап Богдана Лисевского","А","2026-11-25","19:00","Комедия и юмор","Стендап","Стендап",2200,4700,443,759,2448568,1425068,0,"",11086],
+["Александр Пушной","А","2026-11-26","19:00","Музыка","Концерт","Рок",2700,4700,83,207,809500,327000,0,"",10673],
+["Burito","А","2026-11-27","19:00","Музыка","Концерт","Поп",2700,5200,141,207,846600,551100,0,"",10941],
+["Виктор Комаров","А","2026-11-29","19:00","Музыка","Концерт","Стендап",1880,3770,466,759,1893030,1167620,0,"",9713],
+["Спектакль «Гранд. История в отеле»","А","2026-12-01","19:00","Театр","Спектакль","",1700,6200,286,759,2405800,972700,0,"",10731],
+["Спектакль «У каждого свои недостатки»","А","2026-12-02","19:00","Театр","Спектакль","Комедия",1700,5000,18,759,2887700,70600,0,"",11604],
+["Новогодние хиты и саундтреки. Нео Классик","А","2026-12-07","19:00","Музыка","Концерт","Неоклассика",2000,4200,67,759,2555200,227000,0,"",11835],
+["Мюзикл «Танго — моя жизнь»","А","2026-12-10","19:00","Театр","Мюзикл","",1600,3100,97,759,1905000,234300,0,"",11297],
+["Группа «Бутырка». Юбилейный тур","А","2026-12-11","19:00","Музыка","Концерт","Шансон",2000,4600,47,759,2769600,119200,0,"",11720],
+["Шоу «Ваши Пельмени»","А","2026-12-16","19:00","Шоу","Шоу","Эстрада",2900,7400,6,759,4501500,24000,0,"",11786],
+["Спектакль «Свидание на четверых»","А","2026-12-17","19:00","Театр","Спектакль","Комедия",1400,3700,85,358,876300,181800,0,"",11356],
+["Спектакль «Доктор знает всё»","А","2026-12-18","19:00","Театр","Спектакль","Комедия",1700,5000,63,759,2885000,206600,0,"",11119],
+["Наташа Королёва. Все хиты","А","2026-12-20","18:00","Музыка","Концерт","Поп",2500,6000,24,759,3644500,85500,0,"",11787],
+["Спектакль «Бывшие»","А","2026-12-21","19:00","Театр","Спектакль","Комедия",2000,4700,85,759,2787100,306000,0,"",11762],
+["Спектакль «Муж моей жены»","А","2026-12-23","19:00","Театр","Спектакль","Комедия",1700,5200,80,759,2242300,273000,0,"",11455],
+["Спектакль «Ловушка для мужа»","А","2026-12-24","19:00","Театр","Спектакль","Комедия",1700,4200,94,759,2556900,305700,0,"",11763],
+["Шоу «Эхо Фантазий»","А","2026-12-25","13:00","Шоу","Шоу","",500,2600,140,720,1246700,235300,0,"",11460],
+["Шоу «Эхо Фантазий»","А","2026-12-25","16:00","Шоу","Шоу","",500,2600,167,720,1246700,286700,0,"",11461],
+["Симфония Экспедиция 33. CAGMO","А","2026-12-26","18:00","Музыка","Концерт","Классическая музыка",2900,6700,282,759,2862100,1068300,0,"",11472],
+["«Белоснежный бал Иоганна Штрауса»","А","2026-12-30","19:00","Шоу","Шоу","Классическая музыка",2200,4400,47,759,2549200,152600,0,"",11145],
+["Юлия Савичева. Новогодний концерт","А","2027-01-05","18:00","Музыка","Концерт","",2100,6100,16,352,1502700,59100,0,"",11718],
+["Спектакль «Служебный роман»","А","2027-01-06","18:00","Театр","Спектакль","Комедия",2200,4200,64,759,2639000,220400,0,"",11746],
+["ВИА «Синяя птица»","А","2027-01-10","18:00","Музыка","Концерт","Поп",1200,2800,415,759,1772400,979200,0,"",11603],
+["Слава","А","2027-01-27","19:00","Музыка","Концерт","Поп",2700,5700,115,759,3347300,422000,0,"",11622],
+["Спектакль «Боинг-Боинг»","А","2027-01-29","19:00","Театр","Спектакль","Комедия",1400,3700,123,358,874500,300100,0,"",11600],
+["Симфония Стинг при свечах. CAGMO","А","2027-02-06","18:00","Музыка","Концерт","Классическая музыка",2100,5900,220,759,2483700,737800,0,"",11471],
+["Мельница. Юбилейный тур","А","2027-02-15","19:00","Музыка","Концерт","Фолк / этника",2500,5400,15,759,3112500,58100,0,"",11760],
+["Спектакль «Слишком женатый таксист»","А","2027-02-20","19:00","Театр","Спектакль","Абсурд",1400,3700,116,358,872400,268600,0,"",11727],
+["Пикник. Вечное движение","А","2027-03-02","19:00","Музыка","Концерт","Рок",2700,10200,291,771,4774100,1300800,0,"",11462],
+["Спектакль «Ночь её откровений»","А","2027-03-27","19:00","Театр","Спектакль","Мелодрама",1400,3700,107,358,870900,251400,0,"",11836]
+];
+var VENUE = { "О": "ОДКиИ", "А": "Арт Холл" };
+
+// Города: данные есть только по Владимиру; остальные — найденные источники, ещё не подключённые
+var CITIES = [
+  { name: "Владимир", ready: true },
+  { name: "Иваново", source: "ivanovokoncert.ru", note: "13 площадок: филармония, драмтеатр, музыкальный театр, ЦКиО и др." },
+  { name: "Кинешма", source: "ivanovokoncert.ru", note: "Кинешемский драматический театр продаёт билеты через ивановский сайт" },
+  { name: "Кострома", source: "kostromakoncert.ru", note: "3 площадки: КВЦ «Губернский», Дом музыки, ЦК «Майский»" },
+  { name: "Ярославль", source: "yarkoncert.ru", note: "17 площадок: «Миллениум», Дворец молодёжи, «Арена-2000» и др." },
+  { name: "Рыбинск", source: "yarkoncert.ru", note: "среди ярославских площадок есть ДК «Авиатор» и «Вымпел» — нужно уточнить, какие из них в Рыбинске" },
+  { name: "Ковров", source: "kovrovkoncert.ru", note: "4 площадки: ДК им. Ногина, «Современник», ДКиО им. Дегтярёва, ДКиТ «Родина»" }
+];
+
+// Заполненность «Кармен» по рядам (снимок 29.09): [ряд, мест, занято, цена]
+var CARMEN = [
+  { name: "Зона 1 · партер", rows: [[1,38,4,2500],[2,36,2,2700],[3,34,1,2900],[4,30,11,2900],[5,26,8,2900],[6,22,6,2900],[7,18,7,2900],[8,16,10,2900],[9,14,9,2900],[10,14,10,2900]] },
+  { name: "Зона 2 · амфитеатр", rows: [[11,44,36,2900],[12,46,15,2900],[13,46,8,2700],[14,48,5,2700],[15,48,8,2700],[16,39,20,2500],[17,37,9,2500]] },
+  { name: "Зона 3 · балкон", rows: [[1,35,17,2700],[2,37,0,2500],[3,37,6,2200],[4,38,7,2200],[5,44,20,1700]] }
+];
+var CHANGES = [
+  { title: "Валерий Сёмин «Неужели 60?!»", venue: "ОДКиИ", date: "22 ноя", from: 477, to: 453 },
+  { title: "Спектакль «Ночной гость»", venue: "ОДКиИ", date: "9 окт", from: 432, to: 435 },
+  { title: "Спектакль «Сублимация любви»", venue: "Арт Холл", date: "8 ноя", from: 141, to: 139 },
+  { title: "Александр Малинин", venue: "ОДКиИ", date: "29 окт", from: 275, to: 274 }
+];
+var TAX = {
+  sphere: ["Музыка","Театр","Танец","Комедия и юмор","Фокусы и иллюзия","Разговорный жанр","Литература / поэзия","Перформанс / современное искусство","Зрелищные / смешанные","Детские","Спортивно-зрелищные","Шоу"],
+  format: ["Концерт","Фестиваль","DJ-сет","Музыкальное шоу","Спектакль","Мюзикл","Опера","Музыкальный спектакль","Пластический спектакль","Иммерсивный спектакль","Балет","Танцевальное представление","Танцевальное шоу","Стендап","Юмористическое шоу","Импровизация","Скетч-шоу","Иллюзионное шоу","Фокусы","Лекция","Публичная беседа","Интервью","Творческая встреча","Литературный вечер","Шоу"],
+  genre: ["Драма","Комедия","Трагедия","Трагикомедия","Мелодрама","Хоррор","Фарс","Сатира","Абсурд","Приключение","Исторический","Документальный","Поп","Рок","Рэп / хип-хоп","Электронная музыка","Джаз","Блюз","Шансон","Классическая музыка","Неоклассика","R&B","Соул","Фанк","Панк","Метал","Инди","Фолк / этника","Альтернатива","Классическая хореография","Современная хореография","Народная хореография","Стендап","Импровизационная комедия","Скетч","Сатирическая комедия","Эстрада","Шоу","Научно популярное","Роман"]
+};
+var HEAT = ["#eaf4fc", "#c1e1f7", "#7ab9e8", "#3b8fd1", "#1d6fae", "#104a78"];
+var MONTHS = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"];
+var MONTHS_FULL = ["январь", "февраль", "март", "апрель", "май", "июнь", "июль", "август", "сентябрь", "октябрь", "ноябрь", "декабрь"];
+var WD = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
+var TODAY = "2026-09-29";
+
+// Данные парсера — неизменяемая основа; ручные правки и свои события хранятся отдельно и накладываются сверху
+var BASE = EV.map(function (r, i) {
+  var link = typeof r[15] === "number" ? "https://vladimirkoncert.ru/shows/event/" + r[15] : "https://odk33.ru/afisha/" + r[15];
+  return { i: i, title: r[0], v: r[1], venue: VENUE[r[1]], city: "Владимир", date: r[2], time: r[3],
+    sphere: r[4], format: r[5], genre: r[6], pmin: r[7], pmax: r[8], taken: r[9], sellable: r[10],
+    gross: r[11], revenue: r[12], pushkin: !!r[13], priceText: r[14], link: link };
+});
+var EDITS_KEY = "ticketmonitor.prototype.edits";
+var EDIT_FIELDS = ["title", "date", "time", "city", "venue", "sphere", "format", "genre", "pmin", "pmax", "sellable", "taken", "gross", "revenue", "pushkin", "priceText", "link"];
+function loadEdits() { try { var x = JSON.parse(localStorage.getItem(EDITS_KEY)); return x && x.byId ? x : { byId: {}, custom: [], nextId: 10000 }; } catch (e) { return { byId: {}, custom: [], nextId: 10000 }; } }
+function saveEdits() { try { localStorage.setItem(EDITS_KEY, JSON.stringify(EDITS)); } catch (e) { /* хранилище недоступно — правки живут до перезагрузки */ } }
+var EDITS = loadEdits();
+var ALL = [], EVENT_DAYS = {};
+function rebuild() {
+  ALL = BASE.map(function (b) {
+    var o = EDITS.byId[b.i];
+    return o ? Object.assign({}, b, o.fields, { edited: o.at }) : b;
+  }).concat(EDITS.custom.map(function (c) { return Object.assign({ custom: true }, c); }))
+    .filter(function (e) { return e.date >= TODAY; });
+  EVENT_DAYS = {}; ALL.forEach(function (e) { EVENT_DAYS[e.date] = true; });
+}
+rebuild();
+
+// ---------------------------------------------------------------- столбцы таблицы
+var COLS = [
+  { id: "date", label: "Дата", w: 104, sort: "date", lock: true },
+  { id: "venue", label: "Площадка", w: 124 },
+  { id: "title", label: "Мероприятие", w: 300, lock: true },
+  { id: "niche", label: "Ниша", w: 170 },
+  { id: "fill", label: "Заполняемость", w: 236, sort: "fill", tip: "Занято — места, которые нельзя купить на схеме зала: проданные, пригласительные и квоты других касс. Постоянная бронь площадки исключена. Цвет полосы: красный — под риском (меньше 3 недель и заполнено меньше 40%), зелёный — заполнено от 60%, синий — продажи идут." },
+  { id: "prices", label: "Цены", w: 118, sort: "pmin", r: true, tip: "Цена билета от и до по всем категориям зала." },
+  { id: "gross", label: "Вал", w: 112, sort: "gross", r: true, tip: "Все продаваемые места × цена — сумма, если продать весь зал." },
+  { id: "revenue", label: "Выручка", w: 118, sort: "revenue", r: true, tip: "Оценка: занятые места × цена их ряда." }
+];
+var PREFS_KEY = "ticketmonitor.prototype.table";
+function loadPrefs() { try { return JSON.parse(localStorage.getItem(PREFS_KEY)) || {}; } catch (e) { return {}; } }
+function savePrefs() { try { localStorage.setItem(PREFS_KEY, JSON.stringify({ hidden: S.hidden, widths: S.widths })); } catch (e) { /* хранилище недоступно — настройки живут до перезагрузки */ } }
+var prefs = loadPrefs();
+
+// ---------------------------------------------------------------- состояние
+var S = { view: "events", city: "Владимир", period: "all", from: null, to: null, q: "", tab: "all", venue: "", sphere: "",
+  sort: "date", desc: false, sel: null, dim: "sphere", measure: "count",
+  hidden: prefs.hidden || [], widths: prefs.widths || {}, colsOpen: false,
+  calOpen: false, calMonth: "2026-10-01", pickFrom: null, pickTo: null };
+
+// ---------------------------------------------------------------- утилиты
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) { return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]; }); }
+function num(n) { return Number(n).toLocaleString("ru-RU"); }
+function money(n) {
+  if (n == null) return "—";
+  if (n >= 1e6) return (n / 1e6).toLocaleString("ru-RU", { maximumFractionDigits: 2 }) + "\u00a0млн\u00a0₽";
+  if (n >= 1e3) return Math.round(n / 1e3).toLocaleString("ru-RU") + "\u00a0тыс.\u00a0₽";
+  return num(Math.round(n)) + "\u00a0₽";
+}
+function addDays(iso, n) { var d = new Date(iso + "T00:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function dparts(iso) { var p = iso.split("-"), d = new Date(iso + "T12:00:00Z"), wd = d.getUTCDay(); return { day: +p[2], mon: MONTHS[+p[1] - 1], wd: WD[wd], weekend: wd === 0 || wd === 6, y: p[0] }; }
+function human(iso) { var d = dparts(iso); return d.day + " " + d.mon; }
+function fill(e) { return e.gross ? Math.round(e.taken / e.sellable * 100) : null; }
+function isRisk(e) { return e.gross && e.date <= addDays(TODAY, 21) && e.taken / e.sellable < 0.4; }
+// Статус продаж — цвет полосы заполняемости: красный — под риском, зелёный — заполнено от 60%, синий — идут продажи
+var GOOD_FILL = 60;
+function status(e) { if (!e.gross) return null; if (isRisk(e)) return "risk"; return fill(e) >= GOOD_FILL ? "good" : "normal"; }
+function barColor(e) { var s = status(e); return s === "risk" ? "var(--risk-bar)" : s === "good" ? "var(--good-bar)" : "var(--data)"; }
+function prices(e) { return e.pmin ? (e.pmin === e.pmax ? num(e.pmin) : num(e.pmin) + "–" + num(e.pmax)) + "\u00a0₽" : ""; }
+function inPeriod(e) {
+  if (S.period === "custom") return e.date >= S.from && e.date <= S.to;
+  return S.period === "all" || e.date <= addDays(TODAY, +S.period);
+}
+function cityData() { return S.city === "Все города" ? ALL : ALL.filter(function (e) { return e.city === S.city; }); }
+function heat(v, max) {
+  if (v == null || max <= 0) return { bg: "#f5f5f4", fg: "#a8a29e" };
+  if (v === 0) return { bg: "#f5f5f4", fg: "#78716c" };
+  var i = Math.min(HEAT.length - 1, Math.floor(v / max * (HEAT.length - 0.001)));
+  return { bg: HEAT[i], fg: i >= 4 ? "#ffffff" : "#0c0a09" };
+}
+function monthEnd(iso) { var d = new Date(iso.slice(0, 7) + "-01T00:00:00Z"); d.setUTCMonth(d.getUTCMonth() + 1); d.setUTCDate(0); return d.toISOString().slice(0, 10); }
+function rangeLabel(a, b) {
+  if (!a) return "Даты";
+  if (!b || a === b) return human(a);
+  if (a.slice(8) === "01" && b === monthEnd(a)) return MONTHS_FULL[+a.slice(5, 7) - 1] + " " + a.slice(0, 4);
+  return human(a) + " – " + human(b);
+}
+function periodLabel() {
+  if (S.period === "custom") return rangeLabel(S.from, S.to);
+  return S.period === "all" ? "вся будущая афиша" : "ближайшие " + S.period + " дней";
+}
+
+function cityEmpty() {
+  var c = CITIES.filter(function (x) { return x.name === S.city; })[0];
+  if (!c || c.ready) return '<div class="empty"><h2>Мероприятий нет</h2><p style="margin:0">Попробуйте другой город или добавьте своё событие.</p></div>';
+  return '<div class="empty"><h2>' + esc(S.city) + ' — данных пока нет</h2>' +
+    '<p style="margin:0 auto;max-width:520px">Источник найден: <b>' + esc(c.source) + '</b> — тот же билетный движок, что у vladimirkoncert.ru, поэтому подключается без новой разработки. ' + esc(c.note) + (/\.$/.test(c.note) ? '' : '.') + '</p>' +
+    '<p class="muted" style="margin-top:10px;font-size:13px">Подключение — в разделе «Настройки → Площадки». После первого сбора здесь появятся мероприятия, ниши и выручка.</p></div>';
+}
+function head(title, sub, action) {
+  return '<div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap"><div><h1>' + esc(title) + '</h1><p>' + esc(sub) + '</p></div>' + (action || '') + '</div>';
+}
+var ADD_BTN = '<button class="btn-dark" data-action="add" style="height:40px;padding:0 18px;display:inline-flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>Добавить событие</button>';
+
+// ---------------------------------------------------------------- Обзор
+function renderOverview() {
+  var data = cityData();
+  if (!data.length) return head("Обзор рынка", S.city) + cityEmpty();
+  var p = data.filter(inPeriod), m = p.filter(function (e) { return e.gross; });
+  var sum = function (l, k) { return l.reduce(function (s, e) { return s + (e[k] || 0); }, 0); };
+  var G = sum(m, "gross"), R = sum(m, "revenue"), T = sum(m, "taken"), SL = sum(m, "sellable");
+  var share = G ? Math.round(R / G * 100) : 0;
+  var venues = ["Арт Холл", "ОДКиИ"].map(function (n) {
+    var v = m.filter(function (e) { return e.venue === n; });
+    return { n: n, c: v.length, g: sum(v, "gross"), r: sum(v, "revenue"), t: sum(v, "taken"), s: sum(v, "sellable") };
+  });
+  var maxG = Math.max.apply(null, venues.map(function (v) { return v.g; }).concat([1]));
+  var risk = data.filter(isRisk).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  var soon = data.filter(function (e) { return e.date <= addDays(TODAY, 7); });
+  return head("Обзор рынка", S.city + " · " + periodLabel() + " · " + p.length + " мероприятий") +
+  '<section class="card kpis" aria-label="Главные цифры">' +
+    '<div><div class="kpi-label">Выручка рынка · оценка</div><div class="kpi-value kpi-hero">' + money(R) + '</div><div class="sub">' + share + '% от вала ' + money(G) + '</div><div class="meter"><div style="width:' + share + '%"></div></div></div>' +
+    '<div><div class="kpi-label">Заполняемость</div><div class="kpi-value">' + (SL ? Math.round(T / SL * 100) : 0) + '%</div><div class="sub">' + num(T) + ' из ' + num(SL) + ' мест</div></div>' +
+    '<div><div class="kpi-label">Средний билет</div><div class="kpi-value">' + (T ? num(Math.round(R / T)) + " ₽" : "—") + '</div><div class="sub">по занятым местам</div></div>' +
+    '<div><div class="kpi-label">В продаже</div><div class="kpi-value">' + m.length + '</div><div class="sub">со схемой зала · ещё ' + (p.length - m.length) + ' без продажи</div></div>' +
+    '<div><div class="kpi-label">Подтверждённые продажи</div><div class="kpi-value">0 ₽</div><div class="sub">слежение с 29 сент.</div></div>' +
+  '</section>' +
+  '<div class="grid-3">' +
+    '<section class="card card-pad span-2"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2>Что изменилось</h2><span class="sub" style="margin:0">сбор 29 сент., 17:26 → 19:31</span></div><ul class="list">' +
+      CHANGES.map(function (c) {
+        var d = c.to - c.from, up = d > 0;
+        return '<li class="change"><span class="change-sign" style="background:' + (up ? "#dcebf8" : "#f5f5f4") + ';color:' + (up ? "#104a78" : "#57534e") + '" aria-hidden="true">' + (up ? "+" : "−") + '</span>' +
+          '<div style="flex-grow:1;min-width:0"><div style="font-weight:500">' + esc(c.title) + '</div><div class="sub" style="margin:0">' + c.venue + ' · ' + c.date + '</div></div>' +
+          '<div style="text-align:right"><div class="num" style="font-weight:500">' + (up ? "+" : "−") + Math.abs(d) + ' мест</div><div class="sub num" style="margin:0">занято ' + c.from + ' → ' + c.to + '</div></div></li>';
+      }).join("") + '<li class="muted">Новых мероприятий и изменений цен не было</li></ul></section>' +
+    '<section class="card card-pad"><h2>Под риском</h2><p class="sub">До даты меньше 3 недель, зал заполнен меньше чем на 40%</p><ul class="list">' +
+      risk.map(function (e) { return '<li><div style="display:flex;justify-content:space-between;gap:10px"><span style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(e.title) + '</span><span class="badge-risk num">' + fill(e) + '%</span></div><div class="sub" style="margin:0">' + e.venue + ' · ' + human(e.date) + '</div></li>'; }).join("") +
+    '</ul></section>' +
+  '</div>' +
+  '<div class="grid-3">' +
+    '<section class="card card-pad span-2"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2>Площадки</h2><div class="legend"><span><i class="sw" style="background:#1d6fae"></i>Выручка</span><span><i class="sw" style="background:#7ab9e8"></i>Осталось продать</span></div></div>' +
+      '<div style="display:flex;flex-direction:column;gap:18px;margin-top:18px">' + venues.map(function (v) {
+        var w = v.g / maxG * 100, rw = v.g ? w * v.r / v.g : 0;
+        return '<div class="vbar"><div><div style="font-weight:500">' + v.n + '</div><div class="sub" style="margin:0">' + v.c + ' мероприятий · заполн. ' + (v.s ? Math.round(v.t / v.s * 100) : 0) + '%</div></div>' +
+          '<div class="stack"><div style="width:' + rw.toFixed(1) + '%;background:#1d6fae"></div><div style="width:' + (w - rw).toFixed(1) + '%;background:#7ab9e8;border-radius:0 4px 4px 0"></div></div>' +
+          '<div class="num" style="font-size:13px;color:var(--ink-2)"><b style="font-weight:600;color:var(--ink)">' + money(v.r) + '</b> из ' + money(v.g) + '</div></div>';
+      }).join("") + '</div></section>' +
+    '<section class="card card-pad"><h2>Ближайшие 7 дней</h2><ul class="list">' + soon.map(function (e) {
+        var d = dparts(e.date);
+        return '<li style="display:flex;gap:12px;align-items:center"><div style="width:40px;text-align:center;line-height:1.15"' + (d.weekend ? ' class="wknd"' : '') + '><div style="font-family:var(--display);font-size:18px">' + d.day + '</div><div class="d-sub' + (d.weekend ? ' wknd' : '') + '">' + d.mon + '</div></div>' +
+          '<div style="min-width:0"><div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(e.title) + '</div><div class="sub" style="margin:0">' + e.venue + ' · ' + (e.gross ? "заполн. " + fill(e) + "%" : e.priceText) + '</div></div></li>';
+      }).join("") + '</ul></section>' +
+  '</div>';
+}
+
+// ---------------------------------------------------------------- Ниши
+function renderNiches() {
+  var data = cityData();
+  if (!data.length) return head("Ниши", S.city) + cityEmpty();
+  var fut = data.filter(inPeriod), dim = S.dim, measure = S.measure;
+  if (!fut.length) return head("Ниши", S.city + " · " + periodLabel()) + '<div class="empty"><h2>За выбранные даты мероприятий нет</h2><p style="margin:0">Выберите другой период.</p></div>';
+  var keyOf = function (e) { return e[dim] || "Не определено"; };
+  var names = []; fut.forEach(function (e) { if (names.indexOf(keyOf(e)) < 0) names.push(keyOf(e)); });
+  var zero = TAX[dim].filter(function (t) { return names.indexOf(t) < 0; });
+  var st = function (l) { var m = l.filter(function (e) { return e.gross; }), t = 0, s = 0, r = 0; m.forEach(function (e) { t += e.taken; s += e.sellable; r += e.revenue; }); return { n: l.length, mapped: m.length, fill: s ? Math.round(t / s * 100) : null, rev: r }; };
+  var rows = names.map(function (n) { var c = fut.filter(function (e) { return keyOf(e) === n; }); return { name: n, o: st(c.filter(function (e) { return e.v === "О"; })), a: st(c.filter(function (e) { return e.v === "А"; })), all: st(c) }; }).sort(function (x, y) { return y.all.n - x.all.n; });
+  var val = function (s) { return measure === "count" ? s.n : measure === "fill" ? s.fill : s.rev; };
+  var txt = function (s) { return measure === "count" ? String(s.n) : measure === "fill" ? (s.fill == null ? "—" : s.fill + "%") : (s.rev ? money(s.rev).replace("\u00a0₽", "") : "—"); };
+  var maxV = Math.max.apply(null, rows.map(function (r) { return Math.max(val(r.o) || 0, val(r.a) || 0); }).concat([1]));
+  var maxA = Math.max.apply(null, rows.map(function (r) { return val(r.all) || 0; }).concat([1]));
+  var total = fut.length;
+  var cell = function (s, max, bold) { var h = heat(val(s), max); return '<td><div class="cell" style="background:' + h.bg + ';color:' + h.fg + ';font-weight:' + (bold ? 600 : 400) + '">' + txt(s) + '</div></td>'; };
+  var tag = function (r) {
+    if (r.all.n / total >= 0.2) return '<span class="tag" style="background:#1c1917;color:#fff;border-color:#1c1917">Плотно</span>';
+    if (r.all.fill != null && r.all.fill >= 45) return '<span class="tag" style="background:#dcebf8;color:#104a78;border-color:#dcebf8">Спрос выше среднего</span>';
+    return '<span class="tag" style="color:#44403c">Есть место</span>';
+  };
+  var busy = rows[0];
+  var best = rows.filter(function (r) { return r.all.mapped >= 3 && r.all.fill != null; }).sort(function (x, y) { return y.all.fill - x.all.fill; })[0];
+  var mk = ["2026-10", "2026-11", "2026-12", "2027-01", "2027-02", "2027-03"];
+  var mrows = rows.slice(0, 8).map(function (r) { return { name: r.name, c: mk.map(function (m) { return fut.filter(function (e) { return keyOf(e) === r.name && e.date.slice(0, 7) === m; }).length; }) }; });
+  var maxM = Math.max.apply(null, mrows.map(function (r) { return Math.max.apply(null, r.c); }).concat([1]));
+  var segBtns = function (items, cur, key) { return items.map(function (it) { return '<button data-set="' + key + '" data-val="' + it[0] + '" aria-pressed="' + (it[0] === cur) + '">' + it[1] + '</button>'; }).join(""); };
+  var dimLabel = { sphere: "Сфера", format: "Формат", genre: "Жанр" }[dim];
+  return head("Ниши", "Сколько мероприятий в каждой нише и как они продаются · " + S.city + " · " + periodLabel() + ", " + total + " мероприятий") +
+  '<div class="insights">' +
+    '<div class="card"><div class="kpi-label">Самая плотная ниша</div><div class="insight-v">' + esc(busy.name) + '</div><div class="sub">' + busy.all.n + ' мероприятий — ' + Math.round(busy.all.n / total * 100) + '% афиши' + (busy.all.fill != null ? ', заполн. ' + busy.all.fill + '%' : '') + '</div></div>' +
+    '<div class="card"><div class="kpi-label">Лучше всего продаётся</div><div class="insight-v">' + (best ? esc(best.name) : "—") + '</div><div class="sub">' + (best ? 'заполн. ' + best.all.fill + '% · ' + best.all.mapped + ' мероприятий со схемой зала' : 'мало данных') + '</div></div>' +
+    '<div class="card"><div class="kpi-label">Свободно — нет ни одного мероприятия</div><div class="insight-v">' + zero.length + ' из ' + TAX[dim].length + '</div><div class="sub" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + (zero.length ? esc(zero.join(", ")) : "все категории заняты") + '</div></div>' +
+  '</div>' +
+  '<div class="toolbar"><div class="seg" role="group" aria-label="Разрез">' + segBtns([["sphere", "Сфера"], ["format", "Формат"], ["genre", "Жанр"]], dim, "dim") + '</div>' +
+    '<div class="seg" role="group" aria-label="Мера">' + segBtns([["count", "Мероприятий"], ["fill", "Заполняемость"], ["revenue", "Выручка"]], measure, "measure") + '</div>' +
+    '<div style="flex-grow:1"></div><div class="legend">меньше <span style="gap:2px">' + HEAT.map(function (h) { return '<i class="sw" style="width:18px;height:12px;background:' + h + '"></i>'; }).join("") + '</span> больше</div></div>' +
+  '<div class="niche-grid" style="display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:20px;align-items:start">' +
+    '<section class="card" style="padding:8px 0;overflow:auto"><table class="heat-table"><thead><tr><th scope="col">' + dimLabel + '</th><th scope="col" style="width:96px">ОДКиИ</th><th scope="col" style="width:96px">Арт Холл</th><th scope="col" style="width:96px">Всего</th><th scope="col" style="width:170px;text-align:left;padding-right:22px">Ниша</th></tr></thead><tbody>' +
+      rows.map(function (r) { return '<tr><th scope="row">' + esc(r.name) + '</th>' + cell(r.o, maxV) + cell(r.a, maxV) + cell(r.all, maxA, true) + '<td style="padding-right:22px">' + tag(r) + '</td></tr>'; }).join("") +
+    '</tbody></table>' + (zero.length ? '<div class="note" style="margin:12px 22px 8px"><b style="color:var(--ink)">Без мероприятий (' + zero.length + '):</b> ' + esc(zero.join(", ")) + '</div>' : '') + '</section>' +
+    '<section class="card card-pad"><h2>Плотность по месяцам</h2><p class="sub" style="margin-bottom:14px">Где конкуренты сталкиваются датами</p>' +
+      '<div class="months d-sub"><span></span>' + ["окт", "ноя", "дек", "янв", "фев", "мар"].map(function (m) { return '<span style="text-align:center">' + m + '</span>'; }).join("") + '</div>' +
+      '<div style="display:flex;flex-direction:column;gap:4px;margin-top:6px">' + mrows.map(function (r) {
+        return '<div class="months"><span style="font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(r.name) + '</span>' + r.c.map(function (c) { var h = heat(c, maxM); return '<span class="mcell" style="background:' + h.bg + ';color:' + h.fg + '">' + (c || "") + '</span>'; }).join("") + '</div>';
+      }).join("") + '</div><p class="sub" style="margin-top:14px">8 самых плотных категорий выбранного разреза.</p></section>' +
+  '</div>';
+}
+
+// ---------------------------------------------------------------- Мероприятия
+var FILTERS = { all: function () { return true; }, risk: isRisk, fresh: function () { return false; }, nogenre: function (e) { return !e.genre; } };
+function eventsBase() {
+  var q = S.q.trim().toLowerCase();
+  return cityData().filter(inPeriod).filter(function (e) {
+    return (!q || (e.title + " " + e.venue).toLowerCase().indexOf(q) >= 0) && (!S.venue || e.venue === S.venue) && (!S.sphere || e.sphere === S.sphere);
+  });
+}
+function sortKey(e) {
+  if (S.sort === "fill") return fill(e) == null ? -1 : fill(e);
+  if (S.sort === "gross") return e.gross || -1;
+  if (S.sort === "revenue") return e.revenue == null ? -1 : e.revenue;
+  if (S.sort === "pmin") return e.pmin || -1;
+  return e.date + e.time;
+}
+function visibleCols() { return COLS.filter(function (c) { return S.hidden.indexOf(c.id) < 0; }); }
+function colW(c) { return S.widths[c.id] || c.w; }
+
+var CELL = {
+  date: function (e) { var d = dparts(e.date), w = d.weekend ? " wknd" : ""; return '<div class="d-day' + w + '">' + d.day + ' ' + d.mon + '</div><div class="d-sub' + w + '">' + d.wd + ', ' + e.time + '</div>'; },
+  venue: function (e) { return '<div style="font-weight:500" class="nowrap">' + e.venue + '</div><div class="sub2">' + e.city + '</div>'; },
+  title: function (e) {
+    var risk = isRisk(e);
+    var badges = (risk ? '<span class="badge-risk">под риском</span>' : '') + (e.pushkin ? '<span class="badge-new">Пушкинская карта</span>' : '') +
+      (e.custom ? '<span class="badge-edit">своё событие</span>' : e.edited ? '<span class="badge-edit">изменено вручную</span>' : '');
+    return '<button class="ev-title" data-open="' + e.i + '">' + esc(e.title) + '</button>' + (badges ? '<div class="ev-badges">' + badges + '</div>' : '');
+  },
+  niche: function (e) { return '<div style="font-size:13px;line-height:1.35">' + esc(e.sphere) + '</div><div class="sub2">' + (e.genre ? esc(e.genre) : "жанр не определён") + '</div>'; },
+  fill: function (e) {
+    if (!e.gross) return '<span class="sub2">вход ' + esc(e.priceText) + '</span>';
+    var f = fill(e);
+    return '<div class="fillwrap"><div class="fillbar"><div class="track"><div style="width:' + f + '%;background:' + barColor(e) + '"></div></div><span class="pct">' + f + '%</span></div>' +
+      '<div class="sub2 num nowrap">занято ' + num(e.taken) + ' из ' + num(e.sellable) + ' · осталось ' + num(e.sellable - e.taken) + '</div></div>';
+  },
+  prices: function (e) { return e.pmin ? '<span class="num nowrap">' + prices(e) + '</span>' : '<span class="muted">—</span>'; },
+  gross: function (e) { return '<div class="money-main">' + (e.gross ? money(e.gross) : "—") + '</div>'; },
+  revenue: function (e) { return '<div class="money-main">' + (e.gross ? money(e.revenue) : "—") + '</div>'; }
+};
+
+function renderEvents() {
+  var data = cityData();
+  if (!data.length) return head("Мероприятия", S.city, ADD_BTN) + cityEmpty();
+  var venues = []; data.forEach(function (e) { if (venues.indexOf(e.venue) < 0) venues.push(e.venue); });
+  var base = eventsBase();
+  var list = base.filter(FILTERS[S.tab]).sort(function (a, b) { var x = sortKey(a), y = sortKey(b); return (x < y ? -1 : x > y ? 1 : 0) * (S.desc ? -1 : 1); });
+  var cols = visibleCols();
+  var totalW = cols.reduce(function (s, c) { return s + colW(c); }, 0);
+  var tabs = [["all", "Все"], ["risk", "Под риском"], ["fresh", "Новые за 7 дней"], ["nogenre", "Без жанра"]];
+  var spheres = []; data.forEach(function (e) { if (spheres.indexOf(e.sphere) < 0) spheres.push(e.sphere); });
+
+  var thead = cols.map(function (c) {
+    var on = S.sort === c.sort, arrow = on ? (S.desc ? " ↓" : " ↑") : "";
+    var label = c.sort ? '<button class="sort-btn" data-sort="' + c.sort + '">' + c.label + arrow + '</button>' : c.label;
+    return '<th scope="col" class="' + (c.r ? "r" : "") + '" style="position:sticky" aria-sort="' + (on ? (S.desc ? "descending" : "ascending") : "none") + '">' +
+      '<div class="th-in">' + label + (c.tip ? '<span class="info" tabindex="0" data-tip="' + esc(c.tip) + '" aria-label="' + esc(c.tip) + '">?</span>' : '') + '</div>' +
+      '<span class="resizer" data-resize="' + c.id + '" title="Потяните, чтобы изменить ширину. Двойной клик — вернуть." aria-hidden="true"></span></th>';
+  }).join("");
+  var rowsHtml = list.map(function (e) {
+    return '<tr data-i="' + e.i + '" class="' + (S.sel === e.i ? "sel" : "") + '">' +
+      cols.map(function (c) { return '<td class="' + (c.r ? "r" : "") + '">' + CELL[c.id](e) + '</td>'; }).join("") + '</tr>';
+  }).join("");
+  var mobile = list.map(function (e) {
+    var d = dparts(e.date), f = fill(e);
+    return '<button class="m-item" data-open="' + e.i + '"><div class="d-sub"><span class="' + (d.weekend ? "wknd" : "") + '">' + d.day + ' ' + d.mon + ', ' + d.wd + '</span> ' + e.time + ' · ' + e.venue + '</div>' +
+      '<div style="font-weight:500;margin:2px 0 8px">' + esc(e.title) + '</div>' +
+      (e.gross ? '<div class="fillbar"><div class="track"><div style="width:' + f + '%;background:' + barColor(e) + '"></div></div><span class="pct">' + f + '%</span></div>' +
+        '<div class="sub2 num" style="margin-top:4px">' + money(e.revenue) + ' из ' + money(e.gross) + ' · ' + prices(e) + '</div>' : '<div class="sub2">вход ' + esc(e.priceText) + '</div>') + '</button>';
+  }).join("");
+  var empty = !list.length ? '<div class="empty" style="border:0"><h2>' + (S.tab === "fresh" ? "Новых мероприятий за 7 дней нет" : "Ничего не найдено") + '</h2><p style="margin:0">' + (S.tab === "fresh" ? "Слежение началось 29 сент. — новые события появятся после следующих сборов." : "Измените даты, фильтры или поиск.") + '</p></div>' : "";
+  var colsPop = S.colsOpen ? '<div class="popover right cols-pop' + (S.colsAnim ? ' anim' : '') + '" role="dialog" aria-label="Столбцы таблицы"><div style="font-weight:500;margin-bottom:6px">Показывать столбцы</div>' +
+    COLS.map(function (c) {
+      var hidden = S.hidden.indexOf(c.id) >= 0;
+      return '<label class="' + (c.lock ? "locked" : "") + '"><input type="checkbox" data-colvis="' + c.id + '"' + (hidden ? "" : " checked") + (c.lock ? " disabled" : "") + '>' + c.label + (c.lock ? '<span class="muted" style="margin-left:auto;font-size:12px">всегда</span>' : '') + '</label>';
+    }).join("") +
+    '<div style="border-top:1px solid var(--line-soft);margin-top:8px;padding-top:10px;display:flex;justify-content:space-between;align-items:center"><span class="sub" style="margin:0">Ширину меняйте, потянув за линию в заголовке</span></div>' +
+    '<button class="btn-ghost" data-action="reset-cols" style="margin-top:10px;width:100%">Вернуть столбцы и ширину как было</button></div>' : '';
+
+  return head("Мероприятия", S.city + " · " + periodLabel() + " · показано " + list.length + " из " + data.filter(inPeriod).length, ADD_BTN) +
+  '<div class="toolbar">' + tabs.map(function (t) { return '<button class="chip-btn" data-tab="' + t[0] + '" aria-pressed="' + (S.tab === t[0]) + '">' + t[1] + '<span class="cnt num">' + base.filter(FILTERS[t[0]]).length + '</span></button>'; }).join("") +
+    '<div style="flex-grow:1"></div>' +
+    '<select class="chip-select" data-filter="venue" aria-label="Площадка"><option value="">Площадка: все</option>' + venues.map(function (v) { return '<option' + (S.venue === v ? " selected" : "") + '>' + esc(v) + '</option>'; }).join("") + '</select>' +
+    '<select class="chip-select" data-filter="sphere" aria-label="Сфера"><option value="">Сфера: все</option>' + spheres.map(function (v) { return '<option' + (S.sphere === v ? " selected" : "") + '>' + esc(v) + '</option>'; }).join("") + '</select>' +
+    '<div class="pop-anchor cols-anchor"><button class="chip-btn" data-action="cols" aria-expanded="' + S.colsOpen + '" style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M6 2.5v11M10 2.5v11"/></svg>Столбцы' + (S.hidden.length ? ' <span class="cnt">−' + S.hidden.length + '</span>' : '') + '</button>' + colsPop + '</div>' +
+  '</div>' +
+  '<section class="card ev-card-table"><table class="ev-table" id="evTable" style="width:' + totalW + 'px"><colgroup>' + cols.map(function (c) { return '<col data-col="' + c.id + '" style="width:' + colW(c) + 'px">'; }).join("") + '</colgroup><thead><tr>' + thead + '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' + empty + '</section>' +
+  '<div class="m-list">' + mobile + (list.length ? "" : empty) + '</div>';
+}
+
+// ---------------------------------------------------------------- Карточка
+function daysLeft(e) { return Math.max(1, Math.round((Date.parse(e.date + "T00:00:00Z") - Date.parse(TODAY + "T00:00:00Z")) / 864e5)); }
+
+// «Нужный темп»: сколько мест в день надо продавать, чтобы к дате события зал был полным
+var TICK_OFFSETS = [0, 1, 2, 3, 4, 5, 7, 10, 14, 21, 30, 45, 60, 90, 120, 150, 180];  // дней до события — чем ближе, тем чаще
+function paceAxis(e, days, x, yBase) {
+  // Кандидаты: день события, сегодня и точки «за N дней»; приоритет — ближе к событию
+  var cands = [{ off: 0 }, { off: days }].concat(TICK_OFFSETS.filter(function (o) { return o > 0 && o < days; }).map(function (o) { return { off: o }; }));
+  var kept = [];
+  cands.forEach(function (c) {
+    var px = x(days - c.off);
+    if (kept.every(function (k) { return Math.abs(k.px - px) >= 26; })) kept.push({ off: c.off, px: px, iso: addDays(e.date, -c.off) });
+  });
+  kept.sort(function (p1, p2) { return p1.px - p2.px; });
+  var seenMonth = {};
+  return kept.map(function (k) {
+    var d = dparts(k.iso), m = k.iso.slice(0, 7), showMonth = !seenMonth[m]; seenMonth[m] = true;
+    var color = k.off === 0 ? "#0c0a09" : d.weekend ? "#b91c1c" : "#78716c", anchor = "middle";
+    return '<line x1="' + k.px + '" x2="' + k.px + '" y1="' + yBase + '" y2="' + (yBase + 4) + '" stroke="#d6d3d1"/>' +
+      '<text x="' + k.px + '" y="' + (yBase + 16) + '" font-size="11" fill="' + color + '" text-anchor="' + anchor + '"' + (k.off === 0 ? ' font-weight="600"' : '') + '>' + d.day + '</text>' +
+      (showMonth ? '<text x="' + k.px + '" y="' + (yBase + 29) + '" font-size="10" fill="#a8a29e" text-anchor="' + anchor + '">' + d.mon + '</text>' : '');
+  }).join("");
+}
+function paceHtml(e) {
+  if (!e.gross) return '<div class="note">Онлайн-продажи нет — темп до аншлага не считается.</div>';
+  var left = e.sellable - e.taken, days = daysLeft(e);
+  if (left <= 0) return '<div class="note">Зал уже заполнен.</div>';
+  var perDay = left / days, avg = e.taken ? e.revenue / e.taken : (e.gross / e.sellable);
+  var W = 380, H = 170, pl = 14, pr = 14, pt = 10, pb = 38;
+  var x = function (d) { return pl + d / days * (W - pl - pr); };
+  var y = function (v) { return pt + (1 - v / e.sellable) * (H - pt - pb); };
+  var yBase = y(0);
+  return '<div class="pace">' +
+    '<b style="font-weight:500">Нужный темп до аншлага</b>' +
+    '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Чтобы заполнить зал к ' + human(e.date) + ', нужно продавать около ' + Math.ceil(perDay) + ' мест в день" style="display:block;margin-top:10px;overflow:visible">' +
+      '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(e.sellable) + '" y2="' + y(e.sellable) + '" stroke="#e8e6e5"/>' +
+      '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + yBase + '" y2="' + yBase + '" stroke="#d6d3d1"/>' +
+      '<polygon points="' + x(0) + ',' + yBase + ' ' + x(0) + ',' + y(e.taken) + ' ' + x(days) + ',' + y(e.sellable) + ' ' + x(days) + ',' + yBase + '" fill="#1d6fae" opacity="0.08"/>' +
+      '<line class="pace-line" x1="' + x(0) + '" y1="' + y(e.taken) + '" x2="' + x(days) + '" y2="' + y(e.sellable) + '" stroke="#1d6fae" stroke-width="2" stroke-dasharray="5 4" stroke-linecap="round"/>' +
+      '<circle cx="' + x(0) + '" cy="' + y(e.taken) + '" r="5" fill="#1d6fae" stroke="#fff" stroke-width="2"><title>Сегодня занято ' + num(e.taken) + '</title></circle>' +
+      '<circle cx="' + x(days) + '" cy="' + y(e.sellable) + '" r="4" fill="#fff" stroke="#1d6fae" stroke-width="2"><title>Аншлаг — ' + num(e.sellable) + ' мест</title></circle>' +
+      paceAxis(e, days, x, yBase) +
+    '</svg>' +
+    '<div class="pace-facts">' +
+      '<div><span class="sub" style="margin:0">Осталось продать</span><b class="num">' + num(left) + ' мест</b></div>' +
+      '<div><span class="sub" style="margin:0">До события</span><b class="num">' + days + ' дн.</b></div>' +
+      '<div><span class="sub" style="margin:0">Нужно в день</span><b class="num">≈ ' + num(Math.ceil(perDay)) + ' мест</b></div>' +
+      // Меньше недели до события — «в неделю» не имеет смысла: показываем, сколько осталось за оставшиеся дни
+      (days >= 7
+        ? '<div><span class="sub" style="margin:0">Нужно в неделю</span><b class="num">≈ ' + num(Math.ceil(perDay * 7)) + ' мест</b></div>'
+        : '<div><span class="sub" style="margin:0">Нужно за ' + days + ' дн.</span><b class="num">' + num(left) + ' мест</b></div>') +
+      '<div style="grid-column:1/-1"><span class="sub" style="margin:0">Выручка в день при таком темпе</span><b class="num">≈ ' + money(Math.round(perDay * avg)) + '</b></div>' +
+    '</div>' +
+  '</div>';
+}
+
+function drawerView(e) {
+  var d = dparts(e.date), f = fill(e), carmen = e.title === "Балет «Кармен»" && e.v === "О" && !e.custom;
+  var chips = [e.sphere, e.format].filter(Boolean).map(function (c) { return '<span class="chip">' + esc(c) + '</span>'; }).join("") +
+    (e.genre ? '<span class="chip">' + esc(e.genre) + '</span>' : '<span class="chip" style="color:var(--muted);border-style:dashed">жанр не определён</span>') +
+    (e.pushkin ? '<span class="chip" style="background:#dcebf8;border-color:#dcebf8;color:#104a78">Пушкинская карта</span>' : '') +
+    (status(e) === "risk" ? '<span class="chip" style="background:var(--risk-bg);border-color:var(--risk-bg);color:var(--risk)">Под риском</span>' : '') +
+    (status(e) === "good" ? '<span class="chip" style="background:var(--good-bg);border-color:var(--good-bg);color:var(--good)">Продаётся хорошо</span>' : '');
+  var editNote = e.custom
+    ? '<div class="note" style="border-style:solid;background:var(--canvas)">Своё событие — добавлено вручную. Парсер его не обновляет.</div>'
+    : e.edited ? '<div class="note" style="border-style:solid;background:var(--canvas);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">Данные исправлены вручную ' + esc(e.edited) + '. Новые сборы их не перезапишут.<button class="btn-ghost" data-drawer="revert">Вернуть данные парсера</button></div>' : '';
+  var blocks = e.gross
+    ? '<div class="kgrid">' +
+        '<div><div class="kpi-label">Заполняемость</div><div class="kpi-value">' + f + '%</div><div class="meter" style="margin-top:8px;background:#e7e5e4"><div style="width:' + f + '%;background:' + barColor(e) + '"></div></div></div>' +
+        '<div><div class="kpi-label">Занято / осталось</div><div class="kpi-value num">' + num(e.taken) + ' / ' + num(e.sellable - e.taken) + '</div><div class="sub" style="margin:0">из ' + num(e.sellable) + ' мест в продаже</div></div>' +
+        '<div><div class="kpi-label">Выручка · оценка</div><div class="kpi-value">' + money(e.revenue) + '</div><div class="sub" style="margin:0">занято × цена ряда</div></div>' +
+        '<div><div class="kpi-label">Вал</div><div class="kpi-value">' + money(e.gross) + '</div><div class="sub" style="margin:0">если продать весь зал</div></div>' +
+        '<div><div class="kpi-label">Средний билет</div><div class="kpi-value">' + (e.taken ? num(Math.round(e.revenue / e.taken)) + " ₽" : "—") + '</div><div class="sub" style="margin:0">по занятым местам</div></div>' +
+        '<div><div class="kpi-label">Цены</div><div class="kpi-value">' + (prices(e) || "—") + '</div><div class="sub" style="margin:0">от и до</div></div>' +
+      '</div>'
+    : '<div class="note">Вход ' + esc(e.priceText || "без онлайн-продажи") + ' — заполняемость, вал и выручка не считаются. Если данные есть, их можно вписать через карандаш.</div>';
+  var hall = carmen
+    ? '<div style="display:flex;flex-direction:column;gap:12px"><div style="text-align:center;font-size:11px;letter-spacing:0.08em;color:var(--muted);border-bottom:2px solid var(--line-strong);padding-bottom:4px">СЦЕНА</div>' +
+      CARMEN.map(function (z) {
+        var seats = 0, taken = 0, pr = [];
+        z.rows.forEach(function (r) { seats += r[1]; taken += r[2]; pr.push(r[3]); });
+        var lo = Math.min.apply(null, pr), hi = Math.max.apply(null, pr);
+        return '<div><div style="display:flex;justify-content:space-between;font-size:12px;color:var(--ink-3);margin-bottom:4px"><b style="color:var(--ink)">' + z.name + '</b><span class="num">' + (lo === hi ? num(lo) : num(lo) + "–" + num(hi)) + ' ₽ · занято ' + Math.round(taken / seats * 100) + '%</span></div>' +
+          '<div style="display:flex;flex-direction:column;gap:2px">' + z.rows.map(function (r) {
+            return '<div class="hall-row" title="Ряд ' + r[0] + ': занято ' + r[2] + ' из ' + r[1] + ', ' + num(r[3]) + ' ₽"><span class="n">' + r[0] + '</span><div class="wrap"><div class="bar" style="width:' + (r[1] / 48 * 100).toFixed(1) + '%"><div style="width:' + (r[2] / r[1] * 100).toFixed(1) + '%;background:#1d6fae;border-radius:2px 0 0 2px"></div><div style="flex-grow:1;background:#c1e1f7;border-radius:0 2px 2px 0"></div></div></div></div>';
+          }).join("") + '</div></div>';
+      }).join("") + '<div class="sub" style="margin:0">Длина полосы — число мест в ряду. Наведите на ряд, чтобы увидеть цифры.</div></div>'
+    : '<div class="note">' + (e.custom ? "Для своего события схемы зала нет." : "В прототипе разбивка по рядам показана для «Кармен». В приложении она будет у каждого мероприятия со схемой зала.") + '</div>';
+  var link = e.link ? '<a href="' + esc(e.link) + '" target="_blank" rel="noopener" class="pill" style="justify-content:center;height:44px;color:var(--ink);font-weight:500">Открыть это мероприятие на ' + esc(e.link.replace(/^https?:\/\//, "").split("/")[0]) + ' ↗</a>' : '';
+
+  return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div class="sub" style="margin:0">' + esc(e.venue) + ' · ' + esc(e.city) + ' · <span class="' + (d.weekend ? "wknd" : "") + '">' + d.wd + ', ' + d.day + ' ' + d.mon + ' ' + d.y + '</span>, ' + esc(e.time) + '</div>' +
+      '<div style="display:flex;gap:8px"><button class="icon-btn" data-drawer="edit" aria-label="Редактировать мероприятие" title="Редактировать"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M11 2.5l2.5 2.5L6 12.5 3 13l.5-3z"/><path d="M9.5 4l2.5 2.5"/></svg></button>' +
+      '<button class="icon-btn" data-drawer="close" aria-label="Закрыть карточку"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button></div></div>' +
+    '<div><h2 style="font-weight:400;font-size:28px;line-height:1.2;letter-spacing:-0.02em">' + esc(e.title) + '</h2><div class="chips">' + chips + '</div></div>' +
+    editNote + blocks +
+    '<div class="drawer-cols">' +
+      '<section style="display:flex;flex-direction:column;gap:12px"><h3 style="font-weight:500;font-size:15px">Динамика продаж</h3>' +
+        '<div class="dyn-empty"><span>Фактический график появится после сборов в разные дни.<br>Сейчас 2 снимка за 29 сент.</span></div>' + paceHtml(e) + '</section>' +
+      '<section><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px"><h3 style="font-weight:500;font-size:15px">Зал по рядам</h3>' + (carmen ? '<div class="legend"><span><i class="sw" style="background:#1d6fae"></i>занято</span><span><i class="sw" style="background:#c1e1f7"></i>свободно</span></div>' : '') + '</div>' + hall + '</section>' +
+    '</div>' +
+    '<section><h3 style="font-weight:500;font-size:15px;margin-bottom:8px">Приезжал раньше</h3><div class="note">Архив копится с этого сезона — здесь появятся прошлые приезды с итогами продаж.</div></section>' +
+    link;
+}
+
+// Форма: правка мероприятия или своё событие (e = null)
+function drawerForm(e, errors, isNew) {
+  e = e || { city: S.city !== "Все города" ? S.city : "Владимир", date: "", time: "19:00", pushkin: false };
+  errors = errors || {};
+  var val = function (k) { return e[k] == null ? "" : esc(e[k]); };
+  var field = function (k, label, type, hint, cls) {
+    return '<div class="field ' + (cls || "") + (errors[k] ? " bad" : "") + '"><label for="f-' + k + '">' + label + '</label><input id="f-' + k + '" name="' + k + '" type="' + (type || "text") + '" value="' + val(k) + '"' + (type === "number" ? ' min="0" step="1" inputmode="numeric"' : '') + '>' +
+      (errors[k] ? '<div class="err">' + errors[k] + '</div>' : hint ? '<div class="hint">' + hint + '</div>' : '') + '</div>';
+  };
+  var select = function (k, label, options, allowEmpty) {
+    return '<div class="field"><label for="f-' + k + '">' + label + '</label><select id="f-' + k + '" name="' + k + '">' + (allowEmpty ? '<option value="">— не указано —</option>' : '') +
+      options.map(function (o) { return '<option' + (o === e[k] ? " selected" : "") + '>' + esc(o) + '</option>'; }).join("") + '</select></div>';
+  };
+  var knownVenues = []; ALL.forEach(function (x) { if (knownVenues.indexOf(x.venue) < 0) knownVenues.push(x.venue); });
+  return '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><h2 style="font-weight:400;font-size:26px;letter-spacing:-0.02em">' + (isNew ? "Новое событие" : "Редактирование") + '</h2>' +
+      '<button class="icon-btn" data-drawer="' + (isNew ? "close" : "cancel") + '" aria-label="Закрыть без сохранения"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button></div>' +
+    '<p class="sub" style="margin:-10px 0 0">' + (isNew ? "Своё мероприятие появится в таблице и в аналитике с меткой «своё событие»." : "Исправленные значения заменят данные парсера и сохранятся при следующих сборах. Исходные данные можно вернуть в любой момент.") + '</p>' +
+    '<form id="evForm" class="form-grid" novalidate>' +
+      '<h4>Основное</h4>' +
+      field("title", "Название", "text", "", "full") +
+      field("date", "Дата", "date") + field("time", "Время", "time") +
+      select("city", "Город", CITIES.map(function (c) { return c.name; })) +
+      '<div class="field' + (errors.venue ? " bad" : "") + '"><label for="f-venue">Площадка</label><input id="f-venue" name="venue" list="venues-list" value="' + val("venue") + '"><datalist id="venues-list">' + knownVenues.map(function (v) { return '<option value="' + esc(v) + '">'; }).join("") + '</datalist>' + (errors.venue ? '<div class="err">' + errors.venue + '</div>' : '') + '</div>' +
+      '<h4>Ниша</h4>' +
+      select("sphere", "Сфера", TAX.sphere, true) + select("format", "Формат", TAX.format, true) +
+      select("genre", "Жанр", TAX.genre, true) +
+      '<div class="field" style="display:flex;align-items:flex-end"><label class="check" style="margin:0 0 10px"><input type="checkbox" name="pushkin"' + (e.pushkin ? " checked" : "") + '> Пушкинская карта</label></div>' +
+      '<h4>Билеты и деньги</h4>' +
+      field("sellable", "Мест в продаже", "number") + field("taken", "Занято (продано)", "number") +
+      field("pmin", "Цена от, ₽", "number") + field("pmax", "Цена до, ₽", "number") +
+      field("gross", "Вал, ₽", "number", "Пусто — посчитаем: места × средняя цена") + field("revenue", "Выручка, ₽", "number", "Пусто — посчитаем: занято × средняя цена") +
+      field("priceText", "Если онлайн-продажи нет", "text", "Например: «по пригласительным»", "full") +
+      field("link", "Ссылка на мероприятие", "url", "", "full") +
+    '</form>' +
+    '<div class="form-actions"><button class="btn-dark" data-drawer="save">' + (isNew ? "Добавить событие" : "Сохранить") + '</button>' +
+      '<button class="btn-ghost" data-drawer="' + (isNew ? "close" : "cancel") + '">Отмена</button><div style="flex-grow:1"></div>' +
+      (!isNew && e.custom ? '<button class="btn-danger" data-drawer="delete">Удалить событие</button>' : '') +
+      (!isNew && e.edited ? '<button class="btn-ghost" data-drawer="revert">Вернуть данные парсера</button>' : '') + '</div>';
+}
+
+function readForm() {
+  var f = $("evForm"), out = {};
+  ["title", "date", "time", "city", "venue", "sphere", "format", "genre", "priceText", "link"].forEach(function (k) { out[k] = f.elements[k].value.trim(); });
+  ["sellable", "taken", "pmin", "pmax", "gross", "revenue"].forEach(function (k) { var v = f.elements[k].value.trim(); out[k] = v === "" ? null : Math.round(Number(v)); });
+  out.pushkin = f.elements.pushkin.checked;
+  var errors = {};
+  if (!out.title) errors.title = "Впишите название";
+  if (!out.date) errors.date = "Укажите дату";
+  if (!out.venue) errors.venue = "Укажите площадку";
+  if (out.taken != null && out.sellable != null && out.taken > out.sellable) errors.taken = "Занято больше, чем мест в продаже";
+  if (out.pmin != null && out.pmax != null && out.pmin > out.pmax) errors.pmax = "«До» меньше, чем «от»";
+  if (out.taken != null && out.sellable == null) errors.sellable = "Укажите, сколько мест в продаже";
+  // Вал и выручка: если не вписаны, но есть места и цены — оценка по средней цене
+  var avg = out.pmin != null ? ((out.pmin + (out.pmax != null ? out.pmax : out.pmin)) / 2) : null;
+  if (out.gross == null && out.sellable != null && avg != null) out.gross = Math.round(out.sellable * avg);
+  if (out.revenue == null && out.taken != null && avg != null) out.revenue = Math.round(out.taken * avg);
+  if (out.gross != null && out.taken == null) out.taken = 0;
+  if (out.gross != null && out.revenue == null) out.revenue = 0;
+  return { data: out, errors: errors };
+}
+
+var lastFocus = null;
+function showDrawer(html) {
+  var dr = $("drawer");
+  dr.innerHTML = html; dr.scrollTop = 0;
+  if (!dr.classList.contains("open")) lastFocus = document.activeElement;
+  dr.classList.add("open"); dr.setAttribute("aria-hidden", "false"); $("veil").classList.add("open");
+  var first = dr.querySelector("input, button"); if (first) first.focus();
+}
+function findEvent(i) { return ALL.filter(function (x) { return x.i === i; })[0]; }
+function openDrawer(i) {
+  var e = findEvent(i); if (!e) return;
+  S.sel = i; S.editing = false;
+  showDrawer(drawerView(e));
+  document.querySelectorAll(".ev-table tbody tr").forEach(function (tr) { tr.classList.toggle("sel", +tr.getAttribute("data-i") === i); });
+}
+function openEditor(i) { S.editing = true; S.sel = i; showDrawer(drawerForm(i == null ? null : findEvent(i), null, i == null)); }
+function closeDrawer() {
+  if (!$("drawer").classList.contains("open")) return;
+  $("drawer").classList.remove("open"); $("drawer").setAttribute("aria-hidden", "true"); $("veil").classList.remove("open");
+  S.editing = false;
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+function stamp() { var d = new Date(); return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" }) + " " + d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }); }
+
+$("drawer").addEventListener("click", function (ev) {
+  var b = ev.target.closest("[data-drawer]"); if (!b) return;
+  var act = b.getAttribute("data-drawer"), i = S.sel;
+  if (act === "close") closeDrawer();
+  else if (act === "edit") openEditor(i);
+  else if (act === "cancel") openDrawer(i);
+  else if (act === "revert") { delete EDITS.byId[i]; saveEdits(); rebuild(); render(); openDrawer(i); }
+  else if (act === "delete") {
+    if (!confirm("Удалить своё событие? Это действие нельзя отменить.")) return;
+    EDITS.custom = EDITS.custom.filter(function (c) { return c.i !== i; }); saveEdits(); rebuild(); closeDrawer(); render();
+  }
+  else if (act === "save") {
+    var r = readForm();
+    if (Object.keys(r.errors).length) { showDrawer(drawerForm(Object.assign({}, i == null ? {} : findEvent(i), r.data), r.errors, i == null)); return; }
+    if (i == null || !findEvent(i)) {                                   // своё событие
+      var id = EDITS.nextId++;
+      EDITS.custom.push(Object.assign({ i: id, v: "", created: stamp() }, r.data));
+      i = id;
+    } else if (findEvent(i).custom) {                                  // правка своего события
+      EDITS.custom = EDITS.custom.map(function (c) { return c.i === i ? Object.assign({}, c, r.data) : c; });
+    } else {                                                           // правка спарсенного: храним только отличия
+      var base = BASE[i], diff = {};
+      var norm = function (v) { return v == null ? "" : String(v); };
+      EDIT_FIELDS.forEach(function (k) {
+        if (k in r.data && norm(r.data[k]) !== norm(base[k])) diff[k] = r.data[k] === "" ? null : r.data[k];
+      });
+      if (Object.keys(diff).length) EDITS.byId[i] = { fields: diff, at: stamp() }; else delete EDITS.byId[i];
+    }
+    saveEdits(); rebuild(); render(); openDrawer(i);
+  }
+});
+
+// ---------------------------------------------------------------- Календарь
+function monthGrid(first) {
+  var y = +first.slice(0, 4), m = +first.slice(5, 7);
+  var d0 = new Date(Date.UTC(y, m - 1, 1)), shift = (d0.getUTCDay() + 6) % 7, last = +monthEnd(first).slice(8);
+  var from = S.pickFrom, to = S.pickTo || S.pickFrom;
+  var cells = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"].map(function (w, k) { return '<div class="cal-wd' + (k >= 5 ? " wknd" : "") + '">' + w + '</div>'; }).join("");
+  for (var k = 0; k < shift; k++) cells += '<button class="cal-day out" tabindex="-1" aria-hidden="true"></button>';
+  for (var d = 1; d <= last; d++) {
+    var iso = first.slice(0, 8) + (d < 10 ? "0" + d : d), wd = (shift + d - 1) % 7;
+    var cls = "cal-day" + (wd >= 5 ? " wknd" : "") + (EVENT_DAYS[iso] ? " has" : "");
+    if (from && iso >= from && iso <= to) cls += (iso === from || iso === to) ? " edge" : " in";
+    cells += '<button class="' + cls + '" data-day="' + iso + '" aria-label="' + d + ' ' + MONTHS[m - 1] + (EVENT_DAYS[iso] ? ', есть мероприятия' : '') + '">' + d + '</button>';
+  }
+  return '<div><div class="cal-head"><span>' + MONTHS_FULL[m - 1][0].toUpperCase() + MONTHS_FULL[m - 1].slice(1) + ' ' + y + '</span></div><div class="cal-grid">' + cells + '</div></div>';
+}
+function shiftMonth(first, n) { var d = new Date(first + "T00:00:00Z"); d.setUTCMonth(d.getUTCMonth() + n); return d.toISOString().slice(0, 10); }
+function renderCal() {
+  var cal = $("cal");
+  cal.hidden = !S.calOpen; $("dateBtn").setAttribute("aria-expanded", String(S.calOpen));
+  if (!S.calOpen) return;
+  var months = ["2026-09-01", "2026-10-01", "2026-11-01", "2026-12-01", "2027-01-01", "2027-02-01", "2027-03-01"];
+  var right = shiftMonth(S.calMonth, 1);
+  cal.innerHTML =
+    '<div class="cal-months" role="group" aria-label="Быстрый выбор месяца">' + months.map(function (m) {
+      var on = S.pickFrom === m && S.pickTo === monthEnd(m);
+      return '<button data-month="' + m + '" aria-pressed="' + on + '">' + MONTHS_FULL[+m.slice(5, 7) - 1][0].toUpperCase() + MONTHS_FULL[+m.slice(5, 7) - 1].slice(1) + (m.slice(0, 4) !== "2026" ? " " + m.slice(0, 4) : "") + '</button>';
+    }).join("") + '</div>' +
+    '<div style="display:flex;justify-content:space-between;margin-bottom:-30px;position:relative;z-index:1">' +
+      '<button class="cal-nav" data-calnav="-1" aria-label="Предыдущий месяц"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7.5 3l-3 3 3 3"/></svg></button>' +
+      '<button class="cal-nav" data-calnav="1" aria-label="Следующий месяц"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4.5 3l3 3-3 3"/></svg></button></div>' +
+    '<div class="cal-body" style="padding:0 40px">' + monthGrid(S.calMonth) + monthGrid(right) + '</div>' +
+    '<div class="cal-foot"><span class="sel-text">' + (S.pickFrom ? (S.pickTo ? "Выбрано: " + rangeLabel(S.pickFrom, S.pickTo) : "Начало: " + human(S.pickFrom) + " — выберите конец") : "Нажмите на первый и последний день — в любом порядке. Точка — есть мероприятия.") + '</span>' +
+      '<button class="btn-ghost" data-calact="reset">Сбросить</button><button class="btn-dark" data-calact="apply"' + (S.pickFrom ? "" : " disabled") + '>Показать</button></div>';
+}
+function openCal() {
+  S.calOpen = true; S.pickFrom = S.period === "custom" ? S.from : null; S.pickTo = S.period === "custom" ? S.to : null;
+  if (S.pickFrom) S.calMonth = S.pickFrom.slice(0, 8) + "01";
+  renderCal();
+}
+$("cal").addEventListener("click", function (ev) {
+  ev.stopPropagation();
+  var t = ev.target.closest("button"); if (!t) return;
+  if (t.hasAttribute("data-day")) {
+    var d = t.getAttribute("data-day");
+    if (!S.pickFrom || S.pickTo) { S.pickFrom = d; S.pickTo = null; }
+    else if (d < S.pickFrom) { S.pickTo = S.pickFrom; S.pickFrom = d; }  // конец раньше начала — меняем местами
+    else S.pickTo = d;
+  } else if (t.hasAttribute("data-month")) { var m = t.getAttribute("data-month"); S.pickFrom = m; S.pickTo = monthEnd(m); S.calMonth = m; }
+  else if (t.hasAttribute("data-calnav")) S.calMonth = shiftMonth(S.calMonth, +t.getAttribute("data-calnav"));
+  else if (t.getAttribute("data-calact") === "reset") { S.pickFrom = S.pickTo = null; S.period = "all"; S.from = S.to = null; S.calOpen = false; render(); }
+  else if (t.getAttribute("data-calact") === "apply" && S.pickFrom) { S.period = "custom"; S.from = S.pickFrom; S.to = S.pickTo || S.pickFrom; S.calOpen = false; render(); }
+  renderCal();
+});
+
+// ---------------------------------------------------------------- Перетаскивание ширины столбцов
+var drag = null;
+document.addEventListener("mousedown", function (ev) {
+  var h = ev.target.closest && ev.target.closest("[data-resize]");
+  if (!h) return;
+  ev.preventDefault(); ev.stopPropagation();
+  var id = h.getAttribute("data-resize"), col = document.querySelector('col[data-col="' + id + '"]');
+  drag = { id: id, x: ev.clientX, w: col.getBoundingClientRect().width || parseInt(col.style.width, 10), col: col, table: $("evTable"), handle: h };
+  h.classList.add("active"); document.body.classList.add("resizing");
+});
+document.addEventListener("mousemove", function (ev) {
+  if (!drag) return;
+  var w = Math.max(64, Math.round(drag.w + ev.clientX - drag.x));
+  drag.col.style.width = w + "px"; S.widths[drag.id] = w;
+  drag.table.style.width = visibleCols().reduce(function (s, c) { return s + colW(c); }, 0) + "px";
+});
+document.addEventListener("mouseup", function () {
+  if (!drag) return;
+  drag.handle.classList.remove("active"); document.body.classList.remove("resizing");
+  drag = null; savePrefs();
+});
+document.addEventListener("dblclick", function (ev) {
+  var h = ev.target.closest && ev.target.closest("[data-resize]");
+  if (h) { delete S.widths[h.getAttribute("data-resize")]; savePrefs(); render(); }
+});
+
+// ---------------------------------------------------------------- Подсказки у заголовков
+function showTip(el) {
+  var r = el.getBoundingClientRect(), pop = $("infoPop");
+  pop.textContent = el.getAttribute("data-tip"); pop.hidden = false;
+  pop.style.left = Math.max(8, Math.min(window.innerWidth - 296, r.left - 130)) + "px"; pop.style.top = (r.bottom + 8) + "px";
+}
+document.addEventListener("mouseover", function (ev) { var t = ev.target.closest && ev.target.closest(".info"); if (t) showTip(t); });
+document.addEventListener("mouseout", function (ev) { if (ev.target.closest && ev.target.closest(".info")) $("infoPop").hidden = true; });
+document.addEventListener("focusin", function (ev) { if (ev.target.classList && ev.target.classList.contains("info")) showTip(ev.target); });
+document.addEventListener("focusout", function (ev) { if (ev.target.classList && ev.target.classList.contains("info")) $("infoPop").hidden = true; });
+
+// ---------------------------------------------------------------- рендер и события
+function render() {
+  document.querySelectorAll("[data-view]").forEach(function (b) { if (b.getAttribute("data-view") === S.view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+  document.querySelectorAll("#period button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-p") === S.period)); });
+  $("dateLabel").textContent = S.period === "custom" ? rangeLabel(S.from, S.to) : "Даты";
+  $("dateBtn").style.borderColor = S.period === "custom" ? "var(--soot)" : "";
+  $("view").innerHTML = S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : renderEvents();
+  $("view").classList.toggle("enter", !!S.enter); S.enter = false; S.colsAnim = false;
+  renderCal();
+}
+
+$("city").innerHTML = '<option>Все города</option>' + CITIES.map(function (c) { return '<option' + (c.name === S.city ? " selected" : "") + '>' + c.name + (c.ready ? "" : " — нет данных") + '</option>'; }).join("");
+$("city").addEventListener("change", function () { S.city = this.value.replace(" — нет данных", ""); closeDrawer(); render(); });
+$("period").addEventListener("click", function (ev) { var b = ev.target.closest("button"); if (b) { S.period = b.getAttribute("data-p"); S.from = S.to = null; render(); } });
+$("dateBtn").addEventListener("click", function (ev) { ev.stopPropagation(); if (S.calOpen) { S.calOpen = false; renderCal(); } else openCal(); });
+$("q").addEventListener("input", function () { S.q = this.value; if (S.view !== "events") S.view = "events"; render(); });
+document.querySelectorAll("[data-view]").forEach(function (b) { b.addEventListener("click", function () { if (S.view !== b.getAttribute("data-view")) S.enter = true; S.view = b.getAttribute("data-view"); location.hash = S.view; render(); window.scrollTo(0, 0); }); });
+$("veil").addEventListener("click", closeDrawer);
+document.addEventListener("keydown", function (ev) {
+  if (ev.key !== "Escape") return;
+  if (S.calOpen) { S.calOpen = false; renderCal(); return; }
+  if (S.colsOpen) { S.colsOpen = false; render(); return; }
+  closeDrawer();
+});
+document.addEventListener("click", function (ev) {
+  // Клик мимо всплывающих панелей закрывает их
+  if (S.calOpen && !ev.target.closest(".pop-anchor")) { S.calOpen = false; renderCal(); }
+  if (S.colsOpen && !ev.target.closest(".cols-anchor")) { S.colsOpen = false; render(); }
+});
+$("view").addEventListener("click", function (ev) {
+  if (ev.target.closest(".resizer")) return;
+  var t = ev.target.closest("[data-tab],[data-sort],[data-set],[data-open],[data-action],tr[data-i]");
+  if (!t) return;
+  if (t.hasAttribute("data-tab")) { S.tab = t.getAttribute("data-tab"); render(); }
+  else if (t.hasAttribute("data-sort")) { var k = t.getAttribute("data-sort"); S.desc = S.sort === k ? !S.desc : k !== "date"; S.sort = k; render(); }
+  else if (t.hasAttribute("data-set")) { S[t.getAttribute("data-set")] = t.getAttribute("data-val"); render(); }
+  else if (t.getAttribute("data-action") === "cols") { ev.stopPropagation(); S.colsOpen = !S.colsOpen; S.colsAnim = S.colsOpen; render(); }
+  else if (t.getAttribute("data-action") === "reset-cols") { S.hidden = []; S.widths = {}; savePrefs(); render(); }
+  else if (t.getAttribute("data-action") === "add") openEditor(null);
+  else if (t.hasAttribute("data-open")) openDrawer(+t.getAttribute("data-open"));
+  else if (t.hasAttribute("data-i")) openDrawer(+t.getAttribute("data-i"));
+});
+$("view").addEventListener("change", function (ev) {
+  var f = ev.target.getAttribute("data-filter"), v = ev.target.getAttribute("data-colvis");
+  if (f) { S[f] = ev.target.value; render(); }
+  if (v) {
+    if (ev.target.checked) S.hidden = S.hidden.filter(function (x) { return x !== v; });
+    else if (S.hidden.indexOf(v) < 0) S.hidden.push(v);
+    savePrefs(); render();
+  }
+});
+if (["overview", "niches", "events"].indexOf(location.hash.slice(1)) >= 0) S.view = location.hash.slice(1);
+// Кнопки «назад/вперёд» браузера переключают разделы
+S.enter = true;  // первый показ страницы тоже с анимацией
+window.addEventListener("hashchange", function () {
+  var v = location.hash.slice(1);
+  if (["overview", "niches", "events"].indexOf(v) >= 0 && v !== S.view) { S.view = v; S.enter = true; closeDrawer(); render(); }
+});
+render();
+</script>
+</body>
+</html>

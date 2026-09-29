@@ -1,0 +1,20 @@
+# Секреты: ключи GigaChat / Claude / Google — только локально
+config/settings.json
+service_account.json
+
+# Сертификат Минцифры скачивается приложением сам (с проверкой отпечатка)
+config/certs/
+
+# Собираемые данные и логи — не код, пересоздаются сбором
+data/
+*.log
+# …но журнал дизайн-решений — это история проекта, его храним
+!.tastemaker/decisions.log
+
+# Служебные файлы Claude Code
+.claude/scheduled_tasks.lock
+
+# Python и системный мусор
+__pycache__/
+*.pyc
+.DS_Store

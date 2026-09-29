@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Аналитика рынка</title>
+<style>
+  :root {
+    --bg: #F6F6F3;
+    --surface: #FFFFFF;
+    --ink: #1C1C1A;
+    --ink-2: #5B5B56;
+    --ink-3: #8C8B84;
+    --border: #E3E2DC;
+    --grid: #ECEBE6;
+    --accent: #1F4B3F;
+    --accent-tint: #E7EFEC;
+    --revenue: #1F4B3F;      /* выручка — тёмный шаг зелёного */
+    --remaining: #8FB8A6;    /* остаток вала — светлый шаг того же тона (проверен: 2.19:1 к фону) */
+    --danger: #B23B3B;
+    --danger-tint: #FAEBEB;
+    --success: #2F7A4F;
+    --success-tint: #E7F3EB;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); line-height: 1.5; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  header.app-header { margin-bottom: 22px; display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+  header.app-header h1 { font-size: 22px; font-weight: 500; margin: 0 0 4px; }
+  header.app-header p { color: var(--ink-2); font-size: 14px; margin: 0; }
+  .tabs { display: flex; gap: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; flex-wrap: wrap; }
+  .tabs a { font-size: 13px; padding: 7px 14px; border-radius: 7px; color: var(--ink-2); text-decoration: none; }
+  .tabs a.active { background: var(--accent); color: #fff; }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+  .filters select { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 14px; font-family: var(--sans); background: var(--surface); color: var(--ink); }
+  .filters .as-of { margin-left: auto; font-size: 12px; color: var(--ink-3); }
+
+  .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px; margin-bottom: 20px; }
+  .panel h2 { font-size: 15px; font-weight: 500; margin: 0 0 4px; }
+  .panel .sub { font-size: 12px; color: var(--ink-3); margin: 0 0 16px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+  .grid-2 > .panel { margin-bottom: 0; }
+  .stack { display: flex; flex-direction: column; gap: 20px; margin-bottom: 20px; }
+
+  /* Главные цифры */
+  .kpis { display: grid; grid-template-columns: 1.5fr repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
+  @media (max-width: 1000px) { .kpis { grid-template-columns: 1fr 1fr; } .kpis .hero { grid-column: 1 / -1; } }
+  .tile { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; }
+  .tile .label { font-size: 13px; color: var(--ink-2); }
+  .tile .value { font-size: 26px; font-weight: 600; margin-top: 4px; letter-spacing: -0.01em; }
+  .tile .note { font-size: 12px; color: var(--ink-3); margin-top: 2px; }
+  .hero .value { font-size: 48px; line-height: 1.1; }
+  .meter { height: 8px; border-radius: 999px; background: var(--remaining); margin-top: 12px; overflow: hidden; }
+  .meter > div { height: 100%; background: var(--revenue); border-radius: 999px 0 0 999px; }
+
+  /* Легенда */
+  .legend { display: flex; gap: 16px; font-size: 12px; color: var(--ink-2); margin-bottom: 14px; flex-wrap: wrap; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .swatch.rev { background: var(--revenue); }
+  .swatch.rem { background: var(--remaining); }
+
+  /* Горизонтальные полосы: выручка + остаток = вал */
+  .hbars { display: flex; flex-direction: column; gap: 12px; }
+  .hbar { display: grid; grid-template-columns: minmax(120px, 210px) 1fr; gap: 12px; align-items: center; cursor: default; }
+  .hbar .name { font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hbar .name small { color: var(--ink-3); font-size: 12px; }
+  .hbar .track { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .hbar .bar { display: flex; gap: 2px; height: 18px; flex: none; width: calc(var(--w) * (100% - 170px)); }
+  @media (max-width: 600px) {
+    .hbar { grid-template-columns: 1fr; gap: 4px; }
+    .hbar .track { flex-wrap: wrap; gap: 4px; }
+    .hbar .bar { width: calc(var(--w) * 100%); }
+    .hbar .val { flex-basis: 100%; }
+  }
+  .hbar .bar > div { height: 100%; min-width: 2px; }
+  .hbar .bar > div:first-child { border-radius: 0; }
+  .hbar .bar > div:last-child { border-radius: 0 4px 4px 0; }
+  .seg-rev { background: var(--revenue); }
+  .seg-rem { background: var(--remaining); }
+  .hbar .val { font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+  .hbar:hover .name { color: var(--accent); }
+
+  /* Колонки по неделям */
+  .cols-wrap { position: relative; height: 230px; margin-top: 8px; }
+  .cols-grid { position: absolute; inset: 0 0 26px 44px; }
+  .cols-grid .gl { position: absolute; left: 0; right: 0; border-top: 1px solid var(--grid); }
+  .cols-grid .gl span { position: absolute; left: -44px; top: -8px; width: 40px; text-align: right; font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+  .cols-grid .gl.base { border-top-color: #C3C2B7; }
+  .cols { position: absolute; inset: 0 0 0 44px; display: flex; align-items: flex-end; gap: 6px; padding-bottom: 26px; }
+  .col { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; position: relative; min-width: 0; }
+  .col .stackc { width: 100%; max-width: 24px; display: flex; flex-direction: column; gap: 2px; }
+  .col .stackc > div:first-child { border-radius: 4px 4px 0 0; }
+  .col .lab { position: absolute; bottom: -24px; font-size: 11px; color: var(--ink-3); white-space: nowrap; }
+  .col:hover .stackc { filter: brightness(0.92); }
+
+  /* Линия продаж */
+  .line-wrap { position: relative; }
+  .line-svg { width: 100%; height: 220px; display: block; overflow: visible; }
+  .line-x { display: flex; justify-content: space-between; font-size: 11px; color: var(--ink-3); margin-top: 6px; }
+
+  .tooltip {
+    position: fixed; pointer-events: none; z-index: 30; background: var(--ink); color: #fff;
+    font-size: 12px; line-height: 1.55; padding: 8px 11px; border-radius: 8px; opacity: 0;
+    transition: opacity 0.08s; max-width: 280px; box-shadow: 0 6px 16px rgba(0,0,0,0.18);
+  }
+  .tooltip b { font-weight: 600; }
+  .tooltip .muted { color: #B9B8B0; }
+
+  details.table-view { margin-top: 14px; }
+  details.table-view summary { font-size: 12px; color: var(--accent); cursor: pointer; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-3); padding: 8px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td .muted { color: var(--ink-3); font-size: 12px; }
+  td a { color: var(--ink); text-decoration: none; }
+  td a:hover { text-decoration: underline; }
+  .pill { font-size: 11px; border-radius: 5px; padding: 1px 6px; white-space: nowrap; }
+  .pill.low { background: var(--danger-tint); color: var(--danger); }
+  .pill.new { background: var(--success-tint); color: var(--success); }
+  .empty { color: var(--ink-3); font-size: 13px; padding: 12px 0; }
+  .caveat { font-size: 12px; color: var(--ink-3); margin-top: 20px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="app-header">
+    <div>
+      <h1>Аналитика рынка</h1>
+      <p>Вал, выручка и динамика продаж конкурентов по схемам залов</p>
+    </div>
+    <nav class="tabs">
+      <a href="/">Мониторинг Яндекс Афиши</a>
+      <a href="/competitors">Конкуренты</a>
+      <a href="/analytics" class="active">Аналитика рынка</a>
+    </nav>
+  </header>
+
+  <div class="filters">
+    <select id="period" aria-label="Период">
+      <option value="next30">Ближайшие 30 дней</option>
+      <option value="next90" selected>Ближайшие 90 дней</option>
+      <option value="future">Все будущие</option>
+      <option value="past30">Прошедшие 30 дней</option>
+      <option value="all">Всё время</option>
+    </select>
+    <select id="venue" aria-label="Площадка"><option value="">Все площадки</option></select>
+    <select id="sphere" aria-label="Сфера"><option value="">Все сферы</option></select>
+    <span class="as-of" id="asOf"></span>
+  </div>
+
+  <section class="kpis" id="kpis"></section>
+
+  <div class="grid-2" style="margin-bottom:20px">
+    <section class="panel">
+      <h2>Площадки</h2>
+      <p class="sub">Выручка (оценка по занятым местам) и остаток до вала</p>
+      <div class="legend"><span><i class="swatch rev"></i>Выручка</span><span><i class="swatch rem"></i>Осталось продать</span></div>
+      <div class="hbars" id="venueBars"></div>
+      <details class="table-view"><summary>Таблицей</summary><div id="venueTable"></div></details>
+    </section>
+    <section class="panel">
+      <h2>Сферы</h2>
+      <p class="sub">Где сосредоточены деньги рынка</p>
+      <div class="legend"><span><i class="swatch rev"></i>Выручка</span><span><i class="swatch rem"></i>Осталось продать</span></div>
+      <div class="hbars" id="sphereBars"></div>
+      <details class="table-view"><summary>Таблицей</summary><div id="sphereTable"></div></details>
+    </section>
+  </div>
+
+  <div class="stack">
+    <section class="panel">
+      <h2>Нагрузка по неделям</h2>
+      <p class="sub">Вал мероприятий по неделе проведения: видно, где конкуренты сталкиваются датами</p>
+      <div class="legend"><span><i class="swatch rev"></i>Выручка</span><span><i class="swatch rem"></i>Осталось продать</span></div>
+      <div class="cols-wrap" id="weeks"></div>
+      <details class="table-view"><summary>Таблицей</summary><div id="weeksTable"></div></details>
+    </section>
+
+    <section class="panel">
+      <h2>Подтверждённые продажи по дням</h2>
+      <p class="sub">Места, которые были свободны в прошлом сборе и стали заняты, × их цена. Учитываются площадка и сфера из фильтров, период — последние 30 дней</p>
+      <div class="line-wrap" id="salesLine"></div>
+    </section>
+  </div>
+
+  <div class="grid-2" style="margin-bottom:20px">
+    <section class="panel">
+      <h2>Лидеры по выручке</h2>
+      <p class="sub">Оценка по занятым местам</p>
+      <div id="topRevenue"></div>
+    </section>
+    <section class="panel">
+      <h2>Быстрее всего продаются</h2>
+      <p class="sub">Подтверждённые продажи за последние 7 дней</p>
+      <div id="topFast"></div>
+    </section>
+  </div>
+  <div class="grid-2">
+    <section class="panel">
+      <h2>Под риском</h2>
+      <p class="sub">До даты меньше 3 недель, а зал заполнен меньше чем на 40%</p>
+      <div id="atRisk"></div>
+    </section>
+    <section class="panel">
+      <h2>Новое в афишах</h2>
+      <p class="sub">Появилось за последние 7 дней</p>
+      <div id="newEvents"></div>
+    </section>
+  </div>
+
+  <p class="caveat">
+    Выручка — оценка сверху: «занятые» места включают пригласительные и квоты других касс. Постоянная бронь
+    площадки (места, занятые во всех событиях зала) и ряды, отмеченные вручную, из вала и выручки исключены —
+    настраивается на вкладке «Конкуренты» → «Бронь залов». Цены — номинал, без скидок и льгот.
+    Подтверждённые продажи точные, но считаются только с начала слежения. Мероприятия без онлайн-продажи
+    (по пригласительным, клубные) в денежных показателях не участвуют.
+  </p>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+const el = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const state = { events: [], status: {} };
+const DAY = 86400000;
+
+function money(n, full = false) {
+  if (n == null) return '—';
+  if (full) return Math.round(n).toLocaleString('ru-RU') + ' ₽';
+  const abs = Math.abs(n);
+  if (abs >= 1e6) return (n / 1e6).toLocaleString('ru-RU', { maximumFractionDigits: abs >= 1e7 ? 1 : 2 }) + ' млн ₽';
+  if (abs >= 1e3) return Math.round(n / 1e3).toLocaleString('ru-RU') + ' тыс. ₽';
+  return Math.round(n).toLocaleString('ru-RU') + ' ₽';
+}
+const pct = (a, b) => (b ? Math.round(a / b * 100) : 0);
+// Даты-строки 'YYYY-MM-DD' считаем в UTC: местная полночь + toISOString() в поясе UTC+3
+// давала «вчера», и прибавление дня возвращало ту же дату
+const utc = (iso) => new Date(iso + 'T00:00:00Z');
+const fmtDate = (iso) => iso ? utc(iso).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', timeZone: 'UTC' }) : '—';
+const todayIso = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+const addDays = (iso, n) => new Date(utc(iso).getTime() + n * DAY).toISOString().slice(0, 10);
+
+/* ---------- Подсказка ---------- */
+const tip = el('tooltip');
+function showTip(ev, html) {
+  tip.innerHTML = html; tip.style.opacity = 1;
+  const pad = 14, w = tip.offsetWidth, h = tip.offsetHeight;
+  let x = ev.clientX + pad, y = ev.clientY + pad;
+  if (x + w > window.innerWidth - 8) x = ev.clientX - w - pad;
+  if (y + h > window.innerHeight - 8) y = ev.clientY - h - pad;
+  tip.style.left = x + 'px'; tip.style.top = y + 'px';
+}
+function hideTip() { tip.style.opacity = 0; }
+function bindTips(container, selector, render) {
+  container.querySelectorAll(selector).forEach(node => {
+    node.addEventListener('mousemove', (ev) => showTip(ev, render(node)));
+    node.addEventListener('mouseleave', hideTip);
+  });
+}
+
+/* ---------- Фильтры ---------- */
+function inPeriod(e) {
+  const p = el('period').value, t = todayIso();
+  if (!e.date) return p === 'all' || p === 'future';
+  if (p === 'next30') return e.date >= t && e.date <= addDays(t, 30);
+  if (p === 'next90') return e.date >= t && e.date <= addDays(t, 90);
+  if (p === 'future') return e.date >= t;
+  if (p === 'past30') return e.date < t && e.date >= addDays(t, -30);
+  return true;
+}
+const byDims = (e) => (!el('venue').value || e.venue === el('venue').value) && (!el('sphere').value || e.sphere === el('sphere').value);
+const withMoney = (list) => list.filter(e => e.gross != null);
+
+/* ---------- Главные цифры ---------- */
+function renderKpis(list) {
+  const m = withMoney(list);
+  const gross = m.reduce((s, e) => s + e.gross, 0);
+  const revenue = m.reduce((s, e) => s + (e.revenue_est || 0), 0);
+  const taken = m.reduce((s, e) => s + (e.seats_taken_sellable || 0), 0);
+  const sellable = m.reduce((s, e) => s + (e.seats_sellable || 0), 0);
+  const confSeats = m.reduce((s, e) => s + (e.sold_confirmed || 0), 0);
+  const confRub = m.reduce((s, e) => s + (e.revenue_confirmed || 0), 0);
+  const since = m.map(e => e.tracking_since).filter(Boolean).sort()[0];
+  el('kpis').innerHTML = `
+    <div class="tile hero">
+      <div class="label">Выручка рынка (оценка)</div>
+      <div class="value">${money(revenue)}</div>
+      <div class="note">${pct(revenue, gross)}% от вала ${money(gross)}</div>
+      <div class="meter" role="img" aria-label="Выручка ${pct(revenue, gross)}% от вала"><div style="width:${pct(revenue, gross)}%"></div></div>
+    </div>
+    <div class="tile"><div class="label">Мероприятий</div><div class="value">${list.length}</div><div class="note">со схемой зала: ${m.length}</div></div>
+    <div class="tile"><div class="label">Заполняемость</div><div class="value">${pct(taken, sellable)}%</div><div class="note">${taken.toLocaleString('ru-RU')} из ${sellable.toLocaleString('ru-RU')} мест</div></div>
+    <div class="tile"><div class="label">Средний билет</div><div class="value">${taken ? money(revenue / taken, true) : '—'}</div><div class="note">по занятым местам</div></div>
+    <div class="tile"><div class="label">Подтверждённые продажи</div><div class="value">${money(confRub)}</div><div class="note">${confSeats.toLocaleString('ru-RU')} мест${since ? ' с ' + fmtDate(since.slice(0, 10)) : ''}</div></div>`;
+}
+
+/* ---------- Полосы: площадки и сферы ---------- */
+function groupMoney(list, keyFn) {
+  const groups = new Map();
+  for (const e of withMoney(list)) {
+    const k = keyFn(e) || 'Не определено';
+    const g = groups.get(k) || { name: k, gross: 0, revenue: 0, events: 0, taken: 0, sellable: 0 };
+    g.gross += e.gross; g.revenue += e.revenue_est || 0; g.events += 1;
+    g.taken += e.seats_taken_sellable || 0; g.sellable += e.seats_sellable || 0;
+    groups.set(k, g);
+  }
+  return [...groups.values()].sort((a, b) => b.gross - a.gross);
+}
+
+function renderHBars(targetId, tableId, groups) {
+  const box = el(targetId);
+  if (!groups.length) { box.innerHTML = '<div class="empty">Нет мероприятий со схемой зала за выбранный период.</div>'; el(tableId).innerHTML = ''; return; }
+  const max = Math.max(...groups.map(g => g.gross));
+  box.innerHTML = groups.map((g, i) => {
+    const w = g.gross / max * 100;
+    const revW = g.gross ? g.revenue / g.gross * 100 : 0;
+    return `<div class="hbar" data-i="${i}">
+      <div class="name" title="${esc(g.name)}">${esc(g.name)} <small>· ${g.events}</small></div>
+      <div class="track">
+        <div class="bar" style="--w:${(w / 100).toFixed(4)}">
+          <div class="seg-rev" style="flex:${revW} 0 0"></div><div class="seg-rem" style="flex:${100 - revW} 0 0"></div>
+        </div>
+        <span class="val">${money(g.revenue)} из ${money(g.gross)}</span>
+      </div>
+    </div>`;
+  }).join('');
+  bindTips(box, '.hbar', (node) => {
+    const g = groups[node.dataset.i];
+    return `<b>${esc(g.name)}</b><br>Мероприятий: ${g.events}<br>Выручка: <b>${money(g.revenue, true)}</b> (${pct(g.revenue, g.gross)}%)<br>
+      Вал: ${money(g.gross, true)}<br>Заполняемость: ${pct(g.taken, g.sellable)}%<br>
+      <span class="muted">Средний билет: ${g.taken ? money(g.revenue / g.taken, true) : '—'}</span>`;
+  });
+  el(tableId).innerHTML = `<table><thead><tr><th></th><th class="num">Событий</th><th class="num">Вал</th><th class="num">Выручка</th><th class="num">% вала</th><th class="num">Заполн.</th><th class="num">Ср. билет</th></tr></thead><tbody>
+    ${groups.map(g => `<tr><td>${esc(g.name)}</td><td class="num">${g.events}</td><td class="num">${money(g.gross, true)}</td><td class="num">${money(g.revenue, true)}</td>
+      <td class="num">${pct(g.revenue, g.gross)}%</td><td class="num">${pct(g.taken, g.sellable)}%</td><td class="num">${g.taken ? money(g.revenue / g.taken, true) : '—'}</td></tr>`).join('')}
+  </tbody></table>`;
+}
+
+/* ---------- Колонки по неделям ---------- */
+function weekStart(iso) {
+  const shift = (utc(iso).getUTCDay() + 6) % 7;  // понедельник
+  return addDays(iso, -shift);
+}
+function niceMax(v) {
+  if (v <= 0) return 1;
+  const p = Math.pow(10, Math.floor(Math.log10(v)));
+  for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= v) return m * p;
+  return 10 * p;
+}
+function renderWeeks(list) {
+  const groups = new Map();
+  for (const e of withMoney(list)) {
+    if (!e.date) continue;
+    const k = weekStart(e.date);
+    const g = groups.get(k) || { week: k, gross: 0, revenue: 0, events: 0, titles: [] };
+    g.gross += e.gross; g.revenue += e.revenue_est || 0; g.events += 1; g.titles.push(e.title);
+    groups.set(k, g);
+  }
+  const weeks = [...groups.values()].sort((a, b) => a.week.localeCompare(b.week));
+  const box = el('weeks');
+  if (!weeks.length) { box.innerHTML = '<div class="empty">Нет данных за выбранный период.</div>'; el('weeksTable').innerHTML = ''; return; }
+  const top = niceMax(Math.max(...weeks.map(w => w.gross)));
+  const label = (w) => `${fmtDate(w.week)}–${fmtDate(addDays(w.week, 6))}`;
+  const every = Math.ceil(weeks.length / 12);
+  box.innerHTML = `
+    <div class="cols-grid">
+      ${[0, 0.5, 1].map(f => `<div class="gl ${f === 0 ? 'base' : ''}" style="bottom:${f * 100}%"><span>${f ? money(top * f).replace(' ₽', '') : '0'}</span></div>`).join('')}
+    </div>
+    <div class="cols">
+      ${weeks.map((w, i) => `<div class="col" data-i="${i}">
+        <div class="stackc" style="height:${w.gross / top * 100}%">
+          <div class="seg-rem" style="flex:${w.gross - w.revenue} 0 0"></div>
+          <div class="seg-rev" style="flex:${w.revenue} 0 0"></div>
+        </div>
+        ${i % every === 0 ? `<span class="lab">${fmtDate(w.week)}</span>` : ''}
+      </div>`).join('')}
+    </div>`;
+  bindTips(box, '.col', (node) => {
+    const w = weeks[node.dataset.i];
+    return `<b>${label(w)}</b><br>Мероприятий: ${w.events}<br>Вал: ${money(w.gross, true)}<br>Выручка: <b>${money(w.revenue, true)}</b> (${pct(w.revenue, w.gross)}%)
+      <br><span class="muted">${w.titles.slice(0, 4).map(esc).join('<br>')}${w.titles.length > 4 ? '<br>…' : ''}</span>`;
+  });
+  el('weeksTable').innerHTML = `<table><thead><tr><th>Неделя</th><th class="num">Событий</th><th class="num">Вал</th><th class="num">Выручка</th><th class="num">% вала</th></tr></thead><tbody>
+    ${weeks.map(w => `<tr><td>${label(w)}</td><td class="num">${w.events}</td><td class="num">${money(w.gross, true)}</td><td class="num">${money(w.revenue, true)}</td><td class="num">${pct(w.revenue, w.gross)}%</td></tr>`).join('')}
+  </tbody></table>`;
+}
+
+/* ---------- Линия продаж ---------- */
+function renderSalesLine(list) {
+  const t = todayIso(), from = addDays(t, -29);
+  const days = [];
+  for (let i = 0; i < 30; i++) days.push({ date: addDays(from, i), seats: 0, rub: 0 });  // ровно 30 дней, без while-цикла
+  const idx = new Map(days.map((d, i) => [d.date, i]));
+  let firstData = null;
+  for (const e of list) {
+    for (const [d, [n, rub]] of Object.entries(e.sales_by_day || {})) {
+      if (!idx.has(d)) continue;
+      const day = days[idx.get(d)]; day.seats += n; day.rub += rub;
+      if (!firstData || d < firstData) firstData = d;
+    }
+  }
+  const box = el('salesLine');
+  const since = list.map(e => e.tracking_since).filter(Boolean).sort()[0];
+  const start = since ? Math.max(0, idx.get(since.slice(0, 10)) ?? 0) : 0;
+  const pts = days.slice(start);
+  if (pts.length < 2) {
+    box.innerHTML = '<div class="empty">Слежение за местами началось недавно — график появится после сборов в разные дни. Продажи фиксируются при каждом сборе, включите автосбор на вкладке «Конкуренты».</div>';
+    return;
+  }
+  const W = 1000, H = 220, pl = 56, pr = 12, pt = 10, pb = 8;
+  const top = niceMax(Math.max(...pts.map(p => p.rub), 1));
+  const x = (i) => pl + i / (pts.length - 1) * (W - pl - pr);
+  const y = (v) => pt + (1 - v / top) * (H - pt - pb);
+  const line = pts.map((p, i) => `${x(i).toFixed(1)},${y(p.rub).toFixed(1)}`).join(' ');
+  const area = `${x(0)},${y(0)} ${line} ${x(pts.length - 1)},${y(0)}`;
+  const last = pts[pts.length - 1];
+  box.innerHTML = `
+    <svg class="line-svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="Подтверждённые продажи по дням">
+      ${[0, 0.5, 1].map(f => `<line x1="${pl}" x2="${W - pr}" y1="${y(top * f)}" y2="${y(top * f)}" stroke="${f ? '#ECEBE6' : '#C3C2B7'}" stroke-width="1" vector-effect="non-scaling-stroke"/>
+        <text x="${pl - 8}" y="${y(top * f) + 4}" text-anchor="end" font-size="11" fill="#8C8B84">${f ? money(top * f).replace(' ₽', '') : '0'}</text>`).join('')}
+      <polygon points="${area}" fill="var(--revenue)" opacity="0.10"/>
+      <polyline points="${line}" fill="none" stroke="var(--revenue)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+      <line id="cross" x1="0" x2="0" y1="${pt}" y2="${H - pb}" stroke="#8C8B84" stroke-width="1" vector-effect="non-scaling-stroke" opacity="0"/>
+      <rect x="${pl}" y="0" width="${W - pl - pr}" height="${H}" fill="transparent" id="hit"/>
+    </svg>
+    <div class="line-x" style="padding-left:${pl / W * 100}%"><span>${fmtDate(pts[0].date)}</span><span>сегодня: ${money(last.rub)} · ${last.seats} мест</span></div>`;
+  const svg = box.querySelector('svg'), cross = box.querySelector('#cross');
+  box.querySelector('#hit').addEventListener('mousemove', (ev) => {
+    const r = svg.getBoundingClientRect();
+    const rel = ((ev.clientX - r.left) / r.width * W - pl) / (W - pl - pr);
+    const i = Math.max(0, Math.min(pts.length - 1, Math.round(rel * (pts.length - 1))));
+    cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('opacity', 1);
+    showTip(ev, `<b>${fmtDate(pts[i].date)}</b><br>Продано: ${pts[i].seats} мест<br>На сумму: <b>${money(pts[i].rub, true)}</b>`);
+  });
+  box.querySelector('#hit').addEventListener('mouseleave', () => { cross.setAttribute('opacity', 0); hideTip(); });
+}
+
+/* ---------- Списки ---------- */
+function eventCell(e) {
+  const link = e.buy_url || e.url;
+  return `<a href="${esc(link)}" target="_blank" rel="noopener">${esc(e.title)}</a><div class="muted">${esc(e.venue || '')} · ${fmtDate(e.date)}${e.time ? ' ' + esc(e.time) : ''}</div>`;
+}
+const fill = (e) => e.seats_sellable ? pct(e.seats_taken_sellable, e.seats_sellable) : null;
+
+function table(rows, head) {
+  if (!rows.length) return '<div class="empty">Пока пусто.</div>';
+  return `<table><thead><tr>${head.map(h => `<th class="${h.num ? 'num' : ''}">${h.t}</th>`).join('')}</tr></thead><tbody>${rows.join('')}</tbody></table>`;
+}
+
+function renderLists(list, allDims) {
+  const t = todayIso();
+  const top = withMoney(list).sort((a, b) => (b.revenue_est || 0) - (a.revenue_est || 0)).slice(0, 10);
+  el('topRevenue').innerHTML = table(top.map(e => `<tr><td>${eventCell(e)}</td><td class="num">${fill(e)}%</td><td class="num">${money(e.revenue_est)}<div class="muted">из ${money(e.gross)}</div></td></tr>`),
+    [{ t: 'Мероприятие' }, { t: 'Заполн.', num: true }, { t: 'Выручка', num: true }]);
+
+  const weekAgo = addDays(t, -6);
+  const fast = allDims.filter(e => !e.date || e.date >= t).map(e => {
+    let seats = 0, rub = 0;
+    for (const [d, [n, r]] of Object.entries(e.sales_by_day || {})) if (d >= weekAgo) { seats += n; rub += r; }
+    return { e, seats, rub };
+  }).filter(x => x.seats > 0).sort((a, b) => b.seats - a.seats).slice(0, 10);
+  el('topFast').innerHTML = table(fast.map(({ e, seats, rub }) => `<tr><td>${eventCell(e)}</td><td class="num">${seats}</td><td class="num">${money(rub)}</td></tr>`),
+    [{ t: 'Мероприятие' }, { t: 'Мест', num: true }, { t: 'Сумма', num: true }]);
+
+  const risk = withMoney(allDims)
+    .filter(e => e.date && e.date >= t && e.date <= addDays(t, 21) && fill(e) !== null && fill(e) < 40)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  el('atRisk').innerHTML = table(risk.map(e => `<tr><td>${eventCell(e)}</td><td class="num"><span class="pill low">${fill(e)}%</span></td><td class="num">${Math.round((utc(e.date) - utc(t)) / DAY)} дн.</td></tr>`),
+    [{ t: 'Мероприятие' }, { t: 'Заполн.', num: true }, { t: 'До даты', num: true }]);
+
+  // «Новое» — появилось позже первого сбора СВОЕЙ площадки (иначе только что добавленная
+  // площадка целиком выглядела бы новой)
+  const firstByVenue = {};
+  for (const e of state.events) if (!firstByVenue[e.venue] || e.first_seen < firstByVenue[e.venue]) firstByVenue[e.venue] = e.first_seen;
+  const newOnes = allDims.filter(e => e.first_seen > firstByVenue[e.venue].slice(0, 10) + 'T23:59:59' && e.first_seen >= addDays(t, -6))
+    .sort((a, b) => b.first_seen.localeCompare(a.first_seen)).slice(0, 12);
+  el('newEvents').innerHTML = table(newOnes.map(e => `<tr><td>${eventCell(e)}</td><td class="num"><span class="pill new">${fmtDate(e.first_seen.slice(0, 10))}</span></td><td class="num">${e.price_min != null ? e.price_min.toLocaleString('ru-RU') + '–' + e.price_max.toLocaleString('ru-RU') + ' ₽' : '—'}</td></tr>`),
+    [{ t: 'Мероприятие' }, { t: 'Появилось', num: true }, { t: 'Цены', num: true }]);
+}
+
+/* ---------- Сборка ---------- */
+function render() {
+  const allDims = state.events.filter(byDims);
+  const list = allDims.filter(inPeriod);
+  renderKpis(list);
+  renderHBars('venueBars', 'venueTable', groupMoney(list, e => e.venue));
+  renderHBars('sphereBars', 'sphereTable', groupMoney(list, e => e.sphere));
+  renderWeeks(list);
+  renderSalesLine(allDims);
+  renderLists(list, allDims);
+}
+
+async function load() {
+  const data = await (await fetch('/api/analytics')).json();
+  state.events = data.events; state.status = data.status || {};
+  const venues = [...new Set(state.events.map(e => e.venue).filter(Boolean))].sort();
+  el('venue').innerHTML = '<option value="">Все площадки</option>' + venues.map(v => `<option>${esc(v)}</option>`).join('');
+  el('sphere').innerHTML = '<option value="">Все сферы</option>' + data.taxonomy.sphere.map(v => `<option>${esc(v)}</option>`).join('');
+  el('asOf').textContent = state.status.last_run_at
+    ? `Данные на ${new Date(state.status.last_run_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}` : '';
+  render();
+}
+['period', 'venue', 'sphere'].forEach(id => el(id).addEventListener('change', render));
+load();
+</script>
+</body>
+</html>
