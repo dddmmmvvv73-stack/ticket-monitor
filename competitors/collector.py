@@ -647,4 +647,7 @@ def export_to_sheets(webhook_url: str, include_past: bool = False) -> str:
 
 
 if __name__ == "__main__":
-    run_collection("manual")
+    # python3 -m competitors.collector        — сбор вручную
+    # python3 -m competitors.collector auto   — сбор по расписанию (GitHub Actions)
+    import sys
+    run_collection(sys.argv[1] if len(sys.argv) > 1 else "manual")
