@@ -1,0 +1,14 @@
+[
+  {
+    "ts": "2026-09-30T12:11:34",
+    "price_min": 2700,
+    "price_max": 8200,
+    "seats_free": 1090,
+    "seats_taken": 372,
+    "seats_total": 1462,
+    "gross": 6609600,
+    "revenue_est": 1536800,
+    "sold_confirmed": 0,
+    "revenue_confirmed": 0
+  }
+]
