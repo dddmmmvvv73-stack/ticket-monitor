@@ -21,7 +21,7 @@ from threading import Timer
 from flask import Flask, jsonify, request, send_file, Response
 
 from alerts import check_alerts
-from competitors import collector, edits
+from competitors import collector, edits, sync
 from competitors.api import bp as app_api
 from competitors import vladimirkoncert
 from competitors.classifier import FORMATS, GENRES, SPHERES
@@ -304,16 +304,36 @@ def competitors_sources():
     sources = request.get_json(force=True)
     if not isinstance(sources, list):
         return jsonify({"error": "Ожидается список площадок"}), 400
+    for s in sources:
+        if s.get("type") == "vladimirkoncert" and s.get("site", vladimirkoncert.DEFAULT_SITE) not in vladimirkoncert.SITES:
+            return jsonify({"error": f"Неизвестный билетный сайт: {s.get('site')}"}), 400
+    old = {s.get("id"): s for s in collector.load_sources()}
     collector.save_sources(sources)
+    # Что поменялось — в сообщение коммита; затем список уходит на GitHub, где идёт сбор
+    new = {s.get("id"): s for s in sources}
+    on = lambda s: s.get("enabled", True)
+    changes = ([f"+ {new[i]['name']}" for i in new if i not in old] +
+               [f"− {old[i]['name']}" for i in old if i not in new] +
+               [("включена " if on(new[i]) else "выключена ") + new[i]["name"] for i in new if i in old and on(new[i]) != on(old[i])])
+    sync.publish_sources(", ".join(changes) or "список обновлён", collector.log)
     return jsonify(sources)
+
+
+@app.route("/api/competitors/sites")
+def competitors_sites():
+    """Билетные сайты на движке vladimirkoncert: адрес, подпись, город по умолчанию."""
+    return jsonify([{"site": k, "label": v[0], "city": v[1]} for k, v in vladimirkoncert.SITES.items()])
 
 
 @app.route("/api/competitors/vk_venues")
 def competitors_vk_venues():
+    site = request.args.get("site", vladimirkoncert.DEFAULT_SITE)
+    if site not in vladimirkoncert.SITES:
+        return jsonify({"error": f"Неизвестный билетный сайт: {site}"}), 400
     try:
-        return jsonify(vladimirkoncert.list_venues())
+        return jsonify(vladimirkoncert.list_venues(site))
     except Exception as e:
-        return jsonify({"error": f"Не удалось получить список площадок: {e}"}), 502
+        return jsonify({"error": f"Не удалось получить список площадок с {site}: {e}"}), 502
 
 
 @app.route("/api/competitors/classify", methods=["POST"])

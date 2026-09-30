@@ -158,7 +158,8 @@ def _collect_source(source: dict) -> list[dict]:
     if source["type"] == "odk33":
         return odk33.collect(log)
     if source["type"] == "vladimirkoncert":
-        return vk.collect_venue(source["venue_id"], source["name"], log, source.get("city", vk.CITY_BY_DEFAULT))
+        return vk.collect_venue(source["venue_id"], source["name"], log, source.get("city", vk.CITY_BY_DEFAULT),
+                                source.get("site", vk.DEFAULT_SITE))
     raise ValueError(f"неизвестный тип источника: {source['type']}")
 
 

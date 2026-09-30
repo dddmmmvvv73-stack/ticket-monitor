@@ -229,10 +229,12 @@
       <h2>Площадки</h2>
       <div class="sources" id="sources"></div>
       <div class="add-source">
-        <select id="venueSelect"><option value="">Добавить площадку с vladimirkoncert.ru…</option></select>
-        <button class="secondary" id="addVenueBtn" disabled>Добавить</button>
+        <select id="siteSelect" aria-label="Билетный сайт"></select>
+        <select id="venueSelect" aria-label="Площадка"><option value="">Площадка…</option></select>
+        <input type="text" id="venueCity" placeholder="Город" aria-label="Город площадки" style="width:150px">
+        <button class="secondary" id="addVenueBtn" disabled>Подключить</button>
       </div>
-      <div class="hint">На vladimirkoncert.ru продают билеты ~20 площадок Владимирской области. У каждой площадки собираются все сеансы, цены и схема зала.</div>
+      <div class="hint" id="venueHint">Региональные билетные сайты на одном движке: выберите сайт, площадку и проверьте город. Список площадок сразу отправляется на GitHub — сбор подхватит его со следующего запуска.</div>
     </section>
   </div>
 
@@ -618,7 +620,7 @@ function renderSources() {
     <div class="source-row">
       <div>
         <div>${esc(s.name)}</div>
-        <div class="meta">${s.type === 'odk33' ? 'odk33.ru + схемы залов с vladimirkoncert.ru' : 'vladimirkoncert.ru'} · ${esc(s.city || '')}</div>
+        <div class="meta">${s.type === 'odk33' ? 'odk33.ru + схемы залов с vladimirkoncert.ru' : esc(s.site || 'vladimirkoncert.ru')} · ${esc(s.city || '')}</div>
       </div>
       <div class="source-actions">
         <label class="switch" title="Собирать эту площадку">
@@ -640,33 +642,52 @@ function removeSource(i) {
   state.sources.splice(i, 1); saveSources();
 }
 
-let venuesLoaded = false;
-el('venueSelect').addEventListener('focus', async () => {
-  if (venuesLoaded) return;
-  venuesLoaded = true;
-  const select = el('venueSelect');
-  select.options[0].textContent = 'Загружаю список площадок…';
+// Сайты на движке vladimirkoncert, площадки — со страницы выбранного сайта
+const ODK_ON_VK = '2';  // ОДКиИ на vladimirkoncert.ru уже собирается через odk33.ru
+const CITY_HINTS = [[/Кинешем/i, 'Кинешма'], [/Вязники/i, 'Вязники'], [/Муромск/i, 'Муром'], [/Кольчугино/i, 'Кольчугино'],
+  [/Хрустальный/i, 'Гусь-Хрустальный'], [/Ногина|Современник|Дегтярёва|Родина/i, 'Ковров'], [/Авиатор|Вымпел/i, 'Рыбинск']];
+let sites = [];
+const siteOf = id => sites.find(x => x.site === id);
+const uidPrefix = site => site === 'vladimirkoncert.ru' ? 'vk' : site.split('.')[0];
+
+async function loadSites() {
   try {
-    const venues = await api('/api/competitors/vk_venues');
-    venues.forEach(v => select.add(new Option(v.name, v.venue_id)));
-    select.options[0].textContent = 'Выберите площадку…';
-  } catch (e) {
-    select.options[0].textContent = 'Не удалось загрузить список';
-    venuesLoaded = false; toast(e.message, true);
-  }
+    sites = await api('/api/competitors/sites');
+    el('siteSelect').innerHTML = sites.map(x => `<option value="${esc(x.site)}">${esc(x.site)} — ${esc(x.label)}</option>`).join('');
+    loadVenues();
+  } catch (e) { toast(e.message, true); }
+}
+async function loadVenues() {
+  const site = el('siteSelect').value, select = el('venueSelect');
+  select.innerHTML = '<option value="">Загружаю список площадок…</option>';
+  el('addVenueBtn').disabled = true; el('venueCity').value = '';
+  try {
+    const venues = await api(`/api/competitors/vk_venues?site=${encodeURIComponent(site)}`);
+    select.innerHTML = `<option value="">Площадка на ${esc(site)} — ${venues.length}</option>` + venues.map(v => {
+      const here = state.sources.some(s => (s.site || 'vladimirkoncert.ru') === site && s.venue_id === v.venue_id);
+      const odk = site === 'vladimirkoncert.ru' && v.venue_id === ODK_ON_VK;
+      return `<option value="${esc(v.venue_id)}"${here || odk ? ' disabled' : ''}>${esc(v.name)}${here ? ' — уже собирается' : odk ? ' — собирается через odk33.ru' : ''}</option>`;
+    }).join('');
+  } catch (e) { select.innerHTML = '<option value="">Не удалось загрузить список</option>'; toast(e.message, true); }
+}
+el('siteSelect').addEventListener('change', loadVenues);
+el('venueSelect').addEventListener('change', () => {
+  const select = el('venueSelect'), name = select.options[select.selectedIndex].text;
+  const hint = CITY_HINTS.find(h => h[0].test(name));
+  el('venueCity').value = select.value ? (hint ? hint[1] : siteOf(el('siteSelect').value).city) : '';
+  el('venueHint').textContent = hint && select.value ? `Город «${hint[1]}» подставлен по названию площадки — проверьте.` : 'Список площадок сразу отправляется на GitHub — сбор подхватит его со следующего запуска.';
+  el('addVenueBtn').disabled = !select.value;
 });
-el('venueSelect').addEventListener('change', () => { el('addVenueBtn').disabled = !el('venueSelect').value; });
 el('addVenueBtn').addEventListener('click', () => {
-  const select = el('venueSelect');
-  const id = `vk-${select.value}`;
-  if (state.sources.some(s => s.id === id)) { toast('Эта площадка уже добавлена'); return; }
+  const site = el('siteSelect').value, select = el('venueSelect');
+  const id = `${uidPrefix(site)}-${select.value}`, city = el('venueCity').value.trim() || siteOf(site).city;
+  if (state.sources.some(s => s.id === id)) { toast('Эта площадка уже подключена'); return; }
   state.sources.push({
-    id, type: 'vladimirkoncert', venue_id: select.value,
-    name: select.options[select.selectedIndex].text, city: 'Владимирская обл.', enabled: true,
+    id, type: 'vladimirkoncert', site, venue_id: select.value,
+    name: select.options[select.selectedIndex].text, city, enabled: true,
   });
-  select.value = ''; el('addVenueBtn').disabled = true;
-  saveSources();
-  toast('Площадка добавлена — данные появятся после следующего сбора');
+  saveSources(); loadVenues();
+  toast('Площадка подключена и отправлена на GitHub — данные появятся после следующего сбора');
 });
 
 /* ---------- Таблица ---------- */
@@ -938,6 +959,7 @@ el('sheetsBtn').addEventListener('click', async () => {
   ]);
   state.settings = settings; state.sources = sources;
   renderSettings(); renderSources();
+  loadSites();  // после площадок — чтобы пометить уже подключённые
   await Promise.all([loadEvents(), loadHalls()]);
   pollStatus();
 })();

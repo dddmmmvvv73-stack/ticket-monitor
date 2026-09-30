@@ -13,5 +13,23 @@
     "name": "Арт Холл",
     "type": "vladimirkoncert",
     "venue_id": "1"
+  },
+  {
+    "id": "ivanovokoncert-2",
+    "type": "vladimirkoncert",
+    "site": "ivanovokoncert.ru",
+    "venue_id": "2",
+    "name": "Центр Культуры и Отдыха",
+    "city": "Иваново",
+    "enabled": true
+  },
+  {
+    "id": "ivanovokoncert-1",
+    "type": "vladimirkoncert",
+    "site": "ivanovokoncert.ru",
+    "venue_id": "1",
+    "name": "Ивановский Музыкальный Театр",
+    "city": "Иваново",
+    "enabled": true
   }
 ]

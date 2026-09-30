@@ -1,7 +1,7 @@
 """
-Парсер vladimirkoncert.ru — региональный билетный сайт (Владимир, Иваново,
-Кострома…), через который продают билеты ОДКиИ, филармония, драмтеатр
-и ещё ~20 площадок.
+Парсер региональных билетных сайтов на одном движке: vladimirkoncert.ru,
+ivanovokoncert.ru, kostromakoncert.ru, yarkoncert.ru, kovrovkoncert.ru.
+Сайт — параметр площадки (source["site"]), по умолчанию vladimirkoncert.ru.
 
 Устройство сайта (всё отдаётся готовым HTML, без JavaScript):
 
@@ -28,14 +28,38 @@ from competitors.fetch import clean_text, fetch_html
 
 BASE_URL = "https://vladimirkoncert.ru"
 CITY_BY_DEFAULT = "Владимир"
+DEFAULT_SITE = "vladimirkoncert.ru"
+
+# Известные сайты на этом движке: адрес -> (подпись, город по умолчанию)
+SITES = {
+    "vladimirkoncert.ru": ("Владимир и область", "Владимир"),
+    "ivanovokoncert.ru": ("Иваново, Кинешма", "Иваново"),
+    "kostromakoncert.ru": ("Кострома", "Кострома"),
+    "yarkoncert.ru": ("Ярославль, Рыбинск", "Ярославль"),
+    "kovrovkoncert.ru": ("Ковров", "Ковров"),
+}
 
 Log = Callable[[str], None]
 
 
-def absolute_url(href: str) -> str:
+def site_base(site: str) -> str:
+    return "https://" + site
+
+
+def uid_prefix(site: str) -> str:
+    """vk — у vladimirkoncert.ru (так уже сохранены история и схемы залов), у остальных — имя сайта."""
+    return "vk" if site == DEFAULT_SITE else site.split(".")[0]
+
+
+def _base_of(url: str) -> str:
+    m = re.match(r"https?://[^/]+", url or "")
+    return m.group(0) if m else BASE_URL
+
+
+def absolute_url(href: str, base: str = BASE_URL) -> str:
     if href.startswith("http"):
         return href
-    return BASE_URL + "/" + href.lstrip("/")
+    return base + "/" + href.lstrip("/")
 
 
 def event_id_from_url(url: str) -> str | None:
@@ -65,9 +89,9 @@ def _prices_from_text(text: str) -> tuple[int | None, int | None]:
     return min(numbers), max(numbers)
 
 
-def list_venues() -> list[dict]:
+def list_venues(site: str = DEFAULT_SITE) -> list[dict]:
     """Все площадки из выпадающего списка «Показывать мероприятия только этой площадки»."""
-    page = fetch_html(BASE_URL + "/")
+    page = fetch_html(site_base(site) + "/")
     select = re.search(r'<select[^>]*name="venue"[^>]*>(.*?)</select>', page, re.S)
     if not select:
         return []
@@ -86,8 +110,9 @@ def _parse_type_labels(page: str) -> dict[str, str]:
     }
 
 
-def list_shows(venue_id: str) -> list[dict]:
-    page = fetch_html(f"{BASE_URL}/shows?venue={venue_id}")
+def list_shows(venue_id: str, site: str = DEFAULT_SITE) -> list[dict]:
+    base = site_base(site)
+    page = fetch_html(f"{base}/shows?venue={venue_id}")
     type_labels = _parse_type_labels(page)
 
     shows: list[dict] = []
@@ -98,7 +123,7 @@ def list_shows(venue_id: str) -> list[dict]:
         link = re.search(r'href="(/shows/[^"]+)"\s+title="([^"]*)"', block)
         if not link:
             continue
-        url = absolute_url(link.group(1))
+        url = absolute_url(link.group(1), base)
         if url in seen:
             continue
         seen.add(url)
@@ -134,7 +159,7 @@ def parse_show_page(url: str) -> dict:
     description = re.split(r"Цена:", description)[0].strip()
 
     event_urls = list(dict.fromkeys(
-        absolute_url(href) for href in re.findall(r'href="([^"]*/shows/event/[^"]+)"', page)
+        absolute_url(href, _base_of(url)) for href in re.findall(r'href="([^"]*/shows/event/[^"]+)"', page)
     ))
 
     return {
@@ -172,7 +197,7 @@ def parse_event_page(url: str) -> dict:
     return {
         "event_id": event_id_from_url(url),
         "url": url,
-        "show_url": absolute_url(show_link.group(1)) if show_link else None,
+        "show_url": absolute_url(show_link.group(1), _base_of(url)) if show_link else None,
         "title": clean_text(title.group(1)) if title else "",
         "date": parse_day_month(when_text),
         "time": parse_time(when_text),
@@ -193,10 +218,12 @@ def resolve_event_urls(url: str) -> list[str]:
     return parse_show_page(url)["event_urls"]
 
 
-def collect_venue(venue_id: str, venue_name: str, log: Log, city: str = CITY_BY_DEFAULT) -> list[dict]:
+def collect_venue(venue_id: str, venue_name: str, log: Log, city: str = CITY_BY_DEFAULT,
+                  site: str = DEFAULT_SITE) -> list[dict]:
     """Все сеансы одной площадки -> строки общей таблицы конкурентов."""
-    shows = list_shows(venue_id)
-    log(f"vladimirkoncert / {venue_name}: найдено {len(shows)} мероприятий, разбираю сеансы…")
+    shows = list_shows(venue_id, site)
+    prefix = uid_prefix(site)
+    log(f"{site.split('.')[0]} / {venue_name}: найдено {len(shows)} мероприятий, разбираю сеансы…")
 
     rows: dict[str, dict] = {}
     for show in shows:
@@ -207,7 +234,8 @@ def collect_venue(venue_id: str, venue_name: str, log: Log, city: str = CITY_BY_
             continue
 
         base = {
-            "source": "vladimirkoncert",
+            "source": "vladimirkoncert" if site == DEFAULT_SITE else prefix,
+            "site": site,
             "venue": venue_name,
             "city": city,
             "hall": None,
@@ -222,7 +250,7 @@ def collect_venue(venue_id: str, venue_name: str, log: Log, city: str = CITY_BY_
         if not info["event_urls"]:
             # Продажа ещё не открыта — сеанса нет, берём то, что есть в списке
             price_min, price_max = _prices_from_text(show["price_text"] or info["price_text"])
-            uid = "vk-show:" + re.sub(r"\D", "", show["show_url"].split("/shows/")[-1].split("-")[0])
+            uid = f"{prefix}-show:" + re.sub(r"\D", "", show["show_url"].split("/shows/")[-1].split("-")[0])
             rows[uid] = {
                 **base, "uid": uid, "url": show["show_url"],
                 "date": parse_day_month(show["date_text"]), "time": parse_time(show["date_text"]),
@@ -234,7 +262,7 @@ def collect_venue(venue_id: str, venue_name: str, log: Log, city: str = CITY_BY_
 
         for event_url in info["event_urls"]:
             event_id = event_id_from_url(event_url)
-            uid = f"vk:{event_id}"
+            uid = f"{prefix}:{event_id}"
             if uid in rows:
                 continue
             try:
