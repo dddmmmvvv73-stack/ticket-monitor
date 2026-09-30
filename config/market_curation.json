@@ -19,6 +19,6 @@
     "show": "tour",
     "pmin": null,
     "pmax": 1300,
-    "noprice": true
+    "noprice": false
   }
 }
