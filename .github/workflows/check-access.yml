@@ -25,3 +25,33 @@ jobs:
           check -k -X POST https://ngw.devices.sberbank.ru:9443/api/v2/oauth
           check -k https://gigachat.devices.sberbank.ru/api/v1/models
           check https://afisha.yandex.ru/vladimir
+          check "https://api.kassir.ru/api/search?domain=ivanovo.kassir.ru&currentPage=1&pageSize=1"
+      - name: Афиша рынка — отдают ли Кассир и Яндекс события, а не капчу
+        run: |
+          python3 - <<'PY'
+          import json, urllib.request, http.cookiejar
+          UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36"
+          def show(name, fn):
+              try: print(name, "—", fn())
+              except Exception as e: print(name, "— ошибка:", repr(e)[:300])
+          def kassir():
+              req = urllib.request.Request("https://api.kassir.ru/api/search?domain=vlm.kassir.ru&currentPage=1&pageSize=100",
+                                           headers={"User-Agent": UA, "Accept": "application/json"})
+              d = json.load(urllib.request.urlopen(req, timeout=40))
+              return f"событий во Владимирской области: {d['pagination']['totalCount']}, получено {len(d['items'])}"
+          def yandex():
+              op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+              op.open(urllib.request.Request("https://afisha.yandex.ru/vladimir", headers={"User-Agent": UA}), timeout=40).read()
+              q = "query RubricEventsQuery($paging: PagingInput){ rubricEvents(paging:$paging){ items{ event{ title } } paging{ total } } }"
+              body = json.dumps({"operationName": "RubricEventsQuery", "query": q, "variables": {"paging": {"limit": 100, "offset": 0}}}).encode()
+              req = urllib.request.Request("https://afisha.yandex.ru/api/graphql?city=vladimir&version=601.0.0&query_name=RubricEventsQuery",
+                  data=body, method="POST", headers={"User-Agent": UA, "Content-Type": "application/json", "Accept": "*/*",
+                  "Origin": "https://afisha.yandex.ru", "Referer": "https://afisha.yandex.ru/vladimir",
+                  "x-csrf-token": "", "X-Parent-Request-Id": "1", "x-force-cors-preflight": "1"})
+              raw = op.open(req, timeout=40).read().decode()
+              try: d = json.loads(raw)["data"]["rubricEvents"]
+              except Exception: return "не JSON (капча?): " + raw[:200]
+              return f"событий во Владимире: {d['paging']['total']}, получено {len(d['items'])}"
+          show("Кассир API", kassir)
+          show("Яндекс Афиша GraphQL", yandex)
+          PY
