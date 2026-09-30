@@ -16,7 +16,7 @@
   },
   "edits": {},
   "filters": {
-    "show": "all",
+    "show": "local",
     "pmin": null,
     "pmax": null,
     "noprice": false
