@@ -18,7 +18,7 @@
   "filters": {
     "show": "tour",
     "pmin": null,
-    "pmax": 1300,
+    "pmax": null,
     "noprice": false
   }
 }
