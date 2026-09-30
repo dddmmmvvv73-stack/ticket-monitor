@@ -297,6 +297,15 @@ button.status:hover { color: var(--ink); }
 .add-row { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 14px; border-top: 1px solid var(--line-soft); }
 .add-row .chip-select { flex: 1 1 260px; min-width: 0; max-width: 460px; height: 40px; font-size: 14px; }
 .city-row { display: grid; grid-template-columns: 120px minmax(0, 1fr) auto; gap: 16px; align-items: baseline; padding: 12px 0; border-top: 1px solid var(--line-soft); }
+/* Подключить площадку */
+.pick-list { list-style: none; margin: 6px 0 0; padding: 0; border-top: 1px solid var(--line-soft); }
+.pick-row { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--line-soft); min-height: 52px; }
+.pick { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; font-size: 14px; }
+.pick.off { cursor: default; color: var(--muted); }
+.pick input { width: 16px; height: 16px; margin: 2px 0 0; accent-color: #1c1917; flex-shrink: 0; }
+.pick-name { font-weight: 500; }
+.city-in { width: 100%; height: 36px; border: 1px solid var(--line-strong); border-radius: 8px; padding: 0 10px; background: var(--card); }
+.city-in:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; border-color: var(--focus); }
 /* Нейросеть */
 .key-state { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .ok-badge { font-size: 12px; font-weight: 600; color: var(--good); background: var(--good-bg); border-radius: 9999px; padding: 1px 8px; white-space: nowrap; }
@@ -456,6 +465,7 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.96); }
   .src-row { grid-template-columns: minmax(0, 1fr) auto 36px; gap: 8px 12px; }
   .src-row .src-stat { grid-column: 1; grid-row: 2; }
   .city-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .pick-row { grid-template-columns: minmax(0, 1fr); }
   .city-row .sub { grid-column: 1 / -1; }
   .city-row .soon-tag { grid-row: 1; grid-column: 2; justify-self: end; }
   .toast { bottom: 88px; }
@@ -651,17 +661,6 @@ var EV = [
 ];
 var VENUE = { "О": "ОДКиИ", "А": "Арт Холл" };
 
-// Города: данные есть только по Владимиру; остальные — найденные источники, ещё не подключённые
-var CITIES = [
-  { name: "Владимир", ready: true },
-  { name: "Нижний Новгород", ready: true, note: "мероприятия по ссылке с Яндекс Афиши" },
-  { name: "Иваново", source: "ivanovokoncert.ru", note: "13 площадок: филармония, драмтеатр, музыкальный театр, ЦКиО и др." },
-  { name: "Кинешма", source: "ivanovokoncert.ru", note: "Кинешемский драматический театр продаёт билеты через ивановский сайт" },
-  { name: "Кострома", source: "kostromakoncert.ru", note: "3 площадки: КВЦ «Губернский», Дом музыки, ЦК «Майский»" },
-  { name: "Ярославль", source: "yarkoncert.ru", note: "17 площадок: «Миллениум», Дворец молодёжи, «Арена-2000» и др." },
-  { name: "Рыбинск", source: "yarkoncert.ru", note: "среди ярославских площадок есть ДК «Авиатор» и «Вымпел» — нужно уточнить, какие из них в Рыбинске" },
-  { name: "Ковров", source: "kovrovkoncert.ru", note: "4 площадки: ДК им. Ногина, «Современник», ДКиО им. Дегтярёва, ДКиТ «Родина»" }
-];
 
 // Зал по рядам у каждого мероприятия со схемой (data/competitors/seats, сбор 23:56).
 // Ключ — номер сеанса vladimirkoncert.ru; [зона, [[ряд, мест, занято, цена], …]]. Занято включает бронь площадки.
@@ -803,12 +802,27 @@ function periodLabel() {
   return S.period === "all" ? "вся будущая афиша" : "ближайшие " + S.period + " дней";
 }
 
+// Города — там, где подключена хотя бы одна площадка (и мероприятия по ссылке); без данных — «ждём сбор»
+function cityNames() {
+  var names = [];
+  S.cfg.sources.forEach(function (s) { if (s.on && names.indexOf(s.city) < 0) names.push(s.city); });
+  YA.forEach(function (y) { if (names.indexOf(y.city) < 0) names.push(y.city); });
+  return names;
+}
+function cityHasData(name) { return ALL.some(function (e) { return e.city === name; }); }
+function buildCitySelect() {
+  var names = cityNames();
+  if (S.city !== "Все города" && names.indexOf(S.city) < 0) S.city = names[0] || "Все города";
+  $("city").innerHTML = '<option value="Все города">Все города</option>' + names.map(function (n) {
+    return '<option value="' + esc(n) + '"' + (n === S.city ? " selected" : "") + '>' + esc(n) + (cityHasData(n) ? "" : " — ждём сбор") + '</option>';
+  }).join("");
+}
 function cityEmpty() {
-  var c = CITIES.filter(function (x) { return x.name === S.city; })[0];
-  if (!c || c.ready) return '<div class="empty"><h2>Мероприятий нет</h2><p style="margin:0">Попробуйте другой город или добавьте своё мероприятие.</p></div>';
-  return '<div class="empty"><h2>' + esc(S.city) + ' — данных пока нет</h2>' +
-    '<p style="margin:0 auto;max-width:520px">Источник найден: <b>' + esc(c.source) + '</b> — тот же билетный движок, что у vladimirkoncert.ru, поэтому подключается без новой разработки. ' + esc(c.note) + (/\.$/.test(c.note) ? '' : '.') + '</p>' +
-    '<p class="muted" style="margin-top:10px;font-size:13px">Подключение — в разделе «Настройки → Площадки». После первого сбора здесь появятся мероприятия, ниши и выручка.</p></div>';
+  var venues = S.cfg.sources.filter(function (x) { return x.on && x.city === S.city; });
+  if (!venues.length || cityHasData(S.city)) return '<div class="empty"><h2>Мероприятий нет</h2><p style="margin:0">Попробуйте другой город или добавьте своё мероприятие.</p></div>';
+  return '<div class="empty"><h2>' + esc(S.city) + ' — ждём первый сбор</h2>' +
+    '<p style="margin:0 auto;max-width:520px">Подключены: <b>' + esc(venues.map(function (x) { return x.name; }).join(", ")) + '</b> (' + esc(venues[0].site) + '). ' +
+    'Сбор идёт каждый час в :23 — после него здесь появятся мероприятия, ниши, продажи и залы.</p></div>';
 }
 // Площадки в данных — по числу мероприятий, самые крупные первыми
 function venuesOf(list, limit) {
@@ -1166,7 +1180,7 @@ function drawerForm(e, errors, isNew) {
       '<h3>Основное</h3>' +
       field("title", "Название", "text", "", "full") +
       field("date", "Дата", "date") + field("time", "Время", "time") +
-      select("city", "Город", CITIES.map(function (c) { return c.name; })) +
+      select("city", "Город", cityNames()) +
       '<div class="field' + (errors.venue ? " bad" : "") + '"><label for="f-venue">Площадка</label><input id="f-venue" name="venue" list="venues-list" value="' + val("venue") + '"' + (errors.venue ? ' aria-invalid="true" aria-describedby="err-venue"' : '') + '><datalist id="venues-list">' + knownVenues.map(function (v) { return '<option value="' + esc(v) + '">'; }).join("") + '</datalist>' + (errors.venue ? '<div class="err" id="err-venue">' + errors.venue + '</div>' : '') + '</div>' +
       '<h3>Ниша</h3>' +
       select("sphere", "Сфера", TAX.sphere, true) + select("format", "Формат", TAX.format, true) +
@@ -1789,8 +1803,8 @@ var CFG0 = {
   last: { trigger: "по расписанию", from: "23:50", to: "23:56", took: 364, found: 100, fresh: 0, sold: 6, soldRub: 14400 },
   auto: true, interval: 60, csvPast: false,
   sources: [
-    { name: "ОДКиИ", afisha: "odk33.ru", on: true, n: 43, mapped: 36 },
-    { name: "Арт Холл", afisha: "vladimirkoncert.ru", venueId: "1", on: true, n: 57, mapped: 57, removable: true }
+    { name: "ОДКиИ", site: "odk33.ru", afisha: "odk33.ru", sales: "vladimirkoncert.ru", city: "Владимир", on: true, n: 43, mapped: 36 },
+    { name: "Арт Холл", site: "vladimirkoncert.ru", afisha: "vladimirkoncert.ru", sales: "vladimirkoncert.ru", venueId: "1", city: "Владимир", on: true, n: 57, mapped: 57, removable: true }
   ],
   ai: { provider: "gigachat", gigaKey: true, claudeKey: false, model: "GigaChat-2-Max", scope: "GIGACHAT_API_PERS" },
   sheets: { url: "", auto: false }
@@ -1798,6 +1812,20 @@ var CFG0 = {
 // Площадки из списка на vladimirkoncert.ru (запрос 29.09, 23:27)
 var VK_VENUES = [["1", "Арт Холл"], ["5", "Владимирская областная филармония"], ["2", "Областной Дворец культуры и искусства"], ["10", "Центр классической музыки имени А.Э. Маркина"], ["9", "Владимирский областной Театр кукол"], ["43", "Областной академический театр драмы"], ["3", "Ледовый Дворец «Полярис»"], ["4", "Концертный бар ЦЕХ"], ["7", "Ресторан-пивоварня Макс Брой"], ["8", "Творческая лаБАРатория ДРУГОЙ 2.0"], ["22", "ДК Современник"], ["23", "ДКиТ «Родина»"], ["38", "Владимирский областной Дом работников искусств"], ["30", "ГЦКиО «Спутник» (Вязники)"], ["41", "Дворец Молодежи «Хрустальный»"], ["40", "ДК «Кольчугино»"], ["46", "ДК имени В.П. Ногина"], ["47", "ДКиО им. В.А. Дегтярёва"], ["45", "Муромский городской театр"], ["6", "Мореско by Кабуки"], ["13", "ДК с. Горки"]];
 var ODK_VENUE_ID = "2";  // ОДКиИ уже собирается через odk33.ru
+// Билетные сайты на одном движке. Списки площадок — с самих сайтов (запрос 30.09); в приложении загружаются в момент выбора.
+var SITES = [
+  { id: "vladimirkoncert.ru", label: "Владимир и область", city: "Владимир", venues: VK_VENUES },
+  { id: "ivanovokoncert.ru", label: "Иваново, Кинешма", city: "Иваново", venues: [["2", "Центр Культуры и Отдыха"], ["1", "Ивановский Музыкальный Театр"], ["11", "Ивановский Областной Драматический театр"], ["12", "Ивановский Театр Кукол"], ["6", "Ивановская Государственная Филармония"], ["3", "Дворец игровых видов спорта"], ["8", "Кинешемский драматический театр"], ["7", "Концертный зал «Классика»"], ["13", "ГБУИО «Центральная универсальная научная библиотека»"], ["14", "Ивановский дом национальностей"], ["4", "Клуб «Айсберг»"], ["18", "Арт-резиденция «Авангард» (Центр культуры и отдыха)"], ["43", "Руки Вверх! Бар"]] },
+  { id: "kostromakoncert.ru", label: "Кострома", city: "Кострома", venues: [["1", "КВЦ Губернский"], ["2", "Дом музыки"], ["17", "ЦК «Майский»"]] },
+  { id: "yarkoncert.ru", label: "Ярославль, Рыбинск", city: "Ярославль", venues: [["2", "Концертно-зрелищный центр Миллениум"], ["4", "Дворец Молодежи"], ["3", "УКРК «Арена-2000. Локомотив»"], ["7", "Клуб «Китайский Лётчик Джао Да»"], ["6", "РУКИ ВВЕРХ БАР"], ["11", "Арт-пространство «Лампа»"], ["16", "ДК Железнодорожников"], ["5", "КСК «Вознесенский»"], ["8", "Территория CLub"], ["29", "Concert-Hall КИНО"], ["49", "Городской клуб"], ["32", "Гостиница Которосль"], ["47", "ДК «Авиатор»"], ["25", "ДК «Вымпел»"], ["23", "ДК «Нефтяник»"], ["1", "ДК им. А.М. Добрынина"], ["46", "Дом культуры железнодорожников"]] },
+  { id: "kovrovkoncert.ru", label: "Ковров", city: "Ковров", venues: [["6", "ДК имени В.П. Ногина"], ["1", "ДК Современник"], ["7", "ДКиО им. В.А. Дегтярёва"], ["2", "ДКиТ «Родина»"]] }
+];
+// Город по названию площадки — только подсказка: в интерфейсе помечается «проверьте», его можно исправить
+var CITY_HINTS = [[/Кинешем/i, "Кинешма"], [/Вязники/i, "Вязники"], [/Муромск/i, "Муром"], [/Кольчугино/i, "Кольчугино"], [/Хрустальный/i, "Гусь-Хрустальный"],
+  [/Ногина|Современник|Дегтярёва|Родина/i, "Ковров"], [/Авиатор|Вымпел/i, "Рыбинск"]];
+function siteById(id) { return SITES.filter(function (x) { return x.id === id; })[0]; }
+function cityGuess(site, name) { for (var i = 0; i < CITY_HINTS.length; i++) if (CITY_HINTS[i][0].test(name)) return { city: CITY_HINTS[i][1], hint: true }; return { city: site.city, hint: false }; }
+function venueKey(name) { return String(name).toLowerCase().replace(/ё/g, "е").replace(/[«»"'.\s]/g, ""); }
 var GIGA_MODELS = [["GigaChat-2-Max", "точнее всех"], ["GigaChat-2-Pro", ""], ["GigaChat-2", "Lite — самый большой бесплатный лимит"], ["GigaChat-3-Lightning", ""], ["GigaChat-3-Pro", ""], ["GigaChat-3-Ultra", ""]];
 var GIGA_SCOPES = [["GIGACHAT_API_PERS", "физлицо (PERS)"], ["GIGACHAT_API_B2B", "ИП / юрлицо, пакеты (B2B)"], ["GIGACHAT_API_CORP", "юрлицо, оплата по факту (CORP)"]];
 // Кто определил нишу у 100 мероприятий текущей таблицы
@@ -1939,42 +1967,71 @@ function yaSourcesCard() {
     '<p class="sub">Закрытые ряды площадки («административные места» старого мониторинга) — теперь в «Площадки и залы» → «Бронь зала», как у всех площадок. Сейчас они нигде не заданы.</p>' +
   '</section>';
 }
+S.conn = null;  // открытая форма «Подключить площадку»: { site, picked: {id: true}, city: {id: город} }
+S.lastPush = "";
+function srcRow(s, k) {
+  var where = s.site === "odk33.ru" ? "Афиша — odk33.ru · продажи — vladimirkoncert.ru, схема зала" : "Афиша и продажи — " + s.site + ", схема зала";
+  return '<li class="src-row' + (s.on ? '' : ' is-off') + '"><div style="min-width:0"><div class="src-name">' + esc(s.name) + '</div><div class="sub" style="margin:0">' + esc(where) + '</div></div>' +
+    '<div class="src-stat">' + (s.n == null ? '<span class="sub" style="margin:0">мероприятия появятся после сбора</span>'
+      : '<div class="num" style="font-weight:500">' + s.n + ' ' + plural(s.n, "мероприятие", "мероприятия", "мероприятий") + '</div><div class="sub" style="margin:0">' + s.mapped + ' со схемой зала</div>') + '</div>' +
+    toggle("src:" + k, s.on, "", (s.on ? "Не собирать " : "Собирать ") + s.name) +
+    (s.removable ? '<button class="icon-btn" data-sa="remove" data-sv="' + k + '" aria-label="Убрать площадку ' + esc(s.name) + '" title="Убрать площадку"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>' : '<span></span>') + '</li>';
+}
+function connectedCard() {
+  var c = S.cfg, groups = {};
+  c.sources.forEach(function (s, k) { (groups[s.city] = groups[s.city] || []).push(srcRow(s, k)); });
+  return '<section class="card card-pad"><div class="card-head"><div><h2>Подключённые площадки</h2><p class="sub">Откуда собираются афиши. Выключенная площадка не опрашивается, удалённая — тоже; уже собранные мероприятия и история сохраняются.</p></div>' +
+      (S.conn ? '' : '<button class="btn-dark" data-sa="connect-open" style="height:40px;display:inline-flex;align-items:center;gap:8px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M8 3v10M3 8h10"/></svg>Подключить площадку</button>') + '</div>' +
+      Object.keys(groups).map(function (city) {
+        return '<div class="field-label" style="margin-top:18px">' + esc(city) + ' · ' + groups[city].length + ' ' + plural(groups[city].length, "площадка", "площадки", "площадок") + '</div><ul class="src-list" style="margin:0">' + groups[city].join("") + '</ul>';
+      }).join("") +
+      '<p class="sub" style="margin-top:14px">Список площадок хранится на GitHub и отправляется туда сам при каждом изменении — сбор на сервере подхватывает его со следующего запуска' + (S.lastPush ? '. Последняя отправка — ' + S.lastPush : '') + '.</p>' +
+    '</section>';
+}
+function connectCard() {
+  var cn = S.conn; if (!cn) return "";
+  var site = cn.site && siteById(cn.site), c = S.cfg;
+  var siteChips = SITES.map(function (x) { return '<button class="chip-btn" data-sa="connect-site" data-sv="' + x.id + '" aria-pressed="' + (cn.site === x.id) + '">' + esc(x.id) + ' · ' + esc(x.label) + '<span class="cnt num">' + x.venues.length + '</span></button>'; }).join("");
+  var list = "", nPicked = 0;
+  if (site) {
+    list = site.venues.map(function (v) {
+      var id = v[0], name = v[1];
+      var here = c.sources.some(function (s) { return s.site === site.id && s.venueId === id; });
+      var odk = site.id === "vladimirkoncert.ru" && id === ODK_VENUE_ID;
+      var twin = c.sources.filter(function (s) { return s.site !== site.id && s.site !== "odk33.ru" && venueKey(s.name) === venueKey(name); })[0];
+      var other = !twin && SITES.filter(function (x) { return x.id !== site.id && x.venues.some(function (w) { return venueKey(w[1]) === venueKey(name); }); })[0];
+      var disabled = here || odk || !!twin, picked = !disabled && cn.picked[id];
+      if (picked) nPicked++;
+      var guess = cityGuess(site, name), city = cn.city[id] || guess.city;
+      var note = here ? "уже собирается" : odk ? "собирается через odk33.ru" : twin ? "уже собирается с " + twin.site + " — вторая копия задвоит мероприятия" : other ? "есть и на " + other.id + " — подключите с одного сайта" : "";
+      return '<li class="pick-row"><label class="pick' + (disabled ? ' off' : '') + '"><input type="checkbox" data-sc="pick:' + id + '"' + (picked || here ? " checked" : "") + (disabled ? " disabled" : "") + '><span><span class="pick-name">' + esc(name) + '</span>' + (note ? '<span class="sub" style="display:block;margin:0">' + esc(note) + '</span>' : '') + '</span></label>' +
+        (picked ? '<div><input class="city-in" data-sc="city:' + id + '" value="' + esc(city) + '" list="cityList" aria-label="Город площадки ' + esc(name) + '">' + (guess.hint && !cn.city[id] ? '<div class="sub" style="margin:2px 0 0">по названию — проверьте</div>' : '') + '</div>' : '<span></span>') + '</li>';
+    }).join("");
+  }
+  var known = []; SITES.forEach(function (x) { if (known.indexOf(x.city) < 0) known.push(x.city); }); CITY_HINTS.forEach(function (h) { if (known.indexOf(h[1]) < 0) known.push(h[1]); });
+  return '<section class="card card-pad" id="connectCard"><div class="card-head"><h2>Подключить площадку</h2><button class="icon-btn" data-sa="connect-close" aria-label="Закрыть без подключения"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button></div>' +
+    '<div class="field-label">1. Билетный сайт</div><div class="opt-row">' + siteChips + '</div>' +
+    (site ? '<div class="field-label" style="margin-top:18px">2. Площадки на ' + esc(site.id) + ' · отметьте нужные</div><ul class="pick-list">' + list + '</ul>' +
+      '<p class="sub">Список загружается с сайта в момент выбора. У отмеченной площадки справа — город: он подставляется сам, его можно исправить.</p>' +
+      '<datalist id="cityList">' + known.map(function (k) { return '<option value="' + esc(k) + '">'; }).join("") + '</datalist>'
+      : '<p class="sub" style="margin-top:10px">Все сайты работают на одном билетном движке — площадки подключаются одинаково.</p>') +
+    '<div class="form-actions" style="margin-top:16px"><button class="btn-dark" data-sa="connect-save"' + (nPicked ? "" : " disabled") + '>' + (nPicked ? "Подключить " + nPicked + " " + plural(nPicked, "площадку", "площадки", "площадок") : "Отметьте площадки") + '</button>' +
+      '<button class="btn-ghost" data-sa="connect-close">Отмена</button><span class="sub" style="margin:0">Изменение сразу уйдёт на GitHub, сбор начнётся со следующего запуска — в :23.</span></div>' +
+  '</section>';
+}
 function setSources() {
-  var c = S.cfg;
-  var rows = c.sources.map(function (s, k) {
-    return '<li class="src-row' + (s.on ? '' : ' is-off') + '"><div style="min-width:0"><div class="src-name">' + esc(s.name) + '</div><div class="sub" style="margin:0">Афиша — ' + esc(s.afisha) + ' · продажи — vladimirkoncert.ru, схема зала</div></div>' +
-      '<div class="src-stat">' + (s.n == null ? '<span class="sub" style="margin:0">мероприятия появятся после сбора</span>'
-        : '<div class="num" style="font-weight:500">' + s.n + ' ' + plural(s.n, "мероприятие", "мероприятия", "мероприятий") + '</div><div class="sub" style="margin:0">' + s.mapped + ' со схемой зала</div>') + '</div>' +
-      toggle("src:" + k, s.on, "", (s.on ? "Не собирать " : "Собирать ") + s.name) +
-      (s.removable ? '<button class="icon-btn" data-sa="remove" data-sv="' + k + '" aria-label="Убрать площадку ' + esc(s.name) + '" title="Убрать площадку"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button>' : '<span></span>') + '</li>';
-  }).join("");
-  var options = VK_VENUES.map(function (v) {
-    var added = c.sources.some(function (s) { return s.venueId === v[0]; }), odk = v[0] === ODK_VENUE_ID;
-    return '<option value="' + v[0] + '"' + (added || odk ? " disabled" : "") + '>' + esc(v[1]) + (added ? " — уже собирается" : odk ? " — собирается через odk33.ru" : "") + '</option>';
-  }).join("");
-  var free = VK_VENUES.filter(function (v) { return v[0] !== ODK_VENUE_ID && !c.sources.some(function (s) { return s.venueId === v[0]; }); }).length;
-  return '<section class="card card-pad"><div class="card-head"><div><h2>Откуда считаются продажи</h2><p class="sub">vladimirkoncert.ru — для площадок Владимира; Яндекс Афиша — для мероприятий по ссылке</p></div>' +
+  return '<section class="card card-pad"><div class="card-head"><div><h2>Откуда считаются продажи</h2><p class="sub">Региональные билетные сайты — для подключённых площадок; Яндекс Афиша — для мероприятий по ссылке</p></div>' +
       '<a class="pill" href="https://vladimirkoncert.ru" target="_blank" rel="noopener" style="height:36px;color:var(--ink);font-weight:500">vladimirkoncert.ru ↗</a></div>' +
       '<dl class="kv">' +
-        '<dt>Что это</dt><dd>Билетный сайт, через который продают билеты ОДКиИ и Арт Холл.</dd>' +
+        '<dt>Что это</dt><dd>Региональные билетные сайты на одном движке: vladimirkoncert.ru, ivanovokoncert.ru и другие. У каждой площадки ниже указано, с какого сайта она собирается.</dd>' +
         '<dt>Что берём</dt><dd>Схему зала каждого сеанса: какие места свободны, какие заняты, цену каждого ряда. Проданных билетов сайт не показывает.</dd>' +
         '<dt>Занято</dt><dd>Места, которые нельзя купить: проданные, пригласительные и квоты других касс — оценка сверху. Постоянная бронь площадки вычитается.</dd>' +
         '<dt>Подтверждённые продажи</dt><dd>Место было свободно в прошлом сборе и стало занятым — точная цифра, копится с 29 сент. <button class="link-btn" data-go="sales">История продаж →</button></dd>' +
         '<dt>Яндекс Афиша</dt><dd>Для мероприятий по ссылке — та же схема зала, но с afisha.yandex.ru. Страница открывается в браузере, поэтому проверка медленнее.</dd>' +
         '<dt>Не учитывается</dt><dd>7 мероприятий ОДКиИ без онлайн-продажи — вход по пригласительным и клубные вечера.</dd>' +
       '</dl></section>' +
-    '<section class="card card-pad"><div class="card-head"><div><h2>Владимир и область</h2><p class="sub">Откуда собираются афиши. Выключенная площадка не опрашивается, но её мероприятия и история сохраняются.</p></div></div>' +
-      '<ul class="src-list">' + rows + '</ul>' +
-      '<div class="add-row"><select class="chip-select" id="venueAdd" aria-label="Площадка с vladimirkoncert.ru"><option value="">Добавить площадку с vladimirkoncert.ru — ещё ' + free + '</option>' + options + '</select>' +
-      '<button class="btn-dark" data-sa="add" style="height:40px">Добавить</button></div>' +
-      '<p class="sub" style="margin-top:10px">У каждой площадки собираются все сеансы, цены и схема зала. Каждая новая площадка удлиняет сбор.</p>' +
-    '</section>' +
+    connectedCard() + connectCard() +
     yaSourcesCard() +
-    '<section class="card card-pad"><div class="card-head"><div><h2>Другие города</h2><p class="sub">Сайты на том же билетном движке, что vladimirkoncert.ru — подключаются без новой разработки. Это этап 2 плана.</p></div></div>' +
-      '<div style="margin-top:10px">' + CITIES.filter(function (x) { return !x.ready; }).map(function (x) {
-        return '<div class="city-row"><div style="font-weight:500">' + esc(x.name) + '</div><div class="sub" style="margin:0">' + esc(x.source) + ' — ' + esc(x.note) + '</div><span class="soon-tag" style="margin:0">скоро</span></div>';
-      }).join("") + '</div>' +
-    '</section>' +
     '<div class="note">Бронь залов — места, которые площадка не продаёт, — в разделе <button class="link-btn" data-go="venues" style="font-size:13px">«Площадки и залы» →</button></div>';
 }
 
@@ -2065,6 +2122,8 @@ function toast(msg) {
   t.textContent = msg; t.classList.add("show");
   clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove("show"); }, 3600);
 }
+// В приложении: коммит config/competitors.json и git push — сбор на GitHub подхватит список со следующего запуска
+function pushSources() { var d = new Date(); S.lastPush = "сегодня в " + (d.getHours() < 10 ? "0" : "") + d.getHours() + ":" + (d.getMinutes() < 10 ? "0" : "") + d.getMinutes(); }
 function collectNow() { toast("В прототипе сбор не запускается. В приложении кнопка запустит сбор — он идёт 6–8 минут, ход виден в журнале."); }
 // Перерисовать и вернуть фокус на тот же элемент управления — чтобы клавиатура не теряла место
 function rerender(selector) { render(); var el = selector && document.querySelector(selector); if (el) el.focus(); }
@@ -2081,15 +2140,23 @@ $("view").addEventListener("click", function (ev) {
   else if (a === "remove") {
     var s = c.sources[+v];
     askConfirm("Убрать площадку «" + s.name + "»?", "Уже собранные мероприятия и их история сохранятся.", "Убрать площадку", function () {
-      c.sources.splice(+v, 1); rerender("#venueAdd"); toast("Площадка «" + s.name + "» убрана из сбора.");
+      c.sources.splice(+v, 1); pushSources(); buildCitySelect(); rerender('[data-sa="connect-open"]');
+      toast("«" + s.name + "» убрана из сбора. Изменение отправлено на GitHub.");
     });
   }
-  else if (a === "add") {
-    var id = $("venueAdd").value;
-    if (!id) { $("venueAdd").focus(); toast("Выберите площадку в списке."); return; }
-    var name = VK_VENUES.filter(function (x) { return x[0] === id; })[0][1];
-    c.sources.push({ name: name, afisha: "vladimirkoncert.ru", venueId: id, on: true, n: null, removable: true });
-    rerender("#venueAdd"); toast("«" + name + "» добавлена. Мероприятия появятся после следующего сбора.");
+  else if (a === "connect-open") { S.conn = { site: "", picked: {}, city: {} }; rerender('[data-sa="connect-site"]'); }
+  else if (a === "connect-close") { S.conn = null; rerender('[data-sa="connect-open"]'); }
+  else if (a === "connect-site") { S.conn = { site: v, picked: {}, city: {} }; rerender(same); }
+  else if (a === "connect-save") {
+    var site = siteById(S.conn.site), added = [];
+    site.venues.forEach(function (w) {
+      if (!S.conn.picked[w[0]]) return;
+      var city = (S.conn.city[w[0]] || cityGuess(site, w[1]).city).trim() || site.city;
+      c.sources.push({ name: w[1], site: site.id, afisha: site.id, sales: site.id, venueId: w[0], city: city, on: true, n: null, removable: true });
+      added.push(w[1]);
+    });
+    S.conn = null; pushSources(); buildCitySelect(); rerender('[data-sa="connect-open"]');
+    toast("Подключено: " + added.join(", ") + ". Отправлено на GitHub — начнут собираться со следующего сбора.");
   }
   else if (a === "ya-freq") { S.yaFreq = v; rerender(same); }
   else if (a === "ya-remove") {
@@ -2139,7 +2206,9 @@ $("view").addEventListener("change", function (ev) {
   var k = ev.target.getAttribute("data-sc"); if (!k) return;
   var c = S.cfg;
   if (k === "auto") c.auto = ev.target.checked;
-  else if (k.indexOf("src:") === 0) c.sources[+k.slice(4)].on = ev.target.checked;
+  else if (k.indexOf("src:") === 0) { c.sources[+k.slice(4)].on = ev.target.checked; pushSources(); buildCitySelect(); }
+  else if (k.indexOf("pick:") === 0) { S.conn.picked[k.slice(5)] = ev.target.checked; }
+  else if (k.indexOf("city:") === 0) { S.conn.city[k.slice(5)] = ev.target.value; }
   else if (k.indexOf("ya:") === 0) S.yaList[+k.slice(3)].on = ev.target.checked;
   else if (k === "model") c.ai.model = ev.target.value;
   else if (k === "scope") c.ai.scope = ev.target.value;
@@ -2261,8 +2330,8 @@ function render() {
   renderCal();
 }
 
-$("city").innerHTML = '<option>Все города</option>' + CITIES.map(function (c) { return '<option' + (c.name === S.city ? " selected" : "") + '>' + c.name + (c.ready ? "" : " — нет данных") + '</option>'; }).join("");
-$("city").addEventListener("change", function () { S.city = this.value.replace(" — нет данных", ""); closeDrawer(); render(); });
+buildCitySelect();
+$("city").addEventListener("change", function () { S.city = this.value; closeDrawer(); render(); });
 $("period").addEventListener("click", function (ev) { var b = ev.target.closest("button"); if (b) { S.period = b.getAttribute("data-p"); S.from = S.to = null; render(); } });
 $("dateBtn").addEventListener("click", function (ev) { ev.stopPropagation(); if (S.calOpen) { S.calOpen = false; renderCal(); } else openCal(); });
 $("q").addEventListener("input", function () { S.q = this.value; if (S.view !== "events") S.view = "events"; render(); });
