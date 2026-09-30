@@ -4,7 +4,7 @@
   "edits": {},
   "filters": {
     "show": "tour",
-    "pmin": 1200,
+    "pmin": null,
     "pmax": null,
     "noprice": false
   }
