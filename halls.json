@@ -743,13 +743,14 @@
       "527d53786c92",
       "61e54e8fa6d7",
       "781c3caee588",
+      "7eb9ed8c3bce",
+      "92dba0d35a8e",
       "98216eba9f75",
       "9a5b43007c37",
       "a802a528ceab",
       "ae459a2ac500",
       "bc735c8e2c05",
       "c1fa0b025731",
-      "daa5573f3fcd",
       "e07d752051df",
       "e084f1ceab08",
       "fc8bf5d5a3e9",
@@ -758,7 +759,7 @@
     "auto_enabled": true,
     "auto_reserve": 82,
     "series_reserve": {
-      "98216eba9f75": 302
+      "98216eba9f75": 304
     },
     "auto_possible": true,
     "manual_rows": [],
