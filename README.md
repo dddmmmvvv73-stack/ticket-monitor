@@ -16,6 +16,10 @@ gh workflow run collect.yml     # запустить сбор на GitHub пря
 gh run list --workflow=collect.yml --limit 5   # последние сборы
 ```
 
+Площадки подключаются на странице «Конкуренты» (`/competitors`): билетный
+сайт → площадка → город. Список сохраняется в `config/competitors.json` и
+сам уходит на GitHub, сбор подхватывает его со следующего запуска.
+
 ## 1. Установка (один раз)
 
 ```bash
