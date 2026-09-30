@@ -1,5 +1,485 @@
 {
   "new": [],
-  "gone": [],
-  "at": "2026-09-30T14:33:04"
+  "gone": [
+    {
+      "keys": [
+        "k:event:5327738"
+      ],
+      "city": "Саранск",
+      "venue": "ГАУ «Театр песни «Росичи»",
+      "title": "В семье единой. Концерт",
+      "date": "2026-09-30",
+      "time": "14:00",
+      "format": "Концерт",
+      "sphere": "Музыка",
+      "genre": "",
+      "pmin": 500,
+      "pmax": 500,
+      "url_k": "https://saransk.kassir.ru/koncert/gau-teatr-pesni-rosichi/v-seme-edinoy-kontsert-6699_2026-09-30",
+      "url_y": null
+    },
+    {
+      "keys": [
+        "y:6aa2bb9585e77ba60b94d51c:2026-09-30"
+      ],
+      "city": "Пермь",
+      "venue": "Дворец культуры «Урал»",
+      "title": "По следам любимых книг",
+      "date": "2026-09-30",
+      "time": "17:00",
+      "format": "Концерт",
+      "sphere": "Музыка",
+      "genre": "Классическая музыка",
+      "pmin": 200,
+      "pmax": 200,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/perm/concert/po-sledam-liubimykh-knig"
+    },
+    {
+      "keys": [
+        "y:6a1592c7ecb85d00318640f6:2026-09-30",
+        "k:activity:298144"
+      ],
+      "city": "Новосибирск",
+      "venue": "Мой театр",
+      "title": "Женщины в опасности",
+      "date": "2026-09-30",
+      "time": "19:00",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "Комедия",
+      "pmin": 600,
+      "pmax": 2000,
+      "url_k": "https://nsk.kassir.ru/teatr/jenschinyi-v-opasnosti",
+      "url_y": "https://afisha.yandex.ru/novosibirsk/theatre_show/zhenshchiny-v-opasnosti-teatralnaia-kompaniia-gamma"
+    },
+    {
+      "keys": [
+        "k:activity:171662"
+      ],
+      "city": "Новосибирск",
+      "venue": "КЗ Евразия (Сибирь-Концерт)",
+      "title": "Магия Севера: Волшебный концерт Олены УУТАй",
+      "date": "2026-09-30",
+      "time": "19:00",
+      "format": "Концерт",
+      "sphere": "Музыка",
+      "genre": "",
+      "pmin": 1200,
+      "pmax": 3400,
+      "url_k": "https://nsk.kassir.ru/koncert/magiya-severa-volshebnyiy-kontsert-olenyi-uutay-11",
+      "url_y": null
+    },
+    {
+      "keys": [
+        "y:68b8158e221a25003b0b8c6b:2026-09-30",
+        "k:event:4004496"
+      ],
+      "city": "Новосибирск",
+      "venue": "в 2 местах",
+      "title": "Максим Аверин. Расправь крылья",
+      "date": "2026-09-30",
+      "time": "19:00",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "",
+      "pmin": 4000,
+      "pmax": 7000,
+      "url_k": "https://nsk.kassir.ru/teatr/dk-jeleznodorojnikov-nsk/maksim-averin-rasprav-kryilya_2026-09-30",
+      "url_y": "https://afisha.yandex.ru/novosibirsk/recital/maksim-averin-rasprav-krylia"
+    },
+    {
+      "keys": [
+        "y:658bea0c57e92c007a14daed:2026-09-30"
+      ],
+      "city": "Новосибирск",
+      "venue": "Евразия",
+      "title": "Олена Уутай",
+      "date": "2026-09-30",
+      "time": "19:00",
+      "format": "Концерт",
+      "sphere": "Музыка",
+      "genre": "Электронная музыка",
+      "pmin": 1200,
+      "pmax": 3400,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/novosibirsk/concert/olena-uutai"
+    },
+    {
+      "keys": [
+        "y:69fb1b19ecb85d00307f5e1c:2026-09-30"
+      ],
+      "city": "Новосибирск",
+      "venue": "Дом учёных СО РАН",
+      "title": "Очаровательные рогоносцы",
+      "date": "2026-09-30",
+      "time": "19:00",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "Комедия",
+      "pmin": 1500,
+      "pmax": 4000,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/novosibirsk/theatre_show/ocharovatelnye-rogonostsy-kunitsa"
+    },
+    {
+      "keys": [
+        "y:6a47dacb221a25003159eb89:2026-09-30"
+      ],
+      "city": "Новосибирск",
+      "venue": "Филармония. Камерный зал",
+      "title": "Счастья тебе, земля моя!",
+      "date": "2026-09-30",
+      "time": "19:00",
+      "format": "Концерт",
+      "sphere": "Музыка",
+      "genre": "Эстрада",
+      "pmin": 500,
+      "pmax": 800,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/novosibirsk/concert/schastia-tebe-zemlia-moia-2026-09-30"
+    },
+    {
+      "keys": [
+        "y:66f15ce506389f004972a415:2026-09-30",
+        "k:activity:225911"
+      ],
+      "city": "Томск",
+      "venue": "ТЮЗ",
+      "title": "Любовь",
+      "date": "2026-09-30",
+      "time": "19:00",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "Драма",
+      "pmin": 600,
+      "pmax": 1000,
+      "url_k": "https://tomsk.kassir.ru/teatr/lyubov-3",
+      "url_y": "https://afisha.yandex.ru/tomsk/theatre_show/lyubov-tomskii-tiuz"
+    },
+    {
+      "keys": [
+        "y:67b33f45221a25004193ffe8:2026-09-30"
+      ],
+      "city": "Барнаул",
+      "venue": "Крепостной театр",
+      "title": "Прелюдия при людях",
+      "date": "2026-09-30",
+      "time": "",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "Комедия",
+      "pmin": 1300,
+      "pmax": 1300,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/barnaul/theatre/preliudiia-pri-liudiakh-krepostnoi-teatr"
+    },
+    {
+      "keys": [
+        "y:67e3c60906389f004630ccf8:2026-09-30"
+      ],
+      "city": "Новосибирск",
+      "venue": "Новосибирский драматический театр",
+      "title": "Жизнь за други своя",
+      "date": "2026-09-30",
+      "time": "",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "Драма",
+      "pmin": null,
+      "pmax": null,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/novosibirsk/theatre_show/zhizn-za-drugi-svoia-novosibirskii-dramaticheskii-teatr"
+    },
+    {
+      "keys": [
+        "y:5d9dad83dad52867d77305ba:2026-09-30"
+      ],
+      "city": "Новосибирск",
+      "venue": "Красный факел",
+      "title": "Раздражение",
+      "date": "2026-09-30",
+      "time": "",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "Драма",
+      "pmin": 1800,
+      "pmax": 2500,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/novosibirsk/theatre_show/razdrazhenie-krasnyj-fakel"
+    },
+    {
+      "keys": [
+        "y:682077ae221a250053c05a1f:2026-09-30"
+      ],
+      "city": "Новосибирск",
+      "venue": "Молодёжный театр «Драма»",
+      "title": "Чучело",
+      "date": "2026-09-30",
+      "time": "",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "Драма",
+      "pmin": 1100,
+      "pmax": 1500,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/novosibirsk/theatre_show/chuchelo-novosibirskii-molodiozhnyi-teatr-drama"
+    },
+    {
+      "keys": [
+        "y:5b74c4fc7d244ec11d47ed59:2026-09-30"
+      ],
+      "city": "Ростов-На-Дону",
+      "venue": "Театр кукол им. Былкова",
+      "title": "Маугли",
+      "date": "2026-09-30",
+      "time": "",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "",
+      "pmin": 600,
+      "pmax": 1350,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/rostov-na-donu/puppets/maugli-teatr-kukol-im-bylkova"
+    },
+    {
+      "keys": [
+        "y:65c0ae8857e92c007deea99a:2026-09-30"
+      ],
+      "city": "Томск",
+      "venue": "Театральная квартира",
+      "title": "Записки сумасшедшего",
+      "date": "2026-09-30",
+      "time": "",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "Драма",
+      "pmin": 1000,
+      "pmax": 1500,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/tomsk/monoperformance/zapiski-sumasshedshego-teatralnaia-kvartira"
+    },
+    {
+      "keys": [
+        "y:6a9a851e50236eab74759140:2026-09-30"
+      ],
+      "city": "Ульяновск",
+      "venue": "Театр юного зрителя «Nебольшой театр»",
+      "title": "Секрет Сергея Михалкова",
+      "date": "2026-09-30",
+      "time": "",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "",
+      "pmin": null,
+      "pmax": null,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/ulyanovsk/theatre/sekret-sergeia-mikhalkova"
+    },
+    {
+      "keys": [
+        "k:event:5771810"
+      ],
+      "city": "Уфа",
+      "venue": "ДК Родина (Туймазы)",
+      "title": "Фирдус Тямаев г. Туймазы",
+      "date": "2026-10-03",
+      "time": "19:00",
+      "format": "Концерт",
+      "sphere": "Музыка",
+      "genre": "Поп",
+      "pmin": 2000,
+      "pmax": 2000,
+      "url_k": "https://ufa.kassir.ru/koncert/dk-rodina-3/firdus-tyamaev-tuymazyi-031026_2026-10-03",
+      "url_y": null
+    },
+    {
+      "keys": [
+        "k:activity:308686"
+      ],
+      "city": "Красноярск",
+      "venue": "Красноярский музыкальный театр",
+      "title": "День рождения Мухи",
+      "date": "2026-10-04",
+      "time": "11:00",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "",
+      "pmin": 550,
+      "pmax": 600,
+      "url_k": "https://krs.kassir.ru/teatr/den-rojdeniya-muhi",
+      "url_y": null
+    },
+    {
+      "keys": [
+        "y:62947b517c824700d5343965:2026-10-04"
+      ],
+      "city": "Пермь",
+      "venue": "Балет Евгения Панфилова",
+      "title": "reКонструкция",
+      "date": "2026-10-04",
+      "time": "19:00",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "",
+      "pmin": 800,
+      "pmax": 1000,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/perm/plastical_performance/rekonstruktsiia-svobodnyi-teatr-sovremennogo-tantsa"
+    },
+    {
+      "keys": [
+        "y:600fced37e9a4e09433e6828:2026-10-06"
+      ],
+      "city": "Ижевск",
+      "venue": "Театр кукол",
+      "title": "Красная Шапочка",
+      "date": "2026-10-06",
+      "time": "",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "",
+      "pmin": 500,
+      "pmax": 600,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/izhevsk/kids/krasnaia-shapochka-gosudarstvennyi-teatr-kukol-udmurtskoi-respubliki"
+    },
+    {
+      "keys": [
+        "k:event:4745801"
+      ],
+      "city": "Ростов-На-Дону",
+      "venue": "СК Баскет Холл",
+      "title": "Баста",
+      "date": "2026-10-09",
+      "time": "20:00",
+      "format": "Концерт",
+      "sphere": "Музыка",
+      "genre": "",
+      "pmin": 12000,
+      "pmax": 12000,
+      "url_k": "https://rnd.kassir.ru/koncert/sk-basket-holl-5/basta_2026-10-09",
+      "url_y": null
+    },
+    {
+      "keys": [
+        "k:activity:314583"
+      ],
+      "city": "Казань",
+      "venue": "КЦ Московский",
+      "title": "Концерт-лекция оркестра НоуХау и A'capella",
+      "date": "2026-10-20",
+      "time": "18:30",
+      "format": "Лекция",
+      "sphere": "Разговорный жанр",
+      "genre": "Научно популярное",
+      "pmin": 550,
+      "pmax": 550,
+      "url_k": "https://kzn.kassir.ru/koncert/kontsert-lektsiya-orkestra-nouhau-i-acapella",
+      "url_y": null
+    },
+    {
+      "keys": [
+        "y:68f20b5aecb85d003e9f2a94:2026-10-28"
+      ],
+      "city": "Пермь",
+      "venue": "Кама & Space Jam",
+      "title": "БумеR",
+      "date": "2026-10-28",
+      "time": "19:00",
+      "format": "Концерт",
+      "sphere": "Музыка",
+      "genre": "Шансон",
+      "pmin": 2200,
+      "pmax": 3300,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/perm/concert/bumer-2026-04-03"
+    },
+    {
+      "keys": [
+        "y:5a0ca38e10048d02fb789856:2026-11-03"
+      ],
+      "city": "Казань",
+      "venue": "Театр им. Качалова",
+      "title": "Когда зажгутся фонари",
+      "date": "2026-11-03",
+      "time": "18:00",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "",
+      "pmin": 900,
+      "pmax": 900,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/kazan/musical-play/kogda-zazhgutsia-fonari-teatr-im-kachalova"
+    },
+    {
+      "keys": [
+        "y:69cf7b4806389f00289009d8:2026-11-10"
+      ],
+      "city": "Челябинск",
+      "venue": "Новый художественный театр",
+      "title": "Маяк. Три пути + Флора",
+      "date": "2026-11-10",
+      "time": "18:30",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "",
+      "pmin": 850,
+      "pmax": 850,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/chelyabinsk/plastical_performance/maiak-tri-puti-flora"
+    },
+    {
+      "keys": [
+        "k:activity:315237"
+      ],
+      "city": "Новосибирск",
+      "venue": "КЗ Евразия (Сибирь-Концерт)",
+      "title": "Сорочинская ярмарка",
+      "date": "2026-11-29",
+      "time": "18:00",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "",
+      "pmin": 600,
+      "pmax": 2000,
+      "url_k": "https://nsk.kassir.ru/teatr/sorochinskaya-yarmarka",
+      "url_y": null
+    },
+    {
+      "keys": [
+        "y:55c102797abde92e63ac4586:2026-12-28"
+      ],
+      "city": "Новосибирск",
+      "venue": "Старый дом",
+      "title": "Морозко",
+      "date": "2026-12-28",
+      "time": "",
+      "format": "Спектакль",
+      "sphere": "Театр",
+      "genre": "",
+      "pmin": 600,
+      "pmax": 1000,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/novosibirsk/theatre_show/morozko-staryi-dom"
+    },
+    {
+      "keys": [
+        "y:670934f64b3a7000801ee251:2027-04-03"
+      ],
+      "city": "Челябинск",
+      "venue": "ДК железнодорожников",
+      "title": "Павел Дедищев",
+      "date": "2027-04-03",
+      "time": "19:00",
+      "format": "Стендап",
+      "sphere": "Комедия и юмор",
+      "genre": "Стендап",
+      "pmin": 2300,
+      "pmax": 4500,
+      "url_k": null,
+      "url_y": "https://afisha.yandex.ru/chelyabinsk/standup/pavel-dedishchev-stendap-tour"
+    }
+  ],
+  "at": "2026-09-30T15:20:49"
 }
