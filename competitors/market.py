@@ -16,9 +16,11 @@
     data/competitors/market/events.json    текущая афиша (строка = мероприятие в одну дату)
     data/competitors/market/seen.json      все когда-либо виденные номера мероприятий → дата первого появления
     data/competitors/market/days/Д.json    что появилось и что исчезло в этот день
+    data/competitors/market/archive.json   архив гастролей: каждое гастрольное выступление навсегда (и прошедшее)
     data/competitors/market/status.json    итог последнего сбора
     data/competitors/market/market.log     журнал
 Ниши — те же правила, ручные правки и кэш нейросети, что у сбора конкурентов.
+Гастроль или местное, правки мероприятий — config/market_curation.json (competitors/curation.py).
 """
 
 from __future__ import annotations
@@ -36,11 +38,13 @@ from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
+from competitors import curation
 from competitors.classifier import GENRES, classify_by_rules, classify_with_ai, title_key
 from competitors.storage import BASE_DIR, CONFIG_DIR, DATA_DIR, load_json, save_json
 
 MARKET_DIR = DATA_DIR / "market"
 EVENTS_FILE = MARKET_DIR / "events.json"
+ARCHIVE_FILE = MARKET_DIR / "archive.json"
 SEEN_FILE = MARKET_DIR / "seen.json"
 STATUS_FILE = MARKET_DIR / "status.json"
 DAYS_DIR = MARKET_DIR / "days"
@@ -364,6 +368,7 @@ def parse(kassir: list[dict], yandex: list[dict], cities: list[str], today: str,
                 dropped["Яндекс: город не из списка"] += 1
                 continue
             tags = [t["name"].lower() for t in ev.get("tags") or []]
+            ytour = any(t.get("code") == "artist-tour" for t in ev.get("tags") or [])
             genre = next((YANDEX_GENRE.get(t) or GENRE_BY_NAME.get(t) for t in tags if YANDEX_GENRE.get(t) or GENRE_BY_NAME.get(t)), "")
             nc = niche(ev["title"], [SITE_TYPE[code]] if code in SITE_TYPE else [], overrides,
                        [YANDEX_FORMAT_TAG[t] for t in tags if t in YANDEX_FORMAT_TAG], genre)
@@ -381,13 +386,14 @@ def parse(kassir: list[dict], yandex: list[dict], cities: list[str], today: str,
                     "title": ev["title"].strip(), "sphere": nc.get("sphere", ""), "format": nc["format"], "genre": nc.get("genre", ""),
                     "pmin": int(min(prices)) if prices else None, "pmax": int(max(prices)) if prices else None,
                     "pushkin": False, "age": ev.get("contentRating") or "", "url_k": None,
-                    "url_y": "https://afisha.yandex.ru" + ev["url"], "more": 0, "until": ""}
+                    "url_y": "https://afisha.yandex.ru" + ev["url"], "more": 0, "until": "", "ytour": ytour}
+            # Номер строки — с городом: у Яндекса тур бывает одним событием сразу на несколько городов
             if len(dates) > LONG_RUN_DAYS:
-                rows.append({**base, "keys": [f"y:{ev['id']}"], "date": dates[0], "time": "",
+                rows.append({**base, "keys": [f"y:{ev['id']}@{city}"], "date": dates[0], "time": "",
                              "more": len(dates) - 1, "until": dates[-1]})
             else:
                 for x in dates:
-                    rows.append({**base, "keys": [f"y:{ev['id']}:{x}"], "date": x, "time": one[11:16] if one[:10] == x else ""})
+                    rows.append({**base, "keys": [f"y:{ev['id']}:{x}@{city}"], "date": x, "time": one[11:16] if one[:10] == x else ""})
 
     # --- Склейка: одно мероприятие на обоих сайтах — город, дата и похожее название
     by_day = defaultdict(list)
@@ -483,13 +489,17 @@ def run() -> bool:
             raise RuntimeError(f"меньше половины прошлого сбора вернули: {', '.join(broken)} — афиша не обновлена")
 
         asked = classify_missing(rows, _ai_settings())
+        cur = curation.load()
+        curation.apply_edits(rows, cur)   # ручные правки мероприятий
+        curation.classify(rows, cur)      # гастроль или местное: пометки проекта и площадки, потом автоматические признаки
 
         # «Новое» — ни один номер строки (у Яндекса — событие и дата, у Кассира — событие) раньше не встречался
         seen = load_json(SEEN_FILE, {})
         first_run = status.get("first_run") or today
         new_rows = []
+        legacy = lambda k: k.split("@")[0]  # до 30.09 номера Яндекса были без города
         for r in rows:
-            known = [seen[k] for k in r["keys"] if k in seen]
+            known = [seen[k] for k in r["keys"] if k in seen] or [seen[legacy(k)] for k in r["keys"] if legacy(k) in seen]
             r["first_seen"] = min(known) if known else today
             if not known and first_run != today:
                 new_rows.append(r)
@@ -497,10 +507,13 @@ def run() -> bool:
                 seen.setdefault(k, today)
 
         now_keys = {k for r in rows for k in r["keys"]}
-        gone = [p for p in previous if p["date"] >= today and not any(k in now_keys for k in p["keys"])]
+        now_legacy = {legacy(k) for k in now_keys}
+        gone = [p for p in previous if p["date"] >= today
+                and not any(k in now_keys or ("@" not in k and k in now_legacy) for k in p["keys"])]
 
         _save_lines(EVENTS_FILE, rows)
         _save_lines(SEEN_FILE, seen)
+        archived = update_archive(rows, cur, today)
         brief = lambda r: {k: r[k] for k in ("keys", "city", "venue", "title", "date", "time", "format", "sphere", "genre",
                                              "pmin", "pmax", "url_k", "url_y")}
         # Если за день сбор был не один (запуск вручную), списки дня дополняются, а не перезаписываются
@@ -512,10 +525,11 @@ def run() -> bool:
         save_json(DAYS_DIR / f"{today}.json", day)
         took = time.time() - started
         no_data = [c for c in cities if c not in {r["city"] for r in rows}]
-        summary = (f"мероприятий {len(rows)} в {len(cities) - len(no_data)} городах, новых {len(new_rows)}, "
-                   f"исчезло {len(gone)}, нейросеть {asked}, за {took / 60:.0f} мин")
+        tours = sum(r["tour"] == "tour" for r in rows)
+        summary = (f"мероприятий {len(rows)} в {len(cities) - len(no_data)} городах (гастрольных {tours}), новых {len(new_rows)}, "
+                   f"исчезло {len(gone)}, в архиве гастролей {archived}, нейросеть {asked}, за {took / 60:.0f} мин")
         status.update(first_run=first_run, last_run_at=now_iso, last_ok=True, last_error=None, summary=summary,
-                      rows=len(rows), new=len(new_rows), gone=len(gone), by_src=dict(Counter(r["src"] for r in rows)),
+                      rows=len(rows), tours=tours, new=len(new_rows), gone=len(gone), by_src=dict(Counter(r["src"] for r in rows)),
                       dropped=dict(dropped), no_data=no_data)
         log(f"=== Сбор рынка завершён: {summary} ===")
         return True
@@ -528,14 +542,47 @@ def run() -> bool:
         _trim_log()
 
 
+def update_archive(rows: list[dict], cur: dict, today: str) -> int:
+    """Архив гастролей: каждое гастрольное выступление остаётся навсегда — с последними ценами и тем,
+    чем закончилось: «прошло» (дата наступила) или «снято» (пропало из продажи до даты: распродано или отменено)."""
+    arch = load_json(ARCHIVE_FILE, {})
+    now = set()
+    for r in rows:
+        if r.get("tour") != "tour":
+            continue
+        k = r["keys"][0]
+        now.add(k)
+        e = arch.get(k) or {"first_seen": r.get("first_seen") or today}
+        e.update({f: r.get(f) for f in ("pk", "title", "city", "venue", "date", "time", "format", "sphere", "genre",
+                                         "pmin", "pmax", "url_k", "url_y", "tour_why")})
+        e["last_seen"], e["status"] = today, "on_sale"
+        arch[k] = e
+    local = {k for k, m in cur["projects"].items() if m["type"] == "local"}
+    for k in list(arch):
+        e = arch[k]
+        if e.get("pk") in local:          # вы отметили проект местным — из архива гастролей убираем
+            del arch[k]
+        elif k not in now and e["status"] == "on_sale":
+            e["status"] = "past" if e["date"] < today else "gone"
+    _save_lines(ARCHIVE_FILE, arch)
+    return len(arch)
+
+
 # ---------------------------------------------------------------- снимок для прототипа
 
-def export_prototype() -> None:
-    """data/competitors/market → Design/prototype/market-data.js (формат — в заголовке файла)."""
+def _row_key(r: dict) -> str:
+    k = r["keys"][0]  # данные до 30.09: номер Яндекса без города — добавляем, как в новых сборах
+    return f"{k}@{r['city']}" if k.startswith("y:") and "@" not in k else k
+
+
+def export_js() -> str:
+    """Снимок для прототипа (market-data.js): афиша, архив гастролей. Правки и разметку прототип
+    накладывает сам из config/market_curation.json — поэтому здесь данные парсера (до правок)."""
     rows, status = load_json(EVENTS_FILE, []), load_json(STATUS_FILE, {})
     if not rows:
-        sys.exit("Нет данных рынка — сначала ./pull_data.sh или сбор")
-    all_cities, fo = load_json(CITIES_FILE, {}).get("cities", []), load_json(CITIES_FILE, {}).get("fo", {})
+        raise RuntimeError("Нет данных рынка — сначала ./pull_data.sh или сбор")
+    cfg = load_json(CITIES_FILE, {})
+    all_cities, fo = cfg.get("cities", []), cfg.get("fo", {})
     lists = {"venues": [], "spheres": [], "formats": [], "genres": []}
     cities = list(all_cities)
 
@@ -543,23 +590,36 @@ def export_prototype() -> None:
         if v not in lst:
             lst.append(v)
         return lst.index(v)
-    packed = [[idx(cities, r["city"]), idx(lists["venues"], r["venue"]), r["title"], r["date"], r["time"] or "",
-               idx(lists["spheres"], r["sphere"] or ""), idx(lists["formats"], r["format"]), idx(lists["genres"], r["genre"] or ""),
-               r["pmin"] or 0, r["pmax"] or 0, 1 if r["pushkin"] else 0, r["src"], r["url_k"] or "", r["url_y"] or "",
-               r["more"] or 0, r["until"] or "", r["first_seen"], r["age"] or ""] for r in rows]
+    packed = []
+    for r in rows:
+        r = {**r, **(r.get("orig") or {})}
+        packed.append([idx(cities, r["city"]), idx(lists["venues"], r["venue"]), r["title"], r["date"], r["time"] or "",
+                       idx(lists["spheres"], r["sphere"] or ""), idx(lists["formats"], r["format"]), idx(lists["genres"], r["genre"] or ""),
+                       r["pmin"] or 0, r["pmax"] or 0, 1 if r["pushkin"] else 0, r["src"], r["url_k"] or "", r["url_y"] or "",
+                       r["more"] or 0, r["until"] or "", r["first_seen"], r["age"] or "", 1 if r.get("ytour") else 0, _row_key(r)])
+    arch = [[e["city"], e["venue"], e["title"], e["date"], e.get("format") or "", e.get("genre") or "", e.get("pmin") or 0,
+             e.get("pmax") or 0, e["status"], e.get("first_seen") or "", e.get("last_seen") or "", e.get("url_y") or e.get("url_k") or ""]
+            for e in load_json(ARCHIVE_FILE, {}).values() if e.get("status") != "on_sale"]
     at = datetime.fromisoformat(status["last_run_at"])
     months = ["янв.", "февр.", "мар.", "апр.", "мая", "июн.", "июл.", "авг.", "сент.", "окт.", "нояб.", "дек."]
     label = f"{at.day} {months[at.month - 1]}, {at:%H:%M}"
-    merged = Counter(r["src"] for r in rows)["ky"]
-    data = {"at": label, "first": status.get("first_run"), "cities": cities, "fo": fo, **lists, "rows": packed,
-            "stats": {"merged": merged, "dropped": status.get("dropped", {}), "bySrc": status.get("by_src", {})}}
-    PROTOTYPE_DATA.write_text(
-        f"// Снимок «Афиши рынка»: Кассир + Яндекс Афиша по {len(all_cities)} городам, сбор {label}.\n"
-        "// Пересобрать: ./pull_data.sh && python3 -m competitors.market export\n"
-        "// Строка: [город, площадка, название, дата, время, сфера, формат, жанр, цена от, цена до, Пушкинская,\n"
-        "//  источник k/y/ky, ссылка Кассир, ссылка Яндекс, ещё дат, до, впервые замечено, возраст]\n"
-        "var MK = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n", encoding="utf-8")
-    print(f"{PROTOTYPE_DATA.relative_to(BASE_DIR)}: {len(packed)} строк, сбор {label}")
+    data = {"at": label, "first": status.get("first_run"), "cities": cities, "fo": fo, **lists, "rows": packed, "arch": arch,
+            "stats": {"merged": Counter(r["src"] for r in rows)["ky"], "dropped": status.get("dropped", {}), "bySrc": status.get("by_src", {})}}
+    return (f"// Снимок «Афиши рынка»: Кассир + Яндекс Афиша по {len(all_cities)} городам, сбор {label}.\n"
+            "// Пересобрать: ./pull_data.sh && python3 -m competitors.market export (через app.py — собирается сам)\n"
+            "// Строка: [город, площадка, название, дата, время, сфера, формат, жанр, цена от, цена до, Пушкинская,\n"
+            "//  источник k/y/ky, ссылка Кассир, ссылка Яндекс, ещё дат, до, впервые замечено, возраст, «Тур артиста», номер]\n"
+            "// Архив (arch): [город, площадка, название, дата, формат, жанр, цена от, цена до, итог past|gone, впервые, в последний раз, ссылка]\n"
+            "var MK = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n")
+
+
+def export_prototype() -> None:
+    try:
+        js = export_js()
+    except RuntimeError as e:
+        sys.exit(str(e))
+    PROTOTYPE_DATA.write_text(js, encoding="utf-8")
+    print(f"{PROTOTYPE_DATA.relative_to(BASE_DIR)}: {js.count('],[') + 1} строк")
 
 
 if __name__ == "__main__":
