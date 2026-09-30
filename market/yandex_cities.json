@@ -1,0 +1,4382 @@
+[
+  {
+    "id": "abakan",
+    "url": "/abakan",
+    "name": "Абакан"
+  },
+  {
+    "id": "arbatskoe",
+    "url": "/arbatskoe",
+    "name": "Абатское"
+  },
+  {
+    "id": "abdulino",
+    "url": "/abdulino",
+    "name": "Абдулино"
+  },
+  {
+    "id": "abinsk",
+    "url": "/abinsk",
+    "name": "Абинск"
+  },
+  {
+    "id": "abu-dhabi",
+    "url": "/abu-dhabi",
+    "name": "Абу-Даби"
+  },
+  {
+    "id": "aginskoe",
+    "url": "/aginskoe",
+    "name": "Агинское"
+  },
+  {
+    "id": "adygeysk",
+    "url": "/adygeysk",
+    "name": "Адыгейск"
+  },
+  {
+    "id": "aznakaevo",
+    "url": "/aznakaevo",
+    "name": "Азнакаево"
+  },
+  {
+    "id": "azov",
+    "url": "/azov",
+    "name": "Азов"
+  },
+  {
+    "id": "aksay",
+    "url": "/aksay",
+    "name": "Аксай"
+  },
+  {
+    "id": "aktau",
+    "url": "/aktau",
+    "name": "Актау"
+  },
+  {
+    "id": "aktobe",
+    "url": "/aktobe",
+    "name": "Актобе"
+  },
+  {
+    "id": "alapaevsk",
+    "url": "/alapaevsk",
+    "name": "Алапаевск"
+  },
+  {
+    "id": "alatyr",
+    "url": "/alatyr",
+    "name": "Алатырь"
+  },
+  {
+    "id": "aleysk",
+    "url": "/aleysk",
+    "name": "Алейск"
+  },
+  {
+    "id": "aleksandrov",
+    "url": "/aleksandrov",
+    "name": "Александров"
+  },
+  {
+    "id": "aleksandrovka",
+    "url": "/aleksandrovka",
+    "name": "Александровка"
+  },
+  {
+    "id": "aleksandrovsk",
+    "url": "/aleksandrovsk",
+    "name": "Александровск"
+  },
+  {
+    "id": "alekseevka",
+    "url": "/alekseevka",
+    "name": "Алексеевка"
+  },
+  {
+    "id": "aleksin",
+    "url": "/aleksin",
+    "name": "Алексин"
+  },
+  {
+    "id": "alikovo",
+    "url": "/alikovo",
+    "name": "Аликово"
+  },
+  {
+    "id": "almaty",
+    "url": "/almaty",
+    "name": "Алматы"
+  },
+  {
+    "id": "alushta",
+    "url": "/alushta",
+    "name": "Алушта"
+  },
+  {
+    "id": "almetyevsk",
+    "url": "/almetyevsk",
+    "name": "Альметьевск"
+  },
+  {
+    "id": "anadyr",
+    "url": "/anadyr",
+    "name": "Анадырь"
+  },
+  {
+    "id": "anapa",
+    "url": "/anapa",
+    "name": "Анапа"
+  },
+  {
+    "id": "angarsk",
+    "url": "/angarsk",
+    "name": "Ангарск"
+  },
+  {
+    "id": "angero-sudgensk",
+    "url": "/angero-sudgensk",
+    "name": "Анжеро-Судженск"
+  },
+  {
+    "id": "apatity",
+    "url": "/apatity",
+    "name": "Апатиты"
+  },
+  {
+    "id": "apsheronsk",
+    "url": "/apsheronsk",
+    "name": "Апшеронск"
+  },
+  {
+    "id": "ardatov",
+    "url": "/ardatov",
+    "name": "Ардатов"
+  },
+  {
+    "id": "ardon",
+    "url": "/ardon",
+    "name": "Ардон"
+  },
+  {
+    "id": "arzamas",
+    "url": "/arzamas",
+    "name": "Арзамас"
+  },
+  {
+    "id": "arzgir",
+    "url": "/arzgir",
+    "name": "Арзгир"
+  },
+  {
+    "id": "arkadak",
+    "url": "/arkadak",
+    "name": "Аркадак"
+  },
+  {
+    "id": "armavir",
+    "url": "/armavir",
+    "name": "Армавир"
+  },
+  {
+    "id": "armizonskoe",
+    "url": "/armizonskoe",
+    "name": "Армизонское"
+  },
+  {
+    "id": "aromashevo",
+    "url": "/aromashevo",
+    "name": "Аромашево"
+  },
+  {
+    "id": "arsenjevo",
+    "url": "/arsenjevo",
+    "name": "Арсеньево"
+  },
+  {
+    "id": "arsk",
+    "url": "/arsk",
+    "name": "Арск"
+  },
+  {
+    "id": "artem",
+    "url": "/artem",
+    "name": "Артём"
+  },
+  {
+    "id": "arhangelsk",
+    "url": "/arhangelsk",
+    "name": "Архангельск"
+  },
+  {
+    "id": "arkhangelskoe",
+    "url": "/arkhangelskoe",
+    "name": "Архангельское"
+  },
+  {
+    "id": "arhara",
+    "url": "/arhara",
+    "name": "Архара"
+  },
+  {
+    "id": "arzachena",
+    "url": "/arzachena",
+    "name": "Арцакена"
+  },
+  {
+    "id": "asbest",
+    "url": "/asbest",
+    "name": "Асбест"
+  },
+  {
+    "id": "askarovo",
+    "url": "/askarovo",
+    "name": "Аскарово"
+  },
+  {
+    "id": "astana",
+    "url": "/astana",
+    "name": "Астана"
+  },
+  {
+    "id": "astrahan",
+    "url": "/astrahan",
+    "name": "Астрахань"
+  },
+  {
+    "id": "atyrau",
+    "url": "/atyrau",
+    "name": "Атырау"
+  },
+  {
+    "id": "ahtubinsk",
+    "url": "/ahtubinsk",
+    "name": "Ахтубинск"
+  },
+  {
+    "id": "achinsk",
+    "url": "/achinsk",
+    "name": "Ачинск"
+  },
+  {
+    "id": "bagaevskaya",
+    "url": "/bagaevskaya",
+    "name": "Багаевская"
+  },
+  {
+    "id": "baku",
+    "url": "/baku",
+    "name": "Баку"
+  },
+  {
+    "id": "balakovo",
+    "url": "/balakovo",
+    "name": "Балаково"
+  },
+  {
+    "id": "balakhna",
+    "url": "/balakhna",
+    "name": "Балахна"
+  },
+  {
+    "id": "balashev",
+    "url": "/balashev",
+    "name": "Балашов"
+  },
+  {
+    "id": "baley",
+    "url": "/baley",
+    "name": "Балей"
+  },
+  {
+    "id": "barabinsk",
+    "url": "/barabinsk",
+    "name": "Барабинск"
+  },
+  {
+    "id": "baranavichy",
+    "url": "/baranavichy",
+    "name": "Барановичи"
+  },
+  {
+    "id": "barnaul",
+    "url": "/barnaul",
+    "name": "Барнаул"
+  },
+  {
+    "id": "batetskiy",
+    "url": "/batetskiy",
+    "name": "Батецкий"
+  },
+  {
+    "id": "bachatsky",
+    "url": "/bachatsky",
+    "name": "Бачатский"
+  },
+  {
+    "id": "bayanday",
+    "url": "/bayanday",
+    "name": "Баяндай"
+  },
+  {
+    "id": "bezenchuk",
+    "url": "/bezenchuk",
+    "name": "Безенчук"
+  },
+  {
+    "id": "bekovo",
+    "url": "/bekovo",
+    "name": "Беково"
+  },
+  {
+    "id": "belaya-glina",
+    "url": "/belaya-glina",
+    "name": "Белая Глина"
+  },
+  {
+    "id": "belaya-kalitva",
+    "url": "/belaya-kalitva",
+    "name": "Белая Калитва"
+  },
+  {
+    "id": "belgorod",
+    "url": "/belgorod",
+    "name": "Белгород"
+  },
+  {
+    "id": "belgrade",
+    "url": "/belgrade",
+    "name": "Белград"
+  },
+  {
+    "id": "belebey",
+    "url": "/belebey",
+    "name": "Белебей"
+  },
+  {
+    "id": "belovo",
+    "url": "/belovo",
+    "name": "Белово"
+  },
+  {
+    "id": "belogorsk",
+    "url": "/belogorsk",
+    "name": "Белогорск"
+  },
+  {
+    "id": "belozersk",
+    "url": "/belozersk",
+    "name": "Белозерск"
+  },
+  {
+    "id": "beloretsk",
+    "url": "/beloretsk",
+    "name": "Белорецк"
+  },
+  {
+    "id": "belorechensk",
+    "url": "/belorechensk",
+    "name": "Белореченск"
+  },
+  {
+    "id": "beloyarskiy",
+    "url": "/beloyarskiy",
+    "name": "Белоярский"
+  },
+  {
+    "id": "belyj-jar",
+    "url": "/belyj-jar",
+    "name": "Белый Яр"
+  },
+  {
+    "id": "belyov",
+    "url": "/belyov",
+    "name": "Белёв"
+  },
+  {
+    "id": "berezniki",
+    "url": "/berezniki",
+    "name": "Березники"
+  },
+  {
+    "id": "berezovka",
+    "url": "/berezovka",
+    "name": "Березовка"
+  },
+  {
+    "id": "bizhbulyak",
+    "url": "/bizhbulyak",
+    "name": "Бижбуляк"
+  },
+  {
+    "id": "biysk",
+    "url": "/biysk",
+    "name": "Бийск"
+  },
+  {
+    "id": "birobidgan",
+    "url": "/birobidgan",
+    "name": "Биробиджан"
+  },
+  {
+    "id": "birsk",
+    "url": "/birsk",
+    "name": "Бирск"
+  },
+  {
+    "id": "blagoveschensk",
+    "url": "/blagoveschensk",
+    "name": "Благовещенск"
+  },
+  {
+    "id": "blagoveshchensk",
+    "url": "/blagoveshchensk",
+    "name": "Благовещенск"
+  },
+  {
+    "id": "blagodarny",
+    "url": "/blagodarny",
+    "name": "Благодарный"
+  },
+  {
+    "id": "bobruisk",
+    "url": "/bobruisk",
+    "name": "Бобруйск"
+  },
+  {
+    "id": "bogandinskiy",
+    "url": "/bogandinskiy",
+    "name": "Богандинский"
+  },
+  {
+    "id": "bogoroditsk",
+    "url": "/bogoroditsk",
+    "name": "Богородицк"
+  },
+  {
+    "id": "bogorodskoe",
+    "url": "/bogorodskoe",
+    "name": "Богородское"
+  },
+  {
+    "id": "boguchar",
+    "url": "/boguchar",
+    "name": "Богучар"
+  },
+  {
+    "id": "bolshaya-glushitsa",
+    "url": "/bolshaya-glushitsa",
+    "name": "Большая Глушица"
+  },
+  {
+    "id": "borzya",
+    "url": "/borzya",
+    "name": "Борзя"
+  },
+  {
+    "id": "borisoglebsk",
+    "url": "/borisoglebsk",
+    "name": "Борисоглебск"
+  },
+  {
+    "id": "borovichy",
+    "url": "/borovichy",
+    "name": "Боровичи"
+  },
+  {
+    "id": "borovsk",
+    "url": "/borovsk",
+    "name": "Боровск"
+  },
+  {
+    "id": "borskoe",
+    "url": "/borskoe",
+    "name": "Борское"
+  },
+  {
+    "id": "bokhan",
+    "url": "/bokhan",
+    "name": "Бохан"
+  },
+  {
+    "id": "bratsk",
+    "url": "/bratsk",
+    "name": "Братск"
+  },
+  {
+    "id": "brest",
+    "url": "/brest",
+    "name": "Брест"
+  },
+  {
+    "id": "bryansk",
+    "url": "/bryansk",
+    "name": "Брянск"
+  },
+  {
+    "id": "bugulma",
+    "url": "/bugulma",
+    "name": "Бугульма"
+  },
+  {
+    "id": "buguruslan",
+    "url": "/buguruslan",
+    "name": "Бугуруслан"
+  },
+  {
+    "id": "budennovsk",
+    "url": "/budennovsk",
+    "name": "Будённовск"
+  },
+  {
+    "id": "buzuluk",
+    "url": "/buzuluk",
+    "name": "Бузулук"
+  },
+  {
+    "id": "buynaksk",
+    "url": "/buynaksk",
+    "name": "Буйнакск"
+  },
+  {
+    "id": "bulanash",
+    "url": "/bulanash",
+    "name": "Буланаш"
+  },
+  {
+    "id": "buturlinovka",
+    "url": "/buturlinovka",
+    "name": "Бутурлиновка"
+  },
+  {
+    "id": "vavozh",
+    "url": "/vavozh",
+    "name": "Вавож"
+  },
+  {
+    "id": "valday",
+    "url": "/valday",
+    "name": "Валдай"
+  },
+  {
+    "id": "valuyki",
+    "url": "/valuyki",
+    "name": "Валуйки"
+  },
+  {
+    "id": "vanino",
+    "url": "/vanino",
+    "name": "Ванино"
+  },
+  {
+    "id": "velikie-luky",
+    "url": "/velikie-luky",
+    "name": "Великие Луки"
+  },
+  {
+    "id": "veliky-novgorod",
+    "url": "/veliky-novgorod",
+    "name": "Великий Новгород"
+  },
+  {
+    "id": "velikooktyabrskiy",
+    "url": "/velikooktyabrskiy",
+    "name": "Великооктябрьский"
+  },
+  {
+    "id": "velsk",
+    "url": "/velsk",
+    "name": "Вельск"
+  },
+  {
+    "id": "venev",
+    "url": "/venev",
+    "name": "Венёв"
+  },
+  {
+    "id": "verkh-chebula",
+    "url": "/verkh-chebula",
+    "name": "Верх-Чебула"
+  },
+  {
+    "id": "verkhneyarkeevo",
+    "url": "/verkhneyarkeevo",
+    "name": "Верхнеяркеево"
+  },
+  {
+    "id": "verkhniy-lomov",
+    "url": "/verkhniy-lomov",
+    "name": "Верхний Ломов"
+  },
+  {
+    "id": "verhniy-ufaley",
+    "url": "/verhniy-ufaley",
+    "name": "Верхний Уфалей"
+  },
+  {
+    "id": "verhnya-salda",
+    "url": "/verhnya-salda",
+    "name": "Верхняя Салда"
+  },
+  {
+    "id": "verhoturie",
+    "url": "/verhoturie",
+    "name": "Верхотурье"
+  },
+  {
+    "id": "vershino-darasunskiy",
+    "url": "/vershino-darasunskiy",
+    "name": "Вершино-Дарасунский"
+  },
+  {
+    "id": "veseloyarsk",
+    "url": "/veseloyarsk",
+    "name": "Веселоярск"
+  },
+  {
+    "id": "vizinga",
+    "url": "/vizinga",
+    "name": "Визинга"
+  },
+  {
+    "id": "vitebsk",
+    "url": "/vitebsk",
+    "name": "Витебск"
+  },
+  {
+    "id": "vladivostok",
+    "url": "/vladivostok",
+    "name": "Владивосток"
+  },
+  {
+    "id": "vladikavkaz",
+    "url": "/vladikavkaz",
+    "name": "Владикавказ"
+  },
+  {
+    "id": "vladimir",
+    "url": "/vladimir",
+    "name": "Владимир"
+  },
+  {
+    "id": "volgograd",
+    "url": "/volgograd",
+    "name": "Волгоград"
+  },
+  {
+    "id": "volgodonsk",
+    "url": "/volgodonsk",
+    "name": "Волгодонск"
+  },
+  {
+    "id": "volzhsk",
+    "url": "/volzhsk",
+    "name": "Волжск"
+  },
+  {
+    "id": "vologda",
+    "url": "/vologda",
+    "name": "Вологда"
+  },
+  {
+    "id": "volokolamsk",
+    "url": "/volokolamsk",
+    "name": "Волоколамск"
+  },
+  {
+    "id": "volhov",
+    "url": "/volhov",
+    "name": "Волхов"
+  },
+  {
+    "id": "volchansk",
+    "url": "/volchansk",
+    "name": "Волчанск"
+  },
+  {
+    "id": "volsk",
+    "url": "/volsk",
+    "name": "Вольск"
+  },
+  {
+    "id": "vorkuta",
+    "url": "/vorkuta",
+    "name": "Воркута"
+  },
+  {
+    "id": "voronezh",
+    "url": "/voronezh",
+    "name": "Воронеж"
+  },
+  {
+    "id": "voskresensk",
+    "url": "/voskresensk",
+    "name": "Воскресенск"
+  },
+  {
+    "id": "votkinsk",
+    "url": "/votkinsk",
+    "name": "Воткинск"
+  },
+  {
+    "id": "vurnari",
+    "url": "/vurnari",
+    "name": "Вурнары"
+  },
+  {
+    "id": "vyborg",
+    "url": "/vyborg",
+    "name": "Выборг"
+  },
+  {
+    "id": "vyksa",
+    "url": "/vyksa",
+    "name": "Выкса"
+  },
+  {
+    "id": "vytegra",
+    "url": "/vytegra",
+    "name": "Вытегра"
+  },
+  {
+    "id": "vishniy-volochek",
+    "url": "/vishniy-volochek",
+    "name": "Вышний Волочёк"
+  },
+  {
+    "id": "vyazemsky",
+    "url": "/vyazemsky",
+    "name": "Вяземский"
+  },
+  {
+    "id": "vyazniki",
+    "url": "/vyazniki",
+    "name": "Вязники"
+  },
+  {
+    "id": "vyazma",
+    "url": "/vyazma",
+    "name": "Вязьма"
+  },
+  {
+    "id": "vyatskie-polyani",
+    "url": "/vyatskie-polyani",
+    "name": "Вятские Поляны"
+  },
+  {
+    "id": "veshenskaya",
+    "url": "/veshenskaya",
+    "name": "Вёшенская"
+  },
+  {
+    "id": "gavrilov-yam",
+    "url": "/gavrilov-yam",
+    "name": "Гаврилов-Ям"
+  },
+  {
+    "id": "gagarin",
+    "url": "/gagarin",
+    "name": "Гагарин"
+  },
+  {
+    "id": "gaz-sale",
+    "url": "/gaz-sale",
+    "name": "Газ-Сале"
+  },
+  {
+    "id": "galich",
+    "url": "/galich",
+    "name": "Галич"
+  },
+  {
+    "id": "gatchina",
+    "url": "/gatchina",
+    "name": "Гатчина"
+  },
+  {
+    "id": "gelendgik",
+    "url": "/gelendgik",
+    "name": "Геленджик"
+  },
+  {
+    "id": "glazov",
+    "url": "/glazov",
+    "name": "Глазов"
+  },
+  {
+    "id": "golishmanovo",
+    "url": "/golishmanovo",
+    "name": "Голышманово"
+  },
+  {
+    "id": "gomel",
+    "url": "/gomel",
+    "name": "Гомель"
+  },
+  {
+    "id": "gorki",
+    "url": "/gorki",
+    "name": "Горки "
+  },
+  {
+    "id": "gorno-altaysk",
+    "url": "/gorno-altaysk",
+    "name": "Горно-Алтайск"
+  },
+  {
+    "id": "gornozavodsk",
+    "url": "/gornozavodsk",
+    "name": "Горнозаводск"
+  },
+  {
+    "id": "gornyak",
+    "url": "/gornyak",
+    "name": "Горняк"
+  },
+  {
+    "id": "gorodets",
+    "url": "/gorodets",
+    "name": "Городец"
+  },
+  {
+    "id": "gorodische20056",
+    "url": "/gorodische20056",
+    "name": "Городище"
+  },
+  {
+    "id": "gorodok",
+    "url": "/gorodok",
+    "name": "Городок"
+  },
+  {
+    "id": "gorohovec",
+    "url": "/gorohovec",
+    "name": "Гороховец"
+  },
+  {
+    "id": "gorshechnoe",
+    "url": "/gorshechnoe",
+    "name": "Горшечное"
+  },
+  {
+    "id": "grayvoron",
+    "url": "/grayvoron",
+    "name": "Грайворон"
+  },
+  {
+    "id": "gramoteino",
+    "url": "/gramoteino",
+    "name": "Грамотеино"
+  },
+  {
+    "id": "grodno",
+    "url": "/grodno",
+    "name": "Гродно"
+  },
+  {
+    "id": "grozniy",
+    "url": "/grozniy",
+    "name": "Грозный"
+  },
+  {
+    "id": "gryazi",
+    "url": "/gryazi",
+    "name": "Грязи"
+  },
+  {
+    "id": "gubkin",
+    "url": "/gubkin",
+    "name": "Губкин"
+  },
+  {
+    "id": "gubkinskiy",
+    "url": "/gubkinskiy",
+    "name": "Губкинский"
+  },
+  {
+    "id": "gudermes",
+    "url": "/gudermes",
+    "name": "Гудермес"
+  },
+  {
+    "id": "gukovo",
+    "url": "/gukovo",
+    "name": "Гуково"
+  },
+  {
+    "id": "gulkevichi",
+    "url": "/gulkevichi",
+    "name": "Гулькевичи"
+  },
+  {
+    "id": "gurevsk",
+    "url": "/gurevsk",
+    "name": "Гурьевск\n"
+  },
+  {
+    "id": "gusev",
+    "url": "/gusev",
+    "name": "Гусев"
+  },
+  {
+    "id": "gusinoozersk",
+    "url": "/gusinoozersk",
+    "name": "Гусиноозерск"
+  },
+  {
+    "id": "gus-chrustalniy",
+    "url": "/gus-chrustalniy",
+    "name": "Гусь-Хрустальный"
+  },
+  {
+    "id": "danilov",
+    "url": "/danilov",
+    "name": "Данилов"
+  },
+  {
+    "id": "debyosi",
+    "url": "/debyosi",
+    "name": "Дебёсы"
+  },
+  {
+    "id": "demyansk",
+    "url": "/demyansk",
+    "name": "Демянск"
+  },
+  {
+    "id": "derbent",
+    "url": "/derbent",
+    "name": "Дербент"
+  },
+  {
+    "id": "jankoy",
+    "url": "/jankoy",
+    "name": "Джанкой"
+  },
+  {
+    "id": "divnoe",
+    "url": "/divnoe",
+    "name": "Дивное"
+  },
+  {
+    "id": "dimitrovgrad",
+    "url": "/dimitrovgrad",
+    "name": "Димитровград"
+  },
+  {
+    "id": "dinskaya",
+    "url": "/dinskaya",
+    "name": "Динская"
+  },
+  {
+    "id": "dmitrievka",
+    "url": "/dmitrievka",
+    "name": "Дмитриевка"
+  },
+  {
+    "id": "dmitrov",
+    "url": "/dmitrov",
+    "name": "Дмитров"
+  },
+  {
+    "id": "dobrinka",
+    "url": "/dobrinka",
+    "name": "Добринка"
+  },
+  {
+    "id": "dolinsk",
+    "url": "/dolinsk",
+    "name": "Долинск"
+  },
+  {
+    "id": "donetsk-rnd",
+    "url": "/donetsk-rnd",
+    "name": "Донецк"
+  },
+  {
+    "id": "donskoy",
+    "url": "/donskoy",
+    "name": "Донской"
+  },
+  {
+    "id": "dubna",
+    "url": "/dubna",
+    "name": "Дубна"
+  },
+  {
+    "id": "dubna100803",
+    "url": "/dubna100803",
+    "name": "Дубна"
+  },
+  {
+    "id": "dudinka",
+    "url": "/dudinka",
+    "name": "Дудинка"
+  },
+  {
+    "id": "dukhovshchina",
+    "url": "/dukhovshchina",
+    "name": "Духовщина"
+  },
+  {
+    "id": "dyurtyuli",
+    "url": "/dyurtyuli",
+    "name": "Дюртюли"
+  },
+  {
+    "id": "evpatoria",
+    "url": "/evpatoria",
+    "name": "Евпатория"
+  },
+  {
+    "id": "egorievsk",
+    "url": "/egorievsk",
+    "name": "Егорьевск"
+  },
+  {
+    "id": "yesk",
+    "url": "/yesk",
+    "name": "Ейск"
+  },
+  {
+    "id": "yekaterinburg",
+    "url": "/yekaterinburg",
+    "name": "Екатеринбург"
+  },
+  {
+    "id": "elabuga",
+    "url": "/elabuga",
+    "name": "Елабуга"
+  },
+  {
+    "id": "yelets",
+    "url": "/yelets",
+    "name": "Елец"
+  },
+  {
+    "id": "elizovo",
+    "url": "/elizovo",
+    "name": "Елизово"
+  },
+  {
+    "id": "emva",
+    "url": "/emva",
+    "name": "Емва"
+  },
+  {
+    "id": "yerevan",
+    "url": "/yerevan",
+    "name": "Ереван"
+  },
+  {
+    "id": "ermolaevo",
+    "url": "/ermolaevo",
+    "name": "Ермолаево"
+  },
+  {
+    "id": "efremov",
+    "url": "/efremov",
+    "name": "Ефремов"
+  },
+  {
+    "id": "zhanaozen",
+    "url": "/zhanaozen",
+    "name": "Жанаозен"
+  },
+  {
+    "id": "zharkent",
+    "url": "/zharkent",
+    "name": "Жаркент"
+  },
+  {
+    "id": "zheleznogorsk",
+    "url": "/zheleznogorsk",
+    "name": "Железногорск"
+  },
+  {
+    "id": "zheleznogorsk-ilimsky",
+    "url": "/zheleznogorsk-ilimsky",
+    "name": "Железногорск-Илимский"
+  },
+  {
+    "id": "zherdevka",
+    "url": "/zherdevka",
+    "name": "Жердевка"
+  },
+  {
+    "id": "zhiguliovsk",
+    "url": "/zhiguliovsk",
+    "name": "Жигулёвск"
+  },
+  {
+    "id": "zhirnovsk",
+    "url": "/zhirnovsk",
+    "name": "Жирновск"
+  },
+  {
+    "id": "zhitikara",
+    "url": "/zhitikara",
+    "name": "Житикара"
+  },
+  {
+    "id": "zhytkovichy",
+    "url": "/zhytkovichy",
+    "name": "Житковичи"
+  },
+  {
+    "id": "zhlobin",
+    "url": "/zhlobin",
+    "name": "Жлобин"
+  },
+  {
+    "id": "zhukovka",
+    "url": "/zhukovka",
+    "name": "Жуковка"
+  },
+  {
+    "id": "zavodoukovsk",
+    "url": "/zavodoukovsk",
+    "name": "Заводоуковск"
+  },
+  {
+    "id": "zainsk",
+    "url": "/zainsk",
+    "name": "Заинск"
+  },
+  {
+    "id": "zaoksky",
+    "url": "/zaoksky",
+    "name": "Заокский"
+  },
+  {
+    "id": "zaraysk",
+    "url": "/zaraysk",
+    "name": "Зарайск"
+  },
+  {
+    "id": "zarechny",
+    "url": "/zarechny",
+    "name": "Заречный"
+  },
+  {
+    "id": "zarinsk",
+    "url": "/zarinsk",
+    "name": "Заринск"
+  },
+  {
+    "id": "zvenigorod",
+    "url": "/zvenigorod",
+    "name": "Звенигород"
+  },
+  {
+    "id": "zverevo",
+    "url": "/zverevo",
+    "name": "Зверево"
+  },
+  {
+    "id": "zelenodolsk",
+    "url": "/zelenodolsk",
+    "name": "Зеленодольск"
+  },
+  {
+    "id": "zernograd",
+    "url": "/zernograd",
+    "name": "Зерноград"
+  },
+  {
+    "id": "zima",
+    "url": "/zima",
+    "name": "Зима"
+  },
+  {
+    "id": "zimovniky",
+    "url": "/zimovniky",
+    "name": "Зимовники"
+  },
+  {
+    "id": "zlatoust",
+    "url": "/zlatoust",
+    "name": "Златоуст"
+  },
+  {
+    "id": "zmeinogorsk",
+    "url": "/zmeinogorsk",
+    "name": "Змеиногорск"
+  },
+  {
+    "id": "zubova-poliana",
+    "url": "/zubova-poliana",
+    "name": "Зубова Поляна"
+  },
+  {
+    "id": "ibresi",
+    "url": "/ibresi",
+    "name": "Ибреси"
+  },
+  {
+    "id": "ivanovo",
+    "url": "/ivanovo",
+    "name": "Иваново"
+  },
+  {
+    "id": "ivdel",
+    "url": "/ivdel",
+    "name": "Ивдель"
+  },
+  {
+    "id": "iglino",
+    "url": "/iglino",
+    "name": "Иглино"
+  },
+  {
+    "id": "izhevsk",
+    "url": "/izhevsk",
+    "name": "Ижевск"
+  },
+  {
+    "id": "izhma",
+    "url": "/izhma",
+    "name": "Ижма"
+  },
+  {
+    "id": "izluchinsk",
+    "url": "/izluchinsk",
+    "name": "Излучинск"
+  },
+  {
+    "id": "ilovlya",
+    "url": "/ilovlya",
+    "name": "Иловля"
+  },
+  {
+    "id": "ilskiy",
+    "url": "/ilskiy",
+    "name": "Ильский"
+  },
+  {
+    "id": "inzhavino",
+    "url": "/inzhavino",
+    "name": "Инжавино"
+  },
+  {
+    "id": "inza",
+    "url": "/inza",
+    "name": "Инза"
+  },
+  {
+    "id": "innopolis",
+    "url": "/innopolis",
+    "name": "Иннополис"
+  },
+  {
+    "id": "insar",
+    "url": "/insar",
+    "name": "Инсар"
+  },
+  {
+    "id": "inskoy",
+    "url": "/inskoy",
+    "name": "Инской"
+  },
+  {
+    "id": "inta",
+    "url": "/inta",
+    "name": "Инта"
+  },
+  {
+    "id": "irbit",
+    "url": "/irbit",
+    "name": "Ирбит"
+  },
+  {
+    "id": "irkutsk",
+    "url": "/irkutsk",
+    "name": "Иркутск"
+  },
+  {
+    "id": "iskitim",
+    "url": "/iskitim",
+    "name": "Искитим"
+  },
+  {
+    "id": "istra",
+    "url": "/istra",
+    "name": "Истра"
+  },
+  {
+    "id": "isyangulovo",
+    "url": "/isyangulovo",
+    "name": "Исянгулово"
+  },
+  {
+    "id": "ishim",
+    "url": "/ishim",
+    "name": "Ишим"
+  },
+  {
+    "id": "ishimbay",
+    "url": "/ishimbay",
+    "name": "Ишимбай"
+  },
+  {
+    "id": "yoshkar-ola",
+    "url": "/yoshkar-ola",
+    "name": "Йошкар-Ола"
+  },
+  {
+    "id": "kadoshkino",
+    "url": "/kadoshkino",
+    "name": "Кадошкино"
+  },
+  {
+    "id": "kazan",
+    "url": "/kazan",
+    "name": "Казань"
+  },
+  {
+    "id": "cairo",
+    "url": "/cairo",
+    "name": "Каир"
+  },
+  {
+    "id": "kalach",
+    "url": "/kalach",
+    "name": "Калач"
+  },
+  {
+    "id": "kaliningrad",
+    "url": "/kaliningrad",
+    "name": "Калининград"
+  },
+  {
+    "id": "kalininets",
+    "url": "/kalininets",
+    "name": "Калининец"
+  },
+  {
+    "id": "kalinovichi",
+    "url": "/kalinovichi",
+    "name": "Калинковичи"
+  },
+  {
+    "id": "kaluga",
+    "url": "/kaluga",
+    "name": "Калуга"
+  },
+  {
+    "id": "kambarka",
+    "url": "/kambarka",
+    "name": "Камбарка"
+  },
+  {
+    "id": "kamenka",
+    "url": "/kamenka",
+    "name": "Каменка"
+  },
+  {
+    "id": "kamennomostsky",
+    "url": "/kamennomostsky",
+    "name": "Каменномостский"
+  },
+  {
+    "id": "kamensk",
+    "url": "/kamensk",
+    "name": "Каменск"
+  },
+  {
+    "id": "kamensk-uralskiy",
+    "url": "/kamensk-uralskiy",
+    "name": "Каменск-Уральский"
+  },
+  {
+    "id": "kamensk-shakhtinsky",
+    "url": "/kamensk-shakhtinsky",
+    "name": "Каменск-Шахтинский"
+  },
+  {
+    "id": "kamen-na-obi",
+    "url": "/kamen-na-obi",
+    "name": "Камень-на-Оби"
+  },
+  {
+    "id": "kameshkovo",
+    "url": "/kameshkovo",
+    "name": "Камешково"
+  },
+  {
+    "id": "kamishin",
+    "url": "/kamishin",
+    "name": "Камышин"
+  },
+  {
+    "id": "kandalaksha",
+    "url": "/kandalaksha",
+    "name": "Кандалакша"
+  },
+  {
+    "id": "kansk",
+    "url": "/kansk",
+    "name": "Канск"
+  },
+  {
+    "id": "karabash",
+    "url": "/karabash",
+    "name": "Карабаш"
+  },
+  {
+    "id": "karagay",
+    "url": "/karagay",
+    "name": "Карагай"
+  },
+  {
+    "id": "karaganda",
+    "url": "/karaganda",
+    "name": "Караганда"
+  },
+  {
+    "id": "karaidel",
+    "url": "/karaidel",
+    "name": "Караидель"
+  },
+  {
+    "id": "karakulino",
+    "url": "/karakulino",
+    "name": "Каракулино"
+  },
+  {
+    "id": "karasuk",
+    "url": "/karasuk",
+    "name": "Карасук"
+  },
+  {
+    "id": "karymskoe",
+    "url": "/karymskoe",
+    "name": "Карымское"
+  },
+  {
+    "id": "kasimov",
+    "url": "/kasimov",
+    "name": "Касимов"
+  },
+  {
+    "id": "kachkanar",
+    "url": "/kachkanar",
+    "name": "Качканар"
+  },
+  {
+    "id": "kashira",
+    "url": "/kashira",
+    "name": "Кашира"
+  },
+  {
+    "id": "kemerovo",
+    "url": "/kemerovo",
+    "name": "Кемерово"
+  },
+  {
+    "id": "kemlya",
+    "url": "/kemlya",
+    "name": "Кемля"
+  },
+  {
+    "id": "kerch",
+    "url": "/kerch",
+    "name": "Керчь"
+  },
+  {
+    "id": "kizilyurt",
+    "url": "/kizilyurt",
+    "name": "Кизилюрт"
+  },
+  {
+    "id": "kizlyar",
+    "url": "/kizlyar",
+    "name": "Кизляр"
+  },
+  {
+    "id": "kiknur",
+    "url": "/kiknur",
+    "name": "Кикнур"
+  },
+  {
+    "id": "kilemari",
+    "url": "/kilemari",
+    "name": "Килемары"
+  },
+  {
+    "id": "kilmez",
+    "url": "/kilmez",
+    "name": "Кильмезь"
+  },
+  {
+    "id": "kimovsk",
+    "url": "/kimovsk",
+    "name": "Кимовск"
+  },
+  {
+    "id": "kimry",
+    "url": "/kimry",
+    "name": "Кимры"
+  },
+  {
+    "id": "kingisepp",
+    "url": "/kingisepp",
+    "name": "Кингисепп"
+  },
+  {
+    "id": "kinel",
+    "url": "/kinel",
+    "name": "Кинель"
+  },
+  {
+    "id": "kineshma",
+    "url": "/kineshma",
+    "name": "Кинешма"
+  },
+  {
+    "id": "kireevsk",
+    "url": "/kireevsk",
+    "name": "Киреевск"
+  },
+  {
+    "id": "kirishi",
+    "url": "/kirishi",
+    "name": "Кириши"
+  },
+  {
+    "id": "kirov",
+    "url": "/kirov",
+    "name": "Киров"
+  },
+  {
+    "id": "kirov20200",
+    "url": "/kirov20200",
+    "name": "Киров"
+  },
+  {
+    "id": "kirovgrad",
+    "url": "/kirovgrad",
+    "name": "Кировград"
+  },
+  {
+    "id": "kirsanov",
+    "url": "/kirsanov",
+    "name": "Кирсанов"
+  },
+  {
+    "id": "kiselevsk",
+    "url": "/kiselevsk",
+    "name": "Киселёвск"
+  },
+  {
+    "id": "kislovodsk",
+    "url": "/kislovodsk",
+    "name": "Кисловодск"
+  },
+  {
+    "id": "klimovo",
+    "url": "/klimovo",
+    "name": "Климово"
+  },
+  {
+    "id": "klin",
+    "url": "/klin",
+    "name": "Клин"
+  },
+  {
+    "id": "klintsy",
+    "url": "/klintsy",
+    "name": "Клинцы"
+  },
+  {
+    "id": "klyuchi",
+    "url": "/klyuchi",
+    "name": "Ключи"
+  },
+  {
+    "id": "knyaginino",
+    "url": "/knyaginino",
+    "name": "Княгинино"
+  },
+  {
+    "id": "kovdor",
+    "url": "/kovdor",
+    "name": "Ковдор"
+  },
+  {
+    "id": "kovernino",
+    "url": "/kovernino",
+    "name": "Ковернино"
+  },
+  {
+    "id": "kovrov",
+    "url": "/kovrov",
+    "name": "Ковров"
+  },
+  {
+    "id": "kovylkino",
+    "url": "/kovylkino",
+    "name": "Ковылкино"
+  },
+  {
+    "id": "kozelsk",
+    "url": "/kozelsk",
+    "name": "Козельск"
+  },
+  {
+    "id": "kozlovka",
+    "url": "/kozlovka",
+    "name": "Козловка"
+  },
+  {
+    "id": "kozmodemyansk",
+    "url": "/kozmodemyansk",
+    "name": "Козьмодемьянск"
+  },
+  {
+    "id": "kokrek",
+    "url": "/kokrek",
+    "name": "Кокрек"
+  },
+  {
+    "id": "kokuy",
+    "url": "/kokuy",
+    "name": "Кокуй"
+  },
+  {
+    "id": "kokshetau",
+    "url": "/kokshetau",
+    "name": "Кокшетау"
+  },
+  {
+    "id": "kolomna",
+    "url": "/kolomna",
+    "name": "Коломна"
+  },
+  {
+    "id": "kolosovka",
+    "url": "/kolosovka",
+    "name": "Колосовка"
+  },
+  {
+    "id": "kolpashevo",
+    "url": "/kolpashevo",
+    "name": "Колпашево"
+  },
+  {
+    "id": "kolpni",
+    "url": "/kolpni",
+    "name": "Колпна"
+  },
+  {
+    "id": "kolchugino",
+    "url": "/kolchugino",
+    "name": "Кольчугино"
+  },
+  {
+    "id": "komsomolsk_na_amure",
+    "url": "/komsomolsk_na_amure",
+    "name": "Комсомольск-на-Амуре"
+  },
+  {
+    "id": "konakovo",
+    "url": "/konakovo",
+    "name": "Конаково"
+  },
+  {
+    "id": "kondopoga",
+    "url": "/kondopoga",
+    "name": "Кондопога"
+  },
+  {
+    "id": "kondrovo",
+    "url": "/kondrovo",
+    "name": "Кондрово"
+  },
+  {
+    "id": "konosha",
+    "url": "/konosha",
+    "name": "Коноша"
+  },
+  {
+    "id": "konstantinovka",
+    "url": "/konstantinovka",
+    "name": "Константиновка"
+  },
+  {
+    "id": "konstantinovsk",
+    "url": "/konstantinovsk",
+    "name": "Константиновск"
+  },
+  {
+    "id": "korduy",
+    "url": "/korduy",
+    "name": "Кордай"
+  },
+  {
+    "id": "koryagma",
+    "url": "/koryagma",
+    "name": "Коряжма"
+  },
+  {
+    "id": "kosikha",
+    "url": "/kosikha",
+    "name": "Косиха"
+  },
+  {
+    "id": "kostanai",
+    "url": "/kostanai",
+    "name": "Костанай"
+  },
+  {
+    "id": "kostroma",
+    "url": "/kostroma",
+    "name": "Кострома"
+  },
+  {
+    "id": "kotlas",
+    "url": "/kotlas",
+    "name": "Котлас"
+  },
+  {
+    "id": "krasnoborsk",
+    "url": "/krasnoborsk",
+    "name": "Красноборск"
+  },
+  {
+    "id": "krasnobrodsky",
+    "url": "/krasnobrodsky",
+    "name": "Краснобродский"
+  },
+  {
+    "id": "krasnogvardeyskoe",
+    "url": "/krasnogvardeyskoe",
+    "name": "Красногвардейское"
+  },
+  {
+    "id": "krasnogorsky",
+    "url": "/krasnogorsky",
+    "name": "Красногорский"
+  },
+  {
+    "id": "krasnogorskiy",
+    "url": "/krasnogorskiy",
+    "name": "Красногорский"
+  },
+  {
+    "id": "krasnodar",
+    "url": "/krasnodar",
+    "name": "Краснодар"
+  },
+  {
+    "id": "krasnoe",
+    "url": "/krasnoe",
+    "name": "Красное"
+  },
+  {
+    "id": "krasnokamensk",
+    "url": "/krasnokamensk",
+    "name": "Краснокаменск"
+  },
+  {
+    "id": "krasnomayskiy",
+    "url": "/krasnomayskiy",
+    "name": "Красномайский"
+  },
+  {
+    "id": "krasnoperekopsk",
+    "url": "/krasnoperekopsk",
+    "name": "Красноперекопск"
+  },
+  {
+    "id": "krasnoselkup",
+    "url": "/krasnoselkup",
+    "name": "Красноселькуп"
+  },
+  {
+    "id": "krasnoslobodsk",
+    "url": "/krasnoslobodsk",
+    "name": "Краснослободск"
+  },
+  {
+    "id": "krasnorurinsk",
+    "url": "/krasnorurinsk",
+    "name": "Краснотурьинск"
+  },
+  {
+    "id": "krasnoufimsk",
+    "url": "/krasnoufimsk",
+    "name": "Красноуфимск"
+  },
+  {
+    "id": "krasnoyarsk",
+    "url": "/krasnoyarsk",
+    "name": "Красноярск"
+  },
+  {
+    "id": "krasny-chikoy",
+    "url": "/krasny-chikoy",
+    "name": "Красный Чикой"
+  },
+  {
+    "id": "krestsi",
+    "url": "/krestsi",
+    "name": "Крестцы"
+  },
+  {
+    "id": "krivosheino",
+    "url": "/krivosheino",
+    "name": "Кривошеино"
+  },
+  {
+    "id": "kromi",
+    "url": "/kromi",
+    "name": "Кромы"
+  },
+  {
+    "id": "krilovskaya",
+    "url": "/krilovskaya",
+    "name": "Крыловская"
+  },
+  {
+    "id": "krymsk",
+    "url": "/krymsk",
+    "name": "Крымск"
+  },
+  {
+    "id": "kubinka",
+    "url": "/kubinka",
+    "name": "Кубинка"
+  },
+  {
+    "id": "kudimkar",
+    "url": "/kudimkar",
+    "name": "Кудымкар"
+  },
+  {
+    "id": "kuznetsk",
+    "url": "/kuznetsk",
+    "name": "Кузнецк"
+  },
+  {
+    "id": "kuybyshev",
+    "url": "/kuybyshev",
+    "name": "Куйбышев"
+  },
+  {
+    "id": "kuytun",
+    "url": "/kuytun",
+    "name": "Куйтун"
+  },
+  {
+    "id": "kukmor",
+    "url": "/kukmor",
+    "name": "Кукмор"
+  },
+  {
+    "id": "kulebaki",
+    "url": "/kulebaki",
+    "name": "Кулебаки"
+  },
+  {
+    "id": "kulunda",
+    "url": "/kulunda",
+    "name": "Кулунда"
+  },
+  {
+    "id": "kumertau",
+    "url": "/kumertau",
+    "name": "Кумертау"
+  },
+  {
+    "id": "kuragino",
+    "url": "/kuragino",
+    "name": "Курагино"
+  },
+  {
+    "id": "kurgan",
+    "url": "/kurgan",
+    "name": "Курган"
+  },
+  {
+    "id": "kurganinsk",
+    "url": "/kurganinsk",
+    "name": "Курганинск"
+  },
+  {
+    "id": "kurilsk",
+    "url": "/kurilsk",
+    "name": "Курильск"
+  },
+  {
+    "id": "kurkino",
+    "url": "/kurkino",
+    "name": "Куркино"
+  },
+  {
+    "id": "kursk",
+    "url": "/kursk",
+    "name": "Курск"
+  },
+  {
+    "id": "kurchatov",
+    "url": "/kurchatov",
+    "name": "Курчатов"
+  },
+  {
+    "id": "kusa",
+    "url": "/kusa",
+    "name": "Куса"
+  },
+  {
+    "id": "kushva",
+    "url": "/kushva",
+    "name": "Кушва"
+  },
+  {
+    "id": "kushevskaya",
+    "url": "/kushevskaya",
+    "name": "Кущёвская"
+  },
+  {
+    "id": "kyzyl",
+    "url": "/kyzyl",
+    "name": "Кызыл"
+  },
+  {
+    "id": "kyzylorda",
+    "url": "/kyzylorda",
+    "name": "Кызылорда"
+  },
+  {
+    "id": "kyshtym",
+    "url": "/kyshtym",
+    "name": "Кыштым"
+  },
+  {
+    "id": "labinsk",
+    "url": "/labinsk",
+    "name": "Лабинск"
+  },
+  {
+    "id": "labytnangi",
+    "url": "/labytnangi",
+    "name": "Лабытнанги"
+  },
+  {
+    "id": "langepas",
+    "url": "/langepas",
+    "name": "Лангепас"
+  },
+  {
+    "id": "lenino",
+    "url": "/lenino",
+    "name": "Ленино"
+  },
+  {
+    "id": "leninsk",
+    "url": "/leninsk",
+    "name": "Ленинск"
+  },
+  {
+    "id": "leninsk-kuznetskiy",
+    "url": "/leninsk-kuznetskiy",
+    "name": "Ленинск-Кузнецкий"
+  },
+  {
+    "id": "leninskoe",
+    "url": "/leninskoe",
+    "name": "Ленинское"
+  },
+  {
+    "id": "lensk",
+    "url": "/lensk",
+    "name": "Ленск"
+  },
+  {
+    "id": "lesnoy",
+    "url": "/lesnoy",
+    "name": "Лесной"
+  },
+  {
+    "id": "lesnoy118618",
+    "url": "/lesnoy118618",
+    "name": "Лесной"
+  },
+  {
+    "id": "lesozavodsk",
+    "url": "/lesozavodsk",
+    "name": "Лесозаводск"
+  },
+  {
+    "id": "lesosibirsk",
+    "url": "/lesosibirsk",
+    "name": "Лесосибирск"
+  },
+  {
+    "id": "livny",
+    "url": "/livny",
+    "name": "Ливны"
+  },
+  {
+    "id": "lipetsk",
+    "url": "/lipetsk",
+    "name": "Липецк"
+  },
+  {
+    "id": "lisky",
+    "url": "/lisky",
+    "name": "Лиски"
+  },
+  {
+    "id": "lodeynoe-pole",
+    "url": "/lodeynoe-pole",
+    "name": "Лодейное Поле"
+  },
+  {
+    "id": "luga",
+    "url": "/luga",
+    "name": "Луга"
+  },
+  {
+    "id": "lyskovo",
+    "url": "/lyskovo",
+    "name": "Лысково"
+  },
+  {
+    "id": "lysva",
+    "url": "/lysva",
+    "name": "Лысьва"
+  },
+  {
+    "id": "lgov",
+    "url": "/lgov",
+    "name": "Льгов"
+  },
+  {
+    "id": "lyubinsky",
+    "url": "/lyubinsky",
+    "name": "Любинский"
+  },
+  {
+    "id": "ljudinovo",
+    "url": "/ljudinovo",
+    "name": "Людиново"
+  },
+  {
+    "id": "lyantor",
+    "url": "/lyantor",
+    "name": "Лянтор"
+  },
+  {
+    "id": "magadan",
+    "url": "/magadan",
+    "name": "Магадан"
+  },
+  {
+    "id": "magas",
+    "url": "/magas",
+    "name": "Магас"
+  },
+  {
+    "id": "magnitogorsk",
+    "url": "/magnitogorsk",
+    "name": "Магнитогорск"
+  },
+  {
+    "id": "maykop",
+    "url": "/maykop",
+    "name": "Майкоп"
+  },
+  {
+    "id": "malaya-vishera",
+    "url": "/malaya-vishera",
+    "name": "Малая Вишера"
+  },
+  {
+    "id": "malmyzh",
+    "url": "/malmyzh",
+    "name": "Малмыж"
+  },
+  {
+    "id": "maloyaroslavets",
+    "url": "/maloyaroslavets",
+    "name": "Малоярославец"
+  },
+  {
+    "id": "mamadysh",
+    "url": "/mamadysh",
+    "name": "Мамадыш"
+  },
+  {
+    "id": "manturovo",
+    "url": "/manturovo",
+    "name": "Мантурово"
+  },
+  {
+    "id": "mari-turec",
+    "url": "/mari-turec",
+    "name": "Мари-Турек"
+  },
+  {
+    "id": "mariinskiy-posad",
+    "url": "/mariinskiy-posad",
+    "name": "Мариинский Посад"
+  },
+  {
+    "id": "marks",
+    "url": "/marks",
+    "name": "Маркс"
+  },
+  {
+    "id": "maslyanino",
+    "url": "/maslyanino",
+    "name": "Маслянино"
+  },
+  {
+    "id": "matveev-kurgan",
+    "url": "/matveev-kurgan",
+    "name": "Матвеев Курган"
+  },
+  {
+    "id": "makhachkala",
+    "url": "/makhachkala",
+    "name": "Махачкала"
+  },
+  {
+    "id": "megion",
+    "url": "/megion",
+    "name": "Мегион"
+  },
+  {
+    "id": "medvenka",
+    "url": "/medvenka",
+    "name": "Медвенка"
+  },
+  {
+    "id": "mednogorsk",
+    "url": "/mednogorsk",
+    "name": "Медногорск"
+  },
+  {
+    "id": "mendeleevsk",
+    "url": "/mendeleevsk",
+    "name": "Менделеевск"
+  },
+  {
+    "id": "merke",
+    "url": "/merke",
+    "name": "Мерке"
+  },
+  {
+    "id": "mesyagutovo",
+    "url": "/mesyagutovo",
+    "name": "Месягутово"
+  },
+  {
+    "id": "miass",
+    "url": "/miass",
+    "name": "Миасс"
+  },
+  {
+    "id": "millerovo",
+    "url": "/millerovo",
+    "name": "Миллерово"
+  },
+  {
+    "id": "minsk",
+    "url": "/minsk",
+    "name": "Минск"
+  },
+  {
+    "id": "minusinsk",
+    "url": "/minusinsk",
+    "name": "Минусинск"
+  },
+  {
+    "id": "minyar",
+    "url": "/minyar",
+    "name": "Миньяр"
+  },
+  {
+    "id": "mihaylovka",
+    "url": "/mihaylovka",
+    "name": "Михайловка"
+  },
+  {
+    "id": "mikhaylovskoe",
+    "url": "/mikhaylovskoe",
+    "name": "Михайловское"
+  },
+  {
+    "id": "michurinsk",
+    "url": "/michurinsk",
+    "name": "Мичуринск"
+  },
+  {
+    "id": "mogilev",
+    "url": "/mogilev",
+    "name": "Могилёв"
+  },
+  {
+    "id": "mozhaysk",
+    "url": "/mozhaysk",
+    "name": "Можайск"
+  },
+  {
+    "id": "mozhga",
+    "url": "/mozhga",
+    "name": "Можга"
+  },
+  {
+    "id": "mozdok",
+    "url": "/mozdok",
+    "name": "Моздок"
+  },
+  {
+    "id": "mozyr",
+    "url": "/mozyr",
+    "name": "Мозырь"
+  },
+  {
+    "id": "mokrous",
+    "url": "/mokrous",
+    "name": "Мокроус"
+  },
+  {
+    "id": "monchegorsk",
+    "url": "/monchegorsk",
+    "name": "Мончегорск"
+  },
+  {
+    "id": "mordovo",
+    "url": "/mordovo",
+    "name": "Мордово"
+  },
+  {
+    "id": "morki",
+    "url": "/morki",
+    "name": "Морки"
+  },
+  {
+    "id": "morozovsk",
+    "url": "/morozovsk",
+    "name": "Морозовск"
+  },
+  {
+    "id": "morshansk",
+    "url": "/morshansk",
+    "name": "Моршанск"
+  },
+  {
+    "id": "mosalsk",
+    "url": "/mosalsk",
+    "name": "Мосальск"
+  },
+  {
+    "id": "moscow",
+    "url": "/moscow",
+    "name": "Москва"
+  },
+  {
+    "id": "mostovskoi",
+    "url": "/mostovskoi",
+    "name": "Мостовской"
+  },
+  {
+    "id": "myravlenko",
+    "url": "/myravlenko",
+    "name": "Муравленко"
+  },
+  {
+    "id": "murmansk",
+    "url": "/murmansk",
+    "name": "Мурманск"
+  },
+  {
+    "id": "murom",
+    "url": "/murom",
+    "name": "Муром"
+  },
+  {
+    "id": "muchkapsky",
+    "url": "/muchkapsky",
+    "name": "Мучкапский"
+  },
+  {
+    "id": "mtsensk",
+    "url": "/mtsensk",
+    "name": "Мценск"
+  },
+  {
+    "id": "myski",
+    "url": "/myski",
+    "name": "Мыски"
+  },
+  {
+    "id": "myshkin",
+    "url": "/myshkin",
+    "name": "Мышкин"
+  },
+  {
+    "id": "naberezhnie-chelny",
+    "url": "/naberezhnie-chelny",
+    "name": "Набережные Челны"
+  },
+  {
+    "id": "navashino",
+    "url": "/navashino",
+    "name": "Навашино"
+  },
+  {
+    "id": "nadym",
+    "url": "/nadym",
+    "name": "Надым"
+  },
+  {
+    "id": "nazarovo",
+    "url": "/nazarovo",
+    "name": "Назарово"
+  },
+  {
+    "id": "nazran",
+    "url": "/nazran",
+    "name": "Назрань"
+  },
+  {
+    "id": "nazyvaevsk",
+    "url": "/nazyvaevsk",
+    "name": "Называевск"
+  },
+  {
+    "id": "nalchik",
+    "url": "/nalchik",
+    "name": "Нальчик"
+  },
+  {
+    "id": "naro-fominsk",
+    "url": "/naro-fominsk",
+    "name": "Наро-Фоминск"
+  },
+  {
+    "id": "naryan-mar",
+    "url": "/naryan-mar",
+    "name": "Нарьян-Мар"
+  },
+  {
+    "id": "nahodka",
+    "url": "/nahodka",
+    "name": "Находка"
+  },
+  {
+    "id": "nevelsk",
+    "url": "/nevelsk",
+    "name": "Невельск"
+  },
+  {
+    "id": "nevinnomissk",
+    "url": "/nevinnomissk",
+    "name": "Невинномысск"
+  },
+  {
+    "id": "nelidovo",
+    "url": "/nelidovo",
+    "name": "Нелидово"
+  },
+  {
+    "id": "neman",
+    "url": "/neman",
+    "name": "Неман"
+  },
+  {
+    "id": "nerekhta",
+    "url": "/nerekhta",
+    "name": "Нерехта"
+  },
+  {
+    "id": "nerchinsk",
+    "url": "/nerchinsk",
+    "name": "Нерчинск"
+  },
+  {
+    "id": "nerungri",
+    "url": "/nerungri",
+    "name": "Нерюнгри"
+  },
+  {
+    "id": "nephtekamsk",
+    "url": "/nephtekamsk",
+    "name": "Нефтекамск"
+  },
+  {
+    "id": "neftekumsk",
+    "url": "/neftekumsk",
+    "name": "Нефтекумск"
+  },
+  {
+    "id": "nefteugansk",
+    "url": "/nefteugansk",
+    "name": "Нефтеюганск"
+  },
+  {
+    "id": "neya",
+    "url": "/neya",
+    "name": "Нея"
+  },
+  {
+    "id": "nizhnevartovsk",
+    "url": "/nizhnevartovsk",
+    "name": "Нижневартовск"
+  },
+  {
+    "id": "nizhnekamsk",
+    "url": "/nizhnekamsk",
+    "name": "Нижнекамск"
+  },
+  {
+    "id": "nizhneudinsk",
+    "url": "/nizhneudinsk",
+    "name": "Нижнеудинск"
+  },
+  {
+    "id": "nizhniye-sergi",
+    "url": "/nizhniye-sergi",
+    "name": "Нижние Серги"
+  },
+  {
+    "id": "nizhny-lomov",
+    "url": "/nizhny-lomov",
+    "name": "Нижний Ломов"
+  },
+  {
+    "id": "nizhny-novgorod",
+    "url": "/nizhny-novgorod",
+    "name": "Нижний Новгород"
+  },
+  {
+    "id": "nizhniy-tagil",
+    "url": "/nizhniy-tagil",
+    "name": "Нижний Тагил"
+  },
+  {
+    "id": "nizhnyaya-omka",
+    "url": "/nizhnyaya-omka",
+    "name": "Нижняя Омка"
+  },
+  {
+    "id": "nizhnyaya-salda",
+    "url": "/nizhnyaya-salda",
+    "name": "Нижняя Салда"
+  },
+  {
+    "id": "nizhnyaya-tavda",
+    "url": "/nizhnyaya-tavda",
+    "name": "Нижняя Тавда"
+  },
+  {
+    "id": "nignaya-tura",
+    "url": "/nignaya-tura",
+    "name": "Нижняя Тура"
+  },
+  {
+    "id": "nikolayevsk",
+    "url": "/nikolayevsk",
+    "name": "Николаевск"
+  },
+  {
+    "id": "nikolaevsk-na-amure",
+    "url": "/nikolaevsk-na-amure",
+    "name": "Николаевск-на-Амуре"
+  },
+  {
+    "id": "nikolsk",
+    "url": "/nikolsk",
+    "name": "Никольск"
+  },
+  {
+    "id": "novaya-bryan",
+    "url": "/novaya-bryan",
+    "name": "Новая Брянь"
+  },
+  {
+    "id": "novaya-igirma",
+    "url": "/novaya-igirma",
+    "name": "Новая Игирма"
+  },
+  {
+    "id": "novaya-lyalya",
+    "url": "/novaya-lyalya",
+    "name": "Новая Ляля"
+  },
+  {
+    "id": "novaya-tselina",
+    "url": "/novaya-tselina",
+    "name": "Новая Целина"
+  },
+  {
+    "id": "novoagansk",
+    "url": "/novoagansk",
+    "name": "Новоаганск"
+  },
+  {
+    "id": "novoanninsky",
+    "url": "/novoanninsky",
+    "name": "Новоаннинский"
+  },
+  {
+    "id": "novobelokatay",
+    "url": "/novobelokatay",
+    "name": "Новобелокатай"
+  },
+  {
+    "id": "novobureysky",
+    "url": "/novobureysky",
+    "name": "Новобурейский"
+  },
+  {
+    "id": "novovoronezh",
+    "url": "/novovoronezh",
+    "name": "Нововоронеж"
+  },
+  {
+    "id": "novodvinsk",
+    "url": "/novodvinsk",
+    "name": "Новодвинск"
+  },
+  {
+    "id": "novozibkov",
+    "url": "/novozibkov",
+    "name": "Новозыбков"
+  },
+  {
+    "id": "novokubansk",
+    "url": "/novokubansk",
+    "name": "Новокубанск"
+  },
+  {
+    "id": "novokuznetsk",
+    "url": "/novokuznetsk",
+    "name": "Новокузнецк"
+  },
+  {
+    "id": "novouleshkovskay",
+    "url": "/novouleshkovskay",
+    "name": "Новолеушковская"
+  },
+  {
+    "id": "novomikhaylovskiy",
+    "url": "/novomikhaylovskiy",
+    "name": "Новомихайловский"
+  },
+  {
+    "id": "novomoskovsk",
+    "url": "/novomoskovsk",
+    "name": "Новомосковск"
+  },
+  {
+    "id": "novorossiysk",
+    "url": "/novorossiysk",
+    "name": "Новороссийск"
+  },
+  {
+    "id": "novosergievka",
+    "url": "/novosergievka",
+    "name": "Новосергиевка"
+  },
+  {
+    "id": "novosibirsk",
+    "url": "/novosibirsk",
+    "name": "Новосибирск"
+  },
+  {
+    "id": "novosokolniky",
+    "url": "/novosokolniky",
+    "name": "Новосокольники"
+  },
+  {
+    "id": "novospasskoye",
+    "url": "/novospasskoye",
+    "name": "Новоспасское"
+  },
+  {
+    "id": "novouzensk",
+    "url": "/novouzensk",
+    "name": "Новоузенск"
+  },
+  {
+    "id": "novouralsk",
+    "url": "/novouralsk",
+    "name": "Новоуральск"
+  },
+  {
+    "id": "novocherkassk",
+    "url": "/novocherkassk",
+    "name": "Новочеркасск"
+  },
+  {
+    "id": "novie-burasi",
+    "url": "/novie-burasi",
+    "name": "Новые Бурасы"
+  },
+  {
+    "id": "noviy-torjyal",
+    "url": "/noviy-torjyal",
+    "name": "Новый Торъял"
+  },
+  {
+    "id": "noviy-urengoy",
+    "url": "/noviy-urengoy",
+    "name": "Новый Уренгой"
+  },
+  {
+    "id": "noginsk",
+    "url": "/noginsk",
+    "name": "Ногинск"
+  },
+  {
+    "id": "nolinsk",
+    "url": "/nolinsk",
+    "name": "Нолинск"
+  },
+  {
+    "id": "norilsk",
+    "url": "/norilsk",
+    "name": "Норильск"
+  },
+  {
+    "id": "noyabrsk",
+    "url": "/noyabrsk",
+    "name": "Ноябрьск"
+  },
+  {
+    "id": "nurlat",
+    "url": "/nurlat",
+    "name": "Нурлат"
+  },
+  {
+    "id": "nyurba",
+    "url": "/nyurba",
+    "name": "Нюрба"
+  },
+  {
+    "id": "nyagan",
+    "url": "/nyagan",
+    "name": "Нягань"
+  },
+  {
+    "id": "nyazepetrovsk",
+    "url": "/nyazepetrovsk",
+    "name": "Нязепетровск"
+  },
+  {
+    "id": "nyandoma",
+    "url": "/nyandoma",
+    "name": "Няндома"
+  },
+  {
+    "id": "obninsk",
+    "url": "/obninsk",
+    "name": "Обнинск"
+  },
+  {
+    "id": "oboyan",
+    "url": "/oboyan",
+    "name": "Обоянь"
+  },
+  {
+    "id": "online",
+    "url": "/online",
+    "name": "Общий"
+  },
+  {
+    "id": "obyachevo",
+    "url": "/obyachevo",
+    "name": "Объячево"
+  },
+  {
+    "id": "odoev",
+    "url": "/odoev",
+    "name": "Одоев"
+  },
+  {
+    "id": "ozernyy",
+    "url": "/ozernyy",
+    "name": "Озёрный"
+  },
+  {
+    "id": "ozersk",
+    "url": "/ozersk",
+    "name": "Озёрск"
+  },
+  {
+    "id": "ozery",
+    "url": "/ozery",
+    "name": "Озёры"
+  },
+  {
+    "id": "oktyabrsky",
+    "url": "/oktyabrsky",
+    "name": "Октябрьский"
+  },
+  {
+    "id": "oktyabrskiy",
+    "url": "/oktyabrskiy",
+    "name": "Октябрьский"
+  },
+  {
+    "id": "ola",
+    "url": "/ola",
+    "name": "Ола"
+  },
+  {
+    "id": "olkhovatka",
+    "url": "/olkhovatka",
+    "name": "Ольховатка"
+  },
+  {
+    "id": "omsk",
+    "url": "/omsk",
+    "name": "Омск"
+  },
+  {
+    "id": "omutninsk",
+    "url": "/omutninsk",
+    "name": "Омутнинск"
+  },
+  {
+    "id": "opochka",
+    "url": "/opochka",
+    "name": "Опочка"
+  },
+  {
+    "id": "orenburg",
+    "url": "/orenburg",
+    "name": "Оренбург"
+  },
+  {
+    "id": "orehovo-zuevo",
+    "url": "/orehovo-zuevo",
+    "name": "Орехово-Зуево"
+  },
+  {
+    "id": "orlov",
+    "url": "/orlov",
+    "name": "Орлов"
+  },
+  {
+    "id": "orsk",
+    "url": "/orsk",
+    "name": "Орск"
+  },
+  {
+    "id": "orsha",
+    "url": "/orsha",
+    "name": "Орша"
+  },
+  {
+    "id": "orshanka",
+    "url": "/orshanka",
+    "name": "Оршанка"
+  },
+  {
+    "id": "orel",
+    "url": "/orel",
+    "name": "Орёл"
+  },
+  {
+    "id": "osa",
+    "url": "/osa",
+    "name": "Оса"
+  },
+  {
+    "id": "osinniki",
+    "url": "/osinniki",
+    "name": "Осинники"
+  },
+  {
+    "id": "asipovichy",
+    "url": "/asipovichy",
+    "name": "Осиповичи"
+  },
+  {
+    "id": "ostashkov",
+    "url": "/ostashkov",
+    "name": "Осташков"
+  },
+  {
+    "id": "okha",
+    "url": "/okha",
+    "name": "Оха"
+  },
+  {
+    "id": "pavlovo",
+    "url": "/pavlovo",
+    "name": "Павлово"
+  },
+  {
+    "id": "pavlovsk",
+    "url": "/pavlovsk",
+    "name": "Павловск"
+  },
+  {
+    "id": "pavlovskaya",
+    "url": "/pavlovskaya",
+    "name": "Павловская"
+  },
+  {
+    "id": "pavlovskiy-posad",
+    "url": "/pavlovskiy-posad",
+    "name": "Павловский Посад"
+  },
+  {
+    "id": "pavlodar",
+    "url": "/pavlodar",
+    "name": "Павлодар"
+  },
+  {
+    "id": "palatka",
+    "url": "/palatka",
+    "name": "Палатка"
+  },
+  {
+    "id": "panino",
+    "url": "/panino",
+    "name": "Панино"
+  },
+  {
+    "id": "pankrushikha",
+    "url": "/pankrushikha",
+    "name": "Панкрушиха"
+  },
+  {
+    "id": "parabel",
+    "url": "/parabel",
+    "name": "Парабель"
+  },
+  {
+    "id": "parfino",
+    "url": "/parfino",
+    "name": "Парфино"
+  },
+  {
+    "id": "pattaya",
+    "url": "/pattaya",
+    "name": "Паттайя"
+  },
+  {
+    "id": "penza",
+    "url": "/penza",
+    "name": "Пенза"
+  },
+  {
+    "id": "pervomayskiy",
+    "url": "/pervomayskiy",
+    "name": "Первомайский"
+  },
+  {
+    "id": "pervomajskoye",
+    "url": "/pervomajskoye",
+    "name": "Первомайское"
+  },
+  {
+    "id": "pervomayskoe",
+    "url": "/pervomayskoe",
+    "name": "Первомайское"
+  },
+  {
+    "id": "pervouralsk",
+    "url": "/pervouralsk",
+    "name": "Первоуральск"
+  },
+  {
+    "id": "pereslavl-zalesskiy",
+    "url": "/pereslavl-zalesskiy",
+    "name": "Переславль-Залесский"
+  },
+  {
+    "id": "perm",
+    "url": "/perm",
+    "name": "Пермь"
+  },
+  {
+    "id": "peschanokopskoe",
+    "url": "/peschanokopskoe",
+    "name": "Песчанокопское"
+  },
+  {
+    "id": "petrikov",
+    "url": "/petrikov",
+    "name": "Петриков"
+  },
+  {
+    "id": "petrovsk",
+    "url": "/petrovsk",
+    "name": "Петровск"
+  },
+  {
+    "id": "petrozavodsk",
+    "url": "/petrozavodsk",
+    "name": "Петрозаводск"
+  },
+  {
+    "id": "petropavlovsk",
+    "url": "/petropavlovsk",
+    "name": "Петропавловск"
+  },
+  {
+    "id": "petropavlovsk-kamchatsky",
+    "url": "/petropavlovsk-kamchatsky",
+    "name": "Петропавловск-Камчатский"
+  },
+  {
+    "id": "petushki",
+    "url": "/petushki",
+    "name": "Петушки"
+  },
+  {
+    "id": "pechora",
+    "url": "/pechora",
+    "name": "Печора"
+  },
+  {
+    "id": "pionersky",
+    "url": "/pionersky",
+    "name": "Пионерский"
+  },
+  {
+    "id": "plavsk",
+    "url": "/plavsk",
+    "name": "Плавск"
+  },
+  {
+    "id": "pokachi",
+    "url": "/pokachi",
+    "name": "Покачи"
+  },
+  {
+    "id": "pokrov",
+    "url": "/pokrov",
+    "name": "Покров"
+  },
+  {
+    "id": "pokrovsk",
+    "url": "/pokrovsk",
+    "name": "Покровск"
+  },
+  {
+    "id": "pokrovskoe",
+    "url": "/pokrovskoe",
+    "name": "Покровское"
+  },
+  {
+    "id": "polevskoj",
+    "url": "/polevskoj",
+    "name": "Полевской"
+  },
+  {
+    "id": "polivyanka",
+    "url": "/polivyanka",
+    "name": "Поливянка"
+  },
+  {
+    "id": "polotsk",
+    "url": "/polotsk",
+    "name": "Полоцк"
+  },
+  {
+    "id": "poltavskaya",
+    "url": "/poltavskaya",
+    "name": "Полтавская"
+  },
+  {
+    "id": "polysaevo",
+    "url": "/polysaevo",
+    "name": "Полысаево"
+  },
+  {
+    "id": "polyarnie-zori",
+    "url": "/polyarnie-zori",
+    "name": "Полярные Зори"
+  },
+  {
+    "id": "poronaysk",
+    "url": "/poronaysk",
+    "name": "Поронайск"
+  },
+  {
+    "id": "pospeliha",
+    "url": "/pospeliha",
+    "name": "Поспелиха"
+  },
+  {
+    "id": "pochep",
+    "url": "/pochep",
+    "name": "Почеп"
+  },
+  {
+    "id": "primorsko-ahtarsk",
+    "url": "/primorsko-ahtarsk",
+    "name": "Приморско-Ахтарск"
+  },
+  {
+    "id": "priozersk",
+    "url": "/priozersk",
+    "name": "Приозерск"
+  },
+  {
+    "id": "pristen",
+    "url": "/pristen",
+    "name": "Пристень"
+  },
+  {
+    "id": "prokopevsk",
+    "url": "/prokopevsk",
+    "name": "Прокопьевск"
+  },
+  {
+    "id": "protvino",
+    "url": "/protvino",
+    "name": "Протвино"
+  },
+  {
+    "id": "prohladny",
+    "url": "/prohladny",
+    "name": "Прохладный"
+  },
+  {
+    "id": "prohorovka",
+    "url": "/prohorovka",
+    "name": "Прохоровка"
+  },
+  {
+    "id": "pryazha",
+    "url": "/pryazha",
+    "name": "Пряжа"
+  },
+  {
+    "id": "pskov",
+    "url": "/pskov",
+    "name": "Псков"
+  },
+  {
+    "id": "pugachev",
+    "url": "/pugachev",
+    "name": "Пугачев"
+  },
+  {
+    "id": "puchezh",
+    "url": "/puchezh",
+    "name": "Пучеж"
+  },
+  {
+    "id": "phuket",
+    "url": "/phuket",
+    "name": "Пхукет"
+  },
+  {
+    "id": "pyt-yah",
+    "url": "/pyt-yah",
+    "name": "Пыть-Ях"
+  },
+  {
+    "id": "pyatigorsk",
+    "url": "/pyatigorsk",
+    "name": "Пятигорск"
+  },
+  {
+    "id": "radishevo",
+    "url": "/radishevo",
+    "name": "Радищево"
+  },
+  {
+    "id": "radugniy",
+    "url": "/radugniy",
+    "name": "Радужный"
+  },
+  {
+    "id": "revda",
+    "url": "/revda",
+    "name": "Ревда"
+  },
+  {
+    "id": "reydovo",
+    "url": "/reydovo",
+    "name": "Рейдово"
+  },
+  {
+    "id": "reftinsky",
+    "url": "/reftinsky",
+    "name": "Рефтинский"
+  },
+  {
+    "id": "rechitsa",
+    "url": "/rechitsa",
+    "name": "Речица"
+  },
+  {
+    "id": "rzhev",
+    "url": "/rzhev",
+    "name": "Ржев"
+  },
+  {
+    "id": "rogachev",
+    "url": "/rogachev",
+    "name": "Рогачёв"
+  },
+  {
+    "id": "rodniki",
+    "url": "/rodniki",
+    "name": "Родники"
+  },
+  {
+    "id": "romanovo",
+    "url": "/romanovo",
+    "name": "Романово"
+  },
+  {
+    "id": "roslavl",
+    "url": "/roslavl",
+    "name": "Рославль"
+  },
+  {
+    "id": "rossosh",
+    "url": "/rossosh",
+    "name": "Россошь"
+  },
+  {
+    "id": "rostov",
+    "url": "/rostov",
+    "name": "Ростов"
+  },
+  {
+    "id": "rostov-na-donu",
+    "url": "/rostov-na-donu",
+    "name": "Ростов-на-Дону"
+  },
+  {
+    "id": "roshal",
+    "url": "/roshal",
+    "name": "Рошаль"
+  },
+  {
+    "id": "rtischevo",
+    "url": "/rtischevo",
+    "name": "Ртищево"
+  },
+  {
+    "id": "rubtsovsk",
+    "url": "/rubtsovsk",
+    "name": "Рубцовск"
+  },
+  {
+    "id": "rudnya",
+    "url": "/rudnya",
+    "name": "Рудня"
+  },
+  {
+    "id": "ruza",
+    "url": "/ruza",
+    "name": "Руза"
+  },
+  {
+    "id": "ruzaevka",
+    "url": "/ruzaevka",
+    "name": "Рузаевка"
+  },
+  {
+    "id": "russkaya-polyana",
+    "url": "/russkaya-polyana",
+    "name": "Русская Поляна"
+  },
+  {
+    "id": "rybinsk",
+    "url": "/rybinsk",
+    "name": "Рыбинск"
+  },
+  {
+    "id": "rilsk",
+    "url": "/rilsk",
+    "name": "Рыльск"
+  },
+  {
+    "id": "ryazgsk",
+    "url": "/ryazgsk",
+    "name": "Ряжск"
+  },
+  {
+    "id": "ryazanskaya",
+    "url": "/ryazanskaya",
+    "name": "Рязанская"
+  },
+  {
+    "id": "ryazan",
+    "url": "/ryazan",
+    "name": "Рязань"
+  },
+  {
+    "id": "saky",
+    "url": "/saky",
+    "name": "Саки"
+  },
+  {
+    "id": "salavat",
+    "url": "/salavat",
+    "name": "Салават"
+  },
+  {
+    "id": "salekhard",
+    "url": "/salekhard",
+    "name": "Салехард"
+  },
+  {
+    "id": "salsk",
+    "url": "/salsk",
+    "name": "Сальск"
+  },
+  {
+    "id": "samara",
+    "url": "/samara",
+    "name": "Самара"
+  },
+  {
+    "id": "samarkand",
+    "url": "/samarkand",
+    "name": "Самарканд"
+  },
+  {
+    "id": "saint-petersburg",
+    "url": "/saint-petersburg",
+    "name": "Санкт-Петербург"
+  },
+  {
+    "id": "sanchursk",
+    "url": "/sanchursk",
+    "name": "Санчурск"
+  },
+  {
+    "id": "saransk",
+    "url": "/saransk",
+    "name": "Саранск"
+  },
+  {
+    "id": "sarapul",
+    "url": "/sarapul",
+    "name": "Сарапул"
+  },
+  {
+    "id": "saratov",
+    "url": "/saratov",
+    "name": "Саратов"
+  },
+  {
+    "id": "sarov",
+    "url": "/sarov",
+    "name": "Саров"
+  },
+  {
+    "id": "saryagash",
+    "url": "/saryagash",
+    "name": "Сарыагаш"
+  },
+  {
+    "id": "sasovo",
+    "url": "/sasovo",
+    "name": "Сасово"
+  },
+  {
+    "id": "satka",
+    "url": "/satka",
+    "name": "Сатка"
+  },
+  {
+    "id": "satpaev",
+    "url": "/satpaev",
+    "name": "Сатпаев"
+  },
+  {
+    "id": "safonovo",
+    "url": "/safonovo",
+    "name": "Сафоново"
+  },
+  {
+    "id": "sayanogorsk",
+    "url": "/sayanogorsk",
+    "name": "Саяногорск"
+  },
+  {
+    "id": "svetly",
+    "url": "/svetly",
+    "name": "Светлый"
+  },
+  {
+    "id": "svetogorsk",
+    "url": "/svetogorsk",
+    "name": "Светогорск"
+  },
+  {
+    "id": "sebezh",
+    "url": "/sebezh",
+    "name": "Себеж"
+  },
+  {
+    "id": "sevastopol",
+    "url": "/sevastopol",
+    "name": "Севастополь"
+  },
+  {
+    "id": "severobaykalsk",
+    "url": "/severobaykalsk",
+    "name": "Северобайкальск"
+  },
+  {
+    "id": "severodvinsk",
+    "url": "/severodvinsk",
+    "name": "Северодвинск"
+  },
+  {
+    "id": "severomorsk",
+    "url": "/severomorsk",
+    "name": "Североморск"
+  },
+  {
+    "id": "severouralsk",
+    "url": "/severouralsk",
+    "name": "Североуральск"
+  },
+  {
+    "id": "segezha",
+    "url": "/segezha",
+    "name": "Сегежа"
+  },
+  {
+    "id": "selti",
+    "url": "/selti",
+    "name": "Селты"
+  },
+  {
+    "id": "semey",
+    "url": "/semey",
+    "name": "Семей"
+  },
+  {
+    "id": "semenov",
+    "url": "/semenov",
+    "name": "Семенов"
+  },
+  {
+    "id": "semikarakorsk",
+    "url": "/semikarakorsk",
+    "name": "Семикаракорск"
+  },
+  {
+    "id": "sengiley",
+    "url": "/sengiley",
+    "name": "Сенгилей"
+  },
+  {
+    "id": "serafimovich",
+    "url": "/serafimovich",
+    "name": "Серафимович"
+  },
+  {
+    "id": "serafimovsky",
+    "url": "/serafimovsky",
+    "name": "Серафимовский"
+  },
+  {
+    "id": "sergach",
+    "url": "/sergach",
+    "name": "Сергач"
+  },
+  {
+    "id": "sergiev-posad",
+    "url": "/sergiev-posad",
+    "name": "Сергиев Посад"
+  },
+  {
+    "id": "serdobsk",
+    "url": "/serdobsk",
+    "name": "Сердобск"
+  },
+  {
+    "id": "senur",
+    "url": "/senur",
+    "name": "Сернур"
+  },
+  {
+    "id": "serov",
+    "url": "/serov",
+    "name": "Серов"
+  },
+  {
+    "id": "serpuhov",
+    "url": "/serpuhov",
+    "name": "Серпухов"
+  },
+  {
+    "id": "sechenovo",
+    "url": "/sechenovo",
+    "name": "Сеченово"
+  },
+  {
+    "id": "sigaevo",
+    "url": "/sigaevo",
+    "name": "Сигаево"
+  },
+  {
+    "id": "sim",
+    "url": "/sim",
+    "name": "Сим"
+  },
+  {
+    "id": "simferopol",
+    "url": "/simferopol",
+    "name": "Симферополь"
+  },
+  {
+    "id": "skopin",
+    "url": "/skopin",
+    "name": "Скопин"
+  },
+  {
+    "id": "slavgorod",
+    "url": "/slavgorod",
+    "name": "Славгород"
+  },
+  {
+    "id": "slavyansk-na-kubani",
+    "url": "/slavyansk-na-kubani",
+    "name": "Славянск-на-Кубани"
+  },
+  {
+    "id": "slantsy",
+    "url": "/slantsy",
+    "name": "Сланцы"
+  },
+  {
+    "id": "smolensk",
+    "url": "/smolensk",
+    "name": "Смоленск"
+  },
+  {
+    "id": "sneginsk",
+    "url": "/sneginsk",
+    "name": "Снежинск"
+  },
+  {
+    "id": "sovetsk",
+    "url": "/sovetsk",
+    "name": "Советск"
+  },
+  {
+    "id": "sovetsk11074",
+    "url": "/sovetsk11074",
+    "name": "Советск"
+  },
+  {
+    "id": "sovetskaya-gavan",
+    "url": "/sovetskaya-gavan",
+    "name": "Советская Гавань"
+  },
+  {
+    "id": "sovetsky",
+    "url": "/sovetsky",
+    "name": "Советский"
+  },
+  {
+    "id": "sokol",
+    "url": "/sokol",
+    "name": "Сокол"
+  },
+  {
+    "id": "sokolskoe",
+    "url": "/sokolskoe",
+    "name": "Сокольское"
+  },
+  {
+    "id": "solikamsk",
+    "url": "/solikamsk",
+    "name": "Соликамск"
+  },
+  {
+    "id": "solnechnogorsk",
+    "url": "/solnechnogorsk",
+    "name": "Солнечногорск"
+  },
+  {
+    "id": "solnechny",
+    "url": "/solnechny",
+    "name": "Солнечный"
+  },
+  {
+    "id": "sosnovo-ozerskoe",
+    "url": "/sosnovo-ozerskoe",
+    "name": "Сосново-Озёрское"
+  },
+  {
+    "id": "sosnoviy-bor",
+    "url": "/sosnoviy-bor",
+    "name": "Сосновый Бор"
+  },
+  {
+    "id": "sochi",
+    "url": "/sochi",
+    "name": "Сочи"
+  },
+  {
+    "id": "spassk-dalniy",
+    "url": "/spassk-dalniy",
+    "name": "Спасск-Дальний"
+  },
+  {
+    "id": "spask-pyazanskiy",
+    "url": "/spask-pyazanskiy",
+    "name": "Спасск-Рязанский"
+  },
+  {
+    "id": "stavropol",
+    "url": "/stavropol",
+    "name": "Ставрополь"
+  },
+  {
+    "id": "istanbul",
+    "url": "/istanbul",
+    "name": "Стамбул"
+  },
+  {
+    "id": "staraya-russa",
+    "url": "/staraya-russa",
+    "name": "Старая Русса"
+  },
+  {
+    "id": "starobaltachevo",
+    "url": "/starobaltachevo",
+    "name": "Старобалтачево"
+  },
+  {
+    "id": "staroe-shaygovo",
+    "url": "/staroe-shaygovo",
+    "name": "Старое Шайгово"
+  },
+  {
+    "id": "starominskaya",
+    "url": "/starominskaya",
+    "name": "Староминская"
+  },
+  {
+    "id": "starosherbinovskaya",
+    "url": "/starosherbinovskaya",
+    "name": "Старощербиновская"
+  },
+  {
+    "id": "staroyurjevo",
+    "url": "/staroyurjevo",
+    "name": "Староюрьево"
+  },
+  {
+    "id": "stariy-oskol",
+    "url": "/stariy-oskol",
+    "name": "Старый Оскол"
+  },
+  {
+    "id": "sterlibashevo",
+    "url": "/sterlibashevo",
+    "name": "Стерлибашево"
+  },
+  {
+    "id": "sterlitamak",
+    "url": "/sterlitamak",
+    "name": "Стерлитамак"
+  },
+  {
+    "id": "strezgevoy",
+    "url": "/strezgevoy",
+    "name": "Стрежевой"
+  },
+  {
+    "id": "stupino",
+    "url": "/stupino",
+    "name": "Ступино"
+  },
+  {
+    "id": "subkhankulovo",
+    "url": "/subkhankulovo",
+    "name": "Субханкулово"
+  },
+  {
+    "id": "suvorov",
+    "url": "/suvorov",
+    "name": "Суворов"
+  },
+  {
+    "id": "sudak",
+    "url": "/sudak",
+    "name": "Судак"
+  },
+  {
+    "id": "sudzha",
+    "url": "/sudzha",
+    "name": "Суджа"
+  },
+  {
+    "id": "suzdal",
+    "url": "/suzdal",
+    "name": "Суздаль"
+  },
+  {
+    "id": "surgut",
+    "url": "/surgut",
+    "name": "Сургут"
+  },
+  {
+    "id": "surovikino",
+    "url": "/surovikino",
+    "name": "Суровикино"
+  },
+  {
+    "id": "susuman",
+    "url": "/susuman",
+    "name": "Сусуман"
+  },
+  {
+    "id": "suhinichi",
+    "url": "/suhinichi",
+    "name": "Сухиничи"
+  },
+  {
+    "id": "sukhoi-log",
+    "url": "/sukhoi-log",
+    "name": "Сухой Лог"
+  },
+  {
+    "id": "suhum",
+    "url": "/suhum",
+    "name": "Сухум"
+  },
+  {
+    "id": "sizran",
+    "url": "/sizran",
+    "name": "Сызрань"
+  },
+  {
+    "id": "syktyvkar",
+    "url": "/syktyvkar",
+    "name": "Сыктывкар"
+  },
+  {
+    "id": "sysert",
+    "url": "/sysert",
+    "name": "Сысерть"
+  },
+  {
+    "id": "syumsi",
+    "url": "/syumsi",
+    "name": "Сюмси"
+  },
+  {
+    "id": "tavda",
+    "url": "/tavda",
+    "name": "Тавда"
+  },
+  {
+    "id": "taganrog",
+    "url": "/taganrog",
+    "name": "Таганрог"
+  },
+  {
+    "id": "tazovsky",
+    "url": "/tazovsky",
+    "name": "Тазовский"
+  },
+  {
+    "id": "talgar",
+    "url": "/talgar",
+    "name": "Талгар"
+  },
+  {
+    "id": "taldikorgan",
+    "url": "/taldikorgan",
+    "name": "Талдыкорган"
+  },
+  {
+    "id": "tambov",
+    "url": "/tambov",
+    "name": "Тамбов"
+  },
+  {
+    "id": "taraz",
+    "url": "/taraz",
+    "name": "Тараз"
+  },
+  {
+    "id": "tarko-sale",
+    "url": "/tarko-sale",
+    "name": "Тарко-Сале"
+  },
+  {
+    "id": "tarusa",
+    "url": "/tarusa",
+    "name": "Таруса"
+  },
+  {
+    "id": "tatarsk",
+    "url": "/tatarsk",
+    "name": "Татарск"
+  },
+  {
+    "id": "tashkent",
+    "url": "/tashkent",
+    "name": "Ташкент"
+  },
+  {
+    "id": "tashtagol",
+    "url": "/tashtagol",
+    "name": "Таштагол"
+  },
+  {
+    "id": "tbilisi",
+    "url": "/tbilisi",
+    "name": "Тбилиси"
+  },
+  {
+    "id": "tbilisskaya",
+    "url": "/tbilisskaya",
+    "name": "Тбилисская"
+  },
+  {
+    "id": "tver",
+    "url": "/tver",
+    "name": "Тверь"
+  },
+  {
+    "id": "teykovo",
+    "url": "/teykovo",
+    "name": "Тейково"
+  },
+  {
+    "id": "temirtau",
+    "url": "/temirtau",
+    "name": "Темиртау"
+  },
+  {
+    "id": "temnikov",
+    "url": "/temnikov",
+    "name": "Темников"
+  },
+  {
+    "id": "temryuk",
+    "url": "/temryuk",
+    "name": "Темрюк"
+  },
+  {
+    "id": "tengushevo",
+    "url": "/tengushevo",
+    "name": "Теньгушево"
+  },
+  {
+    "id": "tim",
+    "url": "/tim",
+    "name": "Тим"
+  },
+  {
+    "id": "timashovsk",
+    "url": "/timashovsk",
+    "name": "Тимашевск"
+  },
+  {
+    "id": "tikhvin",
+    "url": "/tikhvin",
+    "name": "Тихвин"
+  },
+  {
+    "id": "tikhoretsk",
+    "url": "/tikhoretsk",
+    "name": "Тихорецк"
+  },
+  {
+    "id": "tobolsk",
+    "url": "/tobolsk",
+    "name": "Тобольск"
+  },
+  {
+    "id": "toguchin",
+    "url": "/toguchin",
+    "name": "Тогучин"
+  },
+  {
+    "id": "togliatti",
+    "url": "/togliatti",
+    "name": "Тольятти"
+  },
+  {
+    "id": "tomsk",
+    "url": "/tomsk",
+    "name": "Томск"
+  },
+  {
+    "id": "topki",
+    "url": "/topki",
+    "name": "Топки"
+  },
+  {
+    "id": "topchikha",
+    "url": "/topchikha",
+    "name": "Топчиха"
+  },
+  {
+    "id": "torbeevo",
+    "url": "/torbeevo",
+    "name": "Торбеево"
+  },
+  {
+    "id": "torzgok",
+    "url": "/torzgok",
+    "name": "Торжок"
+  },
+  {
+    "id": "toropets",
+    "url": "/toropets",
+    "name": "Торопец"
+  },
+  {
+    "id": "troitsk",
+    "url": "/troitsk",
+    "name": "Троицк"
+  },
+  {
+    "id": "trubchevsk",
+    "url": "/trubchevsk",
+    "name": "Трубчевск"
+  },
+  {
+    "id": "trehgorniy",
+    "url": "/trehgorniy",
+    "name": "Трёхгорный"
+  },
+  {
+    "id": "tuapse",
+    "url": "/tuapse",
+    "name": "Туапсе"
+  },
+  {
+    "id": "tugulim",
+    "url": "/tugulim",
+    "name": "Тугулым"
+  },
+  {
+    "id": "tuymazy",
+    "url": "/tuymazy",
+    "name": "Туймазы"
+  },
+  {
+    "id": "tula",
+    "url": "/tula",
+    "name": "Тула"
+  },
+  {
+    "id": "turkestan",
+    "url": "/turkestan",
+    "name": "Туркестан"
+  },
+  {
+    "id": "turtas",
+    "url": "/turtas",
+    "name": "Туртас"
+  },
+  {
+    "id": "tynda",
+    "url": "/tynda",
+    "name": "Тында"
+  },
+  {
+    "id": "tyumen",
+    "url": "/tyumen",
+    "name": "Тюмень"
+  },
+  {
+    "id": "tyoploe",
+    "url": "/tyoploe",
+    "name": "Тёплое"
+  },
+  {
+    "id": "uvarovo",
+    "url": "/uvarovo",
+    "name": "Уварово"
+  },
+  {
+    "id": "uglegorsk",
+    "url": "/uglegorsk",
+    "name": "Углегорск"
+  },
+  {
+    "id": "uglich",
+    "url": "/uglich",
+    "name": "Углич"
+  },
+  {
+    "id": "udomlya",
+    "url": "/udomlya",
+    "name": "Удомля"
+  },
+  {
+    "id": "uzlovaya",
+    "url": "/uzlovaya",
+    "name": "Узловая"
+  },
+  {
+    "id": "ulan-ude",
+    "url": "/ulan-ude",
+    "name": "Улан-Удэ"
+  },
+  {
+    "id": "ulyanovsk",
+    "url": "/ulyanovsk",
+    "name": "Ульяновск"
+  },
+  {
+    "id": "umyot",
+    "url": "/umyot",
+    "name": "Умёт"
+  },
+  {
+    "id": "unecha",
+    "url": "/unecha",
+    "name": "Унеча"
+  },
+  {
+    "id": "uray",
+    "url": "/uray",
+    "name": "Урай"
+  },
+  {
+    "id": "uralsk",
+    "url": "/uralsk",
+    "name": "Уральск"
+  },
+  {
+    "id": "uralsky",
+    "url": "/uralsky",
+    "name": "Уральский"
+  },
+  {
+    "id": "uren",
+    "url": "/uren",
+    "name": "Урень"
+  },
+  {
+    "id": "urzhum",
+    "url": "/urzhum",
+    "name": "Уржум"
+  },
+  {
+    "id": "urmayevo",
+    "url": "/urmayevo",
+    "name": "Урмаево"
+  },
+  {
+    "id": "uryupinsk",
+    "url": "/uryupinsk",
+    "name": "Урюпинск"
+  },
+  {
+    "id": "usinsk",
+    "url": "/usinsk",
+    "name": "Усинск"
+  },
+  {
+    "id": "usman",
+    "url": "/usman",
+    "name": "Усмань"
+  },
+  {
+    "id": "usole-sibirskoe",
+    "url": "/usole-sibirskoe",
+    "name": "Усолье-Сибирское"
+  },
+  {
+    "id": "uspenskoe",
+    "url": "/uspenskoe",
+    "name": "Успенское"
+  },
+  {
+    "id": "ussuriysk",
+    "url": "/ussuriysk",
+    "name": "Уссурийск"
+  },
+  {
+    "id": "ust-ilimsk",
+    "url": "/ust-ilimsk",
+    "name": "Усть-Илимск"
+  },
+  {
+    "id": "ust-ishim",
+    "url": "/ust-ishim",
+    "name": "Усть-Ишим"
+  },
+  {
+    "id": "ust-kamenogorsk",
+    "url": "/ust-kamenogorsk",
+    "name": "Усть-Каменогорск"
+  },
+  {
+    "id": "ust-kulom",
+    "url": "/ust-kulom",
+    "name": "Усть-Кулом"
+  },
+  {
+    "id": "ust-kut",
+    "url": "/ust-kut",
+    "name": "Усть-Кут"
+  },
+  {
+    "id": "ust-labinsk",
+    "url": "/ust-labinsk",
+    "name": "Усть-Лабинск"
+  },
+  {
+    "id": "ust-ordynskiy",
+    "url": "/ust-ordynskiy",
+    "name": "Усть-Ордынский"
+  },
+  {
+    "id": "ust-uda",
+    "url": "/ust-uda",
+    "name": "Усть-Уда"
+  },
+  {
+    "id": "ufa",
+    "url": "/ufa",
+    "name": "Уфа"
+  },
+  {
+    "id": "uhta",
+    "url": "/uhta",
+    "name": "Ухта"
+  },
+  {
+    "id": "feodosia",
+    "url": "/feodosia",
+    "name": "Феодосия"
+  },
+  {
+    "id": "khabarovsk",
+    "url": "/khabarovsk",
+    "name": "Хабаровск"
+  },
+  {
+    "id": "khanty-mansiysk",
+    "url": "/khanty-mansiysk",
+    "name": "Ханты-Мансийск"
+  },
+  {
+    "id": "hvalynsk",
+    "url": "/hvalynsk",
+    "name": "Хвалынск"
+  },
+  {
+    "id": "khvorostyanka",
+    "url": "/khvorostyanka",
+    "name": "Хворостянка"
+  },
+  {
+    "id": "holm",
+    "url": "/holm",
+    "name": "Холм"
+  },
+  {
+    "id": "holmsk",
+    "url": "/holmsk",
+    "name": "Холмск"
+  },
+  {
+    "id": "tsimliansk",
+    "url": "/tsimliansk",
+    "name": "Цимлянск"
+  },
+  {
+    "id": "chaikovsky",
+    "url": "/chaikovsky",
+    "name": "Чайковский"
+  },
+  {
+    "id": "chany",
+    "url": "/chany",
+    "name": "Чаны"
+  },
+  {
+    "id": "chapligin",
+    "url": "/chapligin",
+    "name": "Чаплыгин"
+  },
+  {
+    "id": "chebarkul",
+    "url": "/chebarkul",
+    "name": "Чебаркуль"
+  },
+  {
+    "id": "cheboksary",
+    "url": "/cheboksary",
+    "name": "Чебоксары"
+  },
+  {
+    "id": "chelyabinsk",
+    "url": "/chelyabinsk",
+    "name": "Челябинск"
+  },
+  {
+    "id": "cherdakli",
+    "url": "/cherdakli",
+    "name": "Чердаклы"
+  },
+  {
+    "id": "cheremkhovo",
+    "url": "/cheremkhovo",
+    "name": "Черемхово"
+  },
+  {
+    "id": "cherepovets",
+    "url": "/cherepovets",
+    "name": "Череповец"
+  },
+  {
+    "id": "cherkessk",
+    "url": "/cherkessk",
+    "name": "Черкесск"
+  },
+  {
+    "id": "chernigovka",
+    "url": "/chernigovka",
+    "name": "Черниговка"
+  },
+  {
+    "id": "chernogolovka",
+    "url": "/chernogolovka",
+    "name": "Черноголовка"
+  },
+  {
+    "id": "chernomorskoe",
+    "url": "/chernomorskoe",
+    "name": "Черноморское"
+  },
+  {
+    "id": "chernushka",
+    "url": "/chernushka",
+    "name": "Чернушка"
+  },
+  {
+    "id": "chern",
+    "url": "/chern",
+    "name": "Чернь"
+  },
+  {
+    "id": "chernyahovsk",
+    "url": "/chernyahovsk",
+    "name": "Черняховск"
+  },
+  {
+    "id": "chehov",
+    "url": "/chehov",
+    "name": "Чехов"
+  },
+  {
+    "id": "chechersk",
+    "url": "/chechersk",
+    "name": "Чечерск"
+  },
+  {
+    "id": "chistoozyornoe",
+    "url": "/chistoozyornoe",
+    "name": "Чистоозерное"
+  },
+  {
+    "id": "chistopol",
+    "url": "/chistopol",
+    "name": "Чистополь"
+  },
+  {
+    "id": "chita",
+    "url": "/chita",
+    "name": "Чита"
+  },
+  {
+    "id": "chudovo",
+    "url": "/chudovo",
+    "name": "Чудово"
+  },
+  {
+    "id": "shadrinsk",
+    "url": "/shadrinsk",
+    "name": "Шадринск"
+  },
+  {
+    "id": "shalakusha",
+    "url": "/shalakusha",
+    "name": "Шалакуша"
+  },
+  {
+    "id": "shakhty",
+    "url": "/shakhty",
+    "name": "Шахты"
+  },
+  {
+    "id": "shahuniya",
+    "url": "/shahuniya",
+    "name": "Шахунья"
+  },
+  {
+    "id": "shemisheika",
+    "url": "/shemisheika",
+    "name": "Шемышейка"
+  },
+  {
+    "id": "sherbakul",
+    "url": "/sherbakul",
+    "name": "Шербакуль"
+  },
+  {
+    "id": "shigoni",
+    "url": "/shigoni",
+    "name": "Шигоны"
+  },
+  {
+    "id": "shiely",
+    "url": "/shiely",
+    "name": "Шиели"
+  },
+  {
+    "id": "shimanovsk",
+    "url": "/shimanovsk",
+    "name": "Шимановск"
+  },
+  {
+    "id": "shumerlya",
+    "url": "/shumerlya",
+    "name": "Шумерля"
+  },
+  {
+    "id": "shumiha",
+    "url": "/shumiha",
+    "name": "Шумиха"
+  },
+  {
+    "id": "shuya",
+    "url": "/shuya",
+    "name": "Шуя"
+  },
+  {
+    "id": "chimkent",
+    "url": "/chimkent",
+    "name": "Шымкент"
+  },
+  {
+    "id": "ekibastus",
+    "url": "/ekibastus",
+    "name": "Экибастуз"
+  },
+  {
+    "id": "elektrogorsk",
+    "url": "/elektrogorsk",
+    "name": "Электрогорск"
+  },
+  {
+    "id": "elektrostal",
+    "url": "/elektrostal",
+    "name": "Электросталь"
+  },
+  {
+    "id": "elista",
+    "url": "/elista",
+    "name": "Элиста"
+  },
+  {
+    "id": "enem",
+    "url": "/enem",
+    "name": "Энем"
+  },
+  {
+    "id": "ugorsk",
+    "url": "/ugorsk",
+    "name": "Югорск"
+  },
+  {
+    "id": "sakhalinsk",
+    "url": "/sakhalinsk",
+    "name": "Южно-Сахалинск"
+  },
+  {
+    "id": "ugnouralsk",
+    "url": "/ugnouralsk",
+    "name": "Южноуральск"
+  },
+  {
+    "id": "yukamenskoe",
+    "url": "/yukamenskoe",
+    "name": "Юкаменское"
+  },
+  {
+    "id": "urga",
+    "url": "/urga",
+    "name": "Юрга"
+  },
+  {
+    "id": "yurginskoe",
+    "url": "/yurginskoe",
+    "name": "Юргинское"
+  },
+  {
+    "id": "yurev-polskiy",
+    "url": "/yurev-polskiy",
+    "name": "Юрьев-Польский"
+  },
+  {
+    "id": "yurievets",
+    "url": "/yurievets",
+    "name": "Юрьевец"
+  },
+  {
+    "id": "yakutsk",
+    "url": "/yakutsk",
+    "name": "Якутск"
+  },
+  {
+    "id": "yalta",
+    "url": "/yalta",
+    "name": "Ялта"
+  },
+  {
+    "id": "yalutorovsk",
+    "url": "/yalutorovsk",
+    "name": "Ялуторовск"
+  },
+  {
+    "id": "yar",
+    "url": "/yar",
+    "name": "Яр"
+  },
+  {
+    "id": "yarkovo",
+    "url": "/yarkovo",
+    "name": "Ярково"
+  },
+  {
+    "id": "yaroslavl",
+    "url": "/yaroslavl",
+    "name": "Ярославль"
+  },
+  {
+    "id": "yartsevo",
+    "url": "/yartsevo",
+    "name": "Ярцево"
+  },
+  {
+    "id": "yasnogorsk",
+    "url": "/yasnogorsk",
+    "name": "Ясногорск"
+  },
+  {
+    "id": "yashkino",
+    "url": "/yashkino",
+    "name": "Яшкино"
+  }
+]
