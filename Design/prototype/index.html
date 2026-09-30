@@ -59,7 +59,8 @@ button.pill:hover { border-color: var(--line-strong); }
 .seg { display: inline-flex; height: 40px; padding: 3px; border: 1px solid var(--line); border-radius: 9999px; background: var(--card); }
 .seg button { border: 0; background: transparent; color: var(--ink-2); padding: 0 14px; border-radius: 9999px; white-space: nowrap; }
 .seg button[aria-pressed="true"] { background: var(--soot); color: #fff; font-weight: 500; }
-.search { flex-grow: 1; max-width: 360px; }
+.search { flex-grow: 1; max-width: 360px; min-width: 110px; }
+#city { max-width: 180px; text-overflow: ellipsis; }
 .search input { border: 0; outline: none; background: transparent; width: 100%; }
 /* Поле и список внутри «таблетки» без своей рамки — кольцо фокуса рисует сама таблетка */
 .pill:has(:focus-visible) { outline: 2px solid var(--focus); outline-offset: 2px; }
@@ -424,7 +425,7 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.96); }
 /* ---------- Ноутбук: шапка в две строки ----------
    На ширине до 1320px город, период, даты, поиск, статус и кнопка не помещаются в одну строку —
    поиск уходит во вторую строку, шапка перестаёт прилипать (иначе съедает высоту экрана). */
-@media (max-width: 1320px) and (min-width: 821px) {
+@media (max-width: 1480px) and (min-width: 821px) {  /* до 1480px поиск — отдельной строкой: иначе он сжимается до пары букв */
   .top { height: auto; padding: 12px 32px; flex-wrap: wrap; position: static; }
   .search { max-width: none; order: 5; flex-basis: 100%; }
   .ev-table thead th { top: 0; }
@@ -516,8 +517,8 @@ button:active:not(:disabled), a.pill:active { transform: scale(0.96); }
 .mwd { font-size: 11px; color: var(--muted); text-align: center; }
 .mwd.wk { color: var(--weekend); }
 .mday { all: unset; box-sizing: border-box; height: 44px; border-radius: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; font-variant-numeric: tabular-nums; cursor: pointer; }
-.mday b { font-weight: 600; font-size: 11px; opacity: 0.85; }
-.mday.off { background: var(--canvas); color: var(--ash); cursor: default; }
+.mday b { font-weight: 600; font-size: 11px; }
+.mday.off { background: var(--canvas); color: var(--muted); cursor: default; }  /* #78716c — прошедшие дни читаются (≥4,5:1) */
 button.mday:hover { box-shadow: inset 0 0 0 2px var(--soot); }
 button.mday:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 .tours { display: flex; flex-direction: column; }
@@ -546,6 +547,61 @@ button.mday:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px
   .vtable thead { display: none; }
   .vtable tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
   .vtable td:nth-child(n+3) { display: none; }
+}
+/* ---------- Рынок: графики, «Город», «Проекты» ---------- */
+.cc-wrap { position: relative; margin-top: 10px; }
+.cc-months { position: relative; height: 16px; }
+.cc-month { position: absolute; top: 0; font-size: 11px; color: var(--muted); padding-left: 3px; border-left: 1px solid var(--line); white-space: nowrap; }
+.cc-marks { position: relative; height: 14px; }
+.cc-best { position: absolute; top: 0; transform: translateX(-50%); font-size: 10px; color: var(--ink); line-height: 1; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.pill-label { display: inline-flex; align-items: center; gap: 8px; }
+.sbars { display: flex; flex-direction: column; gap: 2px; }
+.sbar { display: grid; grid-template-columns: minmax(110px, 170px) minmax(0, 1fr) 92px; align-items: center; gap: 12px; padding: 5px 0; width: 100%; box-sizing: border-box; font: inherit; color: inherit; text-align: left; }
+button.sbar { border: 0; background: none; cursor: pointer; border-radius: 6px; }
+button.sbar:hover .sbar-name { color: var(--data-dark); }
+button.sbar:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.sbar-name { font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sbar-val { font-size: 13px; color: var(--ink-3); text-align: right; }
+.sbar.sub-row .sbar-name { padding-left: 16px; color: var(--ink-3); }
+.sbar-track { position: relative; height: 14px; background: var(--line-soft); border-radius: 0 4px 4px 0; }
+.sbar-track > i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 0 4px 4px 0; }
+.sbar-track.plain { background: none; border-bottom: 1px solid var(--line-soft); }
+.sbar-track.plain > em { position: absolute; top: 6px; height: 2px; background: var(--ink-3); }
+.sbar-track .stack { display: flex; gap: 2px; height: 100%; }
+.stack .seg-btn { border: 0; padding: 0; height: 100%; min-width: 2px; cursor: pointer; }
+.stack .seg-btn:last-child { border-radius: 0 4px 4px 0; }
+.stack .seg-btn:hover { filter: brightness(0.88); }
+.stack .seg-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
+.mk-usual { position: absolute; top: -4px; bottom: -4px; width: 2px; margin-left: -1px; background: var(--ink); }
+.mk-market { position: absolute; top: 2px; width: 8px; height: 8px; margin-left: -5px; background: #fff; border: 2px solid var(--ink); transform: rotate(45deg); box-sizing: border-box; }
+.mk-usual.static, .mk-market.static { position: static; display: inline-block; margin: 0 4px 0 2px; vertical-align: middle; }
+.mk-usual.static { height: 14px; }
+.chev-s { color: var(--muted); font-size: 11px; }
+.axis-row { display: grid; grid-template-columns: minmax(110px, 170px) minmax(0, 1fr) 92px; gap: 12px; font-size: 11px; color: var(--muted); }
+.axis-row span { grid-row: 1; grid-column: 2; }
+.axis-row span:nth-child(2) { justify-self: center; }
+.axis-row span:nth-child(3) { justify-self: end; }
+.mcity-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 20px; align-items: start; }
+.proj-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 20px; align-items: start; }
+.hov { cursor: pointer; }
+.hov:hover rect:first-child { fill: #f0efed; }
+.hov-cell { cursor: pointer; }
+.hov-cell:hover { opacity: 1; stroke: var(--soot); stroke-width: 1.5; }
+.hov-dot { cursor: pointer; }
+.mday { position: relative; }
+.mday small { font-size: 11px; font-weight: 400; }  /* без прозрачности — иначе контраст ниже 4,5:1 */
+.mday .mix { position: absolute; left: 4px; right: 4px; bottom: 3px; height: 3px; display: flex; gap: 1px; border-radius: 2px; overflow: hidden; }
+.mday.inrng { box-shadow: inset 0 0 0 1.5px var(--ink-3); }
+.mday.daysel { box-shadow: inset 0 0 0 2px var(--cta); }
+.ptable .prow { cursor: pointer; }
+.ptable .prow:hover { background: #fbfaf9; }
+.info-pop { white-space: pre-line; }
+@media (min-width: 1600px) { .mcal-months { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+@media (max-width: 1180px) { .mcity-grid, .proj-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 820px) {
+  .sbar, .axis-row { grid-template-columns: 96px minmax(0, 1fr) 64px; gap: 8px; }
+  .ptable td:nth-child(4), .ptable th:nth-child(4) { display: none; }
 }
 </style>
 </head>
@@ -612,6 +668,7 @@ button.mday:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px
 <div class="info-pop" id="infoPop" hidden></div>
 
 <script src="market-data.js"></script>
+<script src="market-geo.js"></script>
 <script>
 // ---------------------------------------------------------------- данные (снимок сбора 30.09.2026, 12:11)
 // [название, площадка, дата, время, сфера, формат, жанр, цена от, цена до, занято, мест в продаже, вал, выручка,
@@ -2469,11 +2526,17 @@ var MR = typeof MK === "undefined" ? [] : MK.rows.map(function (r, i) {
     format: MK.formats[r[6]], genre: MK.genres[r[7]] || "", pmin: r[8] || null, pmax: r[9] || null, pushkin: !!r[10], src: r[11],
     urlK: r[12], urlY: r[13], more: r[14], until: r[15], seen: r[16], age: r[17], tk: tourKey(r[2]) };
 });
+(function () {  // одна площадка под разными написаниями (Кассир и Яндекс) — одно название: самое частое в городе
+  var key = function (e) { return e.city + "|" + e.venue.toLowerCase().replace(/ё/g, "е").replace(/[«»"'.,\s-]/g, ""); }, names = {};
+  MR.forEach(function (e) { var k = key(e), n = names[k] = names[k] || {}; n[e.venue] = (n[e.venue] || 0) + 1; });
+  MR.forEach(function (e) { var n = names[key(e)]; e.venue = Object.keys(n).sort(function (a, b) { return n[b] - n[a]; })[0]; });
+})();
 var MR_LAST = MR.reduce(function (m, e) { return e.seen > m ? e.seen : m; }, typeof MK === "undefined" ? TODAY : MK.first);
 var MPREFS_KEY = "ticketmonitor.prototype.market";
 var mprefs = (function () { try { return JSON.parse(localStorage.getItem(MPREFS_KEY)) || {}; } catch (e) { return {}; } })();
 S.m = { tab: "table", city: "Все города", filter: "all", format: "", sphere: "", genre: "", src: "", venue: "", sort: "date", desc: false, limit: 200,
-  dim: "sphere", meas: "count", win: "1", wkOnly: false, repOff: true, sel: null,
+  dim: "sphere", meas: "count", win: "1", wkOnly: false, repOff: true, sel: null, genre: "",
+  myFormat: "", myGenre: "", cwin: "3", day: null, openSph: null, hview: "heat", project: null, pmode: "in", pminCities: "2", psort: "cities", candAll: false,
   hidden: mprefs.hidden || (window.innerWidth < 1600 ? ["seen"] : []), widths: mprefs.widths || {} };
 function saveMPrefs() { try { localStorage.setItem(MPREFS_KEY, JSON.stringify({ hidden: S.m.hidden, widths: S.m.widths })); } catch (e) { /* хранилище недоступно */ } }
 // Таблица, которая сейчас на экране: «Мероприятия» или «Рынок» — у каждой свои столбцы и ширины
@@ -2521,10 +2584,10 @@ function mNicheSelects(list) {
     mSelect("format", "Формат", mTop(mCount(list, "format")));
 }
 
-var M_TABS = [["table", "Таблица"], ["heat", "Города × ниши"], ["new", "Новые события"], ["cal", "Календарь нагрузки"], ["tours", "Гастроли"], ["venues", "Площадки"]];
+var M_TABS = [["table", "Таблица"], ["city", "Город"], ["projects", "Проекты"], ["heat", "Города × ниши"], ["cal", "Календарь нагрузки"], ["new", "Новые события"], ["venues", "Площадки"]];
 function renderMarket() {
   if (!MR.length) return head("Рынок", "Снимок афиши не загружен") + '<div class="empty"><h2>Нет файла market-data.js</h2><p style="margin:0">Он лежит рядом с index.html.</p></div>';
-  var body = { table: mTable, heat: mHeat, "new": mNew, cal: mCal, tours: mTours, venues: mVenues }[S.m.tab]();
+  var body = { table: mTable, city: mCity, projects: mProjects, heat: mHeat, "new": mNew, cal: mCal, venues: mVenues }[S.m.tab]();
   var scope = MR.filter(mInScope);
   return head("Рынок", mScopeLabel() + " · " + periodLabel() + " · " + num(scope.filter(inPeriod).length) + " мероприятий в " +
       num(mUniq(scope, "city").length) + " " + plural(mUniq(scope, "city").length, "городе", "городах", "городах") + " · Кассир и Яндекс Афиша, снимок " + MK.at) +
@@ -2676,15 +2739,16 @@ function mHeat() {
   return '<div class="insights">' + ins.map(function (x) { return '<div class="card"><div class="kpi-label">' + x[0] + '</div><div class="insight-v">' + esc(x[1]) + '</div><div class="sub" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(x[2]) + '">' + esc(x[2]) + '</div></div>'; }).join("") + '</div>' +
     '<div class="toolbar"><div class="seg" role="group" aria-label="Разрез">' + seg([["sphere", "Сфера"], ["format", "Формат"], ["genre", "Жанр"]], dim, "dim") + '</div>' +
     '<div class="seg" role="group" aria-label="Мера">' + seg([["count", "Мероприятий"], ["share", "Доля в " + (single ? "нише" : "городе")]], S.m.meas, "meas") + '</div>' +
-    '<div style="flex-grow:1"></div><div class="legend">меньше <span style="gap:2px">' + HEAT.map(function (h) { return '<i class="sw" style="width:18px;height:12px;background:' + h + '"></i>'; }).join("") + '</span> больше</div></div>' +
-    '<section class="card" style="padding:8px 0;overflow:auto;max-height:70vh" tabindex="0" role="region" aria-label="Тепловая карта ' + (single ? "ниши × площадки" : "города × ниши") + '"><table class="heat-table mheat"><thead><tr><th scope="col">' + (single ? dimLabel : "Город") + '</th>' +
+    '<div class="seg" role="group" aria-label="Вид">' + seg([["heat", "Тепловая карта"], ["bars", "Столбцы"]], S.m.hview, "hview") + '</div>' +
+    '<div style="flex-grow:1"></div>' + (S.m.hview === "bars" ? '' : '<div class="legend">меньше <span style="gap:2px">' + HEAT.map(function (h) { return '<i class="sw" style="width:18px;height:12px;background:' + h + '"></i>'; }).join("") + '</span> больше</div>') + '</div>' +
+    (S.m.hview === "bars" ? mHeatBars(base, dim, single, rowsK, catCnt) + '<p class="sub" style="margin:0">' + (single ? 'Категории города по числу мероприятий.' : 'Каждый город — полоса, сегменты — ' + (dim === "sphere" ? 'сферы' : '6 самых частых категорий рынка и «прочее»') + (S.m.meas === "share" ? ', доли в городе' : ', длина — число мероприятий') + '.') + ' Нажмите на сегмент — эти мероприятия откроются в таблице.</p>' : '<section class="card" style="padding:8px 0;overflow:auto;max-height:70vh" tabindex="0" role="region" aria-label="Тепловая карта ' + (single ? "ниши × площадки" : "города × ниши") + '"><table class="heat-table mheat"><thead><tr><th scope="col">' + (single ? dimLabel : "Город") + '</th>' +
       colsK.map(function (c) { return '<th scope="col" title="' + esc(c) + '"><span>' + esc(c) + '</span></th>'; }).join("") + '<th scope="col">Всего</th></tr></thead><tbody>' +
       rowsK.map(function (r) {
         var t = heat(rowTot[r] || 0, maxT);
         return '<tr><th scope="row">' + esc(r) + (single ? "" : '<div class="sub2">' + esc(MK.fo[r]) + '</div>') + '</th>' + colsK.map(function (c) { return cell(r, c); }).join("") +
           '<td><div class="cell" style="background:' + t.bg + ';color:' + t.fg + ';font-weight:600">' + (rowTot[r] || 0) + '</div></td></tr>';
       }).join("") + '</tbody></table></section>' +
-    '<p class="sub" style="margin:0">' + (single ? "Столбцы — 5 крупнейших площадок города, «Всего» — все площадки." : "Столбцы — " + (dim === "sphere" ? "все сферы" : "10 самых частых категорий") + ", «Всего» — все мероприятия города. ") + ' Нажмите на клетку, чтобы открыть эти мероприятия в таблице.</p>';
+    '<p class="sub" style="margin:0">' + (single ? "Столбцы — 5 крупнейших площадок города, «Всего» — все площадки." : "Столбцы — " + (dim === "sphere" ? "все сферы" : "10 самых частых категорий") + ", «Всего» — все мероприятия города. ") + ' Нажмите на клетку, чтобы открыть эти мероприятия в таблице.</p>');
 }
 
 // ---------- 3. Новые события
@@ -2717,90 +2781,553 @@ function mNew() {
 
 // ---------- 4. Календарь нагрузки
 function mWeekStart(iso) { var d = new Date(iso + "T12:00:00Z"), wd = (d.getUTCDay() + 6) % 7; return addDays(iso, -wd); }
+// ---------- Рынок: общее для графиков
+// Цвета сфер проверены dataviz/validate_palette (светлая тема): порядок слотов даёт различимость при дальтонизме;
+// у трёх светлых цветов контраст с фоном < 3:1 — поэтому у графиков всегда легенда, подписи и подсказки.
+var PAL6 = ["#1d6fae", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#4a3aa7"], OTHER_COLOR = "#a8a29e";
+var SPH = ["Музыка", "Театр", "Комедия и юмор", "Шоу", "Детские", "Танец"];
+function sphOf(e) { return SPH.indexOf(e.sphere) >= 0 ? e.sphere : "Прочее"; }
+function sphColor(s) { var k = SPH.indexOf(s); return k >= 0 ? PAL6[k] : OTHER_COLOR; }
+// Цвет категории закреплён за ней (по частоте на всём рынке), а не за местом в текущем списке
+var CAT_SLOTS = {};
+function catColor(dim, name) {
+  if (dim === "sphere") return sphColor(name);
+  if (!CAT_SLOTS[dim]) { var c = mCount(MR, dim); delete c["Не определено"]; CAT_SLOTS[dim] = mTop(c, 6); }
+  var k = CAT_SLOTS[dim].indexOf(name); return k >= 0 ? PAL6[k] : OTHER_COLOR;
+}
+function catName(dim, e) {
+  if (dim === "sphere") return sphOf(e);
+  catColor(dim, "");
+  var v = e[dim] || ""; return CAT_SLOTS[dim].indexOf(v) >= 0 ? v : "Прочее";
+}
+function legendOf(dim, names) {
+  return '<div class="legend" style="flex-wrap:wrap;gap:6px 14px">' + names.map(function (n) { return '<span><i class="sw" style="background:' + catColor(dim, n) + '"></i>' + esc(n) + '</span>'; }).join("") + '</div>';
+}
+function wdOf(iso) { return new Date(iso + "T12:00:00Z").getUTCDay(); }
+function isFriSun(iso) { var w = wdOf(iso); return w === 5 || w === 6 || w === 0; }
+function daysList(a, b) { var out = [], d = a; while (d <= b && out.length < 800) { out.push(d); d = addDays(d, 1); } return out; }
+function dDiff(a, b) { return Math.round((Date.parse(b + "T00:00:00Z") - Date.parse(a + "T00:00:00Z")) / 864e5); }
+var MR_CITY = {}; MR.forEach(function (e) { (MR_CITY[e.city] = MR_CITY[e.city] || []).push(e); });  // мероприятия по городам — для быстрых расчётов
+var MR_MAXDATE = MR.reduce(function (m, e) { return e.date > m ? e.date : m; }, TODAY);
+var M_HORIZON = MR_MAXDATE < addDays(TODAY, 365) ? MR_MAXDATE : addDays(TODAY, 365);  // календари — не дальше года
+function mRange() {
+  if (S.period === "custom") return [S.from, S.to];
+  if (S.period === "all") return [TODAY, M_HORIZON];
+  return [TODAY, addDays(TODAY, +S.period)];
+}
+function median(arr) { arr = arr.filter(function (x) { return x; }).sort(function (a, b) { return a - b; }); return arr.length ? arr[Math.floor(arr.length / 2)] : null; }
+function pct(arr, p) { arr = arr.filter(function (x) { return x; }).sort(function (a, b) { return a - b; }); return arr.length ? arr[Math.min(arr.length - 1, Math.floor(arr.length * p))] : null; }
+function niceMax(v) { var p = Math.pow(10, Math.floor(Math.log10(Math.max(v, 1)))), m = v / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; }
+function monthTicks(a, b, x) {  // подписи месяцев по шкале дат
+  var out = "", d = a.slice(0, 8) + "01"; if (d < a) { var t = new Date(d + "T12:00:00Z"); t.setUTCMonth(t.getUTCMonth() + 1); d = t.toISOString().slice(0, 10); }
+  while (d <= b) {
+    out += '<line x1="' + x(d) + '" x2="' + x(d) + '" y1="0" y2="100%" stroke="#f0efed"/><text x="' + (x(d) + 3) + '" y="11" font-size="11" fill="#78716c">' + MONTHS[+d.slice(5, 7) - 1] + (d.slice(5, 7) === "01" ? " " + d.slice(0, 4) : "") + '</text>';
+    var t2 = new Date(d + "T12:00:00Z"); t2.setUTCMonth(t2.getUTCMonth() + 1); d = t2.toISOString().slice(0, 10);
+  }
+  return out;
+}
+function dayLabel(iso) { var d = dparts(iso); return d.wd + ", " + d.day + " " + d.mon; }
+
+// «Мой формат»: под какой формат (и жанр) ищем даты — общий для «Города», календаря и проектов
+function myFormatControls(list) {
+  var fmts = mTop(mCount(list, "format"));
+  var genres = S.m.myFormat ? mTop(mCount(list.filter(function (e) { return e.format === S.m.myFormat && e.genre; }), "genre")) : [];
+  return '<label class="pill-label"><span class="sub2">Мой формат</span><select class="chip-select" data-msel="myFormat" aria-label="Мой формат"><option value="">не выбран</option>' +
+      fmts.map(function (v) { return '<option' + (S.m.myFormat === v ? " selected" : "") + '>' + esc(v) + '</option>'; }).join("") + '</select></label>' +
+    (S.m.myFormat ? '<label class="pill-label"><span class="sub2">Жанр</span><select class="chip-select" data-msel="myGenre" aria-label="Мой жанр"><option value="">любой</option>' +
+      genres.map(function (v) { return '<option' + (S.m.myGenre === v ? " selected" : "") + '>' + esc(v) + '</option>'; }).join("") + '</select></label>' : '');
+}
+function isMine(e) { return S.m.myFormat && e.format === S.m.myFormat && (!S.m.myGenre || e.genre === S.m.myGenre); }
+
+// ---------- Индекс конкуренции: насколько тесно вокруг даты мероприятиям того же формата
+// Событие того же формата весит 1 (другого жанра при выбранном жанре — 0,6), той же сферы — 0,3;
+// в тот же день — полностью, за 1–3 дня — половина, за 4–7 дней — пятая часть. Размер зала пока не учитывается.
+var FMT_SPHERE = {};
+function fmtSphere(fmt) {
+  if (!(fmt in FMT_SPHERE)) FMT_SPHERE[fmt] = mTop(mCount(MR.filter(function (e) { return e.format === fmt; }), "sphere"), 1)[0] || "";
+  return FMT_SPHERE[fmt];
+}
+function mComp(city, from, to, fmt, genre, win) {
+  var sph = fmtSphere(fmt), lo = addDays(from, -win), hi = addDays(to, win), idx = {}, same = [];
+  daysList(from, to).forEach(function (d) { idx[d] = 0; });
+  (MR_CITY[city] || []).forEach(function (e) {
+    if (e.date < lo || e.date > hi) return;
+    var sim = e.format === fmt ? (genre ? (e.genre === genre ? 1 : 0.6) : 1) : (e.sphere === sph ? 0.3 : 0);
+    if (!sim) return;
+    if (e.format === fmt) same.push(e);
+    for (var k = -win; k <= win; k++) { var d = addDays(e.date, k); if (d in idx) idx[d] += sim * (k === 0 ? 1 : Math.abs(k) <= 3 ? 0.5 : 0.2); }
+  });
+  same.sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  return { idx: idx, same: same };
+}
+function nearestSame(same, iso) {
+  var before = null, after = null;
+  same.forEach(function (e) { if (e.date < iso) before = e; else if (e.date > iso && !after) after = e; });
+  return { before: before, after: after, today: same.filter(function (e) { return e.date === iso; }) };
+}
+function bestDates(comp, from, to, n) {
+  return daysList(from < TODAY ? TODAY : from, to).filter(isFriSun).map(function (d) {
+    var ns = nearestSame(comp.same, d), gap = Math.min(ns.before ? dDiff(ns.before.date, d) : 99, ns.after ? dDiff(d, ns.after.date) : 99);
+    return { d: d, v: comp.idx[d], gap: gap, ns: ns };
+  }).sort(function (a, b) { return a.v - b.v || b.gap - a.gap || (a.d < b.d ? -1 : 1); }).slice(0, n || 5);
+}
+function compWhy(b) {
+  var f = S.m.myFormat.toLowerCase(), ns = b.ns;
+  if (ns.today.length) return ns.today.length + " × " + f + " в этот же день";
+  return (ns.before ? f + " раньше: " + human(ns.before.date) + ", за " + dDiff(ns.before.date, b.d) + " дн." : "раньше " + f + " нет") + " · " +
+    (ns.after ? "позже: " + human(ns.after.date) + ", через " + dDiff(b.d, ns.after.date) + " дн." : "позже нет");
+}
+function compLabel(v) { return v === 0 ? "свободно" : v < 1 ? "низкая" : v < 2.5 ? "средняя" : "высокая"; }
+
+// ---------- 2. Город: сводка периода
+function mCityPick() {
+  var cc = mCount(MR.filter(inPeriod), "city"), list = mTop(cc);
+  return '<div class="empty" style="text-align:left"><h2>Выберите город</h2><p style="margin:0 0 14px">Город — в шапке слева или здесь; даты — «Даты» в шапке (например, 1 января – 28 февраля). По числу мероприятий за выбранный период:</p>' +
+    '<div class="route">' + list.map(function (c) { return '<button class="stop" data-mcity="' + esc(c) + '">' + esc(c) + ' <span class="num">' + cc[c] + '</span></button>'; }).join("") + '</div></div>';
+}
+function mDayPanel(city) {
+  if (!S.m.day) return '';
+  var l = MR.filter(function (e) { return e.date === S.m.day && (!city || e.city === city) && (city || mInScope(e)); })
+    .sort(function (a, b) { return (isMine(b) - isMine(a)) || ((a.time || "99") < (b.time || "99") ? -1 : 1); });
+  return '<section class="card card-pad day-panel"><div class="card-head"><h2>' + dayLabel(S.m.day) + ' · ' + l.length + ' ' + plural(l.length, "мероприятие", "мероприятия", "мероприятий") + '</h2>' +
+    '<button class="icon-btn" data-maction="day-close" aria-label="Закрыть список дня"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button></div>' +
+    (l.length ? '<ul class="list">' + l.map(function (e) {
+      return '<li><button class="row-btn" data-mopen="' + e.i + '"><i class="sw" style="background:' + sphColor(sphOf(e)) + ';flex-shrink:0"></i><span style="flex-grow:1;min-width:0"><b style="font-weight:500">' + esc(e.title) + '</b>' + (isMine(e) ? ' <span class="badge-new">мой формат</span>' : '') +
+        '<span class="sub2" style="display:block">' + esc(e.time || "время не указано") + ' · ' + esc(e.venue) + (city ? '' : ' · ' + esc(e.city)) + ' · ' + esc(e.format) + '</span></span><span class="sub2 nowrap">' + (e.pmin ? prices(e) : '') + '</span></button></li>';
+    }).join("") + '</ul>' : '<p class="sub">В этот день мероприятий нет.</p>') + '</section>';
+}
+function mCity() {
+  if (!mSingleCity()) return mCityPick();
+  var city = S.m.city, r = mRange(), from = r[0] < TODAY ? TODAY : r[0], to = r[1], days = daysList(from, to);
+  var q = S.q.trim().toLowerCase();
+  var all = MR_CITY[city] || [];
+  var list = all.filter(function (e) { return e.date >= from && e.date <= to && (!q || (e.title + " " + e.venue).toLowerCase().indexOf(q) >= 0); });
+  var tools = '<div class="toolbar">' + myFormatControls(all) + '<div style="flex-grow:1"></div>' +
+    (S.m.myFormat ? '<div class="seg" role="group" aria-label="Окно конкуренции">' + [["0", "тот же день"], ["3", "±3 дня"], ["7", "±7 дней"]].map(function (w) { return '<button data-mset="cwin" data-mval="' + w[0] + '" aria-pressed="' + (S.m.cwin === w[0]) + '">' + w[1] + '</button>'; }).join("") + '</div>' : '') + '</div>';
+  if (!list.length) return tools + mDayPanel(city) + '<div class="empty"><h2>' + esc(city) + ': за ' + rangeLabel(from, to) + ' мероприятий нет</h2><p style="margin:0">Выберите другие даты в шапке.</p></div>';
+  var wk = days.filter(isFriSun), busyWk = wk.filter(function (d) { return list.some(function (e) { return e.date === d && (!S.m.myFormat || isMine(e)); }); }).length;
+  var kpis = '<section class="card kpis k4" aria-label="Главные цифры периода">' +
+    '<div><div class="kpi-label">Мероприятий · ' + esc(rangeLabel(from, to)) + '</div><div class="kpi-value num">' + num(list.length) + '</div><div class="sub" style="margin:0">' + (S.m.myFormat ? num(list.filter(isMine).length) + ' — ' + esc(S.m.myFormat.toLowerCase()) + (S.m.myGenre ? ', ' + esc(S.m.myGenre.toLowerCase()) : '') : 'все форматы') + '</div></div>' +
+    '<div><div class="kpi-label">В среднем в день</div><div class="kpi-value num">' + (list.length / days.length).toFixed(1).replace(".", ",") + '</div><div class="sub" style="margin:0">' + days.length + ' ' + plural(days.length, "день", "дня", "дней") + ' в периоде</div></div>' +
+    '<div><div class="kpi-label">Пт–вс заняты' + (S.m.myFormat ? ' моим форматом' : '') + '</div><div class="kpi-value num">' + busyWk + ' из ' + wk.length + '</div><div class="sub" style="margin:0">свободных: ' + (wk.length - busyWk) + '</div></div>' +
+    '<div><div class="kpi-label">Площадок</div><div class="kpi-value num">' + mUniq(list, "venue").length + '</div><div class="sub" style="margin:0">с мероприятиями в периоде</div></div></section>';
+  return tools + mDayPanel(city) + kpis +
+    (S.m.myFormat ? mCompCard(city, from, to) : '<div class="note">Выберите «Мой формат» — покажу индекс конкуренции по дням и лучшие пятницы–воскресенья для него.</div>') +
+    '<div class="mcity-grid">' + mStructure(list, all, from, to) + mWeeks(list, from, to) + '</div>' +
+    mVenueDays(list, from, to) + mPriceCorridor(list, from, to);
+}
+
+// Структура афиши: доля каждой сферы в периоде + «обычно в городе» (вся афиша города) + «по рынку» (все города, тот же период)
+function mStructure(list, all, from, to) {
+  var mk = MR.filter(function (e) { return e.date >= from && e.date <= to; });
+  var c = mCount(list.map(function (e) { return { s: sphOf(e) }; }), "s"), ca = mCount(all.map(function (e) { return { s: sphOf(e) }; }), "s"), cm = mCount(mk.map(function (e) { return { s: sphOf(e) }; }), "s");
+  var names = SPH.concat(["Прочее"]).filter(function (s) { return c[s] || ca[s]; }).sort(function (a, b) { return (c[b] || 0) - (c[a] || 0); });
+  var share = function (cnt, tot, s) { return tot ? (cnt[s] || 0) / tot * 100 : 0; };
+  var maxP = Math.max.apply(null, names.map(function (s) { return Math.max(share(c, list.length, s), share(ca, all.length, s), share(cm, mk.length, s)); }).concat([10]));
+  var sc = function (p) { return (p / maxP * 100).toFixed(1) + "%"; };
+  var row = function (s) {
+    var p = share(c, list.length, s), pu = share(ca, all.length, s), pm = share(cm, mk.length, s), open = S.m.openSph === s;
+    var sub = open ? mTop(mCount(list.filter(function (e) { return sphOf(e) === s; }), "format")).map(function (f) {
+      var n = list.filter(function (e) { return sphOf(e) === s && e.format === f; }).length;
+      return '<div class="sbar sub-row"><span class="sbar-name">' + esc(f) + '</span><span class="sbar-track"><i style="width:' + sc(n / list.length * 100) + ';background:' + sphColor(s) + ';opacity:.55"></i></span><span class="sbar-val num">' + n + ' · ' + Math.round(n / list.length * 100) + '%</span></div>';
+    }).join("") : '';
+    var tip = s + ": " + (c[s] || 0) + " (" + Math.round(p) + "%) · обычно в городе " + Math.round(pu) + "% · по рынку " + Math.round(pm) + "%";
+    return '<button class="sbar" data-msph="' + esc(s) + '" aria-expanded="' + open + '" data-ct="' + esc(tip) + '"><span class="sbar-name">' + esc(s) + ' <span class="chev-s">' + (open ? "▾" : "▸") + '</span></span>' +
+      '<span class="sbar-track"><i style="width:' + sc(p) + ';background:' + sphColor(s) + '"></i><b class="mk-usual" style="left:' + sc(pu) + '"></b><b class="mk-market" style="left:' + sc(pm) + '"></b></span>' +
+      '<span class="sbar-val num">' + (c[s] || 0) + ' · ' + Math.round(p) + '%</span></button>' + sub;
+  };
+  return '<section class="card card-pad"><h2>Структура афиши</h2><p class="sub">Доля сферы за период. Нажмите на сферу — раскроются форматы.</p>' +
+    '<div class="legend" style="margin:10px 0 6px;flex-wrap:wrap"><span><b class="mk-usual static"></b>обычно в этом городе</span><span><b class="mk-market static"></b>по рынку за эти даты</span></div>' +
+    '<div class="sbars">' + names.map(row).join("") + '</div></section>';
+}
+
+// Нагрузка по неделям: столбец на неделю, сегменты — сферы
+function mWeeks(list, from, to) {
+  var w0 = mWeekStart(from), weeks = [];
+  for (var d = w0; d <= to && weeks.length < 60; d = addDays(d, 7)) weeks.push(d);
+  var data = weeks.map(function (w) { var c = {}; list.forEach(function (e) { if (e.date >= w && e.date <= addDays(w, 6)) { var s = sphOf(e); c[s] = (c[s] || 0) + 1; } }); return c; });
+  var tot = data.map(function (c) { return Object.keys(c).reduce(function (s, k) { return s + c[k]; }, 0); });
+  var names = SPH.concat(["Прочее"]).filter(function (s) { return data.some(function (c) { return c[s]; }); });
+  var W = 640, H = 220, pl = 34, pb = 26, pt = 18, maxV = niceMax(Math.max.apply(null, tot.concat([1])));
+  var bw = Math.min(24, (W - pl) / weeks.length * 0.72), step = (W - pl) / weeks.length;
+  var y = function (v) { return pt + (1 - v / maxV) * (H - pt - pb); };
+  var bars = weeks.map(function (w, k) {
+    var x = pl + k * step + (step - bw) / 2, acc = 0, segs = "";
+    names.forEach(function (s) {
+      var v = data[k][s] || 0; if (!v) return;
+      var y1 = y(acc + v), y0 = y(acc), h = Math.max(1, y0 - y1 - 2); acc += v;
+      segs += '<rect x="' + x.toFixed(1) + '" y="' + y1.toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + h.toFixed(1) + '" rx="' + (acc === tot[k] ? 3 : 0) + '" fill="' + sphColor(s) + '"/>';
+    });
+    var tip = "Неделя с " + human(w) + ": " + tot[k] + " — " + names.filter(function (s) { return data[k][s]; }).map(function (s) { return s.toLowerCase() + " " + data[k][s]; }).join(", ");
+    return '<g class="hov" data-ct="' + esc(tip) + '" data-mweekcity="' + w + '">' + '<rect x="' + (pl + k * step) + '" y="' + pt + '" width="' + step + '" height="' + (H - pt - pb) + '" fill="transparent"/>' + segs + '</g>';
+  }).join("");
+  var ticks = [0, maxV / 2, maxV].map(function (v) { return '<line x1="' + pl + '" x2="' + W + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="#f0efed"/><text x="' + (pl - 6) + '" y="' + (y(v) + 4) + '" font-size="11" fill="#78716c" text-anchor="end">' + v + '</text>'; }).join("");
+  var labels = weeks.map(function (w, k) { return (k % Math.ceil(weeks.length / 8) === 0) ? '<text x="' + (pl + k * step + step / 2) + '" y="' + (H - 8) + '" font-size="11" fill="#78716c" text-anchor="middle">' + human(w) + '</text>' : ''; }).join("");
+  return '<section class="card card-pad"><h2>Нагрузка по неделям</h2><p class="sub">Сколько мероприятий на каждой неделе периода. Нажмите на неделю — откроется в таблице.</p>' + legendOf("sphere", names) +
+    '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Мероприятий по неделям" style="display:block;margin-top:8px">' + ticks + bars + labels + '</svg></section>';
+}
+
+// Индекс конкуренции по дням + лучшие пт–вс
+function mCompCard(city, from, to) {
+  var win = +S.m.cwin, comp = mComp(city, from, to, S.m.myFormat, S.m.myGenre, win), days = daysList(from, to);
+  var vals = days.map(function (d) { return comp.idx[d]; }), maxV = Math.max.apply(null, vals.concat([1]));
+  var best = bestDates(comp, from, to, 5), bestSet = {}; best.forEach(function (b) { bestSet[b.d] = 1; });
+  var W = 1000, H = 150, pl = 8, pt = 18, pb = 22, step = (W - pl * 2) / days.length, bw = Math.max(1, step - (step > 4 ? 2 : 0.5));
+  var x = function (d) { return pl + dDiff(from, d) * step; };
+  var y = function (v) { return pt + (1 - v / maxV) * (H - pt - pb); };
+  var bars = days.map(function (d) {
+    var v = comp.idx[d], wk = isFriSun(d), ns = nearestSame(comp.same, d);
+    var tip = dayLabel(d) + " · конкуренция " + compLabel(v) + " (" + v.toFixed(1).replace(".", ",") + ")" + (ns.today.length ? " · в этот день: " + ns.today.map(function (e) { return e.title; }).join(", ") : "");
+    return '<g class="hov" data-ct="' + esc(tip) + '" data-mday="' + d + '"><rect x="' + x(d) + '" y="' + pt + '" width="' + step + '" height="' + (H - pt - pb) + '" fill="' + (wk ? "#fafaf9" : "transparent") + '"/>' +
+      (v ? '<rect x="' + (x(d) + (step - bw) / 2).toFixed(1) + '" y="' + y(v).toFixed(1) + '" width="' + bw.toFixed(1) + '" height="' + (H - pb - y(v)).toFixed(1) + '" fill="' + (wk ? "#1d6fae" : "#7ab9e8") + '"/>' : '') +
+      '</g>';
+  }).join("");
+  // Подписи месяцев и ▲ лучших дат — обычным текстом поверх графика: столбцы растягиваются по ширине, текст — нет
+  var pctX = function (d) { return ((x(d) + step / 2) / W * 100).toFixed(2) + "%"; }, labels = "", m = from.slice(0, 8) + "01";
+  for (var guard = 0; guard < 14; guard++) {
+    if (m >= from && m <= to) labels += '<span class="cc-month" style="left:' + ((x(m)) / W * 100).toFixed(2) + '%">' + MONTHS[+m.slice(5, 7) - 1] + (m.slice(5, 7) === "01" ? " " + m.slice(0, 4) : "") + '</span>';
+    var mt = new Date(m + "T12:00:00Z"); mt.setUTCMonth(mt.getUTCMonth() + 1); m = mt.toISOString().slice(0, 10); if (m > to) break;
+  }
+  if (from.slice(8) !== "01") labels = '<span class="cc-month" style="left:0">' + MONTHS[+from.slice(5, 7) - 1] + '</span>' + labels;
+  var marks = best.map(function (b) { return '<span class="cc-best" style="left:' + pctX(b.d) + '" title="' + dayLabel(b.d) + '">▲</span>'; }).join("");
+  var none = best.length && best[0].v === 0;
+  return '<section class="card card-pad"><div class="card-head"><div><h2>Конкуренция для «' + esc(S.m.myFormat) + (S.m.myGenre ? ', ' + esc(S.m.myGenre) : '') + '»</h2>' +
+      '<p class="sub" style="margin:2px 0 0">Чем выше столбец, тем теснее вокруг даты мероприятиям того же формата' + (S.m.myGenre ? ' и жанра' : '') + ' (окно ' + (win ? '±' + win + ' дн.' : 'в тот же день') + '). ▲ — лучшие пятницы–воскресенья.</p></div>' +
+      '<div class="legend"><span><i class="sw" style="background:#1d6fae"></i>пт–вс</span><span><i class="sw" style="background:#7ab9e8"></i>пн–чт</span></div></div>' +
+    '<div class="cc-wrap"><div class="cc-months">' + labels + '</div><svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" height="140" role="img" aria-label="Индекс конкуренции по дням" style="display:block" preserveAspectRatio="none">' + bars +
+      '<line x1="' + pl + '" x2="' + (W - pl) + '" y1="' + (H - pb) + '" y2="' + (H - pb) + '" stroke="#d6d3d1" vector-effect="non-scaling-stroke"/></svg><div class="cc-marks">' + marks + '</div></div>' +
+    '<h3 style="font-weight:500;font-size:15px;margin:14px 0 4px">Лучшие пятницы–воскресенья' + (none ? '' : ' — свободных нет, наименее тесные') + '</h3>' +
+    '<ul class="list">' + best.map(function (b) {
+      return '<li><button class="row-btn" data-mday="' + b.d + '"><span style="flex-grow:1;min-width:0"><b style="font-weight:500">' + dayLabel(b.d) + '</b> <span class="tag">' + compLabel(b.v) + '</span><span class="sub2" style="display:block;margin-top:2px">' + esc(compWhy(b)) + '</span></span><span class="sub2 nowrap">список дня →</span></button></li>';
+    }).join("") + '</ul></section>';
+}
+
+// Площадки × дни: какой зал в какой день занят (по афише — оценка, не бронь)
+function mVenueDays(list, from, to) {
+  var vs = mTop(mCount(list, "venue"), 12), days = daysList(from, to), byWeek = days.length > 120;
+  var cols = byWeek ? (function () { var w = []; for (var d = mWeekStart(from); d <= to; d = addDays(d, 7)) w.push(d); return w; })() : days;
+  var cw = byWeek ? 18 : Math.max(8, Math.min(18, Math.floor(760 / cols.length))), lw = 190, H = vs.length * 22 + 24, W = lw + cols.length * cw;
+  var cells = vs.map(function (v, r) {
+    var mine = list.filter(function (e) { return e.venue === v; });
+    return '<text x="' + (lw - 8) + '" y="' + (24 + r * 22 + 15) + '" font-size="12" fill="#44403c" text-anchor="end">' + esc(v.length > 26 ? v.slice(0, 25) + "…" : v) + '</text>' +
+      cols.map(function (c, k) {
+        var hit = mine.filter(function (e) { return byWeek ? e.date >= c && e.date <= addDays(c, 6) : e.date === c; });
+        var bg = (!byWeek && isFriSun(c)) ? '<rect x="' + (lw + k * cw) + '" y="' + (24 + r * 22) + '" width="' + cw + '" height="22" fill="#fafaf9"/>' : '';
+        if (!hit.length) return bg;
+        var tip = v + " · " + (byWeek ? "неделя с " + human(c) : dayLabel(c)) + ": " + hit.map(function (e) { return e.title; }).join("; ");
+        return bg + '<rect class="hov-cell" x="' + (lw + k * cw + 1) + '" y="' + (24 + r * 22 + 3) + '" width="' + (cw - 2) + '" height="16" rx="3" fill="' + sphColor(sphOf(hit[0])) + '" opacity="' + (hit.length > 1 ? 1 : 0.85) + '" data-ct="' + esc(tip) + '"' + (byWeek ? '' : ' data-mday="' + c + '"') + '/>';
+      }).join("");
+  }).join("");
+  var head = cols.map(function (c, k) { return (byWeek ? k % 4 === 0 : c.slice(8) === "01" || k === 0) ? '<text x="' + (lw + k * cw) + '" y="14" font-size="11" fill="#78716c">' + human(c) + '</text>' : ''; }).join("");
+  return '<section class="card card-pad"><h2>Площадки × ' + (byWeek ? 'недели' : 'дни') + '</h2><p class="sub">12 самых загруженных площадок периода: закрашено — в афише есть мероприятие (цвет — сфера)' + (byWeek ? '' : ', светлым фоном — пятница–воскресенье') + '. Пустая клетка — зал, вероятно, свободен, но это оценка по афише, не бронь.</p>' +
+    '<div style="overflow-x:auto" tabindex="0" role="region" aria-label="Площадки по ' + (byWeek ? 'неделям' : 'дням') + '"><svg width="' + W + '" height="' + H + '" style="display:block;margin-top:10px">' + head + cells + '</svg></div></section>';
+}
+
+// Ценовой коридор: типичные цены «от–до» по форматам города и медиана «от» по рынку
+function mPriceCorridor(list, from, to) {
+  var fm = mTop(mCount(list.filter(function (e) { return e.pmin; }), "format"), 8).filter(function (f) { return list.filter(function (e) { return e.format === f && e.pmin; }).length >= 3; });
+  if (!fm.length) return '';
+  var mk = MR.filter(function (e) { return e.date >= from && e.date <= to && e.pmin; });
+  var rows = fm.map(function (f) {
+    var l = list.filter(function (e) { return e.format === f && e.pmin; });
+    return { f: f, n: l.length, lo: pct(l.map(function (e) { return e.pmin; }), 0.1), a: median(l.map(function (e) { return e.pmin; })), b: median(l.map(function (e) { return e.pmax || e.pmin; })), hi: pct(l.map(function (e) { return e.pmax || e.pmin; }), 0.9),
+      m: median(mk.filter(function (e) { return e.format === f; }).map(function (e) { return e.pmin; })) };
+  });
+  var maxV = niceMax(Math.max.apply(null, rows.map(function (r) { return Math.max(r.hi, r.m || 0); })));
+  var sc = function (v) { return (v / maxV * 100).toFixed(1) + "%"; };
+  return '<section class="card card-pad"><h2>Ценовой коридор</h2><p class="sub">По форматам с 3+ мероприятиями. Полоса — типичная цена «от–до» (медианы), линия — от дешёвых 10% до дорогих 10%.</p>' +
+    '<div class="legend" style="margin:10px 0 6px;flex-wrap:wrap"><span><i class="sw" style="background:#1d6fae"></i>типичная цена в городе</span><span><b class="mk-market static"></b>медиана «от» по рынку</span></div>' +
+    '<div class="sbars">' + rows.map(function (r) {
+      var tip = r.f + ": обычно " + num(r.a) + "–" + num(r.b) + " ₽, разброс " + num(r.lo) + "–" + num(r.hi) + " ₽ · " + r.n + " мероприятий" + (r.m ? " · по рынку от " + num(r.m) + " ₽" : "");
+      return '<div class="sbar" data-ct="' + esc(tip) + '"><span class="sbar-name">' + esc(r.f) + '</span><span class="sbar-track plain"><em style="left:' + sc(r.lo) + ';width:calc(' + sc(r.hi) + ' - ' + sc(r.lo) + ')"></em><i style="left:' + sc(r.a) + ';width:calc(' + sc(Math.max(r.b, r.a)) + ' - ' + sc(r.a) + ' + 4px);background:#1d6fae;position:absolute"></i>' + (r.m ? '<b class="mk-market" style="left:' + sc(r.m) + '"></b>' : '') + '</span><span class="sbar-val num nowrap">' + num(r.a) + '–' + num(r.b) + ' ₽</span></div>';
+    }).join("") + '</div><div class="axis-row"><span>0</span><span>' + num(maxV / 2) + ' ₽</span><span>' + num(maxV) + ' ₽</span></div></section>';
+}
+
+// ---------- Календарь нагрузки: весь горизонт афиши (до года), режим «мой формат», список дня
 function mCal() {
   var base = mBase(), single = mSingleCity();
-  var tools = '<div class="toolbar"><label class="toggle-inline"><input type="checkbox" data-mcheck="wkOnly"' + (S.m.wkOnly ? " checked" : "") + '> Только пятница–воскресенье</label><div style="flex-grow:1"></div>' + mNicheSelects(base) + '</div>';
-  if (!base.length) return tools + mEmpty();
-  var wkOk = function (iso) { var w = new Date(iso + "T12:00:00Z").getUTCDay(); return !S.m.wkOnly || w === 5 || w === 6 || w === 0; };
-  var perDay = {}; base.forEach(function (e) { if (wkOk(e.date)) perDay[e.date] = (perDay[e.date] || 0) + 1; });
+  var tools = '<div class="toolbar"><label class="toggle-inline"><input type="checkbox" data-mcheck="wkOnly"' + (S.m.wkOnly ? " checked" : "") + '> Только пятница–воскресенье</label>' +
+    (single ? myFormatControls(MR.filter(function (e) { return e.city === S.m.city; })) : '') + '<div style="flex-grow:1"></div>' + mNicheSelects(base) + '</div>';
+  var wkOk = function (iso) { return !S.m.wkOnly || isFriSun(iso); };
   if (single) {
-    var start = S.period === "custom" ? S.from : TODAY, months = [];
-    for (var m = 0; m < 3; m++) { var d0 = new Date(start.slice(0, 7) + "-01T12:00:00Z"); d0.setUTCMonth(d0.getUTCMonth() + m); months.push(d0.toISOString().slice(0, 7)); }
-    var maxD = Math.max.apply(null, Object.keys(perDay).map(function (k) { return perDay[k]; }).concat([1]));
+    // Календарь показывает всю афишу города, а не только период шапки: период подсвечен рамкой
+    var cityAll = MR.filter(function (e) { return e.city === S.m.city && (!S.m.sphere || e.sphere === S.m.sphere) && (!S.m.format || e.format === S.m.format); });
+    if (!cityAll.length) return tools + mEmpty();
+    var perDay = {}, mineDay = {}, mixDay = {};
+    cityAll.forEach(function (e) {
+      if (!wkOk(e.date)) return;
+      perDay[e.date] = (perDay[e.date] || 0) + 1;
+      if (isMine(e)) mineDay[e.date] = (mineDay[e.date] || 0) + 1;
+      var m = mixDay[e.date] = mixDay[e.date] || {}; m[sphOf(e)] = (m[sphOf(e)] || 0) + 1;
+    });
+    var heatOf = S.m.myFormat ? mineDay : perDay;
+    var last = cityAll.reduce(function (m, e) { return e.date > m ? e.date : m; }, TODAY); if (last > M_HORIZON) last = M_HORIZON;
+    var months = [], d0 = new Date(TODAY.slice(0, 7) + "-01T12:00:00Z");
+    while (d0.toISOString().slice(0, 7) <= last.slice(0, 7) && months.length < 13) { months.push(d0.toISOString().slice(0, 7)); d0.setUTCMonth(d0.getUTCMonth() + 1); }
+    var maxD = Math.max.apply(null, Object.keys(heatOf).map(function (k) { return heatOf[k]; }).concat([1]));
+    var rng = S.period === "custom" ? [S.from, S.to] : null;
     var cal = months.map(function (ym) {
-      var first = ym + "-01", pad = (new Date(first + "T12:00:00Z").getUTCDay() + 6) % 7, last = +monthEnd(first).slice(8), cells = "";
+      var first = ym + "-01", pad = (wdOf(first) + 6) % 7, lastD = +monthEnd(first).slice(8), cells = "";
       for (var p = 0; p < pad; p++) cells += '<span></span>';
-      for (var dd = 1; dd <= last; dd++) {
-        var iso = ym + "-" + (dd < 10 ? "0" : "") + dd, n = perDay[iso] || 0, h = heat(n, maxD), wd = new Date(iso + "T12:00:00Z").getUTCDay(), past = iso < TODAY;
-        cells += past || !wkOk(iso) ? '<span class="mday off' + (wd === 0 || wd === 6 ? " wk" : "") + '"><b>' + dd + '</b></span>'
-          : '<button class="mday' + (wd === 0 || wd === 6 ? " wk" : "") + '" data-mday="' + iso + '" style="background:' + h.bg + ';color:' + h.fg + '" aria-label="' + human(iso) + ': ' + n + ' ' + plural(n, "мероприятие", "мероприятия", "мероприятий") + '"><b>' + dd + '</b><span>' + (n || "—") + '</span></button>';
+      for (var dd = 1; dd <= lastD; dd++) {
+        var iso = ym + "-" + (dd < 10 ? "0" : "") + dd, n = heatOf[iso] || 0, tot = perDay[iso] || 0, h = heat(n, maxD), w = wdOf(iso);
+        var inR = rng && iso >= rng[0] && iso <= rng[1] ? " inrng" : "", sel = S.m.day === iso ? " daysel" : "";
+        if (iso < TODAY || !wkOk(iso)) { cells += '<span class="mday off' + (w === 0 || w === 6 ? " wk" : "") + inR + '"><b>' + dd + '</b></span>'; continue; }
+        var mix = mixDay[iso] || {}, strip = tot ? '<em class="mix">' + SPH.concat(["Прочее"]).filter(function (s) { return mix[s]; }).map(function (s) { return '<i style="flex:' + mix[s] + ';background:' + sphColor(s) + '"></i>'; }).join("") + '</em>' : '';
+        var lbl = human(iso) + ": " + tot + " " + plural(tot, "мероприятие", "мероприятия", "мероприятий") + (S.m.myFormat ? ", из них моего формата " + n : "");
+        cells += '<button class="mday' + (w === 0 || w === 6 ? " wk" : "") + inR + sel + '" data-mday="' + iso + '" style="background:' + h.bg + ';color:' + h.fg + '" aria-label="' + lbl + '" data-ct="' + esc(lbl) + '"><b>' + dd + '</b><span>' + (S.m.myFormat ? (n ? n : '<small>' + (tot || "—") + '</small>') : (tot || "—")) + '</span>' + strip + '</button>';
       }
       return '<div><h3 style="font-weight:500;font-size:15px;margin-bottom:8px;text-transform:capitalize">' + MONTHS_FULL[+ym.slice(5) - 1] + ' ' + ym.slice(0, 4) + '</h3><div class="mcal">' +
-        ["пн", "вт", "ср", "чт", "пт", "сб", "вс"].map(function (w, k) { return '<span class="mwd' + (k >= 5 ? " wk" : "") + '">' + w + '</span>'; }).join("") + cells + '</div></div>';
+        ["пн", "вт", "ср", "чт", "пт", "сб", "вс"].map(function (x, k) { return '<span class="mwd' + (k >= 5 ? " wk" : "") + '">' + x + '</span>'; }).join("") + cells + '</div></div>';
     }).join("");
-    var days = Object.keys(perDay).filter(function (k) { return k >= TODAY; }).sort(function (a, b) { return perDay[b] - perDay[a]; }).slice(0, 7);
-    var freeWk = [];
-    for (var k = 0; k < 91 && freeWk.length < 10; k++) {
-      var iso2 = addDays(TODAY, k), w2 = new Date(iso2 + "T12:00:00Z").getUTCDay();
-      if ((w2 === 5 || w2 === 6 || w2 === 0) && (perDay[iso2] || 0) <= 1) freeWk.push(iso2);
-    }
-    return tools + '<div class="mcal-grid"><section class="card card-pad"><div class="mcal-months">' + cal + '</div><p class="sub" style="margin-top:14px">Цифра — сколько мероприятий в этот день' + (S.m.sphere || S.m.format ? ' в выбранной нише' : '') + '. Нажмите на день, чтобы открыть их в таблице.</p></section>' +
-      '<div style="display:flex;flex-direction:column;gap:20px"><section class="card card-pad"><h2>Самые загруженные дни</h2><ul class="list">' + days.map(function (iso) {
-        var l = base.filter(function (e) { return e.date === iso; }), top = mTop(mCount(l, "format"), 2);
-        return '<li><button class="row-btn" data-mday="' + iso + '"><span style="flex-grow:1"><b style="font-weight:500">' + human(iso) + ', ' + dparts(iso).wd + '</b><span class="sub2" style="display:block">' + esc(top.join(", ")) + '</span></span><span class="num">' + perDay[iso] + '</span></button></li>';
-      }).join("") + '</ul></section>' +
-      '<section class="card card-pad"><h2>Свободные выходные</h2><p class="sub">Пятница–воскресенье в ближайшие 3 месяца, где не больше одного мероприятия' + (S.m.sphere || S.m.format ? ' этой ниши' : '') + '</p><ul class="list">' +
-        (freeWk.length ? freeWk.map(function (iso) { return '<li style="display:flex;justify-content:space-between"><span>' + human(iso) + ', ' + dparts(iso).wd + '</span><span class="sub2">' + (perDay[iso] ? "1 мероприятие" : "пусто") + '</span></li>'; }).join("") : '<li class="sub2">Таких нет — все выходные заняты.</li>') + '</ul></section></div></div>';
+    var busy = Object.keys(perDay).filter(function (k) { return k >= TODAY; }).sort(function (a, b) { return perDay[b] - perDay[a]; }).slice(0, 7);
+    var freeWk = daysList(TODAY, last).filter(function (iso) { return isFriSun(iso) && (S.m.myFormat ? !mineDay[iso] : (perDay[iso] || 0) <= 1); }).slice(0, 12);
+    return tools + '<div class="mcal-grid"><section class="card card-pad"><div class="card-head"><h2>' + esc(S.m.city) + ' — вся афиша, ' + months.length + ' ' + plural(months.length, "месяц", "месяца", "месяцев") + '</h2>' + legendOf("sphere", SPH.concat(["Прочее"])) + '</div>' +
+        '<div class="mcal-months" style="margin-top:12px">' + cal + '</div><p class="sub" style="margin-top:14px">' + (S.m.myFormat ? 'Жирная цифра — сколько мероприятий формата «' + esc(S.m.myFormat) + '», серая — в дни без него: сколько всего. Цвет клетки — по моему формату; всё по дню — в подсказке.' : 'Цифра — сколько мероприятий в день; цвет клетки — насколько день загружен.') + ' Полоска внизу — доли сфер. ' + (rng ? 'Рамкой отмечен период из шапки. ' : '') + 'Нажмите на день — справа появится его список.</p></section>' +
+      '<div style="display:flex;flex-direction:column;gap:20px">' + mDayPanel(S.m.city) +
+        '<section class="card card-pad"><h2>Самые загруженные дни</h2><ul class="list">' + busy.map(function (iso) {
+          var l = cityAll.filter(function (e) { return e.date === iso; }), top = mTop(mCount(l, "format"), 2);
+          return '<li><button class="row-btn" data-mday="' + iso + '"><span style="flex-grow:1"><b style="font-weight:500">' + dayLabel(iso) + '</b><span class="sub2" style="display:block">' + esc(top.join(", ")) + '</span></span><span class="num">' + perDay[iso] + '</span></button></li>';
+        }).join("") + '</ul></section>' +
+        '<section class="card card-pad"><h2>Свободные выходные</h2><p class="sub">Пятница–воскресенье, где ' + (S.m.myFormat ? 'нет мероприятий формата «' + esc(S.m.myFormat) + '»' : 'не больше одного мероприятия') + '</p><ul class="list">' +
+          (freeWk.length ? freeWk.map(function (iso) { return '<li><button class="row-btn" data-mday="' + iso + '"><span style="flex-grow:1">' + dayLabel(iso) + '</span><span class="sub2">' + (perDay[iso] ? perDay[iso] + ' всего' : 'пусто') + '</span></button></li>'; }).join("") : '<li class="sub2">Таких нет.</li>') + '</ul></section></div></div>';
   }
-  // Все города или округ: город × неделя
-  var w0 = mWeekStart(S.period === "custom" ? S.from : TODAY), weeks = [];
-  for (var i = 0; i < 13; i++) weeks.push(addDays(w0, i * 7));
+  if (!base.length) return tools + mEmpty();
+  // Все города или округ: город × неделя, на весь горизонт (до 52 недель)
+  var w0 = mWeekStart(TODAY), weeks = [];
+  for (var i = 0; i < 52 && addDays(w0, i * 7) <= M_HORIZON; i++) weeks.push(addDays(w0, i * 7));
   var byCity = {};
-  base.forEach(function (e) { if (!wkOk(e.date)) return; var wi = Math.floor((Date.parse(e.date) - Date.parse(w0)) / 6048e5); if (wi < 0 || wi > 12) return; var c = byCity[e.city] = byCity[e.city] || { t: 0, w: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] }; c.w[wi]++; c.t++; });
+  base.forEach(function (e) { if (!wkOk(e.date)) return; var wi = Math.floor(dDiff(w0, e.date) / 7); if (wi < 0 || wi >= weeks.length) return; var c = byCity[e.city] = byCity[e.city] || { t: 0, w: weeks.map(function () { return 0; }) }; c.w[wi]++; c.t++; });
   var cities = Object.keys(byCity).sort(function (a, b) { return byCity[b].t - byCity[a].t; });
   var maxW = Math.max.apply(null, cities.map(function (c) { return Math.max.apply(null, byCity[c].w); }).concat([1]));
   var wLabel = function (s) { var e = addDays(s, 6), a = dparts(s), b = dparts(e); return a.mon === b.mon ? a.day + "–" + b.day + " " + a.mon : a.day + " " + a.mon + " – " + b.day + " " + b.mon; };
   return tools + '<section class="card" style="padding:8px 0;overflow:auto;max-height:72vh" tabindex="0" role="region" aria-label="Нагрузка: города по неделям"><table class="heat-table mweeks"><thead><tr><th scope="col">Город</th>' +
       weeks.map(function (s) { return '<th scope="col" title="' + wLabel(s) + '">с ' + human(s) + '</th>'; }).join("") + '<th scope="col">Всего</th></tr></thead><tbody>' +
       cities.map(function (c) {
-        return '<tr><th scope="row">' + esc(c) + '</th>' + byCity[c].w.map(function (n, wi) { var h = heat(n, maxW); return '<td><button class="cell cell-btn" data-mweek="' + weeks[wi] + '" data-mweek-city="' + esc(c) + '" style="background:' + h.bg + ';color:' + h.fg + '" aria-label="' + esc(c) + ', неделя ' + wLabel(weeks[wi]) + ': ' + n + '">' + (n || "") + '</button></td>'; }).join("") +
+        return '<tr><th scope="row"><button class="link-btn" data-mcity="' + esc(c) + '" data-mcity-tab="cal" style="color:var(--ink);font-size:14px;font-weight:500">' + esc(c) + '</button></th>' + byCity[c].w.map(function (n, wi) { var h = heat(n, maxW); return '<td><button class="cell cell-btn" data-mweek="' + weeks[wi] + '" data-mweek-city="' + esc(c) + '" style="background:' + h.bg + ';color:' + h.fg + '" aria-label="' + esc(c) + ', неделя ' + wLabel(weeks[wi]) + ': ' + n + '">' + (n || "") + '</button></td>'; }).join("") +
           '<td><div class="cell" style="font-weight:600">' + byCity[c].t + '</div></td></tr>';
       }).join("") + '</tbody></table></section>' +
-    '<p class="sub" style="margin:0">Сколько мероприятий' + (S.m.wkOnly ? " в пятницу–воскресенье" : "") + ' в каждом городе по неделям. Нажмите на клетку, чтобы открыть неделю в таблице; выберите город в шапке, чтобы увидеть календарь по дням.</p>';
+    '<p class="sub" style="margin:0">Все ' + weeks.length + ' недель горизонта афиши. Нажмите на клетку — неделя откроется в таблице; на город — его календарь по дням.</p>';
 }
 
-// ---------- 5. Гастроли
-var REP_FORMATS = ["Спектакль", "Балет", "Опера", "Мюзикл", "Музыкальный спектакль"];
-function mToursAll(base) {
-  var g = {};
-  base.forEach(function (e) { if (e.tk.length >= 4) (g[e.tk] = g[e.tk] || []).push(e); });
-  return Object.keys(g).map(function (k) {
-    var l = g[k].sort(function (a, b) { return a.date < b.date ? -1 : 1; }), cities = mUniq(l, "city");
-    // Одноимённые постановки разных театров («Щелкунчик», «Ревизор»), а не гастроли: спектакль, балет или опера,
-    // и либо идёт в городе по нескольку раз (репертуар), либо в 15+ городах, либо в основном на театральных сценах
-    var theatre = l.filter(function (e) { return /театр/i.test(e.venue); }).length, perCity = l.length / cities.length;
-    var rep = REP_FORMATS.indexOf(l[0].format) >= 0 && (perCity >= 2 || cities.length >= 15 || theatre >= l.length / 2);
-    return { k: k, l: l, cities: cities, rep: rep };
-  }).filter(function (t) { return t.cities.length >= 2; });
+// ---------- 5. Проекты: гастролирующие программы и где они ещё не были
+// Проект — программа: название без скобок, знаков и служебных слов, слова по алфавиту —
+// так «Оркестр CAGMO: Симфония Майкла Джексона…» и «Симфония Майкла Джексона… Оркестр CAGMO» — один проект.
+var P_STOP = " концерт шоу тур tour группа гр спектакль балет мюзикл опера stand up standup стендап программа при и в на с со the ";
+function projKey(t) {
+  var w = String(t || "").toLowerCase().replace(/ё/g, "е").replace(/\([^)]*\)/g, " ").split(/[^a-zа-я0-9]+/), seen = {}, out = [];
+  w.forEach(function (x) { if (x.length >= 2 && P_STOP.indexOf(" " + x + " ") < 0 && !seen[x]) { seen[x] = 1; out.push(x); } });
+  return out.some(function (x) { return x.length >= 3; }) ? out.sort().join(" ") : "";
 }
-function mTours() {
-  var base = MR.filter(function (e) { return inPeriod(e) && (!S.m.sphere || e.sphere === S.m.sphere) && (!S.m.format || e.format === S.m.format); });
-  var q = S.q.trim().toLowerCase();
-  var all = mToursAll(base), shownAll = all.filter(function (t) { return !(S.m.repOff && t.rep); });
-  var list = shownAll.filter(function (t) { return t.l.some(mInScope) && (!q || t.l[0].title.toLowerCase().indexOf(q) >= 0); })
-    .sort(function (a, b) { return b.cities.length - a.cities.length || (a.l[0].date < b.l[0].date ? -1 : 1); });
-  var repN = all.length - shownAll.length;
-  var tools = '<div class="toolbar"><label class="toggle-inline"><input type="checkbox" data-mcheck="repOff"' + (S.m.repOff ? " checked" : "") + '> Скрыть одноимённые постановки театров <span class="cnt num muted">' + repN + '</span></label><div style="flex-grow:1"></div>' + mNicheSelects(base) + '</div>';
-  var intro = '<p class="sub" style="margin:0">Одно и то же название в двух и более городах списка' + (S.m.city === "Все города" ? "" : ", с остановкой в " + esc(mScopeLabel())) + '. Сравнение по названию без кавычек и слов «концерт», «шоу», «тур». Одноимённые постановки разных театров могут попасть сюда — поэтому они по умолчанию скрыты; а один тур, названный на сайтах по-разному, может оказаться в двух строках.</p>';
-  if (!list.length) return tools + intro + '<div class="empty"><h2>Гастролей не найдено</h2><p style="margin:0">Измените город, даты или нишу.</p></div>';
+MR.forEach(function (e) { e.pk = projKey(e.title); });
+var REP_FORMATS = ["Спектакль", "Балет", "Опера", "Мюзикл", "Музыкальный спектакль"];
+function mostOf(l, key) { return mTop(mCount(l.filter(function (e) { return e[key]; }), key), 1)[0] || ""; }
+var PROJ_CACHE = { key: null, list: [] };
+function mProjectsAll() {
+  var ck = [S.period, S.from, S.to, S.m.sphere, S.m.format].join("|");
+  if (PROJ_CACHE.key === ck) return PROJ_CACHE.list;
+  var g = {};
+  MR.forEach(function (e) { if (e.pk && inPeriod(e) && (!S.m.sphere || e.sphere === S.m.sphere) && (!S.m.format || e.format === S.m.format)) (g[e.pk] = g[e.pk] || []).push(e); });
+  var list = Object.keys(g).map(function (k) {
+    var l = g[k].sort(function (a, b) { return a.date < b.date ? -1 : 1; }), cities = mUniq(l, "city");
+    if (cities.length < 2) return null;
+    var fmt = mostOf(l, "format"), theatre = l.filter(function (e) { return /театр/i.test(e.venue); }).length;
+    // Одноимённые постановки разных театров («Щелкунчик»), а не гастроли: репертуар в городе, 15+ городов или театральные сцены
+    var rep = REP_FORMATS.indexOf(fmt) >= 0 && (l.length / cities.length >= 2 || cities.length >= 15 || theatre >= l.length / 2);
+    return { k: k, l: l, cities: cities, title: mostOf(l, "title"), format: fmt, genre: mostOf(l, "genre"), rep: rep,
+      pmin: Math.min.apply(null, l.map(function (e) { return e.pmin || 1e9; })), pmax: Math.max.apply(null, l.map(function (e) { return e.pmax || 0; })),
+      fresh: l.some(function (e) { return mIsNew(e, 7); }), missing: MK.cities.length - cities.length };
+  }).filter(Boolean);
+  PROJ_CACHE = { key: ck, list: list };
+  return list;
+}
+function miniTimeline(l) {
+  var W = 180, x = function (d) { return Math.max(0, Math.min(W, dDiff(TODAY, d) / 365 * W)); };
+  return '<svg width="' + W + '" height="18" aria-hidden="true" style="display:block"><line x1="0" x2="' + W + '" y1="9" y2="9" stroke="#e8e6e5"/>' +
+    l.map(function (e) { return '<line x1="' + x(e.date).toFixed(1) + '" x2="' + x(e.date).toFixed(1) + '" y1="3" y2="15" stroke="#1d6fae" stroke-width="1.5"/>'; }).join("") + '</svg>';
+}
+function mProjects() {
+  if (S.m.project) return mProjectDetail(S.m.project);
+  var all = mProjectsAll(), q = S.q.trim().toLowerCase(), single = mSingleCity();
+  var repN = all.filter(function (p) { return p.rep; }).length;
+  var list = all.filter(function (p) {
+    if (S.m.repOff && p.rep) return false;
+    if (p.cities.length < +S.m.pminCities) return false;
+    if (q && p.title.toLowerCase().indexOf(q) < 0) return false;
+    if (S.m.city === "Все города") return true;
+    var inScope = p.l.some(mInScope);
+    return single && S.m.pmode === "out" ? !inScope : inScope;
+  });
+  var sorts = { cities: function (a, b) { return b.cities.length - a.cities.length; }, dates: function (a, b) { return b.l.length - a.l.length; },
+    soon: function (a, b) { return a.l[0].date < b.l[0].date ? -1 : 1; }, fresh: function (a, b) { return (b.fresh - a.fresh) || (b.cities.length - a.cities.length); } };
+  list.sort(sorts[S.m.psort] || sorts.cities);
+  var seg = function (key, items) { return '<div class="seg" role="group">' + items.map(function (it) { return '<button data-mset="' + key + '" data-mval="' + it[0] + '" aria-pressed="' + (S.m[key] === it[0]) + '">' + it[1] + '</button>'; }).join("") + '</div>'; };
+  var tools = '<div class="toolbar">' +
+    (single ? seg("pmode", [["in", "Заезжают в " + S.m.city], ["out", "Не заезжают в " + S.m.city]]) : '') +
+    '<label class="pill-label"><span class="sub2">Городов от</span>' + seg("pminCities", [["2", "2"], ["3", "3"], ["5", "5"], ["10", "10"]]) + '</label>' +
+    '<select class="chip-select" data-msel="psort" aria-label="Сортировка">' + [["cities", "Больше городов"], ["dates", "Больше дат"], ["soon", "Ближайшие"], ["fresh", "Новые туры"]].map(function (o) { return '<option value="' + o[0] + '"' + (S.m.psort === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
+    '<div style="flex-grow:1"></div>' + mNicheSelects(MR.filter(inPeriod)) + '</div>' +
+    '<label class="toggle-inline"><input type="checkbox" data-mcheck="repOff"' + (S.m.repOff ? " checked" : "") + '> Скрыть одноимённые постановки театров («Щелкунчик» в 40 городах — не один тур) <span class="cnt num muted">' + repN + '</span></label>';
+  if (!list.length) return tools + '<div class="empty"><h2>Проектов не найдено</h2><p style="margin:0">Измените город, даты, нишу или порог городов.</p></div>';
   var shown = list.slice(0, S.m.limit);
-  return tools + intro + '<section class="card"><div class="tours">' + shown.map(function (t) {
-      var e0 = t.l[0], route = t.l.slice(0, 10).map(function (e) { return '<button class="stop' + (mInScope(e) && S.m.city !== "Все города" ? " here" : "") + '" data-mopen="' + e.i + '">' + esc(e.city) + ' <span class="num">' + human(e.date) + '</span></button>'; }).join("");
-      return '<div class="tour"><div class="tour-main"><button class="ev-title" data-mopen="' + e0.i + '">' + esc(e0.title) + '</button><div class="sub2">' + esc(e0.format) + (e0.genre && e0.genre !== e0.format ? ' · ' + esc(e0.genre) : '') + ' · ' + t.l.length + ' ' + plural(t.l.length, "дата", "даты", "дат") + ', ' + human(e0.date) + ' – ' + human(t.l[t.l.length - 1].date) + '</div></div>' +
-        '<div class="tour-n"><b class="num">' + t.cities.length + '</b><span class="sub2">' + plural(t.cities.length, "город", "города", "городов") + '</span></div>' +
-        '<div class="route">' + route + (t.l.length > 10 ? '<span class="sub2">и ещё ' + (t.l.length - 10) + '</span>' : '') + '</div></div>';
-    }).join("") + '</div></section>' +
-    (list.length > shown.length ? '<div style="display:flex;justify-content:center;gap:12px;align-items:center"><span class="sub" style="margin:0">Показано ' + shown.length + ' из ' + list.length + '</span><button class="btn-ghost" data-maction="more">Показать ещё</button></div>' : '');
+  return tools + '<p class="sub" style="margin:0">' + num(list.length) + ' ' + plural(list.length, "проект", "проекта", "проектов") + ' в 2+ городах' + (single ? (S.m.pmode === "out" ? ' — ни одной даты в ' + esc(S.m.city) + ': кого можно привезти' : ', заезжающих в ' + esc(S.m.city)) : '') +
+      '. «Не был» — в скольких городах из ' + MK.cities.length + ' его нет в афише (прошлые приезды копятся с ' + human(MK.first) + ').</p>' +
+    '<section class="card" style="overflow:auto"><table class="vtable ptable"><thead><tr><th scope="col">Проект</th><th scope="col" class="r">Городов</th><th scope="col" class="r">Дат</th><th scope="col">Даты на год вперёд</th><th scope="col" class="r">Цены</th><th scope="col" class="r">Не был</th></tr></thead><tbody>' +
+      shown.map(function (p) {
+        return '<tr class="prow" data-mproj="' + esc(p.k) + '"><th scope="row"><button class="ev-title" data-mproj="' + esc(p.k) + '">' + esc(p.title) + '</button><div class="sub2">' + esc(p.format) + (p.genre && p.genre !== p.format ? ' · ' + esc(p.genre) : '') + (p.fresh ? ' <span class="badge-new">новый тур</span>' : '') + '</div></th>' +
+          '<td class="r"><b class="num" style="font-weight:500;font-size:16px">' + p.cities.length + '</b></td><td class="r num">' + p.l.length + '</td>' +
+          '<td><div data-ct="' + esc(p.l.length + " " + plural(p.l.length, "дата", "даты", "дат") + ": " + human(p.l[0].date) + " – " + human(p.l[p.l.length - 1].date)) + '">' + miniTimeline(p.l) + '</div><div class="sub2">' + human(p.l[0].date) + ' – ' + human(p.l[p.l.length - 1].date) + '</div></td>' +
+          '<td class="r num nowrap">' + (p.pmax ? prices({ pmin: p.pmin < 1e9 ? p.pmin : p.pmax, pmax: p.pmax }) : '<span class="muted">—</span>') + '</td>' +
+          '<td class="r num">' + p.missing + '</td></tr>';
+      }).join("") + '</tbody></table></section>' +
+    (list.length > shown.length ? '<div style="display:flex;justify-content:center;gap:12px;align-items:center"><span class="sub" style="margin:0">Показано ' + shown.length + ' из ' + num(list.length) + '</span><button class="btn-ghost" data-maction="more">Показать ещё</button></div>' : '');
+}
+
+// Расстояние по прямой между городами, км (координаты — OpenStreetMap, в market-geo.js)
+function geoKm(a, b) {
+  if (typeof MGEO === "undefined" || !MGEO.cities[a] || !MGEO.cities[b]) return null;
+  var p = MGEO.cities[a], q = MGEO.cities[b], r = Math.PI / 180;
+  var h = Math.pow(Math.sin((q[2] - p[2]) * r / 2), 2) + Math.cos(p[2] * r) * Math.cos(q[2] * r) * Math.pow(Math.sin((q[3] - p[3]) * r / 2), 2);
+  return Math.round(12742 * Math.asin(Math.sqrt(h)));
+}
+// Кандидаты: города списка без этого проекта. «По пути» — город между двумя соседними остановками, куда
+// можно заехать без большого крюка (крюк ≤ 150 км или 35% перегона) и между ними есть свободный день.
+function mCandidates(p) {
+  var stops = []; p.l.forEach(function (e) { var s = stops[stops.length - 1]; if (!s || s.city !== e.city) stops.push({ city: e.city, date: e.date, last: e.date }); else s.last = e.date; });
+  var out = [];
+  MK.cities.forEach(function (c) {
+    if (p.cities.indexOf(c) >= 0) return;
+    var best = null;
+    for (var k = 0; k + 1 < stops.length; k++) {
+      var A = stops[k], B = stops[k + 1], gap = dDiff(A.last, B.date), ab = geoKm(A.city, B.city), ac = geoKm(A.city, c), cb = geoKm(c, B.city);
+      // Реальный переезд между соседними выступлениями: до 800 км и до 2 недель, между ними есть свободный день
+      if (gap < 2 || gap > 14 || ab == null || ac == null || ab > 800) continue;
+      var detour = ac + cb - ab;
+      if (detour <= Math.max(60, Math.min(150, ab * 0.35)) && (!best || detour < best.detour))
+        best = { kind: "path", detour: detour, where: A.city + " " + human(A.last) + " → " + B.city + " " + human(B.date), from: addDays(A.last, 1), to: addDays(B.date, -1) };
+    }
+    var dists = stops.map(function (s) { return { s: s, d: geoKm(s.city, c) }; }).filter(function (x) { return x.d != null; }).sort(function (a, b) { return a.d - b.d; });
+    var near = dists[0];
+    if (!best && near && near.d <= 350) {
+      var first = stops[0], last = stops[stops.length - 1];
+      if (near.s === first) best = { kind: "start", where: "рядом с началом — " + first.city, from: addDays(first.date, -10), to: addDays(first.date, -1) };
+      else if (near.s === last) best = { kind: "end", where: "рядом с концом — " + last.city, from: addDays(last.last, 1), to: addDays(last.last, 10) };
+      else best = { kind: "near", where: "рядом с " + near.s.city + " (" + human(near.s.date) + ")", from: addDays(near.s.date, -3), to: addDays(near.s.last, 3) };
+    }
+    var c0 = { city: c, near: near ? near.d : null, nearCity: near ? near.s.city : "", kind: best ? best.kind : "far", where: best ? best.where : "", from: best ? best.from : null, to: best ? best.to : null, detour: best && best.detour };
+    if (c0.from) {
+      if (c0.from < TODAY) c0.from = TODAY;
+      if (c0.to >= c0.from) {
+        var comp = mComp(c, c0.from, c0.to, p.format, "", 3), bd = bestDates(comp, c0.from, c0.to, 1)[0] || daysList(c0.from, c0.to).map(function (d) { return { d: d, v: comp.idx[d] }; }).sort(function (a, b) { return a.v - b.v; })[0];
+        c0.best = bd; c0.sameN = comp.same.filter(function (e) { return e.date >= c0.from && e.date <= c0.to; }).length;
+      } else c0.from = null;
+    }
+    c0.price = median((MR_CITY[c] || []).filter(function (e) { return e.format === p.format; }).map(function (e) { return e.pmin; }));
+    c0.events = (MR_CITY[c] || []).length;
+    out.push(c0);
+  });
+  var rank = { path: 0, start: 1, end: 1, near: 2, far: 3 };
+  return out.sort(function (a, b) { return rank[a.kind] - rank[b.kind] || (a.kind === "path" ? a.detour + a.near * 0.3 - b.detour - b.near * 0.3 : (a.near || 9e9) - (b.near || 9e9)); });
+}
+function mapSvg(p, cands) {
+  if (typeof MGEO === "undefined") return '<div class="note">Карта не загружена — нет файла market-geo.js.</div>';
+  var G = MGEO, pos = function (c) { return G.cities[c]; }, onPath = {}, top = {};
+  cands.forEach(function (c, k) { if (c.kind === "path") { onPath[c.city] = c; if (k < 10) top[c.city] = 1; } });
+  // Окно карты — по маршруту и кандидатам, а не по всей стране: так видно, куда тянуть тур
+  var inv = p.cities.concat(Object.keys(onPath)).filter(pos), xs = inv.map(function (c) { return pos(c)[0]; }), ys = inv.map(function (c) { return pos(c)[1]; });
+  var x0 = Math.min.apply(null, xs), x1 = Math.max.apply(null, xs), y0 = Math.min.apply(null, ys), y1 = Math.max.apply(null, ys);
+  var wv = Math.max(260, x1 - x0) + 80, hv = Math.max(180, y1 - y0) + 60, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+  var view = [cx - wv / 2, cy - hv / 2, wv, hv].map(function (v) { return v.toFixed(0); }), fs = (wv / 60).toFixed(1), rr = wv / 160;
+  var route = p.l.filter(function (e) { return pos(e.city); }), pts = route.map(function (e) { return pos(e.city)[0].toFixed(1) + "," + pos(e.city)[1].toFixed(1); });
+  var dots = MK.cities.filter(function (c) { return pos(c) && p.cities.indexOf(c) < 0 && !onPath[c]; }).map(function (c) {
+    return '<circle cx="' + pos(c)[0] + '" cy="' + pos(c)[1] + '" r="' + (rr * 0.6).toFixed(1) + '" fill="#a8a29e" data-ct="' + esc(c + " — нет в туре") + '"/>';
+  }).join("");
+  var cand = Object.keys(onPath).map(function (c) {
+    return '<circle cx="' + pos(c)[0] + '" cy="' + pos(c)[1] + '" r="' + rr.toFixed(1) + '" fill="#eb6834" stroke="#fff" stroke-width="' + (rr * 0.35).toFixed(1) + '" data-ct="' + esc(c + " — по пути: " + onPath[c].where + ", крюк " + onPath[c].detour + " км") + '"/>' +
+      (top[c] ? '<text x="' + (pos(c)[0] + rr * 1.4).toFixed(1) + '" y="' + (pos(c)[1] + rr * 0.7).toFixed(1) + '" font-size="' + fs + '" fill="#44403c" paint-order="stroke" stroke="#fff" stroke-width="' + (fs / 4).toFixed(1) + '">' + esc(c) + '</text>' : '');
+  }).join("");
+  var stopsDots = p.cities.filter(pos).map(function (c) {
+    var ds = p.l.filter(function (e) { return e.city === c; }).map(function (e) { return human(e.date); }).join(", ");
+    return '<circle cx="' + pos(c)[0] + '" cy="' + pos(c)[1] + '" r="' + rr.toFixed(1) + '" fill="#1d6fae" stroke="#fff" stroke-width="' + (rr * 0.35).toFixed(1) + '" data-ct="' + esc(c + " — " + ds) + '"/>';
+  }).join("");
+  return '<svg viewBox="' + view.join(" ") + '" width="100%" role="img" aria-label="Карта маршрута" style="display:block;max-height:480px;background:#fcfcfb"><path d="' + G.outline + '" fill="#f5f5f4" stroke="#d6d3d1" stroke-width="1" vector-effect="non-scaling-stroke"/>' +
+    '<polyline points="' + pts.join(" ") + '" fill="none" stroke="#1d6fae" stroke-width="1.5" stroke-opacity=".55" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>' + dots + stopsDots + cand + '</svg>' +
+    '<div class="legend" style="margin-top:8px;flex-wrap:wrap"><span><i class="sw" style="background:#1d6fae;border-radius:50%"></i>в туре</span><span><i class="sw" style="background:#eb6834;border-radius:50%"></i>по пути — можно добавить (подписаны 10 лучших)</span><span><i class="sw" style="background:#a8a29e;border-radius:50%"></i>остальные города списка</span></div>';
+}
+function mRouteTimeline(p) {
+  var order = []; p.l.forEach(function (e) { if (order.indexOf(e.city) < 0) order.push(e.city); });
+  var a = addDays(p.l[0].date, -3), b = addDays(p.l[p.l.length - 1].date, 3), n = Math.max(1, dDiff(a, b));
+  var W = 1000, lw = 150, rh = 22, pt = 20, H = pt + order.length * rh + 6;
+  var x = function (d) { return lw + dDiff(a, d) / n * (W - lw - 10); }, y = function (c) { return pt + order.indexOf(c) * rh + rh / 2; };
+  var path = p.l.map(function (e) { return x(e.date).toFixed(1) + "," + y(e.city); }).join(" ");
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Маршрут по датам" style="display:block">' + monthTicks(a, b, x) +
+    order.map(function (c) { return '<text x="' + (lw - 10) + '" y="' + (y(c) + 4) + '" font-size="12" fill="#44403c" text-anchor="end">' + esc(c) + '</text><line x1="' + lw + '" x2="' + (W - 10) + '" y1="' + y(c) + '" y2="' + y(c) + '" stroke="#f5f5f4"/>'; }).join("") +
+    '<polyline points="' + path + '" fill="none" stroke="#7ab9e8" stroke-width="1.5" stroke-linejoin="round"/>' +
+    p.l.map(function (e) { return '<circle cx="' + x(e.date).toFixed(1) + '" cy="' + y(e.city) + '" r="5" fill="#1d6fae" stroke="#fff" stroke-width="2" class="hov-dot" data-mopen="' + e.i + '" data-ct="' + esc(dayLabel(e.date) + (e.time ? ", " + e.time : "") + " · " + e.city + " · " + e.venue + (e.pmin ? " · " + prices(e) : "")) + '"/>'; }).join("") + '</svg>';
+}
+function mProjectDetail(k) {
+  var l = MR.filter(function (e) { return e.pk === k; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+  if (!l.length) { S.m.project = null; return mProjects(); }
+  var cities = mUniq(l, "city"), fmt = mostOf(l, "format"), genre = mostOf(l, "genre");
+  var p = { k: k, l: l, cities: cities, format: fmt, genre: genre, title: mostOf(l, "title") };
+  var cands = mCandidates(p), shownC = S.m.candAll ? cands : cands.slice(0, 25);
+  var pmin = Math.min.apply(null, l.map(function (e) { return e.pmin || 1e9; })), pmax = Math.max.apply(null, l.map(function (e) { return e.pmax || 0; }));
+  var ours = ALL.filter(function (e) { return projKey(e.title) === k; });
+  var kindTxt = { path: "по пути", start: "перед туром", end: "после тура", near: "рядом", far: "" };
+  return '<div><button class="btn-ghost" data-maction="proj-back">← Все проекты</button></div>' +
+    '<div><h2 style="font-weight:400;font-size:28px;line-height:1.2;letter-spacing:-0.02em">' + esc(p.title) + '</h2><div class="chips">' + [fmt, genre].filter(function (c, i, a) { return c && a.indexOf(c) === i; }).map(function (c) { return '<span class="chip">' + esc(c) + '</span>'; }).join("") + '</div></div>' +
+    '<section class="card kpis k4" aria-label="Проект"><div><div class="kpi-label">Городов</div><div class="kpi-value num">' + cities.length + '</div><div class="sub" style="margin:0">нет в ' + (MK.cities.length - cities.length) + ' из ' + MK.cities.length + '</div></div>' +
+      '<div><div class="kpi-label">Дат</div><div class="kpi-value num">' + l.length + '</div><div class="sub" style="margin:0">' + human(l[0].date) + ' – ' + human(l[l.length - 1].date) + '</div></div>' +
+      '<div><div class="kpi-label">Цены</div><div class="kpi-value">' + (pmax ? prices({ pmin: pmin < 1e9 ? pmin : pmax, pmax: pmax }) : "—") + '</div><div class="sub" style="margin:0">от и до по всем датам</div></div>' +
+      '<div><div class="kpi-label">По пути можно добавить</div><div class="kpi-value num">' + cands.filter(function (c) { return c.kind === "path"; }).length + '</div><div class="sub" style="margin:0">городов без крюка</div></div></section>' +
+    '<section class="card card-pad"><h2>Маршрут по датам</h2><p class="sub">Точка — выступление; линия соединяет их по порядку. Нажмите на точку — карточка мероприятия.</p>' + mRouteTimeline(p) + '</section>' +
+    '<div class="proj-grid"><section class="card card-pad"><h2>Карта</h2>' + mapSvg(p, cands) + '</section>' +
+      '<section class="card card-pad"><h2>Продажи</h2>' + (ours.length ? '<p class="sub">Этот проект есть на площадках, где мы собираем схемы залов:</p><ul class="list">' + ours.map(function (e) {
+        return '<li><button class="row-btn" data-open="' + e.i + '"><span style="flex-grow:1"><b style="font-weight:500">' + human(e.date) + ' · ' + esc(e.venue) + '</b><span class="sub2" style="display:block">' + (e.gross ? 'заполнено ' + fill(e) + '% · занято ' + num(e.taken) + ' из ' + num(e.sellable) : 'без онлайн-продажи') + '</span></span><span class="sub2">карточка →</span></button></li>';
+      }).join("") + '</ul>' : '<div class="note" style="margin-top:8px">Продажи видны там, где мы собираем схемы залов: сейчас Владимир (ОДКиИ, Арт Холл) и Иваново (ЦКиО, Музыкальный театр). Этот проект туда не заезжает. Позже — слежение за схемами и в других городах на сайтах движка vladimirkoncert (Кострома, Ярославль, Ковров).</div>') + '</section></div>' +
+    '<section class="card" style="overflow:auto"><div class="card-pad" style="padding-bottom:0"><h2>Города, где его нет</h2><p class="sub">Сначала — «по пути»: между соседними выступлениями (переезд до 800 км и до 2 недель), крюк до 150 км, есть свободный день. Конкуренция — мероприятия того же формата («' + esc(fmt) + '») в окне дат. «Разобрать» открывает город на вкладке «Город» с этим окном и форматом.</p></div>' +
+      '<table class="vtable"><thead><tr><th scope="col">Город</th><th scope="col">Где в маршруте</th><th scope="col" class="r">До тура, км</th><th scope="col">Окно дат</th><th scope="col" class="r">Конкурентов в окне</th><th scope="col">Лучшая дата</th><th scope="col" class="r">Цены формата</th><th scope="col"><span class="sr-only">Действие</span></th></tr></thead><tbody>' +
+      shownC.map(function (c) {
+        return '<tr><th scope="row"><b style="font-weight:500">' + esc(c.city) + '</b><div class="sub2">' + esc(MK.fo[c.city]) + ' ФО · ' + c.events + ' мер.</div></th>' +
+          '<td>' + (c.kind !== "far" ? '<span class="tag"' + (c.kind === "path" ? ' style="background:#fdeee6;border-color:#fdeee6;color:#9a3412"' : '') + '>' + kindTxt[c.kind] + '</span><div class="sub2">' + esc(c.where) + (c.detour != null && c.kind === "path" ? ', крюк ' + c.detour + ' км' : '') + '</div>' : '<span class="sub2">далеко от маршрута</span>') + '</td>' +
+          '<td class="r num">' + (c.near != null ? num(c.near) : '—') + '<div class="sub2">' + esc(c.nearCity) + '</div></td>' +
+          '<td class="nowrap">' + (c.from ? human(c.from) + ' – ' + human(c.to) : '<span class="muted">—</span>') + '</td>' +
+          '<td class="r num">' + (c.from ? c.sameN : '—') + '</td>' +
+          '<td>' + (c.best ? '<b style="font-weight:500">' + dayLabel(c.best.d) + '</b><div class="sub2">' + compLabel(c.best.v) + '</div>' : '<span class="muted">—</span>') + '</td>' +
+          '<td class="r num nowrap">' + (c.price ? 'от ' + num(c.price) + ' ₽' : '<span class="muted">—</span>') + '</td>' +
+          '<td><button class="btn-ghost" data-mcity-go="' + esc(c.city) + '" data-from="' + (c.from || addDays(l[0].date, -7)) + '" data-to="' + (c.to || addDays(l[l.length - 1].date, 7)) + '" data-fmt="' + esc(fmt) + '" data-genre="' + esc(genre) + '">Разобрать</button></td></tr>';
+      }).join("") + '</tbody></table>' +
+      (cands.length > shownC.length ? '<div style="display:flex;justify-content:center;padding:12px"><button class="btn-ghost" data-maction="cand-all">Показать все ' + cands.length + '</button></div>' : '') + '</section>' +
+    '<section class="card card-pad"><h2>Все даты · ' + l.length + '</h2><ul class="list">' + (S.m.datesAll ? l : l.slice(0, 15)).map(function (e) {
+      return '<li><button class="row-btn" data-mopen="' + e.i + '"><span class="nowrap" style="width:120px;flex-shrink:0">' + dayLabel(e.date) + '</span><span style="flex-grow:1;min-width:0">' + esc(e.city) + '<span class="sub2" style="display:block">' + esc(e.venue) + '</span></span><span class="sub2 nowrap">' + (e.pmin ? prices(e) : '') + '</span></button></li>';
+    }).join("") + '</ul>' + (!S.m.datesAll && l.length > 15 ? '<div style="display:flex;justify-content:center;padding-top:12px"><button class="btn-ghost" data-maction="dates-all">Показать все ' + l.length + '</button></div>' : '') + '</section>';
+}
+
+// ---------- 3. Города × ниши: столбцы вместо тепловой карты
+function mHeatBars(base, dim, single, rowsK, catCnt) {
+  var share = S.m.meas === "share";
+  if (single) {  // одна серия: категории города
+    var tot = base.length, cats = mTop(catCnt), maxV = share ? 100 : catCnt[cats[0]];
+    return '<section class="card card-pad"><div class="sbars">' + cats.map(function (c) {
+      var v = catCnt[c], p = v / tot * 100, w = (share ? p : v) / maxV * 100;
+      return '<button class="sbar seg-btn" data-mcell-dim="' + dim + '" data-mcell-cat="' + esc(c) + '" data-ct="' + esc(c + ": " + v + " (" + Math.round(p) + "%)") + '"><span class="sbar-name">' + esc(c) + '</span><span class="sbar-track"><i style="width:' + w.toFixed(1) + '%;background:' + catColor(dim, c) + '"></i></span><span class="sbar-val num">' + (share ? Math.round(p) + '%' : v) + '</span></button>';
+    }).join("") + '</div></section>';
+  }
+  var names = (dim === "sphere" ? SPH : (catColor(dim, ""), CAT_SLOTS[dim])).concat(["Прочее"]);
+  var rows = rowsK.map(function (city) {
+    var l = base.filter(function (e) { return e.city === city; }), c = {};
+    l.forEach(function (e) { var n = catName(dim, e); c[n] = (c[n] || 0) + 1; });
+    return { city: city, c: c, t: l.length };
+  });
+  var present = names.filter(function (n) { return rows.some(function (r) { return r.c[n]; }); });
+  var maxT = Math.max.apply(null, rows.map(function (r) { return r.t; }).concat([1]));
+  return legendOf(dim, present) + '<section class="card card-pad" style="max-height:72vh;overflow:auto" tabindex="0" role="region" aria-label="Столбцы: города по нишам"><div class="sbars">' + rows.map(function (r) {
+    var len = share ? 100 : r.t / maxT * 100;
+    return '<div class="sbar"><span class="sbar-name">' + esc(r.city) + '<span class="sub2" style="display:block">' + esc(MK.fo[r.city]) + '</span></span><span class="sbar-track"><span class="stack" style="width:' + len.toFixed(1) + '%">' +
+      present.filter(function (n) { return r.c[n]; }).map(function (n) {
+        return '<button class="seg-btn" data-mcell-dim="' + dim + '" data-mcell-cat="' + esc(n === "Прочее" ? "Не определено" : n) + '" data-mcell-city="' + esc(r.city) + '" style="flex:' + r.c[n] + ';background:' + catColor(dim, n) + '" data-ct="' + esc(r.city + " · " + n + ": " + r.c[n] + " (" + Math.round(r.c[n] / r.t * 100) + "%)") + '" aria-label="' + esc(r.city + ", " + n + ": " + r.c[n]) + '"></button>';
+      }).join("") + '</span></span><span class="sbar-val num">' + r.t + '</span></div>';
+  }).join("") + '</div></section>';
 }
 
 // ---------- 6. Площадки
@@ -2836,7 +3363,7 @@ function mDrawer(e) {
     (e.genre ? '' : '<span class="chip" style="color:var(--muted);border-style:dashed">жанр не определён</span>') +
     (e.pushkin ? '<span class="chip" style="background:#dcebf8;border-color:#dcebf8;color:#104a78">Пушкинская карта</span>' : '') +
     (e.age ? '<span class="chip">' + esc(e.age) + '</span>' : '') + (mIsNew(e, 1) ? '<span class="chip" style="background:#dcebf8;border-color:#dcebf8;color:#104a78">Новое</span>' : '');
-  var same = MR.filter(function (x) { return x.tk === e.tk && x.i !== e.i; });
+  var same = e.pk ? MR.filter(function (x) { return x.pk === e.pk && x.i !== e.i; }) : [];
   var here = same.filter(function (x) { return x.city === e.city; }), away = same.filter(function (x) { return x.city !== e.city; });
   var line = function (x) { return '<li><button class="row-btn" data-mopen="' + x.i + '"><span class="nowrap" style="width:118px;flex-shrink:0">' + human(x.date) + ', ' + dparts(x.date).wd + '</span><span style="flex-grow:1;min-width:0">' + esc(x.city) + '<span class="sub2" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(x.venue) + '</span></span><span class="sub2 nowrap">' + (x.pmin ? prices(x) : "") + '</span></button></li>'; };
   var links = (e.urlK ? '<a href="' + esc(e.urlK) + '" target="_blank" rel="noopener" class="pill" style="justify-content:center;height:44px;color:var(--ink);font-weight:500;flex:1">Открыть на Кассире ↗</a>' : '') +
@@ -2855,7 +3382,7 @@ function mDrawer(e) {
     '<div class="note">Для рынка собирается только афиша — заполняемость, вал и выручка не считаются. Чтобы следить за продажами площадки, подключите её в «Настройки → Площадки».</div>' +
     (here.length ? '<section><h3 style="font-weight:500;font-size:15px;margin-bottom:4px">Другие даты в ' + esc(e.city) + '</h3><ul class="list">' + here.slice(0, 12).map(line).join("") + '</ul></section>' : '') +
     '<section><h3 style="font-weight:500;font-size:15px;margin-bottom:4px">Гастроли — в других городах</h3>' + (away.length ? '<ul class="list">' + away.slice(0, 30).map(line).join("") + '</ul>' + (away.length > 30 ? '<p class="sub">И ещё ' + (away.length - 30) + '.</p>' : '') : '<div class="note" style="margin-top:8px">В других городах списка такого названия нет.</div>') + '</section>' +
-    '<div style="display:flex;gap:10px;flex-wrap:wrap">' + links + '</div>';
+    '<div style="display:flex;gap:10px;flex-wrap:wrap">' + links + (mUniq(same, "city").filter(function (c) { return c !== e.city; }).length ? '<button class="pill" data-mproj="' + esc(e.pk) + '" style="justify-content:center;height:44px;font-weight:500;flex:1">Открыть проект: маршрут и где его нет →</button>' : '') + '</div>';
 }
 function openMDrawer(i) {
   var e = MR[i]; if (!e) return;
@@ -2866,7 +3393,7 @@ function mGo(patch) { for (var k in patch) S.m[k] = patch[k]; S.m.limit = 200; S
 
 $("view").addEventListener("click", function (ev) {
   if (S.view !== "market" || ev.target.closest(".resizer") || ev.target.closest("a")) return;
-  var t = ev.target.closest("[data-mtab],[data-mf],[data-msort],[data-mset],[data-mopen],[data-maction],[data-mclear],[data-mday],[data-mweek],[data-mvenue],.cell-btn,tr[data-mi]");
+  var t = ev.target.closest("[data-mtab],[data-mf],[data-msort],[data-mset],[data-mopen],[data-maction],[data-mclear],[data-msph],[data-mproj],[data-mcity],[data-mcity-go],[data-mweekcity],.seg-btn,[data-mday],[data-mweek],[data-mvenue],.cell-btn,tr[data-mi]");
   if (!t) return;
   if (t.hasAttribute("data-mtab")) { S.m.tab = t.getAttribute("data-mtab"); S.m.limit = 200; S.enter = true; render(); }
   else if (t.hasAttribute("data-mf")) { S.m.filter = t.getAttribute("data-mf"); S.m.limit = 200; render(); }
@@ -2875,10 +3402,19 @@ $("view").addEventListener("click", function (ev) {
   else if (t.getAttribute("data-maction") === "more") { S.m.limit += 200; render(); }
   else if (t.hasAttribute("data-mclear")) { S.m[t.getAttribute("data-mclear")] = ""; render(); }
   else if (t.getAttribute("data-maction") === "reset-cols") { S.m.hidden = window.innerWidth < 1600 ? ["seen"] : []; S.m.widths = {}; saveMPrefs(); render(); }
-  else if (t.hasAttribute("data-mday")) { var iso = t.getAttribute("data-mday"); S.period = "custom"; S.from = S.to = iso; mGo({ tab: "table" }); }
+  else if (t.hasAttribute("data-mday")) { var iso = t.getAttribute("data-mday"); if (S.m.tab === "city" || S.m.tab === "cal") { S.m.day = S.m.day === iso ? null : iso; render(); var dp = document.querySelector(".day-panel"); if (dp && S.m.day) dp.scrollIntoView({ block: "nearest", behavior: "smooth" }); } else { S.period = "custom"; S.from = S.to = iso; mGo({ tab: "table" }); } }
+  else if (t.getAttribute("data-maction") === "day-close") { S.m.day = null; render(); }
+  else if (t.getAttribute("data-maction") === "proj-back") { S.m.project = null; S.m.candAll = false; render(); window.scrollTo(0, 0); }
+  else if (t.getAttribute("data-maction") === "cand-all") { S.m.candAll = true; render(); }
+  else if (t.getAttribute("data-maction") === "dates-all") { S.m.datesAll = true; render(); }
+  else if (t.hasAttribute("data-msph")) { var sp = t.getAttribute("data-msph"); S.m.openSph = S.m.openSph === sp ? null : sp; render(); }
+  else if (t.hasAttribute("data-mproj")) { S.m.project = t.getAttribute("data-mproj"); S.m.candAll = false; S.m.datesAll = false; S.m.tab = "projects"; S.enter = true; closeDrawer(); render(); window.scrollTo(0, 0); }
+  else if (t.hasAttribute("data-mcity-go")) { S.period = "custom"; S.from = t.getAttribute("data-from"); S.to = t.getAttribute("data-to"); S.m.myFormat = t.getAttribute("data-fmt"); S.m.myGenre = t.getAttribute("data-genre"); S.m.day = null; mGo({ tab: "city", city: t.getAttribute("data-mcity-go"), venue: "" }); }
+  else if (t.hasAttribute("data-mcity")) { S.m.day = null; mGo({ city: t.getAttribute("data-mcity"), venue: "", tab: t.getAttribute("data-mcity-tab") || S.m.tab }); }
+  else if (t.hasAttribute("data-mweekcity")) { var wk0 = t.getAttribute("data-mweekcity"); S.period = "custom"; S.from = wk0; S.to = addDays(wk0, 6); mGo({ tab: "table" }); }
   else if (t.hasAttribute("data-mweek")) { var w = t.getAttribute("data-mweek"); S.period = "custom"; S.from = w; S.to = addDays(w, 6); mGo({ tab: "table", city: t.getAttribute("data-mweek-city") }); }
   else if (t.hasAttribute("data-mvenue")) mGo({ tab: "table", venue: t.getAttribute("data-mvenue"), city: t.getAttribute("data-mvenue-city") });
-  else if (t.classList.contains("cell-btn")) {
+  else if (t.classList.contains("cell-btn") || t.classList.contains("seg-btn")) {
     var p = { tab: "table", sphere: "", format: "", genre: "" }, dim = t.getAttribute("data-mcell-dim"), cat = t.getAttribute("data-mcell-cat");
     if (t.hasAttribute("data-mcell-city")) p.city = t.getAttribute("data-mcell-city");
     if (t.hasAttribute("data-mcell-venue")) p.venue = t.getAttribute("data-mcell-venue");
@@ -2892,7 +3428,7 @@ $("view").addEventListener("click", function (ev) {
 $("view").addEventListener("change", function (ev) {
   if (S.view !== "market") return;
   var sel = ev.target.getAttribute("data-msel"), chk = ev.target.getAttribute("data-mcheck"), vis = ev.target.getAttribute("data-mcolvis");
-  if (sel) { S.m[sel] = ev.target.value; S.m.limit = 200; render(); }
+  if (sel) { S.m[sel] = ev.target.value; if (sel === "myFormat") S.m.myGenre = ""; S.m.limit = 200; render(); }
   if (chk) { S.m[chk] = ev.target.checked; render(); }
   if (vis) {
     if (ev.target.checked) S.m.hidden = S.m.hidden.filter(function (x) { return x !== vis; });
@@ -2919,7 +3455,7 @@ function render() {
 }
 
 buildCitySelect();
-$("city").addEventListener("change", function () { if (S.view === "market") { S.m.city = this.value; S.m.venue = ""; S.m.limit = 200; } else S.city = this.value; closeDrawer(); render(); });
+$("city").addEventListener("change", function () { if (S.view === "market") { S.m.city = this.value; S.m.venue = ""; S.m.limit = 200; S.m.day = null; } else S.city = this.value; closeDrawer(); render(); });
 $("period").addEventListener("click", function (ev) { var b = ev.target.closest("button"); if (b) { S.period = b.getAttribute("data-p"); S.from = S.to = null; render(); } });
 $("dateBtn").addEventListener("click", function (ev) { ev.stopPropagation(); if (S.calOpen) { S.calOpen = false; renderCal(); } else openCal(); });
 $("q").addEventListener("input", function () { S.q = this.value; if (S.view !== "events" && S.view !== "market") S.view = "events"; render(); });
