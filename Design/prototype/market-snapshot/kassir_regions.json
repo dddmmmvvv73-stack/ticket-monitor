@@ -1,0 +1,4211 @@
+[
+ {
+  "id": 1,
+  "domain": "msk.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Москва",
+  "isFeatured": true,
+  "isPublic": true,
+  "slug": "g-moskva",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 41,
+    "name": "Балашиха",
+    "slug": "balashiha",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 44,
+    "name": "Видное",
+    "slug": "vidnoe",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 45,
+    "name": "Волоколамск",
+    "slug": "volokolamsk",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 46,
+    "name": "Воскресенск",
+    "slug": "voskresensk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 48,
+    "name": "Дедовск",
+    "slug": "dedovsk",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 50,
+    "name": "Дмитров",
+    "slug": "dmitrov",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 111,
+    "name": "Долгопрудный",
+    "slug": "dolgoprudnyiy",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 51,
+    "name": "Домодедово",
+    "slug": "domodedovo",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 53,
+    "name": "Дубна",
+    "slug": "dubna",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 54,
+    "name": "Егорьевск",
+    "slug": "egorevsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 113,
+    "name": "Железнодорожный",
+    "slug": "jeleznodorojnyiy",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 55,
+    "name": "Жуковский",
+    "slug": "jukovskiy",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 115,
+    "name": "Зеленоград",
+    "slug": "zelenograd",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 58,
+    "name": "Ивантеевка",
+    "slug": "ivanteevka",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 59,
+    "name": "Истра",
+    "slug": "istra",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 60,
+    "name": "Кашира",
+    "slug": "kashira",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 62,
+    "name": "Клин",
+    "slug": "klin",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 63,
+    "name": "Коломна",
+    "slug": "kolomna",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 64,
+    "name": "Королёв",
+    "slug": "korolev",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 66,
+    "name": "Красноармейск",
+    "slug": "krasnoarmeysk",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 112,
+    "name": "Красногорск",
+    "slug": "krasnogorsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 69,
+    "name": "Куровское",
+    "slug": "kurovskoe",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 70,
+    "name": "Ликино-Дулёво",
+    "slug": "likino-dulevo",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 71,
+    "name": "Лобня",
+    "slug": "lobnya",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 73,
+    "name": "Луховицы",
+    "slug": "luhovitsyi",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 110,
+    "name": "Люберцы",
+    "slug": "lyubertsyi",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 75,
+    "name": "Можайск",
+    "slug": "mojaysk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 76,
+    "name": "Мытищи",
+    "slug": "myitischi",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 77,
+    "name": "Наро-Фоминск",
+    "slug": "naro-fominsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 78,
+    "name": "Ногинск",
+    "slug": "noginsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 79,
+    "name": "Одинцово",
+    "slug": "odintsovo",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 81,
+    "name": "Озёры",
+    "slug": "ozeryi",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 82,
+    "name": "Орехово-Зуево",
+    "slug": "orehovo-zuevo",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 83,
+    "name": "Павловский Посад",
+    "slug": "pavlovskiy-posad",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 84,
+    "name": "Подольск",
+    "slug": "podolsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 86,
+    "name": "Пушкино",
+    "slug": "pushkino",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 88,
+    "name": "Раменское",
+    "slug": "ramenskoe",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 89,
+    "name": "Реутов",
+    "slug": "reutov",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 92,
+    "name": "Сергиев Посад",
+    "slug": "sergiev---posad",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 93,
+    "name": "Серпухов",
+    "slug": "serpuhov",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 94,
+    "name": "Солнечногорск",
+    "slug": "solnechnogorsk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 95,
+    "name": "Ступино",
+    "slug": "stupino",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 97,
+    "name": "Троицк",
+    "slug": "troitsk",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 98,
+    "name": "Фрязино",
+    "slug": "fryazino",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 99,
+    "name": "Химки",
+    "slug": "himki",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 101,
+    "name": "Черноголовка",
+    "slug": "chernogolovka",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 102,
+    "name": "Чехов",
+    "slug": "chehov",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 104,
+    "name": "Щёлково",
+    "slug": "schelkovo",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 106,
+    "name": "Электрогорск",
+    "slug": "elektrogorsk",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 107,
+    "name": "Электросталь",
+    "slug": "elektrostal",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   },
+   {
+    "id": 109,
+    "name": "Яхрома",
+    "slug": "yahroma",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "msk.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 2,
+  "domain": "spb.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Санкт-Петербург",
+  "isFeatured": true,
+  "isPublic": true,
+  "slug": "g-sankt-peterburg",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 1,
+    "name": "Великие Луки",
+    "slug": "velikie-luki",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 373,
+    "name": "Великий Новгород",
+    "slug": "velikiy-novgorod",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 382,
+    "name": "Волосово",
+    "slug": "volosovo",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 385,
+    "name": "Волхов",
+    "slug": "volhov",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 510,
+    "name": "Всеволожск",
+    "slug": "vsevolojsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 352,
+    "name": "Выборг",
+    "slug": "vyiborg",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 502,
+    "name": "Выра",
+    "slug": "vyira",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 2,
+    "name": "Гатчина",
+    "slug": "gatchina",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 509,
+    "name": "Ивангород",
+    "slug": "ivangorod",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 371,
+    "name": "Кингисепп",
+    "slug": "kingisepp",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 497,
+    "name": "Кириши",
+    "slug": "kirishi",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 380,
+    "name": "Кировск",
+    "slug": "kirovsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 3,
+    "name": "Колпино",
+    "slug": "kolpino",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 503,
+    "name": "Копорье",
+    "slug": "kopore",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 386,
+    "name": "Лодейное поле",
+    "slug": "lodeynoe-pole",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 507,
+    "name": "Луга",
+    "slug": "luga",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 437,
+    "name": "Металлострой",
+    "slug": "metallostroy",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 487,
+    "name": "Новое Девяткино",
+    "slug": "novoe-devyatkino",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 434,
+    "name": "Павловск",
+    "slug": "pavlovsk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 389,
+    "name": "Петергоф",
+    "slug": "petergof",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 379,
+    "name": "Пикалево",
+    "slug": "pikalevo",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 4,
+    "name": "Пушкин",
+    "slug": "g-pushkin",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 443,
+    "name": "Репино",
+    "slug": "repino",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 387,
+    "name": "Рощино",
+    "slug": "roschino",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 383,
+    "name": "Светогорск",
+    "slug": "svetogorsk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 381,
+    "name": "Сланцы",
+    "slug": "slantsyi",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 499,
+    "name": "Суйда",
+    "slug": "suyda",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 5,
+    "name": "Тихвин",
+    "slug": "g-tihvin",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 486,
+    "name": "Тосно",
+    "slug": "tosno",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   },
+   {
+    "id": 384,
+    "name": "Шлиссельбург",
+    "slug": "shlisselburg",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "spb.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 4,
+  "domain": "anapa.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Анапа",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-anapa",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 5,
+  "domain": "arh.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Архангельск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-arhangelsk",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 489,
+    "name": "Вельск",
+    "slug": "velsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "arh.kassir.ru"
+   },
+   {
+    "id": 491,
+    "name": "Коряжма",
+    "slug": "koryajma",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "arh.kassir.ru"
+   },
+   {
+    "id": 485,
+    "name": "Котлас",
+    "slug": "kotlas",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "arh.kassir.ru"
+   },
+   {
+    "id": 490,
+    "name": "Новодвинск",
+    "slug": "novodvinsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "arh.kassir.ru"
+   },
+   {
+    "id": 488,
+    "name": "Няндома",
+    "slug": "nyandoma",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "arh.kassir.ru"
+   },
+   {
+    "id": 498,
+    "name": "Онега",
+    "slug": "onega",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "arh.kassir.ru"
+   },
+   {
+    "id": 484,
+    "name": "Северодвинск",
+    "slug": "severodvinsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "arh.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 6,
+  "domain": "astr.kassir.ru",
+  "timezone": "Europe/Astrakhan",
+  "name": "Астрахань",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-astrahan",
+  "title": "Рядом",
+  "suburbs": [
+   {
+    "id": 299,
+    "name": "Ахтубинск и район",
+    "slug": "ahtubinsk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "astr.kassir.ru"
+   },
+   {
+    "id": 372,
+    "name": "Волгоград",
+    "slug": "volgograd",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "astr.kassir.ru"
+   },
+   {
+    "id": 305,
+    "name": "Володарский район",
+    "slug": "volodarskiy",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "astr.kassir.ru"
+   },
+   {
+    "id": 309,
+    "name": "Енотаевский район",
+    "slug": "enotaevskiy-rayon",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "astr.kassir.ru"
+   },
+   {
+    "id": 307,
+    "name": "Знаменск",
+    "slug": "znamensk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "astr.kassir.ru"
+   },
+   {
+    "id": 306,
+    "name": "Икрянинский район",
+    "slug": "ikryaninskiy-rayon",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "astr.kassir.ru"
+   },
+   {
+    "id": 303,
+    "name": "Камызяк и район",
+    "slug": "kamyizyak",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "astr.kassir.ru"
+   },
+   {
+    "id": 301,
+    "name": "Красноярский район",
+    "slug": "krasnyiy-yar",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "astr.kassir.ru"
+   },
+   {
+    "id": 304,
+    "name": "Лиманский район",
+    "slug": "liman",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "astr.kassir.ru"
+   },
+   {
+    "id": 308,
+    "name": "Наримановский район",
+    "slug": "narimanovskiy-rayon",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "astr.kassir.ru"
+   },
+   {
+    "id": 302,
+    "name": "Приволжский район",
+    "slug": "karagali",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "astr.kassir.ru"
+   },
+   {
+    "id": 300,
+    "name": "Харабали и район",
+    "slug": "harabali",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "astr.kassir.ru"
+   },
+   {
+    "id": 354,
+    "name": "Черноярский район",
+    "slug": "chernoyarskiy-rayon",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "astr.kassir.ru"
+   },
+   {
+    "id": 314,
+    "name": "Элиста",
+    "slug": "elista-1",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "astr.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 7,
+  "domain": "brn.kassir.ru",
+  "timezone": "Asia/Barnaul",
+  "name": "Барнаул",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-barnaul",
+  "title": "Алтайский край",
+  "suburbs": [
+   {
+    "id": 369,
+    "name": "Бийск",
+    "slug": "biysk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "brn.kassir.ru"
+   },
+   {
+    "id": 370,
+    "name": "Горно-Алтайск",
+    "slug": "gorno-altaysk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "brn.kassir.ru"
+   },
+   {
+    "id": 401,
+    "name": "Рубцовск",
+    "slug": "rubtsovsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "brn.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 8,
+  "domain": "belgorod.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Белгород",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-belgorod",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 583,
+    "name": "Алексеевка",
+    "slug": "alekseevka",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "belgorod.kassir.ru"
+   },
+   {
+    "id": 579,
+    "name": "Губкин",
+    "slug": "gubkin",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "belgorod.kassir.ru"
+   },
+   {
+    "id": 391,
+    "name": "Старый Оскол",
+    "slug": "staryiy-oskol",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "belgorod.kassir.ru"
+   },
+   {
+    "id": 580,
+    "name": "Строитель",
+    "slug": "stroitel",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "belgorod.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 75,
+  "domain": "blag.kassir.ru",
+  "timezone": "Asia/Yakutsk",
+  "name": "Благовещенск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-blagoveschensk",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 608,
+    "name": "Белогорск",
+    "slug": "belogorsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "blag.kassir.ru"
+   },
+   {
+    "id": 405,
+    "name": "Якутск",
+    "slug": "yakutsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "blag.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 9,
+  "domain": "bryansk.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Брянск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-bryansk",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 114,
+  "domain": "vtb.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "ВТБ",
+  "isFeatured": false,
+  "isPublic": false,
+  "slug": "g-vtb-arena",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 72,
+  "domain": "nov.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Великий Новгород",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-velikiy-novgorod",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 10,
+  "domain": "vl.kassir.ru",
+  "timezone": "Asia/Vladivostok",
+  "name": "Владивосток",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-vladivostok",
+  "title": "Приморский край",
+  "suburbs": [
+   {
+    "id": 285,
+    "name": "Артём",
+    "slug": "artyom",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "vl.kassir.ru"
+   },
+   {
+    "id": 591,
+    "name": "Большой Камень",
+    "slug": "bolshoy-kamen",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "vl.kassir.ru"
+   },
+   {
+    "id": 592,
+    "name": "Дальнегорск",
+    "slug": "dalnegorsk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "vl.kassir.ru"
+   },
+   {
+    "id": 286,
+    "name": "Находка",
+    "slug": "nahodka",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "vl.kassir.ru"
+   },
+   {
+    "id": 594,
+    "name": "Спасск-Дальний",
+    "slug": "spassk-dalniy",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "vl.kassir.ru"
+   },
+   {
+    "id": 287,
+    "name": "Уссурийск",
+    "slug": "ussuriysk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "vl.kassir.ru"
+   },
+   {
+    "id": 593,
+    "name": "Фокино",
+    "slug": "fokino",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "vl.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 11,
+  "domain": "vlm.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Владимир",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-vladimir",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 420,
+    "name": "Александров",
+    "slug": "aleksandrov",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "vlm.kassir.ru"
+   },
+   {
+    "id": 425,
+    "name": "Вязники",
+    "slug": "vyazniki",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "vlm.kassir.ru"
+   },
+   {
+    "id": 496,
+    "name": "Гусь-Хрустальный",
+    "slug": "gus-hrustalnyiy",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "vlm.kassir.ru"
+   },
+   {
+    "id": 586,
+    "name": "Карабаново",
+    "slug": "karabanovo",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "vlm.kassir.ru"
+   },
+   {
+    "id": 395,
+    "name": "Ковров",
+    "slug": "kovrov",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "vlm.kassir.ru"
+   },
+   {
+    "id": 424,
+    "name": "Кольчугино",
+    "slug": "kolchugino",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "vlm.kassir.ru"
+   },
+   {
+    "id": 588,
+    "name": "Костерёво",
+    "slug": "kosteryovo",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "vlm.kassir.ru"
+   },
+   {
+    "id": 400,
+    "name": "Муром",
+    "slug": "murom",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "vlm.kassir.ru"
+   },
+   {
+    "id": 587,
+    "name": "Петушки",
+    "slug": "petushki",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "vlm.kassir.ru"
+   },
+   {
+    "id": 441,
+    "name": "Радужный",
+    "slug": "radujnyiy",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "vlm.kassir.ru"
+   },
+   {
+    "id": 589,
+    "name": "Собинка",
+    "slug": "sobinka",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "vlm.kassir.ru"
+   },
+   {
+    "id": 506,
+    "name": "Суздаль",
+    "slug": "suzdal",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "vlm.kassir.ru"
+   },
+   {
+    "id": 439,
+    "name": "Юрьев-Польский",
+    "slug": "yurev-polskiy",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "vlm.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 12,
+  "domain": "vlg.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Волгоград",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-volgograd",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 156,
+    "name": "г. Волжский ",
+    "slug": "g-voljskiy",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "vlg.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 13,
+  "domain": "vologda.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Вологда",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-vologda",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 492,
+    "name": "Сокол",
+    "slug": "sokol",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "vologda.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 14,
+  "domain": "vrn.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Воронеж",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-voronej",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 565,
+    "name": "Бобров",
+    "slug": "bobrov",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "vrn.kassir.ru"
+   },
+   {
+    "id": 564,
+    "name": "Борисоглебск",
+    "slug": "borisoglebsk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "vrn.kassir.ru"
+   },
+   {
+    "id": 570,
+    "name": "Воробьевка",
+    "slug": "vorobevka",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "vrn.kassir.ru"
+   },
+   {
+    "id": 569,
+    "name": "Калач",
+    "slug": "kalach",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "vrn.kassir.ru"
+   },
+   {
+    "id": 573,
+    "name": "Каменка",
+    "slug": "kamenka",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "vrn.kassir.ru"
+   },
+   {
+    "id": 566,
+    "name": "Лиски",
+    "slug": "liski",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "vrn.kassir.ru"
+   },
+   {
+    "id": 574,
+    "name": "Нововоронеж",
+    "slug": "novovoronej",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "vrn.kassir.ru"
+   },
+   {
+    "id": 568,
+    "name": "Павловск",
+    "slug": "pavlovsk-1",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "vrn.kassir.ru"
+   },
+   {
+    "id": 563,
+    "name": "Рамонь",
+    "slug": "ramon",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "vrn.kassir.ru"
+   },
+   {
+    "id": 567,
+    "name": "Россошь",
+    "slug": "rossosh",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "vrn.kassir.ru"
+   },
+   {
+    "id": 571,
+    "name": "Семилуки",
+    "slug": "semiluki",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "vrn.kassir.ru"
+   },
+   {
+    "id": 572,
+    "name": "Хохол",
+    "slug": "hohol",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "vrn.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 15,
+  "domain": "gel.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Геленджик",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-gelendjik",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 16,
+  "domain": "ekb.kassir.ru",
+  "timezone": "Asia/Yekaterinburg",
+  "name": "Екатеринбург",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-ekaterinburg",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 164,
+    "name": "Алапаевск",
+    "slug": "alapaevsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 343,
+    "name": "Артемовский",
+    "slug": "gartemovskiy",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 161,
+    "name": "Асбест",
+    "slug": "asbest",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 159,
+    "name": "Берёзовский",
+    "slug": "berezovskiy",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 332,
+    "name": "Верхняя Пышма",
+    "slug": "verhnyaya-pyishma",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 175,
+    "name": "Верхотурье",
+    "slug": "verhoture",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 374,
+    "name": "Дегтярск",
+    "slug": "degtyarsk",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 177,
+    "name": "Заречный",
+    "slug": "zarechnyiy",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 346,
+    "name": "Ивдель",
+    "slug": "ivdel",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 178,
+    "name": "Ирбит",
+    "slug": "irbit",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 167,
+    "name": "Каменск-Уральский",
+    "slug": "kamensk-uralskiy",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 176,
+    "name": "Камышлов",
+    "slug": "g-kamyishlov",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 544,
+    "name": "Кировград",
+    "slug": "kirovgrad",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 215,
+    "name": "Краснотурьинск",
+    "slug": "krasnoturinsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 168,
+    "name": "Нижний Тагил",
+    "slug": "nijniy-tagil",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 311,
+    "name": "Новая Ляля",
+    "slug": "novaya-lyalya",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 378,
+    "name": "Новоуральск",
+    "slug": "novouralsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 341,
+    "name": "Первоуральск",
+    "slug": "pervouralsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 347,
+    "name": "п. Лобва",
+    "slug": "p-lobva",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 165,
+    "name": "Полевской",
+    "slug": "polevskoy",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 163,
+    "name": "пос. Арти",
+    "slug": "pos-arti",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 169,
+    "name": "Ревда",
+    "slug": "revda",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 504,
+    "name": "Реж",
+    "slug": "rej",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 291,
+    "name": "Североуральск",
+    "slug": "g-severouralsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 436,
+    "name": "Серов",
+    "slug": "g-serov",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 166,
+    "name": "Сысерть",
+    "slug": "syisert",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 356,
+    "name": "Тавда",
+    "slug": "tavdv",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 228,
+    "name": "Талица",
+    "slug": "g-talitsa",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   },
+   {
+    "id": 162,
+    "name": "Туринск",
+    "slug": "turinsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ekb.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 17,
+  "domain": "ivanovo.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Иваново",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-ivanovo",
+  "title": "пригороды",
+  "suburbs": [
+   {
+    "id": 430,
+    "name": "Вичуга",
+    "slug": "vichuga",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ivanovo.kassir.ru"
+   },
+   {
+    "id": 429,
+    "name": "Кинешма",
+    "slug": "kineshma",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ivanovo.kassir.ru"
+   },
+   {
+    "id": 431,
+    "name": "Кохма",
+    "slug": "kohma",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ivanovo.kassir.ru"
+   },
+   {
+    "id": 428,
+    "name": "Родники",
+    "slug": "rodniki",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "ivanovo.kassir.ru"
+   },
+   {
+    "id": 440,
+    "name": "Тейково",
+    "slug": "teykovo",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ivanovo.kassir.ru"
+   },
+   {
+    "id": 423,
+    "name": "Фурманов",
+    "slug": "furmanov",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "ivanovo.kassir.ru"
+   },
+   {
+    "id": 432,
+    "name": "Шуя",
+    "slug": "shuya",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ivanovo.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 18,
+  "domain": "izhevsk.kassir.ru",
+  "timezone": "Europe/Samara",
+  "name": "Ижевск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-ijevsk",
+  "title": "Города УР",
+  "suburbs": [
+   {
+    "id": 6,
+    "name": "Воткинск",
+    "slug": "votkinsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "izhevsk.kassir.ru"
+   },
+   {
+    "id": 9,
+    "name": "Глазов",
+    "slug": "glazov",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "izhevsk.kassir.ru"
+   },
+   {
+    "id": 7,
+    "name": "Можга",
+    "slug": "mojga",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "izhevsk.kassir.ru"
+   },
+   {
+    "id": 8,
+    "name": "Сарапул",
+    "slug": "sarapul",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "izhevsk.kassir.ru"
+   },
+   {
+    "id": 229,
+    "name": "Шаркан",
+    "slug": "sharkan",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "izhevsk.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 19,
+  "domain": "irk.kassir.ru",
+  "timezone": "Asia/Irkutsk",
+  "name": "Иркутск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-irkutsk",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 547,
+    "name": "Ангарск",
+    "slug": "angarsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "irk.kassir.ru"
+   },
+   {
+    "id": 318,
+    "name": "Братск",
+    "slug": "bratsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "irk.kassir.ru"
+   },
+   {
+    "id": 602,
+    "name": "Зима",
+    "slug": "zima",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "irk.kassir.ru"
+   },
+   {
+    "id": 601,
+    "name": "Саянск",
+    "slug": "sayansk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "irk.kassir.ru"
+   },
+   {
+    "id": 604,
+    "name": "Тайшет",
+    "slug": "tayshet",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "irk.kassir.ru"
+   },
+   {
+    "id": 600,
+    "name": "Тулун",
+    "slug": "tulun",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "irk.kassir.ru"
+   },
+   {
+    "id": 595,
+    "name": "Усолье-Сибирское",
+    "slug": "usole-sibirskoe",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "irk.kassir.ru"
+   },
+   {
+    "id": 599,
+    "name": "Усть-Илимск",
+    "slug": "ust-ilimsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "irk.kassir.ru"
+   },
+   {
+    "id": 598,
+    "name": "Черемхово",
+    "slug": "cheremhovo",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "irk.kassir.ru"
+   },
+   {
+    "id": 603,
+    "name": "Шелехов",
+    "slug": "shelehov",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "irk.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 20,
+  "domain": "yola.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Йошкар-Ола",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-yoshkar-ola",
+  "title": "Республика",
+  "suburbs": [
+   {
+    "id": 422,
+    "name": "Марий Эл",
+    "slug": "mariy-el",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "yola.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 21,
+  "domain": "kzn.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Казань",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-kazan",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 290,
+    "name": "Апастово",
+    "slug": "apastovo",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "kzn.kassir.ru"
+   },
+   {
+    "id": 481,
+    "name": "Буинск",
+    "slug": "buinsk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "kzn.kassir.ru"
+   },
+   {
+    "id": 289,
+    "name": "Зеленодольск",
+    "slug": "zelenodolsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "kzn.kassir.ru"
+   },
+   {
+    "id": 482,
+    "name": "Лаишево",
+    "slug": "laishevo",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "kzn.kassir.ru"
+   },
+   {
+    "id": 321,
+    "name": "Мамадыш",
+    "slug": "mamadyish",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "kzn.kassir.ru"
+   },
+   {
+    "id": 483,
+    "name": "Новошешминск",
+    "slug": "novosheshminsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "kzn.kassir.ru"
+   },
+   {
+    "id": 322,
+    "name": "Нурлат",
+    "slug": "nurlat",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "kzn.kassir.ru"
+   },
+   {
+    "id": 320,
+    "name": "Чистополь",
+    "slug": "chistopol-1",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "kzn.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 22,
+  "domain": "kgd.kassir.ru",
+  "timezone": "Europe/Kaliningrad",
+  "name": "Калининград",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-kaliningrad",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 23,
+  "domain": "klg.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Калуга",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-kaluga",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 561,
+    "name": "Обнинск",
+    "slug": "obninsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "klg.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 24,
+  "domain": "kemerovo.kassir.ru",
+  "timezone": "Asia/Novokuznetsk",
+  "name": "Кемерово",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-kemerovo",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 406,
+    "name": "Шерегеш",
+    "slug": "sheregesh",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "kemerovo.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 25,
+  "domain": "kirov.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Киров",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-kirov",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 297,
+    "name": "Вятские Поляны",
+    "slug": "vyatskie-polyanyi",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "kirov.kassir.ru"
+   },
+   {
+    "id": 559,
+    "name": "Кирово-Чепецк",
+    "slug": "kirovo-chepetsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "kirov.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 218,
+  "domain": "kostroma.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Кострома",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-kostroma",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 26,
+  "domain": "krd.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Краснодар",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-krasnodar",
+  "title": "Край",
+  "suburbs": [
+   {
+    "id": 250,
+    "name": "Абинск",
+    "slug": "abinsk",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 335,
+    "name": "Апшеронск",
+    "slug": "apsheronsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 30,
+    "name": "Армавир",
+    "slug": "armavir",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 336,
+    "name": "Белореченск",
+    "slug": "belorechensk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 337,
+    "name": "Горячий Ключ",
+    "slug": "goryachiy-klyuch",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 334,
+    "name": "Гулькевичи",
+    "slug": "gulkevichi",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 242,
+    "name": "Ейск",
+    "slug": "eysk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 239,
+    "name": "Каневская",
+    "slug": "kanevskaya",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 295,
+    "name": "Кореновск",
+    "slug": "korenovsk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 238,
+    "name": "Кропоткин",
+    "slug": "kropotkin",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 236,
+    "name": "Крымск",
+    "slug": "kryimsk",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 237,
+    "name": "Курганинск",
+    "slug": "kurganinsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 247,
+    "name": "Лабинск",
+    "slug": "labinsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 351,
+    "name": "Майкоп",
+    "slug": "maykop-1",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 340,
+    "name": "Новокубанск",
+    "slug": "g-novokubansk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 339,
+    "name": "пгт. Яблоновский",
+    "slug": "pgt-yablonovskiy",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 353,
+    "name": "Псебай",
+    "slug": "psebay",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 252,
+    "name": "Славянск-на-Кубани",
+    "slug": "slavyansk-na-kubani",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 350,
+    "name": "ст. Брюховецкая",
+    "slug": "st-bryuhovetskaya",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 298,
+    "name": "ст. Динская",
+    "slug": "st-dinskaya",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 342,
+    "name": "ст. Кущёвская",
+    "slug": "st-kuschyovskaya",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 368,
+    "name": "ст.Ладожская",
+    "slug": "stladojskaya",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 338,
+    "name": "ст. Ленинградская",
+    "slug": "st-leningradskaya",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 31,
+    "name": "ст. Новотитаровская",
+    "slug": "st-novotitarovskaya",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 240,
+    "name": "ст. Павловская",
+    "slug": "pavlovskaya",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 32,
+    "name": "ст. Пластуновская",
+    "slug": "st-plastunovskaya",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 241,
+    "name": " ст. Староминская",
+    "slug": "starominskaya",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 33,
+    "name": "Тамань",
+    "slug": "taman",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 244,
+    "name": "Тбилисская",
+    "slug": "tbilisskaya",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 245,
+    "name": "Темрюк",
+    "slug": "temryuk",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 243,
+    "name": "Тимашевск",
+    "slug": "timashevsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 246,
+    "name": "Тихорецк",
+    "slug": "tihoretsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 157,
+    "name": "Туапсе",
+    "slug": "tuapse",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   },
+   {
+    "id": 249,
+    "name": "Усть-Лабинск",
+    "slug": "ust-labinsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krd.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 27,
+  "domain": "krs.kassir.ru",
+  "timezone": "Asia/Krasnoyarsk",
+  "name": "Красноярск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-krasnoyarsk",
+  "title": "Край",
+  "suburbs": [
+   {
+    "id": 390,
+    "name": "Абакан",
+    "slug": "abakan",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "krs.kassir.ru"
+   },
+   {
+    "id": 590,
+    "name": "Железногорск",
+    "slug": "jeleznogorsk-1",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "krs.kassir.ru"
+   },
+   {
+    "id": 545,
+    "name": "Минусинск",
+    "slug": "minusinsk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "krs.kassir.ru"
+   },
+   {
+    "id": 296,
+    "name": "Норильск",
+    "slug": "norilsk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "krs.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 147,
+  "domain": "crocus.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Крокус",
+  "isFeatured": false,
+  "isPublic": false,
+  "slug": "g-krokus",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 28,
+  "domain": "krym.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Крым",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-kryim",
+  "title": "Города Крыма",
+  "suburbs": [
+   {
+    "id": 558,
+    "name": "Алушта",
+    "slug": "alushta",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "krym.kassir.ru"
+   },
+   {
+    "id": 555,
+    "name": "Бахчисарай",
+    "slug": "bahchisaray",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "krym.kassir.ru"
+   },
+   {
+    "id": 552,
+    "name": "Евпатория",
+    "slug": "evpatoriya",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krym.kassir.ru"
+   },
+   {
+    "id": 551,
+    "name": "Керчь",
+    "slug": "kerch",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krym.kassir.ru"
+   },
+   {
+    "id": 548,
+    "name": "Симферополь",
+    "slug": "simferopol",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "krym.kassir.ru"
+   },
+   {
+    "id": 556,
+    "name": "Старый Крым",
+    "slug": "staryiy-kryim",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "krym.kassir.ru"
+   },
+   {
+    "id": 557,
+    "name": "Судак",
+    "slug": "sudak",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "krym.kassir.ru"
+   },
+   {
+    "id": 550,
+    "name": "Феодосия",
+    "slug": "feodosiya",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "krym.kassir.ru"
+   },
+   {
+    "id": 549,
+    "name": "Ялта",
+    "slug": "yalta",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "krym.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 113,
+  "domain": "kurgan.kassir.ru",
+  "timezone": "Asia/Yekaterinburg",
+  "name": "Курган",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-kurgan",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 501,
+    "name": "Шадринск",
+    "slug": "shadrinsk-1",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "kurgan.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 29,
+  "domain": "kursk.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Курск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-kursk",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 578,
+    "name": "Железногорск",
+    "slug": "jeleznogorsk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "kursk.kassir.ru"
+   },
+   {
+    "id": 577,
+    "name": "Курчатов",
+    "slug": "kurchatov",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "kursk.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 30,
+  "domain": "lzr.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Лазаревское",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-lazarevskoe",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 31,
+  "domain": "lipetsk.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Липецк",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-lipetsk",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 597,
+    "name": "Грязи",
+    "slug": "gryazi",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "lipetsk.kassir.ru"
+   },
+   {
+    "id": 394,
+    "name": "Елец",
+    "slug": "elets",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "lipetsk.kassir.ru"
+   },
+   {
+    "id": 576,
+    "name": "Задонск",
+    "slug": "zadonsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "lipetsk.kassir.ru"
+   },
+   {
+    "id": 585,
+    "name": "Копцевы Хутора",
+    "slug": "koptsevyi-hutora",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "lipetsk.kassir.ru"
+   },
+   {
+    "id": 584,
+    "name": "Скорняково",
+    "slug": "skornyakovo",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "lipetsk.kassir.ru"
+   },
+   {
+    "id": 553,
+    "name": "Чаплыгин",
+    "slug": "chaplyigin",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "lipetsk.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 32,
+  "domain": "mgn.kassir.ru",
+  "timezone": "Asia/Yekaterinburg",
+  "name": "Магнитогорск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-magnitogorsk",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 78,
+  "domain": "mkala.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Махачкала",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-mahachkala",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 33,
+  "domain": "murm.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Мурманск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-murmansk",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 34,
+  "domain": "nabchelny.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Набережные Челны",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-naberejnyie-chelnyi",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 543,
+    "name": "Агрыз",
+    "slug": "agryiz",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "nabchelny.kassir.ru"
+   },
+   {
+    "id": 39,
+    "name": "Азнакаево",
+    "slug": "aznakaevo",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "nabchelny.kassir.ru"
+   },
+   {
+    "id": 37,
+    "name": "Альметьевск",
+    "slug": "almetevsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "nabchelny.kassir.ru"
+   },
+   {
+    "id": 288,
+    "name": "Бугульма",
+    "slug": "bugulma",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "nabchelny.kassir.ru"
+   },
+   {
+    "id": 35,
+    "name": "Елабуга",
+    "slug": "elabuga",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "nabchelny.kassir.ru"
+   },
+   {
+    "id": 505,
+    "name": "Лениногорск",
+    "slug": "leninogorsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "nabchelny.kassir.ru"
+   },
+   {
+    "id": 36,
+    "name": "Нижнекамск",
+    "slug": "nijnekamsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "nabchelny.kassir.ru"
+   },
+   {
+    "id": 435,
+    "name": "Нурлат",
+    "slug": "nurlat-1",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "nabchelny.kassir.ru"
+   },
+   {
+    "id": 38,
+    "name": "Чистополь",
+    "slug": "chistopol",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "nabchelny.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 35,
+  "domain": "nn.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Нижний Новгород",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-nijniy-novgorod",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 411,
+    "name": "Арзамас",
+    "slug": "arzamas",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "nn.kassir.ru"
+   },
+   {
+    "id": 412,
+    "name": "Выкса",
+    "slug": "vyiksa",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "nn.kassir.ru"
+   },
+   {
+    "id": 29,
+    "name": "Дзержинск",
+    "slug": "dzerjinsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "nn.kassir.ru"
+   },
+   {
+    "id": 414,
+    "name": "Заволжье",
+    "slug": "zavolje",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "nn.kassir.ru"
+   },
+   {
+    "id": 413,
+    "name": "Павлово",
+    "slug": "pavlovo",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "nn.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 36,
+  "domain": "novokuznetsk.kassir.ru",
+  "timezone": "Asia/Novokuznetsk",
+  "name": "Новокузнецк",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-novokuznetsk",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 74,
+  "domain": "nvrsk.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Новороссийск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-novorossiysk",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 37,
+  "domain": "nsk.kassir.ru",
+  "timezone": "Asia/Novosibirsk",
+  "name": "Новосибирск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-novosibirsk",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 396,
+    "name": "Куйбышев",
+    "slug": "kuybyishev",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "nsk.kassir.ru"
+   },
+   {
+    "id": 407,
+    "name": "Татарск",
+    "slug": "tatarsk",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "nsk.kassir.ru"
+   },
+   {
+    "id": 408,
+    "name": "Убинское",
+    "slug": "ubinskoe",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "nsk.kassir.ru"
+   },
+   {
+    "id": 409,
+    "name": "Чаны",
+    "slug": "chanyi",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "nsk.kassir.ru"
+   },
+   {
+    "id": 410,
+    "name": "Чистоозёрное",
+    "slug": "chistoozyornoe",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "nsk.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 38,
+  "domain": "omsk.kassir.ru",
+  "timezone": "Asia/Omsk",
+  "name": "Омск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-omsk",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 39,
+  "domain": "orenburg.kassir.ru",
+  "timezone": "Asia/Yekaterinburg",
+  "name": "Оренбург",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-orenburg",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 357,
+    "name": "Адамовский район",
+    "slug": "adamovskiy-rayon",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 358,
+    "name": "Акбулакский район",
+    "slug": "akbulakskiy-rayon",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 366,
+    "name": "Беляевский район",
+    "slug": "belyaevskiy-rayon",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 216,
+    "name": "Бузулукский район",
+    "slug": "saraktash",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 218,
+    "name": "Гайский район",
+    "slug": "gayskiy-rayon",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 225,
+    "name": "г. Новотроицк",
+    "slug": "g-novotroitsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 360,
+    "name": "Домбаровский район",
+    "slug": "dombarovskiy-rayon",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 222,
+    "name": "Красногвардейский район",
+    "slug": "krasnogvardeyskiy-rayon",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 361,
+    "name": "Кувандыкский район",
+    "slug": "kuvandyikskiy-rayon",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 365,
+    "name": "Новоорский район",
+    "slug": "novoorskiy-rayon",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 362,
+    "name": "Новосергеевский район",
+    "slug": "novosergeevskiy-rayon",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 220,
+    "name": "Октябрьский район",
+    "slug": "oktyabrskiy-rayon",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 367,
+    "name": "Оренбургский район",
+    "slug": "orenburgskiy-rayon",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 363,
+    "name": "Первомайский район",
+    "slug": "pervomayskiy-rayon",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 359,
+    "name": "Переволоцкий район",
+    "slug": "perevolotskiy-rayon",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 364,
+    "name": "Сакмарский район",
+    "slug": "sakmarskiy-rayon",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 226,
+    "name": "Саракташский район",
+    "slug": "saraktashskiy-rayon",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 224,
+    "name": "Светлинский район",
+    "slug": "svetlinskiy-rayon",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 221,
+    "name": "Соль-Илецкий район",
+    "slug": "sol-iletskiy-rayon",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 217,
+    "name": "Сорочинский район",
+    "slug": "sorochinskiy-rayon",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 219,
+    "name": "Ташлинский район",
+    "slug": "tashlinskiy-rayon",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   },
+   {
+    "id": 223,
+    "name": "Ясненский район",
+    "slug": "yasnenskiy-rayon",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "orenburg.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 41,
+  "domain": "orsk.kassir.ru",
+  "timezone": "Asia/Yekaterinburg",
+  "name": "Орск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-orsk",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 40,
+  "domain": "orel.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Орёл",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-oryol",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 582,
+    "name": "Ливны",
+    "slug": "livnyi",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "orel.kassir.ru"
+   },
+   {
+    "id": 581,
+    "name": "Мценск",
+    "slug": "mtsensk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "orel.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 42,
+  "domain": "pnz.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Пенза",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-penza",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 375,
+    "name": "Кузнецк",
+    "slug": "kuznetsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "pnz.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 43,
+  "domain": "perm.kassir.ru",
+  "timezone": "Asia/Yekaterinburg",
+  "name": "Пермь",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-perm",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 313,
+    "name": "г. Кунгур",
+    "slug": "g-kungur",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "perm.kassir.ru"
+   },
+   {
+    "id": 312,
+    "name": "г. Оса",
+    "slug": "g-osa",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "perm.kassir.ru"
+   },
+   {
+    "id": 344,
+    "name": "г. Соликамск",
+    "slug": "g-solikamsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "perm.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 44,
+  "domain": "ptz.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Петрозаводск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-petrozavodsk",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 403,
+    "name": "Сланцы",
+    "slug": "slantsyi-1",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "ptz.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 79,
+  "domain": "kam.kassir.ru",
+  "timezone": "Asia/Kamchatka",
+  "name": "Петропавловск-Камчатский",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-petropavlovsk-kamchatskiy",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 71,
+  "domain": "pskov.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Псков",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-pskov",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 45,
+  "domain": "rnd.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Ростов-на-Дону",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-rostov-na-donu",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 13,
+    "name": "Азов",
+    "slug": "azov",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 18,
+    "name": "Аксай",
+    "slug": "aksay",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 19,
+    "name": "Батайск",
+    "slug": "bataysk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 20,
+    "name": "Вёшенская",
+    "slug": "vyoshenskaya",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 14,
+    "name": "Волгодонск",
+    "slug": "volgodonsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 232,
+    "name": "Гуково",
+    "slug": "gukovo",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 15,
+    "name": "Зерноград",
+    "slug": "zernograd",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 17,
+    "name": "Каменск-Шахтинский",
+    "slug": "kamensk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 233,
+    "name": "Матвеев-Курган",
+    "slug": "matveev-kurgan",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 235,
+    "name": "Миллерово",
+    "slug": "millerovo",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 12,
+    "name": "Новочеркасск",
+    "slug": "novocherkassk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 21,
+    "name": "Новошахтинск",
+    "slug": "novoshahtinsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 10,
+    "name": "Песчанокопское",
+    "slug": "peschannokopskoe",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 231,
+    "name": "Ремонтное",
+    "slug": "remontnoe",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 34,
+    "name": "Сальск",
+    "slug": "salsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 11,
+    "name": "Таганрог",
+    "slug": "taganrog",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 292,
+    "name": "Цимлянск",
+    "slug": "tsimlyansk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 150,
+    "name": "Чалтырь",
+    "slug": "chaltyir",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   },
+   {
+    "id": 16,
+    "name": "Шахты",
+    "slug": "shahtyi",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "rnd.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 46,
+  "domain": "rzn.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Рязань",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-ryazan",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 47,
+  "domain": "smr.kassir.ru",
+  "timezone": "Europe/Samara",
+  "name": "Самара",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-samara",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 331,
+    "name": "г. Новокуйбышевск",
+    "slug": "g-novokuybyishevsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "smr.kassir.ru"
+   },
+   {
+    "id": 327,
+    "name": "г. Отрадный",
+    "slug": "g-otradnyiy",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "smr.kassir.ru"
+   },
+   {
+    "id": 326,
+    "name": "г. Похвистнево",
+    "slug": "g-pohvistnevo",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "smr.kassir.ru"
+   },
+   {
+    "id": 323,
+    "name": "г. Сызрань",
+    "slug": "syizran",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "smr.kassir.ru"
+   },
+   {
+    "id": 610,
+    "name": "г. Чапаевск",
+    "slug": "g-chapaevsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "smr.kassir.ru"
+   },
+   {
+    "id": 329,
+    "name": "п. Безенчук",
+    "slug": "p-bezenchuk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "smr.kassir.ru"
+   },
+   {
+    "id": 328,
+    "name": "с. Красноармейское",
+    "slug": "s-krasnoarmeyskoe",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "smr.kassir.ru"
+   },
+   {
+    "id": 330,
+    "name": "с. Хворостянка",
+    "slug": "s-hvorostyanka",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "smr.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 48,
+  "domain": "saransk.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Саранск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-saransk",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 49,
+  "domain": "saratov.kassir.ru",
+  "timezone": "Europe/Samara",
+  "name": "Саратов",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-saratov",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 392,
+    "name": "Балаково",
+    "slug": "balakovo",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "saratov.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 217,
+  "domain": "sev.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Севастополь",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 50,
+  "domain": "smolensk.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Смоленск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-smolensk",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 562,
+    "name": "Рославль",
+    "slug": "roslavl",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "smolensk.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 51,
+  "domain": "sochi.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Сочи",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-sochi",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 52,
+  "domain": "sk.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Ставрополь",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-stavropol",
+  "title": "Край",
+  "suburbs": [
+   {
+    "id": 234,
+    "name": "Буденновск",
+    "slug": "budennovsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "sk.kassir.ru"
+   },
+   {
+    "id": 28,
+    "name": "Владикавказ",
+    "slug": "vladikavkaz",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "sk.kassir.ru"
+   },
+   {
+    "id": 248,
+    "name": "Георгиевск",
+    "slug": "georgievsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "sk.kassir.ru"
+   },
+   {
+    "id": 23,
+    "name": "Ессентуки",
+    "slug": "essentuki",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "sk.kassir.ru"
+   },
+   {
+    "id": 25,
+    "name": "Железноводск",
+    "slug": "jeleznovodsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "sk.kassir.ru"
+   },
+   {
+    "id": 24,
+    "name": "Кисловодск",
+    "slug": "kislovodsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "sk.kassir.ru"
+   },
+   {
+    "id": 355,
+    "name": "Минеральные Воды",
+    "slug": "mineralnyie-vodyi",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "sk.kassir.ru"
+   },
+   {
+    "id": 26,
+    "name": "Нальчик",
+    "slug": "nalchik",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "sk.kassir.ru"
+   },
+   {
+    "id": 345,
+    "name": "Невинномысск",
+    "slug": "nevinnomyissk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "sk.kassir.ru"
+   },
+   {
+    "id": 22,
+    "name": "Пятигорск",
+    "slug": "pyatigorsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "sk.kassir.ru"
+   },
+   {
+    "id": 417,
+    "name": "Черкесск",
+    "slug": "cherkessk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "sk.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 54,
+  "domain": "sur.kassir.ru",
+  "timezone": "Asia/Yekaterinburg",
+  "name": "Сургут",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-surgut",
+  "title": "ХМАО и ЯНАО",
+  "suburbs": [
+   {
+    "id": 173,
+    "name": "Губкинский",
+    "slug": "gubkinskiy",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "sur.kassir.ru"
+   },
+   {
+    "id": 315,
+    "name": "Лангепас",
+    "slug": "langepas",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "sur.kassir.ru"
+   },
+   {
+    "id": 214,
+    "name": "Лянтор",
+    "slug": "lyantor",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "sur.kassir.ru"
+   },
+   {
+    "id": 325,
+    "name": "Надым",
+    "slug": "nadyim",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "sur.kassir.ru"
+   },
+   {
+    "id": 174,
+    "name": "Нижневартовск",
+    "slug": "nijnevartovsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "sur.kassir.ru"
+   },
+   {
+    "id": 171,
+    "name": "Новый Уренгой",
+    "slug": "novyiy-urengoy",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "sur.kassir.ru"
+   },
+   {
+    "id": 316,
+    "name": "Ноябрьск",
+    "slug": "noyabrsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "sur.kassir.ru"
+   },
+   {
+    "id": 324,
+    "name": "Салехард",
+    "slug": "saleharnd",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "sur.kassir.ru"
+   },
+   {
+    "id": 181,
+    "name": "Сургут",
+    "slug": "surgut",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "sur.kassir.ru"
+   },
+   {
+    "id": 170,
+    "name": "Урай",
+    "slug": "uray",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "sur.kassir.ru"
+   },
+   {
+    "id": 172,
+    "name": "Ханты-Мансийск",
+    "slug": "hantyi-mansiysk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "sur.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 214,
+  "domain": "syktyvkar.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Сыктывкар",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-syktyvkar",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 494,
+    "name": "Воркута",
+    "slug": "vorkuta",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "syktyvkar.kassir.ru"
+   },
+   {
+    "id": 418,
+    "name": "Печора",
+    "slug": "pechora",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "syktyvkar.kassir.ru"
+   },
+   {
+    "id": 419,
+    "name": "Усинск",
+    "slug": "usinsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "syktyvkar.kassir.ru"
+   },
+   {
+    "id": 493,
+    "name": "Ухта",
+    "slug": "uhta-1",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "syktyvkar.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 55,
+  "domain": "tambov.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Тамбов",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-tambov",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 399,
+    "name": "Мичуринск",
+    "slug": "michurinsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "tambov.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 56,
+  "domain": "tver.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Тверь",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-tver",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 57,
+  "domain": "tlt.kassir.ru",
+  "timezone": "Europe/Astrakhan",
+  "name": "Тольятти",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-tolyatti",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 58,
+  "domain": "tomsk.kassir.ru",
+  "timezone": "Asia/Tomsk",
+  "name": "Томск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-tomsk",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 59,
+  "domain": "tula.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Тула",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-tula",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 575,
+    "name": "Ефремов",
+    "slug": "efremov",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "tula.kassir.ru"
+   },
+   {
+    "id": 560,
+    "name": "Новомосковск",
+    "slug": "novomoskovsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "tula.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 60,
+  "domain": "tmn.kassir.ru",
+  "timezone": "Asia/Yekaterinburg",
+  "name": "Тюмень",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-tyumen",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 349,
+    "name": "Курган",
+    "slug": "kurgan",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "tmn.kassir.ru"
+   },
+   {
+    "id": 376,
+    "name": "с. Вагай",
+    "slug": "s-vagay",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "tmn.kassir.ru"
+   },
+   {
+    "id": 377,
+    "name": "с. Туртас",
+    "slug": "s-turtas",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "tmn.kassir.ru"
+   },
+   {
+    "id": 227,
+    "name": "Тобольск",
+    "slug": "tobolsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "tmn.kassir.ru"
+   },
+   {
+    "id": 348,
+    "name": "Упорово",
+    "slug": "uporovo",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "tmn.kassir.ru"
+   },
+   {
+    "id": 500,
+    "name": "Шадринск",
+    "slug": "shadrinsk",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "tmn.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 61,
+  "domain": "ulan.kassir.ru",
+  "timezone": "Asia/Irkutsk",
+  "name": "Улан-Удэ",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-ulan-ude",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 62,
+  "domain": "ulyanovsk.kassir.ru",
+  "timezone": "Europe/Ulyanovsk",
+  "name": "Ульяновск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-ulyanovsk",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 444,
+    "name": "Барыш",
+    "slug": "baryish",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "ulyanovsk.kassir.ru"
+   },
+   {
+    "id": 393,
+    "name": "Димитровград",
+    "slug": "dimitrovgrad",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ulyanovsk.kassir.ru"
+   },
+   {
+    "id": 445,
+    "name": "Инза",
+    "slug": "inza",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "ulyanovsk.kassir.ru"
+   },
+   {
+    "id": 609,
+    "name": "Чердаклы",
+    "slug": "cherdaklyi",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "ulyanovsk.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 63,
+  "domain": "ufa.kassir.ru",
+  "timezone": "Asia/Yekaterinburg",
+  "name": "Уфа",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-ufa",
+  "title": "Республика",
+  "suburbs": [
+   {
+    "id": 179,
+    "name": "Благовещенск",
+    "slug": "blagoveschensk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ufa.kassir.ru"
+   },
+   {
+    "id": 398,
+    "name": "Кумертау",
+    "slug": "kumertau",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "ufa.kassir.ru"
+   },
+   {
+    "id": 152,
+    "name": "Нефтекамск",
+    "slug": "neftekamsk",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "ufa.kassir.ru"
+   },
+   {
+    "id": 153,
+    "name": "Октябрьский",
+    "slug": "oktyabrskiy",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "ufa.kassir.ru"
+   },
+   {
+    "id": 180,
+    "name": "Сибай",
+    "slug": "sibay",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "ufa.kassir.ru"
+   },
+   {
+    "id": 151,
+    "name": "Стерлитамак",
+    "slug": "respublika",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "ufa.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 64,
+  "domain": "hbr.kassir.ru",
+  "timezone": "Asia/Vladivostok",
+  "name": "Хабаровск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-habarovsk",
+  "title": "Хабаровский край",
+  "suburbs": [
+   {
+    "id": 605,
+    "name": "Амурск",
+    "slug": "amursk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "hbr.kassir.ru"
+   },
+   {
+    "id": 606,
+    "name": "Бикин",
+    "slug": "bikin",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "hbr.kassir.ru"
+   },
+   {
+    "id": 442,
+    "name": "Биробиджан",
+    "slug": "birobidjan",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "hbr.kassir.ru"
+   },
+   {
+    "id": 388,
+    "name": "Комсомольск-на-Амуре",
+    "slug": "komsomolsk-na-amure",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "hbr.kassir.ru"
+   },
+   {
+    "id": 508,
+    "name": "Магадан",
+    "slug": "magadan",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "hbr.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 65,
+  "domain": "chaik.kassir.ru",
+  "timezone": "Asia/Yekaterinburg",
+  "name": "Чайковский",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-chaykovskiy",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 66,
+  "domain": "cheboksary.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Чебоксары",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-cheboksaryi",
+  "title": "Республика",
+  "suburbs": [
+   {
+    "id": 416,
+    "name": "Алатырь",
+    "slug": "alatyir",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "cheboksary.kassir.ru"
+   },
+   {
+    "id": 415,
+    "name": "Канаш",
+    "slug": "kanash",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "cheboksary.kassir.ru"
+   },
+   {
+    "id": 421,
+    "name": "Новочебоксарск",
+    "slug": "novocheboksarsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "cheboksary.kassir.ru"
+   },
+   {
+    "id": 433,
+    "name": "Шумерля",
+    "slug": "afisha-goroda-shumerlya",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "cheboksary.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 67,
+  "domain": "chel.kassir.ru",
+  "timezone": "Asia/Yekaterinburg",
+  "name": "Челябинск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-chelyabinsk",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 294,
+    "name": "Миасс",
+    "slug": "miass",
+    "isActive": true,
+    "isFeatured": true,
+    "domain": "chel.kassir.ru"
+   },
+   {
+    "id": 293,
+    "name": "Озерск",
+    "slug": "ozersk",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "chel.kassir.ru"
+   },
+   {
+    "id": 310,
+    "name": "Троицк",
+    "slug": "troitsk-1",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "chel.kassir.ru"
+   }
+  ]
+ },
+ {
+  "id": 68,
+  "domain": "cher.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Череповец",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-cherepovets",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 69,
+  "domain": "chita.kassir.ru",
+  "timezone": "Asia/Chita",
+  "name": "Чита",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-chita",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 181,
+  "domain": "elista.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Элиста",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-elista",
+  "title": "Рядом",
+  "suburbs": []
+ },
+ {
+  "id": 73,
+  "domain": "sakh.kassir.ru",
+  "timezone": "Asia/Sakhalin",
+  "name": "Южно-Сахалинск",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-yujno-sahalinsk",
+  "title": "Область",
+  "suburbs": []
+ },
+ {
+  "id": 70,
+  "domain": "yar.kassir.ru",
+  "timezone": "Europe/Moscow",
+  "name": "Ярославль",
+  "isFeatured": false,
+  "isPublic": true,
+  "slug": "g-yaroslavl",
+  "title": "Область",
+  "suburbs": [
+   {
+    "id": 438,
+    "name": "Буй",
+    "slug": "buy",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "yar.kassir.ru"
+   },
+   {
+    "id": 480,
+    "name": "Вятское",
+    "slug": "vyatskoe",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "yar.kassir.ru"
+   },
+   {
+    "id": 596,
+    "name": "Данилов",
+    "slug": "danilov",
+    "isActive": false,
+    "isFeatured": true,
+    "domain": "yar.kassir.ru"
+   },
+   {
+    "id": 427,
+    "name": "Нерехта",
+    "slug": "nerehta",
+    "isActive": false,
+    "isFeatured": false,
+    "domain": "yar.kassir.ru"
+   },
+   {
+    "id": 426,
+    "name": "Переславль-Залесский",
+    "slug": "pereslavl-zalesskiy",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "yar.kassir.ru"
+   },
+   {
+    "id": 478,
+    "name": "Ростов Великий",
+    "slug": "rostov-velikiy",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "yar.kassir.ru"
+   },
+   {
+    "id": 402,
+    "name": "Рыбинск",
+    "slug": "ryibinsk",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "yar.kassir.ru"
+   },
+   {
+    "id": 479,
+    "name": "Углич",
+    "slug": "uglich",
+    "isActive": true,
+    "isFeatured": false,
+    "domain": "yar.kassir.ru"
+   }
+  ]
+ }
+]
