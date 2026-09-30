@@ -3,7 +3,7 @@
   "venues": {},
   "edits": {},
   "filters": {
-    "show": "local",
+    "show": "tour",
     "pmin": null,
     "pmax": null,
     "noprice": false
