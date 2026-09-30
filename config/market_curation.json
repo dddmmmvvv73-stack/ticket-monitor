@@ -5,7 +5,7 @@
   "filters": {
     "show": "tour",
     "pmin": null,
-    "pmax": null,
+    "pmax": 1200,
     "noprice": false
   }
 }
