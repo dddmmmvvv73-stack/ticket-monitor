@@ -3,10 +3,11 @@
 # Ключ GigaChat — секрет GIGACHAT_AUTH_KEY (Settings → Secrets and variables → Actions).
 name: Сбор конкурентов
 
+# Раз в час, в :25 МСК, сбор запускает cron-job.org (POST …/actions/workflows/collect.yml/dispatches,
+# fine-grained токен только с Actions: write на этот репозиторий). Своё расписание GitHub срабатывало
+# редко — 30.09 из ежечасных окон сработало одно, — поэтому schedule убран.
 on:
-  schedule:
-    - cron: "23 * * * *"     # раз в час, в :23 (публичный репозиторий — минуты не ограничены)
-  workflow_dispatch:           # и вручную: gh workflow run collect.yml
+  workflow_dispatch:           # cron-job.org и вручную: gh workflow run collect.yml
 
 concurrency:
   group: collect               # два сбора одновременно не идут

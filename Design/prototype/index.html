@@ -948,7 +948,7 @@ function cityEmpty() {
   if (!venues.length || cityHasData(S.city)) return '<div class="empty"><h2>Мероприятий нет</h2><p style="margin:0">Попробуйте другой город или добавьте своё мероприятие.</p></div>';
   return '<div class="empty"><h2>' + esc(S.city) + ' — ждём первый сбор</h2>' +
     '<p style="margin:0 auto;max-width:520px">Подключены: <b>' + esc(venues.map(function (x) { return x.name; }).join(", ")) + '</b> (' + esc(venues[0].site) + '). ' +
-    'Сбор идёт каждый час в :23 — после него здесь появятся мероприятия, ниши, продажи и залы.</p></div>';
+    'Сбор идёт каждый час в :25 — после него здесь появятся мероприятия, ниши, продажи и залы.</p></div>';
 }
 // Площадки в данных — по числу мероприятий, самые крупные первыми
 function venuesOf(list, limit) {
@@ -2035,7 +2035,7 @@ function plural(n, one, few, many) { var a = Math.abs(n) % 100, b = a % 10; retu
 function hhmm(min) { min = ((min % 1440) + 1440) % 1440; var h = Math.floor(min / 60), m = min % 60; return (h < 10 ? "0" : "") + h + ":" + (m < 10 ? "0" : "") + m; }
 function nextRunLabel() {
   if (!S.cfg.auto) return "Автосбор выключен — только вручную";
-  if (S.cfg.interval === 60) return "Следующий сбор — по расписанию GitHub, в :23 каждого часа (бывают задержки)";
+  if (S.cfg.interval === 60) return "Следующий сбор — в :25 каждого часа (запускает cron-job.org)";
   var at = LAST_AT - 24 * 60 + S.cfg.interval;  // от последнего сбора 30.09
   return "Следующий сбор — " + (at >= 1440 ? "1 окт., " : "сегодня в ") + hhmm(at);
 }
@@ -2156,7 +2156,7 @@ function connectCard() {
       '<datalist id="cityList">' + known.map(function (k) { return '<option value="' + esc(k) + '">'; }).join("") + '</datalist>'
       : '<p class="sub" style="margin-top:10px">Все сайты работают на одном билетном движке — площадки подключаются одинаково.</p>') +
     '<div class="form-actions" style="margin-top:16px"><button class="btn-dark" data-sa="connect-save"' + (nPicked ? "" : " disabled") + '>' + (nPicked ? "Подключить " + nPicked + " " + plural(nPicked, "площадку", "площадки", "площадок") : "Отметьте площадки") + '</button>' +
-      '<button class="btn-ghost" data-sa="connect-close">Отмена</button><span class="sub" style="margin:0">Изменение сразу уйдёт на GitHub, сбор начнётся со следующего запуска — в :23.</span></div>' +
+      '<button class="btn-ghost" data-sa="connect-close">Отмена</button><span class="sub" style="margin:0">Изменение сразу уйдёт на GitHub, сбор начнётся со следующего запуска — в :25.</span></div>' +
   '</section>';
 }
 function setSources() {
