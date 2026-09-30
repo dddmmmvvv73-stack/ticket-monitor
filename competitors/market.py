@@ -33,6 +33,7 @@ import time
 import urllib.error
 import urllib.request
 from collections import Counter, defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 from competitors.classifier import GENRES, classify_by_rules, classify_with_ai, title_key
@@ -466,9 +467,10 @@ def run() -> bool:
     log(f"=== Сбор рынка начат: городов {len(cities)} ===")
     try:
         plan, _ = kassir_plan(cities)
-        kassir = fetch_kassir(plan)
+        with ThreadPoolExecutor(max_workers=2) as pool:  # сайты разные — опрашиваем одновременно, паузы у каждого свои
+            kassir_job, yandex_job = pool.submit(fetch_kassir, plan), pool.submit(fetch_yandex, cities)
+            kassir, yandex = kassir_job.result(), yandex_job.result()
         log(f"Кассир: {len(plan)} запросов по {len({p[0] for p in plan})} регионам, записей {sum(len(p['items']) for p in kassir)}")
-        yandex = fetch_yandex(cities)
         log(f"Яндекс Афиша: {len(yandex)} городов, записей {sum(len(p['items']) for p in yandex)}")
 
         rows, dropped = parse(kassir, yandex, cities, today, load_json(OVERRIDES_FILE, {}))
