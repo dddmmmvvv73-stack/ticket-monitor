@@ -16,6 +16,18 @@ gh workflow run collect.yml     # запустить сбор на GitHub пря
 gh run list --workflow=collect.yml --limit 5   # последние сборы
 ```
 
+**Афиша рынка** (98 городов по Кассиру и Яндекс Афише, раз в сутки в 21:00 МСК —
+запускает cron-job.org) — `competitors/market.py`, данные — `data/competitors/market`:
+
+```bash
+gh workflow run market.yml                      # собрать рынок на GitHub прямо сейчас (~20 мин)
+./pull_data.sh && python3 -m competitors.market export   # свежий снимок → раздел «Рынок» прототипа
+MARKET_ONLY="Владимир,Иваново" python3 -m competitors.market   # проверочный сбор по паре городов (пишет в data/!)
+```
+
+Города списка — `config/market.json`, справочник регионов Кассира —
+`config/market_kassir_regions.json`.
+
 Площадки подключаются на странице «Конкуренты» (`/competitors`): билетный
 сайт → площадка → город. Список сохраняется в `config/competitors.json` и
 сам уходит на GitHub, сбор подхватывает его со следующего запуска.

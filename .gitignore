@@ -22,6 +22,3 @@ __pycache__/
 # граф кода (graphify), пересобирается командой /graphify
 graphify-out/
 
-# Сырые ответы и промежуточный файл разового сбора «Афиши рынка» (пересоздаются скриптами)
-Design/prototype/market-snapshot/raw/
-Design/prototype/market-snapshot/market.json

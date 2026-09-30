@@ -1,27 +1,24 @@
-# Сбор афиш конкурентов по расписанию — вместо app.py на ноутбуке.
-# Код — ветка main, собранные данные (data/competitors) — ветка data этого же репозитория.
-# Ключ GigaChat — секрет GIGACHAT_AUTH_KEY (Settings → Secrets and variables → Actions).
-name: Сбор конкурентов
+# «Афиша рынка»: 98 городов по Кассиру и Яндекс Афише — раз в сутки.
+# Запускает cron-job.org в 21:00 МСК (POST …/actions/workflows/market.yml/dispatches, тот же токен, что у сбора конкурентов).
+# Код — ветка main, данные — ветка data (data/competitors/market). Ключ GigaChat — секрет GIGACHAT_AUTH_KEY.
+name: Афиша рынка
 
-# Раз в час, в :25 МСК, сбор запускает cron-job.org (POST …/actions/workflows/collect.yml/dispatches,
-# fine-grained токен только с Actions: write на этот репозиторий). Своё расписание GitHub срабатывало
-# редко — 30.09 из ежечасных окон сработало одно, — поэтому schedule убран.
 on:
-  workflow_dispatch:           # cron-job.org и вручную: gh workflow run collect.yml
+  workflow_dispatch:           # cron-job.org и вручную: gh workflow run market.yml
 
 concurrency:
-  group: data-branch           # общая очередь с «Афишей рынка»: оба пишут в ветку data и в кэш нейросети
+  group: data-branch           # общая очередь со сбором конкурентов: оба пишут в ветку data и в кэш нейросети
   cancel-in-progress: false
 
 permissions:
   contents: write              # чтобы сохранить данные в ветку data
 
 jobs:
-  collect:
+  market:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
     env:
-      TZ: Europe/Moscow        # время в журнале и истории — московское, как у сборов с ноутбука
+      TZ: Europe/Moscow        # «сегодня» и время в журнале — московские
     steps:
       - name: Код
         uses: actions/checkout@v4
@@ -49,16 +46,15 @@ jobs:
           import json, os
           key = os.environ.get("GIGACHAT_AUTH_KEY", "")
           settings = {"competitors": {
-              "auto_enabled": False, "ai_provider": "gigachat" if key else "off",
-              "gigachat_auth_key": key, "gigachat_scope": "GIGACHAT_API_PERS", "gigachat_model": "GigaChat-2-Max",
-              "sheets_auto_export": False}}
+              "ai_provider": "gigachat" if key else "off",
+              "gigachat_auth_key": key, "gigachat_scope": "GIGACHAT_API_PERS", "gigachat_model": "GigaChat-2-Max"}}
           with open("config/settings.json", "w", encoding="utf-8") as f:
               json.dump(settings, f, ensure_ascii=False)
           print("нейросеть:", settings["competitors"]["ai_provider"])
           PY
 
       - name: Сбор
-        run: python -m competitors.collector auto
+        run: python -m competitors.market
 
       - name: Сохранить данные в ветку data
         if: always()
@@ -68,7 +64,7 @@ jobs:
           git config user.email "actions@users.noreply.github.com"
           git add -A
           if git diff --cached --quiet; then echo "Изменений нет"; exit 0; fi
-          git commit -q -m "Сбор $(date '+%Y-%m-%d %H:%M')"
+          git commit -q -m "Рынок $(date '+%Y-%m-%d %H:%M')"
           for attempt in 1 2 3; do
             git push -q origin HEAD:data && exit 0
             git pull -q --rebase origin data || { git rebase --abort; exit 1; }
