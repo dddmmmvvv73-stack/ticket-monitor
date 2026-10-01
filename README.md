@@ -32,6 +32,9 @@ MARKET_ONLY="Владимир,Иваново" python3 -m competitors.market   # 
 `python3 app.py` → http://127.0.0.1:5050/proto/ (разметка «гастроль / местное», типы
 площадок, правки и фильтры пишутся в `config/market_curation.json` и сами уходят на GitHub;
 данные рынка берутся из `data/competitors/market`, после `./pull_data.sh` — просто обновить страницу).
+Мероприятия, залы и продажи конкурентов прототип берёт так же — из `data/competitors`
+(`/proto/competitors-data.js`). Для прототипа, открытого файлом, снимок пересобирается командой
+`./pull_data.sh && python3 -m competitors.protodata export`.
 
 Площадки подключаются на странице «Конкуренты» (`/competitors`): билетный
 сайт → площадка → город. Список сохраняется в `config/competitors.json` и
