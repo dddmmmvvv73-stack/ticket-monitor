@@ -542,7 +542,7 @@
     }
   },
   "filters": {
-    "show": "tour",
+    "show": "local",
     "pmin": null,
     "pmax": null,
     "noprice": false
