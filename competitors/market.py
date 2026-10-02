@@ -54,7 +54,8 @@ LOG_FILE = MARKET_DIR / "market.log"
 CITIES_FILE = CONFIG_DIR / "market.json"
 KASSIR_REGIONS_FILE = CONFIG_DIR / "market_kassir_regions.json"
 YANDEX_CITIES_CACHE = MARKET_DIR / "yandex_cities.json"
-KASSIR_TITLES_FILE = MARKET_DIR / "kassir_titles.json"   # заголовки страниц Кассира для спорных склеек: адрес → [название, дата]
+KASSIR_TITLES_FILE = MARKET_DIR / "kassir_titles.json"
+VENUE_ALIASES_FILE = MARKET_DIR / "venue_aliases.json"   # одна площадка под разными названиями: {город: [[a, b], …]}   # заголовки страниц Кассира для спорных склеек: адрес → [название, дата]
 OVERRIDES_FILE = CONFIG_DIR / "classification_overrides.json"
 AI_CACHE_FILE = DATA_DIR / "ai_cache.json"
 PROTOTYPE_DATA = BASE_DIR / "Design" / "prototype" / "market-data.js"
@@ -334,25 +335,93 @@ def similar_title(a: str, b: str) -> bool:
     return ca == cb or SequenceMatcher(None, ca, cb).ratio() >= 0.8 or SequenceMatcher(None, _sorted_key(a), _sorted_key(b)).ratio() >= 0.85
 
 
-def same_venue(a: str, b: str, city: str = "") -> bool:
-    """«Окружной Дом Офицеров» и «Дом офицеров», «Джипси офис (Gipsy Office)» и «Gipsy Office»."""
-    na = _lat2cyr(re.sub(r"[^a-zа-я0-9]", "", (a or "").lower().replace("ё", "е")))
-    nb = _lat2cyr(re.sub(r"[^a-zа-я0-9]", "", (b or "").lower().replace("ё", "е")))
-    if not na or not nb:
-        return False
-    if na in nb or nb in na:
+VENUE_ABBR = {"дк": "дворец культуры", "ккз": "киноконцертный зал", "кз": "концертный зал", "гкз": "государственный концертный зал",
+              "бкз": "большой концертный зал", "дкж": "дворец культуры железнодорожников", "дс": "дворец спорта",
+              "лдс": "ледовый дворец спорта", "дзис": "дворец зрелищ и спорта", "кдц": "культурно досуговый центр",
+              "скк": "спортивно концертный комплекс", "ск": "спортивный комплекс", "тюз": "театр юного зрителя",
+              "цко": "центр культуры и отдыха", "цкио": "центр культуры и отдыха", "мтс": "мтс"}
+
+
+def venue_core(v: str, city: str = "") -> tuple[str, set]:
+    """Название площадки без служебных слов и города, с раскрытыми сокращениями и в кириллице: «ККЗ Пенза» → «киноконцертный»."""
+    town = _lat2cyr((city or "").lower().replace("ё", "е"))[:4]
+    words = []
+    for w in re.findall(r"[^\W_]+", (v or "").lower().replace("ё", "е")):
+        words += VENUE_ABBR.get(w, w).split()
+    core = [c for c in (_lat2cyr(w) for w in words) if c not in VENUE_STOP and len(c) > 1 and not (town and c.startswith(town))]
+    return "".join(core), {w for w in core if w.isdigit()}
+
+
+class Aliases:
+    """Одна площадка под разными названиями — выученные пары (город, ядро, ядро) из уверенных склеек."""
+
+    def __init__(self, data: dict | None = None):
+        self.pairs = {c: [list(p) for p in v] for c, v in (data or {}).items()}
+        self.group: dict[tuple, str] = {}
+        for c, pairs in self.pairs.items():
+            for x, y in pairs:
+                self._join(c, x, y)
+
+    def _find(self, c: str, x: str) -> str:
+        g = self.group.get((c, x), x)
+        return g if g == x else self._find(c, g)
+
+    def _join(self, c: str, x: str, y: str) -> None:
+        gx, gy = self._find(c, x), self._find(c, y)
+        if gx != gy:
+            self.group[(c, gx)] = gy
+
+    def same(self, c: str, x: str, y: str) -> bool:
+        return bool(x and y) and self._find(c, x) == self._find(c, y)
+
+    def learn(self, c: str, a: str, b: str) -> bool:
+        x, y = venue_core(a, c)[0], venue_core(b, c)[0]
+        if not x or not y or x == y or self.same(c, x, y):
+            return False
+        self.pairs.setdefault(c, []).append([x, y])
+        self._join(c, x, y)
         return True
-    town = _lat2cyr((city or "").lower().replace("ё", "е"))[:4]  # «Новосибирская филармония» и «Новосибирский театр» — не одно
-    wa = {w for w in _words(a, VENUE_STOP) if not (town and w.startswith(town))}
-    wb = {w for w in _words(b, VENUE_STOP) if not (town and w.startswith(town))}
-    return bool(wa & wb) or SequenceMatcher(None, na, nb).ratio() >= 0.7
+
+    def dump(self) -> dict:
+        return self.pairs
+
+
+def same_venue(a: str, b: str, city: str = "", aliases: Aliases | None = None) -> bool:
+    """«Окружной Дом Офицеров» и «Дом офицеров», «ККЗ Пенза» и «Киноконцертный зал «Пенза»», «ДКЖ» и «Дворец культуры
+    железнодорожников», «Алькатрас» и Alcatraz; школа № 56 и школа № 19 — разные; выученные пары — одна площадка."""
+    (ca, na), (cb, nb) = venue_core(a, city), venue_core(b, city)
+    if aliases and aliases.same(city, ca, cb):
+        return True
+    if na and nb and not (na & nb):
+        return False
+    if not ca or not cb:  # одни служебные слова («Филармония», «ДК Барнаула») — целиком, с раскрытыми сокращениями
+        full = lambda v: "".join(_lat2cyr(x) for w in re.findall(r"[^\W_]+", (v or "").lower().replace("ё", "е"))
+                                 for x in VENUE_ABBR.get(w, w).split())
+        fa, fb = full(a), full(b)
+        return bool(fa and fb) and (fa in fb or fb in fa or SequenceMatcher(None, fa, fb).ratio() >= 0.9)
+    if ca == cb or (min(len(ca), len(cb)) >= 4 and (ca in cb or cb in ca)):
+        return True
+    town = _lat2cyr((city or "").lower().replace("ё", "е"))[:4]
+    wa = {w for w in _words(a, VENUE_STOP) if not (town and w.startswith(town)) and not w.isdigit()}
+    wb = {w for w in _words(b, VENUE_STOP) if not (town and w.startswith(town)) and not w.isdigit()}
+    return bool(wa & wb) or SequenceMatcher(None, ca, cb).ratio() >= 0.75
+
+
+def strict_title(a: str, b: str) -> bool:
+    """Строже similar_title — когда нет времени или оба с одного сайта: то же название с точностью до порядка слов и опечаток."""
+    ka, kb = tour_key(a), tour_key(b)
+    if ka and kb and (ka == kb or (min(len(ka), len(kb)) >= 5 and (ka in kb or kb in ka))):
+        return True
+    sa, sb = _sorted_key(a), _sorted_key(b)
+    return bool(sa) and (sa == sb or SequenceMatcher(None, sa, sb).ratio() >= 0.9)
 
 
 def _merge(hit: dict, r: dict) -> None:
     """Строка Кассира r — в строку Яндекса hit: название и ссылка Яндекса, ссылка и Пушкинская — с Кассира."""
-    hit["src"] = "ky"
+    hit["src"] = "ky" if {hit["src"], r["src"]} != {hit["src"]} else hit["src"]  # дубль с того же сайта — источник прежний
     hit["keys"] = hit["keys"] + r["keys"]
-    hit["url_k"] = r["url_k"]
+    hit["url_k"] = hit["url_k"] or r["url_k"]
+    hit["url_y"] = hit["url_y"] or r["url_y"]
     hit["pushkin"] = hit["pushkin"] or r["pushkin"]
     hit["time"] = hit["time"] or r["time"]
     if hit["pmin"] is None:
@@ -360,7 +429,27 @@ def _merge(hit: dict, r: dict) -> None:
     hit["genre"] = hit["genre"] or r["genre"]
 
 
-def merge_by_slot(rows: list[dict]) -> tuple[list[dict], list[tuple[dict, dict]]]:
+def dedupe_source(rows: list[dict], aliases: Aliases | None = None) -> list[dict]:
+    """Дубли внутри одного сайта: Кассир продаёт концерт с нескольких региональных доменов, Яндекс заводит две карточки.
+    Тот же город, дата, время, площадка и то же название (строгое сравнение) — одна строка."""
+    keep, merged, slot = [], 0, defaultdict(list)
+    for r in rows:
+        if not r["time"]:
+            keep.append(r)
+            continue
+        twin = next((x for x in slot[(r["src"], r["city"], r["date"], r["time"])]
+                     if strict_title(x["title"], r["title"]) and same_venue(x["venue"], r["venue"], r["city"], aliases)), None)
+        if twin:
+            _merge(twin, r)
+            merged += 1
+        else:
+            slot[(r["src"], r["city"], r["date"], r["time"])].append(r)
+            keep.append(r)
+    log(f"Дубли внутри сайта: склеено {merged}")
+    return keep
+
+
+def merge_by_slot(rows: list[dict], aliases: Aliases | None = None) -> tuple[list[dict], list[tuple[dict, dict]]]:
     """
     Вторая склейка: тот же город, дата, время и площадка, а название записано по-разному. Если названия совсем
     разные — спорный случай (бывает и два зала в один час): его проверяет resolve_kassir_titles по странице Кассира.
@@ -374,17 +463,38 @@ def merge_by_slot(rows: list[dict]) -> tuple[list[dict], list[tuple[dict, dict]]
         if r["src"] != "k" or not r["time"]:
             keep.append(r)
             continue
-        cands = [y for y in slot.get((r["city"], r["date"], r["time"]), []) if y["src"] == "y" and same_venue(r["venue"], y["venue"], r["city"])]
+        cands = [y for y in slot.get((r["city"], r["date"], r["time"]), []) if y["src"] == "y" and same_venue(r["venue"], y["venue"], r["city"], aliases)]
         hit = next((y for y in cands if similar_title(r["title"], y["title"])), None)
         if hit:
+            if aliases:
+                aliases.learn(r["city"], r["venue"], hit["venue"])
             _merge(hit, r)
             merged += 1
             continue
         keep.append(r)
         if len(cands) == 1:
             conflicts.append((r, cands[0]))
-    log(f"Склейка по месту и времени: {merged} мероприятий Кассира — те же, что на Яндексе; спорных {len(conflicts)}")
-    return keep, conflicts
+    # Время есть только у одного сайта (у Яндекса часто нет): та же площадка и то же название — строгое сравнение
+    day = defaultdict(list)
+    for y in keep:
+        if y["src"] == "y":
+            day[(y["city"], y["date"])].append(y)
+    rest, no_time = [], 0
+    for r in keep:
+        if r["src"] != "k":
+            rest.append(r)
+            continue
+        cands = [y for y in day.get((r["city"], r["date"]), []) if y["src"] == "y" and not (r["time"] and y["time"])
+                 and same_venue(r["venue"], y["venue"], r["city"], aliases) and strict_title(r["title"], y["title"])]
+        if len(cands) == 1:
+            _merge(cands[0], r)
+            no_time += 1
+        else:
+            rest.append(r)
+    conflicts = [(r, y) for r, y in conflicts if y["src"] == "y" and any(x is r for x in rest)]
+    log(f"Склейка по месту и времени: {merged} мероприятий Кассира — те же, что на Яндексе, ещё {no_time} — без времени "
+        f"у одного из сайтов; спорных {len(conflicts)}")
+    return rest, conflicts
 
 
 def _kassir_page_title(url: str) -> str | None:
@@ -443,7 +553,8 @@ def _clean_venue(v: str, city: str) -> str:
     return re.sub(r"\s*\((%s)\)\s*$" % re.escape(city), "", v or "").strip() or "—"
 
 
-def parse(kassir: list[dict], yandex: list[dict], cities: list[str], today: str, overrides: dict) -> tuple[list[dict], Counter]:
+def parse(kassir: list[dict], yandex: list[dict], cities: list[str], today: str, overrides: dict,
+          aliases: Aliases | None = None) -> tuple[list[dict], Counter, list]:
     city_by_norm = {norm_city(c): c for c in cities}
     dropped: Counter = Counter()
     rows: list[dict] = []
@@ -556,7 +667,8 @@ def parse(kassir: list[dict], yandex: list[dict], cities: list[str], today: str,
                 for x in dates:
                     rows.append({**base, "keys": [f"y:{ev['id']}:{x}@{city}"], "date": x, "time": one[11:16] if one[:10] == x else ""})
 
-    # --- Склейка: одно мероприятие на обоих сайтах — город, дата и похожее название
+    # --- Склейка: сначала дубли внутри сайта, потом одно мероприятие на обоих сайтах — город, дата и похожее название
+    rows = dedupe_source(rows, aliases)
     by_day = defaultdict(list)
     for r in rows:
         if r["src"] == "y":
@@ -572,11 +684,13 @@ def parse(kassir: list[dict], yandex: list[dict], cities: list[str], today: str,
                 hit = y
                 break
         if hit:
+            if aliases is not None and r["time"] and r["time"] == hit["time"]:
+                aliases.learn(r["city"], r["venue"], hit["venue"])  # то же название в тот же час — площадки одни и те же
             _merge(hit, r)
         else:
             out.append(r)
     out += [r for r in rows if r["src"] != "k"]
-    out, conflicts = merge_by_slot(out)
+    out, conflicts = merge_by_slot(out, aliases)
     out.sort(key=lambda r: (r["date"], r["time"] or "99", r["city"], r["title"]))
     return out, dropped, conflicts
 
@@ -634,7 +748,8 @@ def run() -> bool:
         log(f"Кассир: {len(plan)} запросов по {len({p[0] for p in plan})} регионам, записей {sum(len(p['items']) for p in kassir)}")
         log(f"Яндекс Афиша: {len(yandex)} городов, записей {sum(len(p['items']) for p in yandex)}")
 
-        rows, dropped, conflicts = parse(kassir, yandex, cities, today, load_json(OVERRIDES_FILE, {}))
+        aliases = Aliases(load_json(VENUE_ALIASES_FILE, {}))
+        rows, dropped, conflicts = parse(kassir, yandex, cities, today, load_json(OVERRIDES_FILE, {}), aliases)
         rows = resolve_kassir_titles(rows, conflicts, today)
         previous = load_json(EVENTS_FILE, [])
         by_src_now = Counter(s for r in rows for s in r["src"])
@@ -669,6 +784,7 @@ def run() -> bool:
 
         _save_lines(EVENTS_FILE, rows)
         _save_lines(SEEN_FILE, seen)
+        save_json(VENUE_ALIASES_FILE, aliases.dump())
         archived = update_archive(rows, cur, today)
         brief = lambda r: {k: r[k] for k in ("keys", "city", "venue", "title", "date", "time", "format", "sphere", "genre",
                                              "pmin", "pmax", "url_k", "url_y")}
