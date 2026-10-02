@@ -954,6 +954,12 @@ function renderOverview() {
   '</section>' +
   '<div class="grid-3">' +
     '<section class="card card-pad span-2"><div style="display:flex;justify-content:space-between;align-items:baseline"><h2>Что изменилось</h2><span class="sub" style="margin:0">сбор ' + (PREV_RUN ? atText(PREV_RUN) + ' → ' + LAST_RUN.slice(11, 16) : atText(LAST_RUN)) + '</span></div><ul class="list">' +
+      // Новые мероприятия площадок за 7 дней — сверху, затем изменения занятых мест за последний сбор
+      data.filter(isFresh).sort(function (a, b) { return a.first < b.first ? 1 : -1; }).map(function (e) {
+        return '<li class="change"><span class="change-sign" style="background:var(--wash-2);color:var(--data-dark)" aria-hidden="true">★</span>' +
+          '<div style="flex-grow:1;min-width:0"><button class="ev-title" data-open="' + e.i + '">' + esc(e.title) + '</button><div class="sub" style="margin:0">' + esc(e.venue) + ' · ' + human(e.date) + '</div></div>' +
+          '<div style="text-align:right"><span class="badge-new">новое</span><div class="sub num" style="margin:2px 0 0">появилось ' + atText(e.first) + '</div></div></li>';
+      }).join("") +
       (function () { var list = CHANGES.filter(function (c) { return S.city === "Все города" || c.city === S.city; });
         return list.length ? "" : '<li class="muted">За последний сбор занятые места в этом городе не менялись.</li>'; })() +
       CHANGES.filter(function (c) { return S.city === "Все города" || c.city === S.city; }).map(function (c) {
@@ -961,7 +967,7 @@ function renderOverview() {
         return '<li class="change"><span class="change-sign" style="background:' + (up ? "#dcebf8" : "#f5f5f4") + ';color:' + (up ? "#104a78" : "#57534e") + '" aria-hidden="true">' + (up ? "+" : "−") + '</span>' +
           '<div style="flex-grow:1;min-width:0"><div style="font-weight:500">' + esc(c.title) + '</div><div class="sub" style="margin:0">' + c.venue + ' · ' + c.date + '</div></div>' +
           '<div style="text-align:right"><div class="num" style="font-weight:500">' + (up ? "+" : "−") + Math.abs(d) + ' ' + plural(Math.abs(d), "место", "места", "мест") + '</div><div class="sub num" style="margin:0">занято ' + c.from + ' → ' + c.to + '</div></div></li>';
-      }).join("") + (S.city === "Иваново" ? '' : '<li class="muted">Во Владимире новых мероприятий и изменений цен не было</li>') + '</ul></section>' +
+      }).join("") + (data.some(isFresh) ? '' : '<li class="muted">Новых мероприятий за 7 дней нет</li>') + '</ul></section>' +
     '<section class="card card-pad"><h2>Под риском</h2><p class="sub">До даты меньше 3 недель, зал заполнен меньше чем на 40%</p><ul class="list">' +
       risk.map(function (e) { return '<li><button class="list-btn" data-open="' + e.i + '" title="' + esc(e.title) + '"><div style="display:flex;justify-content:space-between;gap:10px"><span class="lb-title" style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(e.title) + '</span><span class="badge-risk num">' + fill(e) + '%</span></div><div class="sub" style="margin:0">' + e.venue + ' · ' + human(e.date) + '</div></button></li>'; }).join("") +
     '</ul></section>' +
@@ -1076,7 +1082,7 @@ var CELL = {
   venue: function (e) { return '<div style="font-weight:500;overflow:hidden;text-overflow:ellipsis" class="nowrap" title="' + esc(e.venue) + '">' + esc(e.venue) + '</div><div class="sub2">' + esc(e.city) + '</div>'; },
   title: function (e) {
     var risk = isRisk(e);
-    var badges = (risk ? '<span class="badge-risk">под риском</span>' : status(e) === "good" ? '<span class="badge-good">продаётся хорошо</span>' : '') + (e.pushkin ? '<span class="badge-new">Пушкинская карта</span>' : '') +
+    var badges = (risk ? '<span class="badge-risk">под риском</span>' : status(e) === "good" ? '<span class="badge-good">продаётся хорошо</span>' : '') + (e.pushkin ? '<span class="badge-new">Пушкинская карта</span>' : '') + (isFresh(e) ? '<span class="badge-new">новое · ' + human(e.first.slice(0, 10)) + '</span>' : '') +
       (yaOf(e) ? '<span class="badge-edit">Яндекс Афиша</span>' : '') +
       (e.custom ? '<span class="badge-edit">своё мероприятие</span>' : e.edited ? '<span class="badge-edit">изменено вручную</span>' : '');
     return '<button class="ev-title" data-open="' + e.i + '">' + esc(e.title) + '</button>' + (badges ? '<div class="ev-badges">' + badges + '</div>' : '');

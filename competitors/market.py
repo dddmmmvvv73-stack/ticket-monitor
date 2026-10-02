@@ -36,7 +36,7 @@ import urllib.error
 import urllib.request
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from competitors import curation
 from competitors.classifier import GENRES, classify_by_rules, classify_with_ai, title_key
@@ -542,6 +542,10 @@ def run() -> bool:
         _trim_log()
 
 
+def _next_day(iso: str) -> str:
+    return (datetime.fromisoformat(iso[:10]) + timedelta(days=1)).date().isoformat()
+
+
 def update_archive(rows: list[dict], cur: dict, today: str) -> int:
     """Архив гастролей: каждое гастрольное выступление остаётся навсегда — с последними ценами и тем,
     чем закончилось: «прошло» (дата наступила) или «снято» (пропало из продажи до даты: распродано или отменено)."""
@@ -563,7 +567,10 @@ def update_archive(rows: list[dict], cur: dict, today: str) -> int:
         if e.get("pk") in local:          # вы отметили проект местным — из архива гастролей убираем
             del arch[k]
         elif k not in now and e["status"] == "on_sale":
-            e["status"] = "past" if e["date"] < today else "gone"
+            # Сбор в 21:00: дневные и вечерние события этого дня уже сняты с продажи — это «прошло», не «снято»
+            e["status"] = "past" if e["date"] <= today else "gone"
+        elif e["status"] == "gone" and e["date"] <= _next_day(e.get("last_seen") or e["date"]):
+            e["status"] = "past"  # записанные до 02.10 по старому правилу: пропали в день даты
     _save_lines(ARCHIVE_FILE, arch)
     return len(arch)
 
@@ -573,6 +580,15 @@ def update_archive(rows: list[dict], cur: dict, today: str) -> int:
 def _row_key(r: dict) -> str:
     k = r["keys"][0]  # данные до 30.09: номер Яндекса без города — добавляем, как в новых сборах
     return f"{k}@{r['city']}" if k.startswith("y:") and "@" not in k else k
+
+
+def _arch_now(e: dict) -> dict:
+    """Статус для прототипа: дата прошла, а сбор рынка (21:00) ещё не отметил — уже «прошло»."""
+    if e.get("status") == "on_sale" and e["date"] < datetime.now().date().isoformat():
+        return {**e, "status": "past"}
+    if e.get("status") == "gone" and e["date"] <= _next_day(e.get("last_seen") or e["date"]):
+        return {**e, "status": "past"}  # до исправления 02.10: пропали в день даты
+    return e
 
 
 def export_js() -> str:
@@ -599,7 +615,7 @@ def export_js() -> str:
                        r["more"] or 0, r["until"] or "", r["first_seen"], r["age"] or "", 1 if r.get("ytour") else 0, _row_key(r)])
     arch = [[e["city"], e["venue"], e["title"], e["date"], e.get("format") or "", e.get("genre") or "", e.get("pmin") or 0,
              e.get("pmax") or 0, e["status"], e.get("first_seen") or "", e.get("last_seen") or "", e.get("url_y") or e.get("url_k") or ""]
-            for e in load_json(ARCHIVE_FILE, {}).values() if e.get("status") != "on_sale"]
+            for e in (_arch_now(x) for x in load_json(ARCHIVE_FILE, {}).values()) if e["status"] != "on_sale"]
     at = datetime.fromisoformat(status["last_run_at"])
     months = ["янв.", "февр.", "мар.", "апр.", "мая", "июн.", "июл.", "авг.", "сент.", "окт.", "нояб.", "дек."]
     label = f"{at.day} {months[at.month - 1]}, {at:%H:%M}"
