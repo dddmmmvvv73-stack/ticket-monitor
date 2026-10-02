@@ -44,6 +44,11 @@ KNOWN_HALLS = {
 GONE_AFTER = timedelta(hours=3)   # не видно на сайте дольше, чем другие события той же площадки, — снято с продажи
 RUN_MATCH = timedelta(minutes=15)  # отметка сбора в истории и строка «Сбор завершён» в журнале — один сбор
 LOG_LINES = 80
+# Поля прототипа ↔ поля API /api/events (competitors/edits.py)
+PROTO_FIELDS = {"title": "title", "date": "date", "time": "time", "city": "city", "venue": "venue", "sphere": "sphere",
+                "format": "format", "genre": "genre", "pmin": "price_min", "pmax": "price_max", "sellable": "seats_sellable",
+                "taken": "seats_taken_sellable", "gross": "gross", "revenue": "revenue_est", "pushkin": "pushkin",
+                "priceText": "price_text", "link": "url"}
 
 MONTHS_GEN = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"]
 MONTHS_SHORT = ["янв", "фев", "мар", "апр", "мая", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"]
@@ -68,6 +73,14 @@ def _day_long(t: datetime) -> str:
 def _day_short(iso: str) -> str:
     y, m, d = (int(x) for x in iso[:10].split("-"))
     return f"{d} {MONTHS_SHORT[m - 1]}"
+
+
+def _stamp(iso: str | None) -> str:
+    """«1 окт. 16:45» — как подпись правки в прототипе."""
+    if not iso:
+        return ""
+    t = datetime.fromisoformat(iso)
+    return f"{t.day} {MONTHS_DOT[t.month - 1]} {t:%H:%M}"
 
 
 def _pretty_title(e: dict) -> str:
@@ -168,7 +181,8 @@ def build() -> dict:
     parsed = collector.load_events()
     if not parsed:
         raise RuntimeError("Нет данных конкурентов — сначала ./pull_data.sh")
-    events = [e for e in edits.apply(parsed.values()) if not edits.is_custom(e["uid"])]
+    # Строки — данные парсера; ручные правки и свои события прототип накладывает сам (CD.edits, CD.custom)
+    events = list(parsed.values())
     venues = _venues(events)
     by_stem = {collector.seat_state_path(e["uid"]).stem: e for e in events}
     states = collector.load_seat_states()
@@ -301,8 +315,16 @@ def build() -> dict:
             "found": lr.get("found", len(upcoming)), "fresh": lr.get("fresh", 0), "sold": lr.get("sold", 0),
             "soldRub": lr.get("soldRub", 0), "ok": status_file.get("last_ok", True), "error": status_file.get("last_error")}
 
+    by_api = {v: k for k, v in PROTO_FIELDS.items()}
+    saved = edits._load()
+    edit_map = {uid: {"fields": {by_api[f]: v for f, v in rec["fields"].items() if f in by_api}, "at": _stamp(rec["at"])}
+                for uid, rec in saved["by_uid"].items() if uid in parsed}
+    custom = [{"uid": c["uid"], "created": _stamp(c.get("created")), **{k: c.get(f) for k, f in PROTO_FIELDS.items()}}
+              for c in saved["custom"]]
+
     return {
         "at": last_at.isoformat(timespec="minutes"),
+        "edits": edit_map, "custom": custom,
         "venue": {v[0]: v[1] for v in venues.values()},
         "venueCity": {v[0]: v[2] for v in venues.values()},
         "ev": ev_rows, "rows": rows, "halls": halls, "sales": sales,

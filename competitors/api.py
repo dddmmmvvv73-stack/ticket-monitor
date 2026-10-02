@@ -17,7 +17,7 @@ from datetime import date
 
 from flask import Blueprint, jsonify, request
 
-from competitors import collector, edits
+from competitors import collector, edits, sync
 from competitors.classifier import FORMATS, GENRES, SPHERES
 
 bp = Blueprint("app_api", __name__, url_prefix="/api")
@@ -25,6 +25,14 @@ bp = Blueprint("app_api", __name__, url_prefix="/api")
 
 def _event(uid: str) -> dict | None:
     return next((e for e in edits.apply(collector.load_events().values()) if e["uid"] == uid), None)
+
+
+def _publish(note: str, niche: bool = False) -> None:
+    """Правки и ниши — в config/: отправляем на GitHub, чтобы они не терялись и были видны на других компьютерах."""
+    files = [str(edits.EDITS_FILE.relative_to(collector.BASE_DIR))]
+    if niche:
+        files.append(str(collector.OVERRIDES_FILE.relative_to(collector.BASE_DIR)))
+    sync.publish_files(files, f"Мероприятия: {note}", collector.log)
 
 
 def _body() -> dict:
@@ -57,7 +65,9 @@ def events_list():
 @bp.post("/events")
 def events_create():
     uid = edits.create_custom(edits.clean(_body()))
-    return jsonify(_event(uid)), 201
+    event = _event(uid)
+    _publish(f"своё мероприятие «{event['title']}»")
+    return jsonify(event), 201
 
 
 @bp.patch("/events/<path:uid>")
@@ -68,13 +78,17 @@ def events_update(uid):
             edits.update_custom(uid, values)
         except KeyError:
             return jsonify({"error": "Событие не найдено"}), 404
-        return jsonify(_event(uid))
+        event = _event(uid)
+        _publish(f"правка своего «{event['title']}»")
+        return jsonify(event)
 
     parsed = collector.load_events().get(uid)
     if parsed is None:
         return jsonify({"error": "Мероприятие не найдено"}), 404
     edits.save_parsed(uid, parsed, values)  # сначала проверки и поля, потом ниша
+    niche = any(f in values for f in edits.NICHE_FIELDS)
     _save_niche(parsed, values)
+    _publish(f"правка «{parsed['title']}»", niche)
     return jsonify(_event(uid))
 
 
@@ -86,6 +100,7 @@ def events_delete(uid):
         edits.delete_custom(uid)
     except KeyError:
         return jsonify({"error": "Событие не найдено"}), 404
+    _publish(f"удалено своё {uid}")
     return jsonify({"ok": True})
 
 
@@ -95,6 +110,8 @@ def events_revert(uid):
     if parsed is None:
         return jsonify({"error": "Мероприятие не найдено"}), 404
     edits.revert(uid)
-    if "manual" in (parsed.get("class_source") or {}).values():
+    niche = "manual" in (parsed.get("class_source") or {}).values()
+    if niche:
         collector.set_override(parsed["title"], {})  # ниша снова по правилам и нейросети
+    _publish(f"вернуть данные парсера «{parsed['title']}»", niche)
     return jsonify(_event(uid))

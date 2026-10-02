@@ -808,13 +808,20 @@ var EDIT_FIELDS = ["title", "date", "time", "city", "venue", "sphere", "format",
 // Правки спарсенных — по uid мероприятия (номер строки меняется с каждым сбором). До 01.10 правки хранились
 // по номеру строки снимка 30.09 — EDITS_LEGACY переводит их в uid при первой загрузке.
 var EDITS_LEGACY = ["odk33:otkryitie-tvorcheskogo-sezona-fabrika-talantov", "odk33:bal-konczert-osennij-vals1", "odk33:osennij-listopad", "odk33:spektakl-nochnoj-gost", "odk33:myuzikl-puteshestvie-malenkogo-princza", "odk33:alisa-v-gorode-chudes1", "odk33:romantika-oseni", "odk33:balet-karmen", "odk33:golos-epoxi", "odk33:tvorcheskij-vecher-aktrisyi-teatra-i-kino-ekaterinyi-volkovoj", "odk33:strunyi-dushi", "odk33:viktor-chausov", "odk33:aleksandr-malinin", "odk33:xor-sretenskogo-monastyirya", "odk33:spektakl-opasnyie-igryi", "odk33:vladimir-kuklachev-volshebnyie-koshki", "odk33:m9", "odk33:marina-devyatova", "odk33:valerij-syomin-neuzheli-60", "odk33:spektakl-muzhchina-s-dostavkoj-na-dom", "odk33:sergej-trofimov", "odk33:oleg-mityaev", "odk33:m", "odk33:lukomore", "odk33:m2", "odk33:m23", "odk33:m234", "odk33:lukomore1", "odk33:lukomore13", "odk33:lukomore134", "odk33:lukomore1345", "odk33:lukomore55", "odk33:lukomore556", "odk33:lukomore5567", "odk33:lukomore55678", "odk33:l", "odk33:l1", "odk33:balet-shhelkunchik1", "odk33:balet-shhelkunchik6", "odk33:spektakl-ironiya-nasledstva", "odk33:yaroslav-sumishevskij", "odk33:spektakl-anna-karenina", "odk33:balet-spyashhaya-krasavicza", "vk:10969", "vk:11559", "vk:11566", "vk:10885", "vk:11459", "vk:11546", "vk:10114", "vk:11500", "vk:11545", "vk:11099", "vk:11170", "vk:11451", "vk:11168", "vk:11098", "vk:11454", "vk:11173", "vk:11178", "vk:11756", "vk:11424", "vk:10621", "vk:10351", "vk:11840", "vk:10898", "vk:10948", "vk:11120", "vk:11752", "vk:11422", "vk:11086", "vk:10673", "vk:10941", "vk:9713", "vk:10731", "vk:11604", "vk:11835", "vk:11297", "vk:11720", "vk:11786", "vk:11356", "vk:11119", "vk:11787", "vk:11762", "vk:11455", "vk:11763", "vk:11460", "vk:11461", "vk:11472", "vk:11145", "vk:11718", "vk:11746", "vk:11603", "vk:11622", "vk:11600", "vk:11471", "vk:11760", "vk:11727", "vk:11462", "vk:11836", "ivanovokoncert:12389", "ivanovokoncert:12916", "ivanovokoncert:12845", "ivanovokoncert:12901", "ivanovokoncert:12682", "ivanovokoncert:12224", "ivanovokoncert:13095", "ivanovokoncert:12937", "ivanovokoncert:12932", "ivanovokoncert:12863", "ivanovokoncert:12983", "ivanovokoncert:12779", "ivanovokoncert:12975", "ivanovokoncert:13203", "ivanovokoncert:12888", "ivanovokoncert:13129", "ivanovokoncert:12985", "ivanovokoncert:12959", "ivanovokoncert:12844", "ivanovokoncert:12225", "ivanovokoncert:13045", "ivanovokoncert:12905", "ivanovokoncert:12981", "ivanovokoncert:12900", "ivanovokoncert:12978", "ivanovokoncert:12842", "ivanovokoncert:12986", "ivanovokoncert:12889", "ivanovokoncert:13019", "ivanovokoncert:12982", "ivanovokoncert:12992", "ivanovokoncert:13072", "ivanovokoncert:12841", "ivanovokoncert:12976", "ivanovokoncert:12980", "ivanovokoncert:12993", "ivanovokoncert:12787", "ivanovokoncert:13237", "ivanovokoncert:13156", "ivanovokoncert:12858", "ivanovokoncert:12897", "ivanovokoncert:12913", "ivanovokoncert:13135", "ivanovokoncert:13268", "ivanovokoncert:13183", "ivanovokoncert:13155", "ivanovokoncert:13178", "ivanovokoncert:13210", "ivanovokoncert:13090", "ivanovokoncert:13180", "ivanovokoncert:13213", "ivanovokoncert:13214", "ivanovokoncert:12843", "ivanovokoncert:13154", "ivanovokoncert:13181", "ivanovokoncert:12988", "ivanovokoncert:13270", "ivanovokoncert:13160", "ivanovokoncert:13236", "ivanovokoncert:12991", "ivanovokoncert:12989", "ivanovokoncert:12977", "ya:povod-ostatsia", "ya:dvoe-na-kacheliakh", "ya:ty-gde-to-riadom"];
+// Открыт через приложение (app.py) — правки и свои мероприятия живут на сервере (/api/events, config/event_edits.json)
+// и уходят на GitHub; открыт файлом — только в этом браузере (localStorage)
+var ON_APP = /^https?:$/.test(location.protocol);
+var P2S = { title: "title", date: "date", time: "time", city: "city", venue: "venue", sphere: "sphere", format: "format", genre: "genre",
+  pmin: "price_min", pmax: "price_max", sellable: "seats_sellable", taken: "seats_taken_sellable", gross: "gross", revenue: "revenue_est",
+  pushkin: "pushkin", priceText: "price_text", link: "url" };
 function loadEdits() {
+  if (ON_APP) return { byUid: CD.edits || {}, custom: (CD.custom || []).map(function (c, k) { return Object.assign({ i: 10000 + k, v: "" }, c); }), nextId: 10000 + (CD.custom || []).length };
   var x; try { x = JSON.parse(localStorage.getItem(EDITS_KEY)); } catch (e) { x = null; }
   if (!x || (!x.byId && !x.byUid)) return { byUid: {}, custom: [], nextId: 10000 };
   if (!x.byUid) { x.byUid = {}; Object.keys(x.byId || {}).forEach(function (k) { if (EDITS_LEGACY[+k]) x.byUid[EDITS_LEGACY[+k]] = x.byId[k]; }); delete x.byId; }
   return x;
 }
-function saveEdits() { try { localStorage.setItem(EDITS_KEY, JSON.stringify(EDITS)); } catch (e) { /* хранилище недоступно — правки живут до перезагрузки */ } }
+function saveEdits() { if (ON_APP) return; try { localStorage.setItem(EDITS_KEY, JSON.stringify(EDITS)); } catch (e) { /* хранилище недоступно — правки живут до перезагрузки */ } }
 var EDITS = loadEdits();
 var ALL = [], ARCH = [], EVENT_DAYS = {};
 function rebuild() {
@@ -1379,40 +1386,82 @@ function closeDrawer() {
 }
 function stamp() { var d = new Date(); return d.toLocaleDateString("ru-RU", { day: "numeric", month: "short" }) + " " + d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" }); }
 
+function apiEvents(method, path, body) {
+  return fetch("/api/events" + path, { method: method, headers: { "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined })
+    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }, function () { return { ok: false, d: {} }; }); });
+}
+function toApi(fields) { var o = {}; Object.keys(fields).forEach(function (k) { if (P2S[k]) o[P2S[k]] = fields[k]; }); return o; }
+function errorsFromApi(errs) {
+  var o = {}; Object.keys(errs || {}).forEach(function (f) { var k = Object.keys(P2S).filter(function (p) { return P2S[p] === f; })[0] || "title"; o[k] = errs[f]; }); return o;
+}
+// Ниша сохраняется по названию — сразу для всех дат: обновляем её у всех строк парсера с тем же названием
+function applyNiche(i, ev) {
+  var t = BASE[i].title;
+  BASE.forEach(function (b) { if (b.title === t) { b.sphere = ev.sphere || ""; b.format = ev.format || ""; b.genre = ev.genre || ""; } });
+}
+function afterSave(i, msg) { rebuild(); render(); if (i != null) openDrawer(i); else closeDrawer(); if (msg) toast(msg); }
+function apiFail(x, form) {
+  if (x && x.d && x.d.errors && form) { showDrawer(drawerForm(form.e, errorsFromApi(x.d.errors), form.isNew)); var el = $("drawer").querySelector('[aria-invalid="true"]'); if (el) el.focus(); return; }
+  toast("Не сохранено: " + (x && x.d && x.d.error || "приложение не отвечает — запущен ли python3 app.py?"));
+}
 $("drawer").addEventListener("click", function (ev) {
   var b = ev.target.closest("[data-drawer]"); if (!b) return;
   var act = b.getAttribute("data-drawer"), i = S.sel;
   if (act === "close") closeDrawer();
   else if (act === "edit") openEditor(i);
   else if (act === "cancel") openDrawer(i);
-  else if (act === "revert") { delete EDITS.byUid[BASE[i].uid]; saveEdits(); rebuild(); render(); openDrawer(i); }
+  else if (act === "revert") {
+    var uid = BASE[i].uid;
+    if (!ON_APP) { delete EDITS.byUid[uid]; saveEdits(); afterSave(i); return; }
+    apiEvents("POST", "/" + encodeURIComponent(uid) + "/revert").then(function (x) {
+      if (!x.ok) return apiFail(x);
+      delete EDITS.byUid[uid]; applyNiche(i, x.d); afterSave(i, "Вернули данные парсера · уходит на GitHub");
+    }, function () { apiFail(); });
+  }
   else if (act === "delete") {
     askConfirm("Удалить своё мероприятие?", "Его нельзя будет вернуть.", "Удалить мероприятие", function () {
-      EDITS.custom = EDITS.custom.filter(function (c) { return c.i !== i; }); saveEdits(); rebuild(); closeDrawer(); render();
+      var c = EDITS.custom.filter(function (x) { return x.i === i; })[0];
+      var drop = function () { EDITS.custom = EDITS.custom.filter(function (x) { return x.i !== i; }); saveEdits(); afterSave(null); };
+      if (!ON_APP || !c || !c.uid) { drop(); return; }
+      apiEvents("DELETE", "/" + encodeURIComponent(c.uid)).then(function (x) { if (!x.ok) return apiFail(x); drop(); toast("Удалено · уходит на GitHub"); }, function () { apiFail(); });
     });
   }
   else if (act === "save") {
-    var r = readForm();
+    var r = readForm(), isNew = i == null || !findEvent(i);
+    var form = { e: Object.assign({}, isNew ? {} : findEvent(i), r.data), isNew: isNew };
     if (Object.keys(r.errors).length) {
-      showDrawer(drawerForm(Object.assign({}, i == null ? {} : findEvent(i), r.data), r.errors, i == null));
+      showDrawer(drawerForm(form.e, r.errors, isNew));
       $("drawer").querySelector('[aria-invalid="true"]').focus();  // фокус на первую ошибку — её текст прочитается через aria-describedby
       return;
     }
-    if (i == null || !findEvent(i)) {                                   // своё мероприятие
-      var id = EDITS.nextId++;
-      EDITS.custom.push(Object.assign({ i: id, v: "", created: stamp() }, r.data));
-      i = id;
+    var okMsg = ON_APP ? "Сохранено · уходит на GitHub" : "";
+    if (isNew) {                                                       // своё мероприятие
+      var add = function (uid) { var id = EDITS.nextId++; EDITS.custom.push(Object.assign({ i: id, v: "", uid: uid, created: stamp() }, r.data)); saveEdits(); afterSave(id, okMsg); };
+      if (!ON_APP) { add(null); return; }
+      apiEvents("POST", "", toApi(r.data)).then(function (x) { if (!x.ok) return apiFail(x, form); add(x.d.uid); }, function () { apiFail(); });
     } else if (findEvent(i).custom) {                                  // правка своего мероприятия
-      EDITS.custom = EDITS.custom.map(function (c) { return c.i === i ? Object.assign({}, c, r.data) : c; });
+      var upd = function () { EDITS.custom = EDITS.custom.map(function (c) { return c.i === i ? Object.assign({}, c, r.data) : c; }); saveEdits(); afterSave(i, okMsg); };
+      var cu = findEvent(i).uid;
+      if (!ON_APP || !cu) { upd(); return; }
+      apiEvents("PATCH", "/" + encodeURIComponent(cu), toApi(r.data)).then(function (x) { if (!x.ok) return apiFail(x, form); upd(); }, function () { apiFail(); });
     } else {                                                           // правка спарсенного: храним только отличия
-      var base = BASE[i], diff = {};
+      var base = BASE[i], diff = {}, send = {}, prev = (EDITS.byUid[base.uid] || {}).fields || {};
       var norm = function (v) { return v == null ? "" : String(v); };
       EDIT_FIELDS.forEach(function (k) {
-        if (k in r.data && norm(r.data[k]) !== norm(base[k])) diff[k] = r.data[k] === "" ? null : r.data[k];
+        if (!(k in r.data)) return;
+        var v = r.data[k] === "" ? null : r.data[k];
+        if (norm(r.data[k]) !== norm(base[k])) { diff[k] = v; send[k] = v; }
+        else if (k in prev) send[k] = v;  // правку вернули к данным парсера — сервер её снимет
       });
-      if (Object.keys(diff).length) EDITS.byUid[base.uid] = { fields: diff, at: stamp() }; else delete EDITS.byUid[base.uid];
+      var keep = function () { if (Object.keys(diff).length) EDITS.byUid[base.uid] = { fields: diff, at: stamp() }; else delete EDITS.byUid[base.uid]; };
+      if (!ON_APP) { keep(); saveEdits(); afterSave(i); return; }
+      if (!Object.keys(send).length) { openDrawer(i); return; }
+      apiEvents("PATCH", "/" + encodeURIComponent(base.uid), toApi(send)).then(function (x) {
+        if (!x.ok) return apiFail(x, form);
+        ["sphere", "format", "genre"].forEach(function (k) { delete diff[k]; });  // ниша — по названию, у всех дат (applyNiche)
+        keep(); applyNiche(i, x.d); afterSave(i, okMsg);
+      }, function () { apiFail(); });
     }
-    saveEdits(); rebuild(); render(); openDrawer(i);
   }
 });
 
