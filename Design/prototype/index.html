@@ -4516,7 +4516,7 @@ document.addEventListener("wheel", function (ev) {
     wkSwipeReset();
   }
   WK_SWIPE.acc += ev.deltaX;
-  if (Math.abs(WK_SWIPE.acc) < 40) return;
+  if (Math.abs(WK_SWIPE.acc) < 40 || now - WK_SWIPE.last < 350) return;  // и не чаще раза в 0,35 с — быстрее рукой не успеть
   var btn = sec.querySelectorAll(".nav-arrow")[WK_SWIPE.acc > 0 ? 1 : 0];
   WK_SWIPE.lock = true; WK_SWIPE.dir = WK_SWIPE.acc > 0 ? 1 : -1; WK_SWIPE.acc = 0; WK_SWIPE.last = now; WK_SWIPE.min = ax;
   if (btn && !btn.disabled) btn.click();
