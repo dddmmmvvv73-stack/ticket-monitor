@@ -4096,10 +4096,18 @@ document.addEventListener("keydown", function (ev) {
   if (ev.key === "Escape") { S.m.priceOpen = false; render(); var b = document.querySelector("[data-mprice]"); if (b) b.focus(); }
   else if (ev.key === "Enter" && ev.target.hasAttribute && ev.target.hasAttribute("data-mpf")) { ev.preventDefault(); mPriceApply(mPriceRead(), false); }
 });
+// Окошки «Цена» и «Столбцы» закрываются кликом по любому другому фильтру или мимо. Слушаем на погружении:
+// выпадающие списки (DD) и кнопка столбцов останавливают клик, до обычного обработчика он не доходит.
+// Без перерисовки — только убираем окошко, иначе открывающийся следом список потеряет свою кнопку
+function dropPop(pop, btn) {
+  document.querySelectorAll(pop).forEach(function (el) { el.remove(); });
+  var b = document.querySelector(btn); if (b) b.setAttribute("aria-expanded", "false");
+}
 document.addEventListener("click", function (ev) {
-  if (!S.m || !S.m.priceOpen || S.view !== "market") return;
-  if (!ev.target.closest(".price-anchor")) { S.m.priceOpen = false; render(); }
-});
+  var t = ev.target, inside = function (sel) { return t.closest && t.closest(sel); };
+  if (S.m && S.m.priceOpen && !inside(".price-anchor")) { S.m.priceOpen = false; dropPop(".price-pop", "[data-mprice]"); }
+  if (S.colsOpen && !inside(".cols-anchor")) { S.colsOpen = false; dropPop(".cols-pop", '[data-action="cols"]'); }
+}, true);
 function mSplitTools(html) {
   var tpl = document.createElement("template"); tpl.innerHTML = html;
   var tb = tpl.content.querySelector(".mtools"); if (!tb) return { tools: "", body: html };
