@@ -459,7 +459,7 @@
   "filters": {
     "show": "tour",
     "pmin": null,
-    "pmax": 500,
+    "pmax": null,
     "noprice": false
   }
 }
