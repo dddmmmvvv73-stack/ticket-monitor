@@ -691,6 +691,15 @@ button.sbar:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px
 @media (prefers-reduced-motion: reduce) { .wk-grow rect.wseg { animation: none; } }
 .hov-cell { cursor: pointer; }
 .hov-cell:hover rect { stroke: var(--soot); stroke-width: 1.5; }
+.pc-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.pc-table thead th { font-size: 12px; font-weight: 500; color: var(--muted); text-align: right; padding: 0 0 6px 12px; }
+.pc-table tbody th { text-align: left; font-weight: 600; font-size: 13px; color: var(--ink-2); padding: 12px 8px 12px 0; white-space: nowrap; }
+.pc-table td { text-align: right; padding: 12px 0 12px 12px; white-space: nowrap; color: var(--ink-3); cursor: default; }
+.pc-table td.main { color: var(--ink); font-weight: 600; font-size: 16px; }
+.pc-table tbody tr { border-top: 1px solid var(--line-soft); }
+.pc-table tr.pc-top { cursor: pointer; }
+.pc-table tr.pc-top:hover { background: #f8f7f6; }
+.pc-table tr.pc-top th { font-weight: 500; white-space: normal; }
 .pc-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 12px; align-items: baseline; padding: 10px 0; border-top: 1px solid var(--line-soft); }
 .pc-label { font-size: 13px; color: var(--ink-3); }
 .pc-val { display: flex; flex-direction: column; gap: 2px; }
@@ -3394,18 +3403,33 @@ function mPriceSummary(list, from, to) {
   if (!f) return '';
   var l = list.filter(function (e) { return e.format === f && (e.pmin || e.pmax); });
   var mk = MRV.filter(function (e) { return e.date >= from && e.date <= to && e.format === f && (e.pmin || e.pmax); });
-  var c = pStats(l), m = pStats(mk);
-  var row = function (label, val, med, mval, tip) {
-    return '<div class="pc-row" data-ct="' + esc(tip) + '"><span class="pc-label">' + label + '</span><span class="pc-val"><b class="num">' + val + '</b>' +
-      (med ? '<span class="sub2 num">медиана ' + num(med) + ' ₽</span>' : '') + '</span><span class="pc-mk num">рынок ' + mval + '</span></div>';
-  };
+  var lo = function (e) { return e.pmin || e.pmax; };
+  var full = function (arr) { arr = arr.filter(Boolean); return arr.length ? rng(Math.min.apply(null, arr), Math.max.apply(null, arr)) : "—"; };
+  var rng = function (a, b) { return a === b ? num(a) + " ₽" : num(a) + "–" + num(b) + " ₽"; };
+  var top = function (x) { return x.slice().sort(function (a, b) { return pTop(b) - pTop(a); }).slice(0, Math.max(1, Math.ceil(x.length * 0.2))); };
+  var tl = top(l), tm = top(mk), fl = f.toLowerCase(), cityWhere = esc(S.m.city);
+  var cell = function (v, tip, cls) { return '<td class="num' + (cls ? ' ' + cls : '') + '" data-ct="' + esc(tip) + '">' + v + '</td>'; };
+  var open = !!S.m.ptopOpen;
+  var rowsHtml =
+    '<tr><th scope="row">MIN</th>' +
+      cell(full(l.map(lo)), "Самый дешёвый билет у всех " + l.length + " мероприятий (" + fl + ", " + S.m.city + "): от самого низкого до самого высокого") +
+      cell(pRange(l.map(lo)), "У большинства — у средней половины мероприятий: без четверти самых дешёвых и четверти самых дорогих", "main") +
+      cell(pRange(mk.map(lo)), "По рынку — все города списка за те же даты: у большинства мероприятий (" + fl + ") самый дешёвый билет в этих пределах") + '</tr>' +
+    '<tr><th scope="row">MAX</th>' +
+      cell(full(l.map(pTop)), "Самый дорогой билет у всех " + l.length + " мероприятий: от самого низкого до самого высокого") +
+      cell(pRange(l.map(pTop)), "У большинства — у средней половины мероприятий: без четверти самых дешёвых и четверти самых дорогих", "main") +
+      cell(pRange(mk.map(pTop)), "По рынку — все города списка за те же даты: у большинства мероприятий самый дорогой билет в этих пределах") + '</tr>' +
+    '<tr class="pc-top" data-ptop aria-expanded="' + open + '"><th scope="row">Самые дорогие постановки <span class="chev-s">' + (open ? "▾" : "▸") + '</span></th>' +
+      cell(rng(Math.min.apply(null, tl.map(lo)), Math.max.apply(null, tl.map(pTop))), tl.length + " самых дорогих (верхние 20% по максимальной цене): от самого дешёвого их билета до самого дорогого. Нажмите — список") +
+      cell(rng(median(tl.map(lo)), median(tl.map(pTop))), "Обычный билет у них: типичная минимальная и типичная максимальная цена", "main") +
+      cell(tm.length ? rng(median(tm.map(lo)), median(tm.map(pTop))) : "—", "По рынку — верхние 20% по максимальной цене во всех городах списка за те же даты") + '</tr>';
+  var tops = tl.slice().sort(function (a, b) { return pTop(b) - pTop(a); }), many = tops.length > 10 && !S.m.ptopAll;
+  var listHtml = open ? '<div class="ps-list" style="margin-top:6px">' + tops.slice(0, many ? 10 : tops.length).map(function (e) {
+    return '<button class="ps-item" data-mopen="' + e.i + '"><span class="nowrap">' + human(e.date) + ', ' + dparts(e.date).wd + '</span><span class="ps-t">' + esc(e.title) + '<span class="sub2"> · ' + esc(e.venue) + '</span></span><span class="num nowrap">' + prices(e) + '</span></button>';
+  }).join("") + (tops.length > 10 ? '<button class="link-btn" data-ptopall style="margin:8px 4px 0;align-self:flex-start">' + (many ? 'Показать все ' + tops.length : 'Свернуть до 10') + '</button>' : '') + '</div>' : '';
   return '<section class="card card-pad"><div class="card-head" style="align-items:center"><h2>Коридор цен</h2>' + pFormatSelect(fm, f) + '</div>' +
-    '<p class="sub" style="margin:2px 0 12px">' + c.n + ' ' + plural(c.n, "мероприятие", "мероприятия", "мероприятий") + ' с ценами · обычно — средняя половина мероприятий</p>' +
-    row("Минимальная цена", c.minRange, c.minMed, m.minRange, "Самый дешёвый билет: у половины мероприятий формата в этих пределах") +
-    row("Максимальная цена", c.maxRange, c.maxMed, m.maxRange, "Самый дорогой билет: у половины мероприятий формата в этих пределах") +
-    row("Высокий уровень", num(c.topMin) + "–" + num(c.topMax) + " ₽", null, num(m.topMin) + "–" + num(m.topMax) + " ₽",
-      "Верхние 20% по максимальной цене (" + c.topN + "): медиана минимальной и максимальной цены") +
-    '<p class="sub" style="margin:12px 0 0">Это цены на афише, а не цены, по которым купили: дешёвые места бывают в продаже почти всегда.</p></section>';
+    '<p class="sub" style="margin:2px 0 10px">' + l.length + ' ' + plural(l.length, "мероприятие", "мероприятия", "мероприятий") + ' с ценами</p>' +
+    '<table class="pc-table"><thead><tr><th></th><th scope="col">Все</th><th scope="col">Большинство</th><th scope="col">Рынок</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>' + listHtml + '</section>';
 }
 function mPriceSegments(list, from, to) {
   var fm = pFormat(list), f = fm.f;
@@ -3881,7 +3905,7 @@ $("view").addEventListener("click", function (ev) {
   if (S.view !== "market" || ev.target.closest(".resizer") || ev.target.closest("a")) return;
   var pr = ev.target.closest("[data-mprice],[data-mprice-preset],[data-mprice-done],[data-mprice-reset]");
   if (pr) { mPriceAction(pr); return; }
-  var t = ev.target.closest("[data-mcur-show],[data-mproject-type],[data-mtab],[data-mf],[data-msort],[data-mset],[data-mopen],[data-maction],[data-mclear],[data-msph],[data-mproj],[data-mcity],[data-mcity-go],[data-mweekcity],[data-mwk],[data-mvd],[data-pseg],[data-pall],.seg-btn,[data-mday],[data-mweek],[data-mvenue],.cell-btn,tr[data-mi]");
+  var t = ev.target.closest("[data-mcur-show],[data-mproject-type],[data-mtab],[data-mf],[data-msort],[data-mset],[data-mopen],[data-maction],[data-mclear],[data-msph],[data-mproj],[data-mcity],[data-mcity-go],[data-mweekcity],[data-mwk],[data-mvd],[data-pseg],[data-pall],[data-ptop],[data-ptopall],.seg-btn,[data-mday],[data-mweek],[data-mvenue],.cell-btn,tr[data-mi]");
   if (!t) return;
   if (t.hasAttribute("data-mcur-show")) { CUR.filters.show = t.getAttribute("data-mcur-show"); curSave({ op: "filters", filters: CUR.filters }); return; }
   if (t.hasAttribute("data-mproject-type")) { mMarkProject(t); return; }
@@ -3911,6 +3935,8 @@ $("view").addEventListener("click", function (ev) {
   else if (t.hasAttribute("data-mproj")) { S.m.project = t.getAttribute("data-mproj"); S.m.candAll = false; S.m.datesAll = false; S.m.tab = "projects"; S.enter = true; closeDrawer(); render(); window.scrollTo(0, 0); }
   else if (t.hasAttribute("data-mcity-go")) { S.period = "custom"; S.from = t.getAttribute("data-from"); S.to = t.getAttribute("data-to"); S.m.myFormat = t.getAttribute("data-fmt"); S.m.myGenre = t.getAttribute("data-genre"); S.m.day = null; mGo({ tab: "city", city: t.getAttribute("data-mcity-go"), venue: "" }); }
   else if (t.hasAttribute("data-mcity")) { S.m.day = null; mGo({ city: t.getAttribute("data-mcity"), venue: "", tab: t.getAttribute("data-mcity-tab") || S.m.tab }); }
+  else if (t.hasAttribute("data-ptopall")) { S.m.ptopAll = !S.m.ptopAll; render(); }
+  else if (t.hasAttribute("data-ptop")) { S.m.ptopOpen = !S.m.ptopOpen; render(); }
   else if (t.hasAttribute("data-pseg")) { var ps = t.getAttribute("data-pseg"); S.m.pseg = S.m.pseg === ps ? null : ps; S.m.pall = false; render(); }
   else if (t.hasAttribute("data-pall")) { S.m.pall = !S.m.pall; render(); }
   else if (t.hasAttribute("data-mwk")) { S.m.wkSel = t.getAttribute("data-mwk") || null; S.m.wkAnim = true; render(); }
