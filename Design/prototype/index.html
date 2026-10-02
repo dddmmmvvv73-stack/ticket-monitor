@@ -4493,22 +4493,32 @@ window.addEventListener("click", function (ev) {
   }
   if (S.colsOpen && !inside(".cols-anchor")) { S.colsOpen = false; dropPop(".cols-pop", '[data-action="cols"]'); }
 }, true);
-// Неделя по дням: свайп двумя пальцами по трекпаду влево / вправо — соседняя неделя, одна за жест
-// (жест закончился — когда 220 мс нет событий прокрутки, включая инерцию)
-var WK_SWIPE = { acc: 0, lock: false, t: null, last: 0 };
-// Блок ищем по положению курсора, а не по ev.target: после перелистывания он перерисован, а браузер до
-// следующего движения мыши шлёт прокрутку старому, уже удалённому элементу — из-за этого второй свайп не срабатывал
+// Свайп по трекпаду: одно перелистывание за жест. После жеста macOS ещё ~1 с шлёт затухающую инерцию — если сразу
+// провести снова, пауз нет, и «жест закончился по паузе» не наступает (движение мыши инерцию обрывает — поэтому раньше
+// помогало пошевелить мышью). Новый жест поверх инерции видно так: сила прокрутки выросла втрое от минимума с момента
+// перелистывания или сменилось направление.
+var WK_SWIPE = { acc: 0, lock: false, t: null, last: 0, min: 0, dir: 0 };
+function wkSwipeReset() { WK_SWIPE.acc = 0; WK_SWIPE.lock = false; }
+// Блок ищем по положению курсора, а не по ev.target: после перелистывания часть блока перерисована
 document.addEventListener("wheel", function (ev) {
-  if (!S.m || !S.m.wkSel || Math.abs(ev.deltaX) <= Math.abs(ev.deltaY)) return;
+  if (!S.m || !S.m.wkSel) return;
+  var ax = Math.abs(ev.deltaX), ay = Math.abs(ev.deltaY);
+  if (ax <= ay) return;
   var sec = document.querySelector("[data-wkswipe]"), r = sec && sec.getBoundingClientRect();
   if (!r || ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) return;
   ev.preventDefault();  // и не даём браузеру уйти «назад» по истории
-  clearTimeout(WK_SWIPE.t); WK_SWIPE.t = setTimeout(function () { WK_SWIPE.acc = 0; WK_SWIPE.lock = false; }, 260);
-  if (WK_SWIPE.lock || Date.now() - WK_SWIPE.last < 450) return;  // одно перелистывание за жест, не чаще раза в 0,45 с
+  var now = Date.now(), dir = ev.deltaX > 0 ? 1 : -1;
+  clearTimeout(WK_SWIPE.t); WK_SWIPE.t = setTimeout(wkSwipeReset, 200);
+  if (WK_SWIPE.lock) {
+    WK_SWIPE.min = Math.min(WK_SWIPE.min, ax);
+    var fresh = now - WK_SWIPE.last > 300 && (dir !== WK_SWIPE.dir || ax >= Math.max(8, WK_SWIPE.min * 3));
+    if (!fresh) return;
+    wkSwipeReset();
+  }
   WK_SWIPE.acc += ev.deltaX;
   if (Math.abs(WK_SWIPE.acc) < 40) return;
   var btn = sec.querySelectorAll(".nav-arrow")[WK_SWIPE.acc > 0 ? 1 : 0];
-  WK_SWIPE.lock = true; WK_SWIPE.acc = 0; WK_SWIPE.last = Date.now();
+  WK_SWIPE.lock = true; WK_SWIPE.dir = WK_SWIPE.acc > 0 ? 1 : -1; WK_SWIPE.acc = 0; WK_SWIPE.last = now; WK_SWIPE.min = ax;
   if (btn && !btn.disabled) btn.click();
 }, { passive: false });
 // ---------- Окно дня на вкладке «Город»: мероприятия дня в городе (площадка, по которой нажали, — первой)
