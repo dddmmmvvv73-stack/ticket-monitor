@@ -692,14 +692,17 @@ button.sbar:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px
 .hov-cell { cursor: pointer; }
 .hov-cell:hover rect { stroke: var(--soot); stroke-width: 1.5; }
 .pc-table { width: 100%; border-collapse: collapse; font-size: 14px; }
-.pc-table thead th { font-size: 12px; font-weight: 500; color: var(--muted); text-align: right; padding: 0 0 6px 12px; }
-.pc-table tbody th { text-align: left; font-weight: 600; font-size: 13px; color: var(--ink-2); padding: 12px 8px 12px 0; white-space: nowrap; }
-.pc-table td { text-align: right; padding: 12px 0 12px 12px; white-space: nowrap; color: var(--ink-3); cursor: default; }
-.pc-table td.main { color: var(--ink); font-weight: 600; font-size: 16px; }
+.pc-head { align-items: flex-start; }                 /* заголовок на одном уровне с «Структурой афиши» */
+.pc-head .dd-btn.dd-flat { height: 24px; margin-top: 1px; }
+.pc-table thead th { font-size: 12px; font-weight: 500; color: var(--muted); text-align: center; padding: 0 6px 6px; }
+.pc-table tbody th { text-align: left; font-weight: 600; font-size: 13px; line-height: 1.3; color: var(--ink-2); padding: 12px 8px 12px 0; white-space: nowrap; }
+.pc-table td { text-align: center; vertical-align: middle; padding: 12px 6px; white-space: nowrap; font-size: 15px; font-weight: 500; color: var(--muted); cursor: default; }
+.pc-table td.main { color: var(--data-dark); }             /* «Большинство» — только цветом */
+.pc-table tr.pc-top.on { background: #f3f7fb; }
 .pc-table tbody tr { border-top: 1px solid var(--line-soft); }
 .pc-table tr.pc-top { cursor: pointer; }
 .pc-table tr.pc-top:hover { background: #f8f7f6; }
-.pc-table tr.pc-top th { font-weight: 500; white-space: normal; }
+.pc-table tr.pc-top th { font-weight: 600; }
 .pc-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 12px; align-items: baseline; padding: 10px 0; border-top: 1px solid var(--line-soft); }
 .pc-label { font-size: 13px; color: var(--ink-3); }
 .pc-val { display: flex; flex-direction: column; gap: 2px; }
@@ -2865,7 +2868,7 @@ function mBase(opts) {
   var q = S.q.trim().toLowerCase(); opts = opts || {};
   return MRV.filter(function (e) {
     return mInScope(e) && inPeriod(e) && (!q || (e.title + " " + e.venue + " " + e.city + " " + e.org).toLowerCase().indexOf(q) >= 0) &&
-      (!S.m.sphere || e.sphere === S.m.sphere) && (!S.m.format || e.format === S.m.format) && (!S.m.genre || e.genre === S.m.genre) &&
+      (opts.noSphere || !S.m.sphere || e.sphere === S.m.sphere) && (opts.noFormat || !S.m.format || e.format === S.m.format) && (!S.m.genre || e.genre === S.m.genre) &&
       (opts.noVenue || !S.m.venue || e.venue === S.m.venue) &&
       (!S.m.src || (S.m.src === "k" ? e.src === "k" : S.m.src === "y" ? e.src === "y" : e.src === "ky"));
   });
@@ -2879,9 +2882,12 @@ function mSelect(key, label, values) {
   return '<select class="flat-select" data-flat-label="' + label + '" data-msel="' + key + '" aria-label="' + label + '"><option value="">Все</option>' +
     values.map(function (v) { return '<option' + (S.m[key] === v ? " selected" : "") + '>' + esc(v) + '</option>'; }).join("") + '</select>';
 }
-function mNicheSelects(list) {
-  return mSelect("sphere", "Сфера", mTop(mCount(list, "sphere")).filter(function (v) { return v !== "Не определено"; })) +
-    mSelect("format", "Формат", mTop(mCount(list, "format")));
+// Варианты списков — без фильтра самого списка: выбрав «Концерт», можно сразу выбрать другой формат.
+// Сферы — все; форматы — все в выбранной сфере
+function mNicheSelects() {
+  var sph = mBase({ noVenue: true, noSphere: true, noFormat: true }), fmt = mBase({ noVenue: true, noFormat: true });
+  return mSelect("sphere", "Сфера", mTop(mCount(sph, "sphere")).filter(function (v) { return v !== "Не определено"; })) +
+    mSelect("format", "Формат", mTop(mCount(fmt, "format")));
 }
 
 var M_TABS = [["table", "Таблица"], ["city", "Город"], ["projects", "Проекты"], ["heat", "Города × ниши"], ["cal", "Календарь нагрузки"], ["new", "Новые события"], ["venues", "Площадки"]];
@@ -3230,7 +3236,8 @@ function mStructure(list, all, from, to) {
     var tip = s + ": " + c[s] + " — " + Math.round(c[s] / list.length * 100) + "% афиши · по рынку " + Math.round((cm[s] || 0) / (mk.length || 1) * 100) + "%";
     return '<circle class="donut-seg" cx="90" cy="90" r="' + R + '" fill="none" stroke="' + sphColor(s) + '" stroke-width="' + SW + '" stroke-dasharray="' + seg.toFixed(2) + ' ' + (C - seg).toFixed(2) + '" stroke-dashoffset="' + off.toFixed(2) + '" transform="rotate(-90 90 90)" data-msph="' + esc(s) + '" data-ct="' + esc(tip) + '"' + (S.m.openSph && S.m.openSph !== s ? ' opacity="0.35"' : '') + '/>';
   }).join("");
-  var rows = names.map(function (s) {
+  var shownNames = S.m.openSph && names.indexOf(S.m.openSph) >= 0 ? [S.m.openSph] : names;  // выбрана сфера — только она и её форматы
+  var rows = shownNames.map(function (s) {
     var p = Math.round(c[s] / list.length * 100), pm = Math.round((cm[s] || 0) / (mk.length || 1) * 100), open = S.m.openSph === s;
     var sub = open ? mTop(mCount(list.filter(function (e) { return sphOf(e) === s; }), "format")).map(function (f) {
       var n = list.filter(function (e) { return sphOf(e) === s && e.format === f; }).length;
@@ -3419,7 +3426,7 @@ function mPriceSummary(list, from, to) {
       cell(full(l.map(pTop)), "Самый дорогой билет у всех " + l.length + " мероприятий: от самого низкого до самого высокого") +
       cell(pRange(l.map(pTop)), "У большинства — у средней половины мероприятий: без четверти самых дешёвых и четверти самых дорогих", "main") +
       cell(pRange(mk.map(pTop)), "По рынку — все города списка за те же даты: у большинства мероприятий самый дорогой билет в этих пределах") + '</tr>' +
-    '<tr class="pc-top" data-ptop aria-expanded="' + open + '"><th scope="row">Самые дорогие постановки <span class="chev-s">' + (open ? "▾" : "▸") + '</span></th>' +
+    '<tr class="pc-top' + (open ? ' on' : '') + '" data-ptop aria-expanded="' + open + '"><th scope="row">Самые<br>дорогие постановки</th>' +
       cell(rng(Math.min.apply(null, tl.map(lo)), Math.max.apply(null, tl.map(pTop))), tl.length + " самых дорогих (верхние 20% по максимальной цене): от самого дешёвого их билета до самого дорогого. Нажмите — список") +
       cell(rng(median(tl.map(lo)), median(tl.map(pTop))), "Обычный билет у них: типичная минимальная и типичная максимальная цена", "main") +
       cell(tm.length ? rng(median(tm.map(lo)), median(tm.map(pTop))) : "—", "По рынку — верхние 20% по максимальной цене во всех городах списка за те же даты") + '</tr>';
@@ -3427,7 +3434,7 @@ function mPriceSummary(list, from, to) {
   var listHtml = open ? '<div class="ps-list" style="margin-top:6px">' + tops.slice(0, many ? 10 : tops.length).map(function (e) {
     return '<button class="ps-item" data-mopen="' + e.i + '"><span class="nowrap">' + human(e.date) + ', ' + dparts(e.date).wd + '</span><span class="ps-t">' + esc(e.title) + '<span class="sub2"> · ' + esc(e.venue) + '</span></span><span class="num nowrap">' + prices(e) + '</span></button>';
   }).join("") + (tops.length > 10 ? '<button class="link-btn" data-ptopall style="margin:8px 4px 0;align-self:flex-start">' + (many ? 'Показать все ' + tops.length : 'Свернуть до 10') + '</button>' : '') + '</div>' : '';
-  return '<section class="card card-pad"><div class="card-head" style="align-items:center"><h2>Коридор цен</h2>' + pFormatSelect(fm, f) + '</div>' +
+  return '<section class="card card-pad"><div class="card-head pc-head"><h2>Коридор цен</h2>' + pFormatSelect(fm, f) + '</div>' +
     '<p class="sub" style="margin:2px 0 10px">' + l.length + ' ' + plural(l.length, "мероприятие", "мероприятия", "мероприятий") + ' с ценами</p>' +
     '<table class="pc-table"><thead><tr><th></th><th scope="col">Все</th><th scope="col">Большинство</th><th scope="col">Рынок</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>' + listHtml + '</section>';
 }
@@ -3967,7 +3974,12 @@ $("view").addEventListener("change", function (ev) {
   if (ev.target.hasAttribute("data-mpf")) return;  // цена применяется кнопкой «Готово» или Enter
   if (ev.target.hasAttribute("data-mfsel")) { S.m.filter = ev.target.value; S.m.limit = 200; render(); return; }
   var sel = ev.target.getAttribute("data-msel"), chk = ev.target.getAttribute("data-mcheck"), vis = ev.target.getAttribute("data-mcolvis");
-  if (sel) { S.m[sel] = ev.target.value; if (sel === "myFormat") S.m.myGenre = ""; S.m.limit = 200; render(); }
+  if (sel) {
+    S.m[sel] = ev.target.value; if (sel === "myFormat") S.m.myGenre = "";
+    // Новая сфера, а выбранного формата в ней нет — формат сбрасываем, иначе таблица пустая
+    if (sel === "sphere" && S.m.sphere && S.m.format && !MRV.some(function (e) { return e.sphere === S.m.sphere && e.format === S.m.format; })) S.m.format = "";
+    S.m.limit = 200; render();
+  }
   if (chk) { S.m[chk] = ev.target.checked; render(); }
   if (vis) {
     if (ev.target.checked) S.m.hidden = S.m.hidden.filter(function (x) { return x !== vis; });
