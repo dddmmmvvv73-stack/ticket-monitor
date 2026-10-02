@@ -124,6 +124,11 @@
       "type": "tour",
       "title": "Рождество",
       "at": "2026-10-02T12:52:11"
+    },
+    "milana star": {
+      "type": "tour",
+      "title": "Milana Star",
+      "at": "2026-10-02T12:52:56"
     }
   },
   "venues": {
