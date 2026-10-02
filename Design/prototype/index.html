@@ -644,9 +644,15 @@ button.sbar:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px
 /* ---------- «Рынок»: единый блок фильтров ---------- */
 .mpanel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
 /* «Рынок»: строка фильтров — без рамки и подписей, фильтры словом заглавными со стрелкой; справа число и столбцы */
-.mpanel.fbar { background: none; border: 0; border-radius: 0; display: flex; align-items: center; justify-content: space-between; gap: 6px 24px; flex-wrap: wrap; padding: 2px 0; }
+.mpanel.fbar { background: none; border: 0; border-radius: 0; display: flex; align-items: flex-start; justify-content: space-between; gap: 6px 24px; padding: 2px 0; }
 .fbar-left, .fbar-right { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 22px; min-width: 0; }
-.fbar-right { margin-inline-start: auto; }
+.fbar-left { flex: 1 1 auto; }  /* фильтры переносятся сами, правая часть всегда в первой строке */
+.fbar-right { flex: none; flex-wrap: nowrap; gap: 4px; margin-inline-start: auto; }
+.fbar-right .fcount { margin-inline-end: 10px; }
+.ficon { width: 36px; height: 36px; display: inline-grid; place-items: center; border: 0; background: none; border-radius: 8px; color: var(--ink-3); cursor: pointer; padding: 0; position: relative; }
+.ficon:hover, .ficon[aria-expanded="true"] { color: var(--ink); background: #f0efed; }
+.ficon:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ficon.on::after { content: ""; position: absolute; top: 7px; right: 7px; width: 6px; height: 6px; border-radius: 50%; background: var(--data); }
 .dd-btn.dd-flat, .fbtn { height: 36px; padding: 0 2px; border: 0; background: none; color: var(--ink-3); font: inherit; font-size: 13px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; max-width: 300px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
 .dd-btn.dd-flat:hover, .fbtn:hover, .dd-btn.dd-flat.on, .fbtn.on { color: var(--ink); }
 .fbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
@@ -2892,7 +2898,8 @@ function mTable() {
   return '<div class="toolbar mtools">' + mNicheSelects(mBase({ noVenue: true })) +
       '<select class="flat-select" data-flat-label="Источник" data-msel="src" aria-label="Источник"><option value="">Все</option>' +
         [["k", "Только Кассир"], ["y", "Только Яндекс"], ["ky", "На обоих сайтах"]].map(function (o) { return '<option value="' + o[0] + '"' + (S.m.src === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
-      venueChip + '<div class="pop-anchor cols-anchor mright"><button class="fbtn' + (S.m.hidden.length ? ' on' : '') + '" data-action="cols" aria-expanded="' + S.colsOpen + '" aria-haspopup="dialog">Столбцы' + (S.m.hidden.length ? ' · скрыто ' + S.m.hidden.length : '') + DD_CHEV + '</button>' + colsPop + '</div>' +
+      venueChip + '<div class="pop-anchor cols-anchor mright"><button class="ficon' + (S.m.hidden.length ? ' on' : '') + '" data-action="cols" aria-expanded="' + S.colsOpen + '" aria-haspopup="dialog" aria-label="Столбцы таблицы' + (S.m.hidden.length ? ', скрыто ' + S.m.hidden.length : '') + '" title="Столбцы таблицы' + (S.m.hidden.length ? ' · скрыто ' + S.m.hidden.length : '') + '">' +
+        '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2.5" y="3" width="13" height="12" rx="1.8"/><path d="M2.5 7h13M7 7v8M11.5 7v8"/></svg></button>' + colsPop + '</div>' +
     '</div>' +
     '<section class="card ev-card-table"><table class="ev-table" id="evTable" style="width:' + totalW + 'px"><colgroup>' + cols.map(function (c) { return '<col data-col="' + c.id + '" style="width:' + fitW[c.id] + 'px">'; }).join("") + '</colgroup><thead><tr>' + thead + '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' + empty + '</section>' +
     '<div class="m-list">' + mobile + (list.length ? "" : empty) + '</div>' +
@@ -4066,11 +4073,14 @@ function mPanel(tabTools) {
   });
   var q = S.q.trim(), custom = f.show !== "tour" || priceOn || mTabActive().length;
   var c = M_COUNT || [shown, "мероприятие", "мероприятия", "мероприятий"];
-  var count = '<span class="fcount" title="После типа и цены — ' + num(shown) + ' из ' + num(inScope.length) + ' мероприятий раздела' + (M_COUNT ? '; на вкладке — ' + num(M_COUNT[0]) : '') + '"><b class="num">' + num(c[0]) + '</b> ' + plural(c[0], c[1], c[2], c[3]) + '</span>';
+  var tip = num(c[0]) + ' ' + plural(c[0], c[1], c[2], c[3]) + ' на вкладке · после типа и цены — ' + num(shown) + ' из ' + num(inScope.length) + ' в разделе';
+  var count = '<span class="fcount" title="' + tip + '" aria-label="' + tip + '"><b class="num">' + num(c[0]) + '</b></span>';
+  var reset = custom ? '<button class="ficon" data-maction="all-reset" aria-label="Сбросить все фильтры" title="Сбросить все фильтры">' +
+    '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg></button>' : '';
   return '<section class="mpanel fbar" aria-label="Фильтры">' +
       '<div class="fbar-left">' + type + price + left + '</div>' +
       '<div class="fbar-right">' + (hidden.length || q ? '<span class="fhidden" title="' + esc(hidden.concat(q ? ["поиск «" + q + "»"] : []).join(" · ")) + '">ещё: ' + esc(hidden.concat(q ? ["поиск «" + q + "»"] : []).join(" · ")) + '</span>' : '') +
-        count + (custom ? '<button class="link-btn" data-maction="all-reset">Сбросить</button>' : '') + right + '</div>' +
+        count + right + reset + '</div>' +
     '</section>' +
     (CAN_SAVE ? '' : '<div class="note warn-note">Прототип открыт файлом — разметка и правки сохраняются только в этом браузере. Чтобы они записывались и уходили на GitHub, откройте через приложение: <b>python3 app.py</b> → <b>http://127.0.0.1:5050/proto/</b></div>');
 }
