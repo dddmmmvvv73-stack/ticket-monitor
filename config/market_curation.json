@@ -123,7 +123,7 @@
   },
   "edits": {},
   "filters": {
-    "show": "tour",
+    "show": "local",
     "pmin": 1200,
     "pmax": null,
     "noprice": false
