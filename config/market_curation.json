@@ -528,7 +528,7 @@
   },
   "filters": {
     "show": "tour",
-    "pmin": 3000,
+    "pmin": null,
     "pmax": null,
     "noprice": false
   }
