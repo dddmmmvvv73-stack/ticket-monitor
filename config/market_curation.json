@@ -79,7 +79,7 @@
   "edits": {},
   "filters": {
     "show": "tour",
-    "pmin": 900,
+    "pmin": null,
     "pmax": null,
     "noprice": false
   }
