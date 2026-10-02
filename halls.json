@@ -142,6 +142,7 @@
     "auto_enabled": true,
     "auto_reserve": 83,
     "series_reserve": {
+      "6194d2029068": 50,
       "9cd9b7c7f375": 439,
       "afabcb541b13": 67
     },
