@@ -761,6 +761,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 .ps-item:focus-visible { outline: 2px solid var(--focus); }
 .ps-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 @media (max-width: 900px) { .ps-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .ps-cards { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 520px) { .pc-row { grid-template-columns: minmax(0, 1fr); gap: 2px; } .pc-mk { text-align: left; } .ps-item { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
 .pb-list { display: flex; flex-direction: column; gap: 8px; }
 .pb-row { display: grid; grid-template-columns: minmax(110px, 170px) minmax(0, 1fr) 150px; gap: 14px; align-items: center; }
