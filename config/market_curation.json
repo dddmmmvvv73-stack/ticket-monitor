@@ -81,6 +81,6 @@
     "show": "local",
     "pmin": 900,
     "pmax": null,
-    "noprice": true
+    "noprice": false
   }
 }
