@@ -1938,7 +1938,21 @@ var RESERVE_FILL = "#1c1917", SERIES_FILL = "#78716c", NO_PRICE_FILL = "#e7e5e4"
 var VENUE_SOURCE = { "ОДКиИ": "афиша — odk33.ru, продажи — vladimirkoncert.ru", "Арт Холл": "афиша и продажи — vladimirkoncert.ru",
   "Центр культуры и отдыха": "афиша и продажи — ivanovokoncert.ru", "Ивановский музыкальный театр": "афиша и продажи — ivanovokoncert.ru" };
 S.hall = HALLS[0].id; S.hallMode = "busy"; S.hallCfg = {};
-HALLS.forEach(function (h) { S.hallCfg[h.id] = { auto: h.auto, manual: [] }; });
+HALLS.forEach(function (h) { S.hallCfg[h.id] = { auto: h.auto, manual: (h.manual || []).slice() }; });
+// Бронь зала через приложение: config/hall_reserve.json → пересчёт вала и выручки всех мероприятий зала, отправка на GitHub.
+// Клики по рядам копятся 1,2 с и уходят одним сохранением
+var hallTimer = null;
+function hallSave() {
+  if (!ON_APP) return;
+  clearTimeout(hallTimer);
+  hallTimer = setTimeout(function () {
+    var id = S.hall, cfg = S.hallCfg[id];
+    fetch("/api/competitors/halls/" + encodeURIComponent(id), { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ auto: cfg.auto, rows: cfg.manual }) })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (x) { toast(x.ok ? "Бронь сохранена: вал и выручка пересчитаны, уходит на GitHub. Обновите страницу, чтобы увидеть новые цифры." : "Не сохранено: " + (x.d.error || "ошибка")); })
+      .catch(function () { toast("Не сохранено: приложение не отвечает — запущен ли python3 app.py?"); });
+  }, 1200);
+}
 function hallById(id) { return HALLS.filter(function (h) { return h.id === id; })[0]; }
 function hallLabel(h) { return h.venue + " · " + h.name; }
 // Радиус места: 40% от типичного расстояния между соседними местами в ряду
@@ -2094,14 +2108,14 @@ $("view").addEventListener("click", function (ev) {
   else if (t.hasAttribute("data-hrow")) {
     var cfg = S.hallCfg[S.hall], k = t.getAttribute("data-hrow"), at = cfg.manual.indexOf(k);
     if (at >= 0) cfg.manual.splice(at, 1); else cfg.manual.push(k);
-    S.how["rows-" + S.hall] = true; rerender('[data-hrow="' + k + '"]');
+    S.how["rows-" + S.hall] = true; rerender('[data-hrow="' + k + '"]'); hallSave();
   }
   else if (t.hasAttribute("data-open-ev")) openDrawer(+t.getAttribute("data-open-ev"));
   else if (t.hasAttribute("data-sales-venue")) { S.salesVenue = t.getAttribute("data-sales-venue"); goView("sales"); }
 });
 $("view").addEventListener("change", function (ev) {
   if (ev.target.getAttribute("data-hc") !== "auto") return;
-  S.hallCfg[S.hall].auto = ev.target.checked; rerender('[data-hc="auto"]');
+  S.hallCfg[S.hall].auto = ev.target.checked; rerender('[data-hc="auto"]'); hallSave();
 });
 
 // ---------------------------------------------------------------- Настройки

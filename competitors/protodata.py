@@ -383,6 +383,7 @@ def _halls(states: dict, by_stem: dict, vinfo) -> list[dict]:
         out.append({
             "id": hall_id, "venue": vinfo(e)[1], "name": KNOWN_HALLS.get(hall_id) or states[latest].get("hall") or "Зал",
             "seats": len(sample), "events": len(members), "layouts": len(h.get("layouts", [])), "auto": h.get("auto_enabled", True),
+            "manual": h.get("manual_rows", []),
             "autoN": h.get("auto_reserve", len(found)), "seriesN": sum(1 for x in seat if x[7] == 3),
             "w": max((x[0] for x in seat), default=0), "h": max((x[1] for x in seat), default=0),
             "sample": [_pretty_title(e), e.get("date") or ""],

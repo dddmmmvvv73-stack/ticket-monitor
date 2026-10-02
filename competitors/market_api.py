@@ -52,12 +52,15 @@ def proto_market_data():
 def proto_competitors_data():
     # Как и рынок: после ./pull_data.sh страница показывает свежий сбор, пересобираем только при изменениях
     files = [collector.EVENTS_FILE, collector.STATUS_FILE, collector.HALLS_FILE, collector.LOG_FILE, edits.EDITS_FILE]
-    key = tuple(f.stat().st_mtime if f.exists() else 0 for f in files)
+    stamp = lambda: tuple(f.stat().st_mtime if f.exists() else 0 for f in files)
+    key = stamp()
     if _cd_cache["key"] != key:
         try:
-            _cd_cache.update(key=key, js=protodata.export_js())
+            js = protodata.export_js()
         except RuntimeError:
             return send_from_directory(PROTOTYPE_DIR, "competitors-data.js", max_age=0)  # данных нет — последний снимок
+        # Файлы поменялись, пока собирали (пересчёт брони, правка) — отдаём, но не запоминаем: следующий запрос соберёт заново
+        _cd_cache.update(key=key if stamp() == key else None, js=js)
     return Response(_cd_cache["js"], mimetype="application/javascript", headers={"Cache-Control": "no-store"})
 
 

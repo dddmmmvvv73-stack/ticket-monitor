@@ -358,7 +358,10 @@ def competitors_hall_reserve(layout):
     if layout not in collector.load_halls():
         return jsonify({"error": "Зал не найден"}), 404
     collector.save_hall_reserve(layout, body.get("auto", True), body.get("rows", []))
-    return jsonify(collector.load_halls()[layout])
+    hall = collector.load_halls()[layout]
+    # Сбор на GitHub пересчитывает вал по config/hall_reserve.json — отправляем туда же
+    sync.publish_files(["config/hall_reserve.json"], f"Бронь зала: {hall['name']}", collector.log)
+    return jsonify(hall)
 
 
 @app.route("/analytics")
