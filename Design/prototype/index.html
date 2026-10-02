@@ -694,6 +694,18 @@ button.sbar:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px
 .nav-arrow:focus-visible, .nav-text:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 .nav-arrow:disabled { opacity: 0.25; cursor: default; }
 @media (prefers-reduced-motion: reduce) { .nav-arrow, .nav-text { transition: none; } .nav-arrow:active, .nav-text:active { transform: none; } }
+.wk-chart { position: relative; }
+.wk-ov { position: absolute; inset: 0; cursor: pointer; }
+g.hov.hl rect:first-child { fill: #f0efed; }
+.dm-veil { position: fixed; inset: 0; z-index: 250; background: rgba(12, 10, 9, 0.28); display: grid; place-items: center; padding: 16px; opacity: 0; transition: opacity 160ms var(--ease); }
+.dm-veil.open { opacity: 1; }
+.dm-veil[hidden] { display: none; }
+.dm-box { width: min(560px, 100%); max-height: min(80vh, 720px); overflow: auto; background: var(--card); border-radius: 16px; box-shadow: rgba(17, 12, 46, 0.2) 0 20px 60px 0; padding: 20px 22px; transform: translateY(6px) scale(0.98); transition: transform 180ms var(--ease); }
+.dm-veil.open .dm-box { transform: none; }
+.dm-box:focus { outline: none; }
+.dm-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 2px; }
+.dm-head h2 { margin: 0; }
+@media (prefers-reduced-motion: reduce) { .dm-veil, .dm-box { transition: none; } }
 .vd-wrap { display: flex; align-items: flex-start; }
 .vd-wrap > svg { flex: none; }
 .vd-scroll { flex: 1 1 auto; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain; scroll-behavior: auto; scrollbar-width: thin; }
@@ -3245,8 +3257,8 @@ function mCity() {
   var tools = '<div class="toolbar mtools">' + myFormatControls(all) +
     (S.m.myFormat ? '<select class="flat-select" data-flat-label="Окно" data-flat-always data-flat-default="3" data-msel="cwin" aria-label="Окно конкуренции">' +
       [["0", "тот же день"], ["3", "±3 дня"], ["7", "±7 дней"]].map(function (w) { return '<option value="' + w[0] + '"' + (S.m.cwin === w[0] ? " selected" : "") + '>' + w[1] + '</option>'; }).join("") + '</select>' : '') + '</div>';
-  if (!list.length) return tools + mDayPanel(city) + '<div class="empty"><h2>' + esc(city) + ': за ' + rangeLabel(from, to) + ' мероприятий нет</h2><p style="margin:0">Выберите другие даты в шапке.</p></div>';
-  return tools + mDayPanel(city) +
+  if (!list.length) return tools + '<div class="empty"><h2>' + esc(city) + ': за ' + rangeLabel(from, to) + ' мероприятий нет</h2><p style="margin:0">Выберите другие даты в шапке.</p></div>';
+  return tools +
     (S.m.myFormat ? mCompCard(city, from, to) : '') +
     '<div class="mcity-grid">' + mStructure(list, all, from, to) + mPriceSummary(list, from, to) + '</div>' +
     mPriceSegments(list, from, to) + mWeeks(list, from, to) + mVenueDays(list, from, to);
@@ -3356,9 +3368,11 @@ function mWeeks(list, from, to) {
   } else {
     head = '<h2>Нагрузка по неделям</h2>' + legendOf("sphere", names);
   }
-  return '<section class="card card-pad"' + (sel ? ' data-wkswipe' : '') + '>' + head +
-    '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="' + (sel ? "Мероприятия по дням недели" : "Мероприятия по неделям") + '" class="' + (anim ? "wk-grow" : "") + '" style="display:block;margin-top:8px">' + ticks + bars + labels + '</svg>' +
-    '</section>';
+  WK_CTX = { list: list, from: from, to: to };
+  var svgHtml = '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="' + (sel ? "Мероприятия по дням недели" : "Мероприятия по неделям") + '" class="' + (anim ? "wk-grow" : "") + '" style="display:block;margin-top:8px">' + ticks + bars + labels + '</svg>';
+  if (!sel) return '<section class="card card-pad">' + head + svgHtml + '</section>';
+  return '<section class="card card-pad" data-wkswipe><div class="wk-head">' + head + '</div>' +
+    '<div class="wk-chart"><div class="wk-svg">' + svgHtml + '</div><div class="wk-ov" aria-hidden="true"></div></div></section>';
 }
 
 // Площадки × дни: один месяц по дням, листается стрелками; сверху — начало, середина и конец месяца и дни недели
@@ -3367,7 +3381,7 @@ var MONTH_NOM = ["Январь", "Февраль", "Март", "Апрель", "
 function mVenueDays(list, from, to) {
   // Весь период одной лентой по дням: прокручивается двумя пальцами (плавно, родная прокрутка), названия площадок
   // закреплены слева; стрелки — к началу соседнего месяца, заголовок — месяц, который сейчас виден
-  var days = daysList(from, to);
+  var start = from.slice(0, 7) + "-01", days = daysList(start, addDays(to, 45));  // вне периода — серые дни без данных
   if (!S.m.vdMonth || S.m.vdMonth < from.slice(0, 7) || S.m.vdMonth > to.slice(0, 7)) S.m.vdMonth = from.slice(0, 7);
   var mon = S.m.vdMonth;
   var ARL = '<svg width="22" height="22" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4L6 9l5 5"/></svg>';
@@ -3383,13 +3397,18 @@ function mVenueDays(list, from, to) {
     return '<text x="' + (lw - 8) + '" y="' + (top + r * rh + 16) + '" font-size="12" fill="#44403c" text-anchor="end">' + esc(v.length > 26 ? v.slice(0, 25) + "…" : v) + '</text>';
   }).join("") + '</svg>';
   var marks = days.map(function (d, k) {
-    var dd = +d.slice(8), lastDay = k === days.length - 1;
+    var dd = +d.slice(8), lastDay = d === to;  // последняя метка — конец периода (дальше — серый запас)
     if (dd !== 1 && dd !== 16 && k !== 0 && !lastDay) return '';
-    if (k !== 0 && !lastDay && dd === 16 && days.length - k < 6) return '';
+    if (d > to) return '';
+    if (k !== 0 && !lastDay && Math.abs(Date.parse(to) - Date.parse(d)) / 864e5 < 6) return '';
     return '<text x="' + (k * cw + (lastDay ? cw : 2)) + '" y="13" font-size="11" fill="#57534e" text-anchor="' + (lastDay ? "end" : "start") + '">' + dparts(d).day + ' ' + dparts(d).mon + '</text>' +
       (dd === 1 && k ? '<line x1="' + (k * cw) + '" x2="' + (k * cw) + '" y1="18" y2="' + (top + vs.length * rh) + '" stroke="#d6d3d1"/>' : '');
   }).join("");
-  var colBg = days.map(function (d, k) { return isFriSun(d) && wdOf(d) !== 5 ? '<rect x="' + (k * cw) + '" y="' + top + '" width="' + cw + '" height="' + (vs.length * rh) + '" fill="#fbf4f3"/>' : ''; }).join("");
+  var colBg = days.map(function (d, k) {
+    var out = d < from || d > to;
+    return out ? '<rect x="' + (k * cw) + '" y="' + top + '" width="' + cw + '" height="' + (vs.length * rh) + '" fill="#f5f5f4"/>'
+      : isFriSun(d) && wdOf(d) !== 5 ? '<rect x="' + (k * cw) + '" y="' + top + '" width="' + cw + '" height="' + (vs.length * rh) + '" fill="#fbf4f3"/>' : '';
+  }).join("");
   var grid = days.map(function (d, k) { return '<line x1="' + (k * cw) + '" x2="' + (k * cw) + '" y1="' + top + '" y2="' + (top + vs.length * rh) + '" stroke="#ecebe9"/>'; }).join("") +
     vs.map(function (v, r) { return '<line x1="0" x2="' + W + '" y1="' + (top + (r + 1) * rh) + '" y2="' + (top + (r + 1) * rh) + '" stroke="#f0efed"/>'; }).join("");
   var wdRow = days.map(function (d, k) {
@@ -3404,13 +3423,13 @@ function mVenueDays(list, from, to) {
     return Object.keys(byDay).map(function (d) {
       var hit = byDay[d], x = idx[d] * cw + 2;
       var tip = v + " · " + dayLabel(d) + ": " + hit.map(function (e) { return e.title + (e.time ? " (" + e.time + ")" : ""); }).join("; ");
-      return '<g class="hov-cell" data-ct="' + esc(tip) + '" data-mday="' + d + '"><rect x="' + x + '" y="' + (yy + 3) + '" width="' + (cw - 4) + '" height="' + (rh - 6) + '" rx="4" fill="' + sphColor(sphOf(hit[0])) + '"/>' +
+      return '<g class="hov-cell" data-ct="' + esc(tip) + '" data-mday="' + d + '" data-mday-venue="' + esc(v) + '"><rect x="' + x + '" y="' + (yy + 3) + '" width="' + (cw - 4) + '" height="' + (rh - 6) + '" rx="4" fill="' + sphColor(sphOf(hit[0])) + '"/>' +
         (hit.length > 1 ? '<text x="' + (x + (cw - 4) / 2) + '" y="' + (yy + 16) + '" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle" pointer-events="none">' + hit.length + '</text>' : '') + '</g>';
     }).join("");
   }).join("");
   return '<section class="card card-pad" data-vd>' + headHtml + legendOf("sphere", names) +
     '<div class="vd-wrap" style="margin-top:10px">' + labels +
-      '<div class="vd-scroll" tabindex="0" role="region" aria-label="Площадки по дням — прокрутите вбок" data-from="' + from + '" data-cw="' + cw + '">' +
+      '<div class="vd-scroll" tabindex="0" role="region" aria-label="Площадки по дням — прокрутите вбок" data-from="' + start + '" data-to="' + to + '" data-cw="' + cw + '">' +
         '<svg width="' + W + '" height="' + H + '" style="display:block">' + colBg + grid + marks + wdRow + cells + '</svg></div></div></section>';
 }
 // Лента «Площадки × дни»: после перерисовки — к месяцу, который смотрели; при прокрутке — заголовок и стрелки
@@ -3422,12 +3441,12 @@ function vdSync(sc, write) {
   if (t) t.textContent = MONTH_NOM[+mon.slice(5) - 1] + " " + mon.slice(0, 4);
   var b = sec ? sec.querySelectorAll("[data-vdstep]") : [];
   if (b[0]) b[0].disabled = sc.scrollLeft <= 2;
-  if (b[1]) b[1].disabled = sc.scrollLeft >= sc.scrollWidth - sc.clientWidth - 2;
+  if (b[1]) b[1].disabled = mon >= sc.getAttribute("data-to").slice(0, 7) || sc.scrollLeft >= sc.scrollWidth - sc.clientWidth - 2;
 }
 function vdRestore() {
   var sc = document.querySelector(".vd-scroll"); if (!sc) return;
   var from = sc.getAttribute("data-from"), cw = +sc.getAttribute("data-cw"), first = S.m.vdMonth + "-01";
-  sc.scrollLeft = Math.max(0, Math.round((Date.parse(first > from ? first : from) - Date.parse(from)) / 864e5)) * cw;
+  sc.scrollLeft = Math.max(0, Math.round((Date.parse(first) - Date.parse(from)) / 864e5)) * cw;
   vdSync(sc, false);
 }
 document.addEventListener("scroll", function (ev) {
@@ -3987,6 +4006,7 @@ $("view").addEventListener("click", function (ev) {
   else if (t.getAttribute("data-maction") === "more") { S.m.limit += 200; render(); }
   else if (t.hasAttribute("data-mclear")) { S.m[t.getAttribute("data-mclear")] = ""; render(); }
   else if (t.getAttribute("data-maction") === "reset-cols") { S.m.hidden = window.innerWidth < 1600 ? ["seen"] : []; S.m.widths = {}; saveMPrefs(); render(); }
+  else if (t.hasAttribute("data-mday") && S.m.tab === "city") mDayModal(t.getAttribute("data-mday"), t.getAttribute("data-mday-venue"));
   else if (t.hasAttribute("data-mday")) { var iso = t.getAttribute("data-mday"); if (S.m.tab === "city" || S.m.tab === "cal") { S.m.day = S.m.day === iso ? null : iso; render(); var dp = document.querySelector(".day-panel"); if (dp && S.m.day) dp.scrollIntoView({ block: "nearest", behavior: "smooth" }); } else { S.period = "custom"; S.from = S.to = iso; mGo({ tab: "table" }); } }
   else if (t.getAttribute("data-maction") === "day-close") { S.m.day = null; render(); }
   else if (t.getAttribute("data-maction") === "proj-back") { S.m.project = null; S.m.candAll = false; render(); window.scrollTo(0, 0); }
@@ -4000,14 +4020,19 @@ $("view").addEventListener("click", function (ev) {
   else if (t.hasAttribute("data-ptop")) { S.m.ptopOpen = !S.m.ptopOpen; render(); }
   else if (t.hasAttribute("data-pseg")) { var ps = t.getAttribute("data-pseg"); S.m.pseg = S.m.pseg === ps ? null : ps; S.m.pall = false; render(); }
   else if (t.hasAttribute("data-pall")) { S.m.pall = !S.m.pall; render(); }
-  else if (t.hasAttribute("data-mwk")) { S.m.wkSel = t.getAttribute("data-mwk") || null; S.m.wkAnim = true; render(); }
+  else if (t.hasAttribute("data-mwk")) { var wk1 = t.getAttribute("data-mwk"); if (wk1 && S.m.wkSel) wkStep(wk1); else { S.m.wkSel = wk1 || null; S.m.wkAnim = true; render(); } }
   else if (t.hasAttribute("data-vdstep")) {
     var sc = document.querySelector(".vd-scroll"); if (!sc) return;
     var from0 = sc.getAttribute("data-from"), cw0 = +sc.getAttribute("data-cw");
-    var cur = addDays(from0, Math.round(sc.scrollLeft / cw0)).slice(0, 7) + "-01", tgt = shiftMonth(cur, +t.getAttribute("data-vdstep"));
-    if (tgt < from0.slice(0, 7) + "-01") tgt = from0;
+    // К 1-му числу соседнего месяца — оно встаёт к левому краю; месяц в заголовке — сразу, не дожидаясь конца прокрутки
+    var left = addDays(from0, Math.round(sc.scrollLeft / cw0)), step = +t.getAttribute("data-vdstep");
+    var tgt = step < 0 && left.slice(8) !== "01" ? left.slice(0, 7) + "-01" : shiftMonth(left.slice(0, 7) + "-01", step);
+    if (tgt < from0) tgt = from0;
+    if (tgt.slice(0, 7) > sc.getAttribute("data-to").slice(0, 7)) return;
+    S.m.vdMonth = tgt.slice(0, 7);
+    var tt = sc.closest("[data-vd]").querySelector(".vd-month"); if (tt) tt.textContent = MONTH_NOM[+tgt.slice(5, 7) - 1] + " " + tgt.slice(0, 4);
     var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    sc.scrollTo({ left: Math.max(0, Math.round((Date.parse(tgt > from0 ? tgt : from0) - Date.parse(from0)) / 864e5)) * cw0, behavior: reduce ? "auto" : "smooth" });
+    sc.scrollTo({ left: Math.round((Date.parse(tgt) - Date.parse(from0)) / 864e5) * cw0, behavior: reduce ? "auto" : "smooth" });
   }
   else if (t.hasAttribute("data-mweekcity")) { var wk0 = t.getAttribute("data-mweekcity"); S.period = "custom"; S.from = wk0; S.to = addDays(wk0, 6); mGo({ tab: "table" }); }
   else if (t.hasAttribute("data-mweek")) { var w = t.getAttribute("data-mweek"); S.period = "custom"; S.from = w; S.to = addDays(w, 6); mGo({ tab: "table", city: t.getAttribute("data-mweek-city") }); }
@@ -4470,7 +4495,7 @@ window.addEventListener("click", function (ev) {
 }, true);
 // Неделя по дням: свайп двумя пальцами по трекпаду влево / вправо — соседняя неделя, одна за жест
 // (жест закончился — когда 220 мс нет событий прокрутки, включая инерцию)
-var WK_SWIPE = { acc: 0, lock: false, t: null };
+var WK_SWIPE = { acc: 0, lock: false, t: null, last: 0 };
 // Блок ищем по положению курсора, а не по ev.target: после перелистывания он перерисован, а браузер до
 // следующего движения мыши шлёт прокрутку старому, уже удалённому элементу — из-за этого второй свайп не срабатывал
 document.addEventListener("wheel", function (ev) {
@@ -4478,14 +4503,89 @@ document.addEventListener("wheel", function (ev) {
   var sec = document.querySelector("[data-wkswipe]"), r = sec && sec.getBoundingClientRect();
   if (!r || ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) return;
   ev.preventDefault();  // и не даём браузеру уйти «назад» по истории
-  clearTimeout(WK_SWIPE.t); WK_SWIPE.t = setTimeout(function () { WK_SWIPE.acc = 0; WK_SWIPE.lock = false; }, 220);
-  if (WK_SWIPE.lock) return;
+  clearTimeout(WK_SWIPE.t); WK_SWIPE.t = setTimeout(function () { WK_SWIPE.acc = 0; WK_SWIPE.lock = false; }, 260);
+  if (WK_SWIPE.lock || Date.now() - WK_SWIPE.last < 450) return;  // одно перелистывание за жест, не чаще раза в 0,45 с
   WK_SWIPE.acc += ev.deltaX;
   if (Math.abs(WK_SWIPE.acc) < 40) return;
   var btn = sec.querySelectorAll(".nav-arrow")[WK_SWIPE.acc > 0 ? 1 : 0];
-  WK_SWIPE.lock = true; WK_SWIPE.acc = 0;
+  WK_SWIPE.lock = true; WK_SWIPE.acc = 0; WK_SWIPE.last = Date.now();
   if (btn && !btn.disabled) btn.click();
 }, { passive: false });
+// ---------- Окно дня на вкладке «Город»: мероприятия дня в городе (площадка, по которой нажали, — первой)
+var DAY_MODAL = { back: null };
+function mDayModal(day, venue) {
+  var city = S.m.city;
+  var l = MRV.filter(function (e) { return e.date === day && e.city === city; })
+    .sort(function (a, b) { return ((b.venue === venue) - (a.venue === venue)) || (isMine(b) - isMine(a)) || ((a.time || "99") < (b.time || "99") ? -1 : 1); });
+  var m = $("dayModal");
+  if (!m) {
+    m = document.createElement("div"); m.id = "dayModal"; m.className = "dm-veil"; m.hidden = true;
+    m.innerHTML = '<div class="dm-box" role="dialog" aria-modal="true" aria-labelledby="dmTitle" tabindex="-1"></div>';
+    document.body.appendChild(m);
+    m.addEventListener("click", function (ev) {
+      if (ev.target === m || ev.target.closest("[data-dm-close]")) { closeDayModal(); return; }
+      var t = ev.target.closest("[data-mopen]");
+      if (t) { var i = +t.getAttribute("data-mopen"); closeDayModal(true); openMDrawer(i); }
+    });
+  }
+  var X = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8"/></svg>';
+  m.firstChild.innerHTML = '<div class="dm-head"><h2 id="dmTitle">' + dayLabel(day) + ' · ' + l.length + ' ' + plural(l.length, "мероприятие", "мероприятия", "мероприятий") + '</h2>' +
+      '<button class="nav-arrow" data-dm-close aria-label="Закрыть">' + X + '</button></div>' +
+    '<p class="sub" style="margin:0 0 8px">' + esc(city) + (venue ? ' · сначала «' + esc(venue) + '»' : '') + '</p>' +
+    (l.length ? '<ul class="list dm-list">' + l.map(function (e) {
+      return '<li><button class="row-btn" data-mopen="' + e.i + '"><i class="sw" style="background:' + sphColor(sphOf(e)) + ';flex-shrink:0"></i><span style="flex-grow:1;min-width:0"><b style="font-weight:500">' + esc(e.title) + '</b>' +
+        (isMine(e) ? ' <span class="badge-new">мой формат</span>' : '') +
+        '<span class="sub2" style="display:block">' + esc(e.time || "время не указано") + ' · ' + esc(e.venue) + ' · ' + esc(e.format) + '</span></span><span class="sub2 nowrap">' + (e.pmin ? prices(e) : '') + '</span></button></li>';
+    }).join("") + '</ul>' : '<p class="sub">В этот день мероприятий нет.</p>');
+  DAY_MODAL.back = document.activeElement;
+  m.hidden = false; requestAnimationFrame(function () { m.classList.add("open"); });
+  m.firstChild.focus();  // фокус — на окно: Esc и Tab работают, а у крестика нет рамки при открытии
+}
+function closeDayModal(keepFocus) {
+  var m = $("dayModal"); if (!m || m.hidden) return;
+  m.classList.remove("open"); m.hidden = true;
+  if (!keepFocus && DAY_MODAL.back && document.body.contains(DAY_MODAL.back)) DAY_MODAL.back.focus();
+}
+document.addEventListener("keydown", function (ev) {
+  var m = $("dayModal"); if (!m || m.hidden) return;
+  if (ev.key === "Escape") { ev.preventDefault(); closeDayModal(); }
+  else if (ev.key === "Tab") {  // фокус не уходит из окна
+    var f = m.querySelectorAll("button"); if (!f.length) return;
+    if (ev.shiftKey && document.activeElement === f[0]) { ev.preventDefault(); f[f.length - 1].focus(); }
+    else if (!ev.shiftKey && document.activeElement === f[f.length - 1]) { ev.preventDefault(); f[0].focus(); }
+  }
+});
+
+// ---------- Неделя по дням: перелистывание без полной перерисовки. Слой .wk-ov над графиком не пересоздаётся —
+// браузер шлёт продолжение жеста трекпада элементу, который был под курсором в начале; если его удалить, свайпы
+// «теряются», пока не сдвинешь мышь. Поэтому меняем только заголовок и график под слоем
+var WK_CTX = null;
+function wkStep(w) {
+  var sec = document.querySelector("[data-wkswipe]");
+  if (!WK_CTX || !sec || !w) { S.m.wkSel = w || null; S.m.wkAnim = true; render(); return; }
+  S.m.wkSel = w; S.m.wkAnim = true;
+  var tpl = document.createElement("template"); tpl.innerHTML = mWeeks(WK_CTX.list, WK_CTX.from, WK_CTX.to);
+  var head = tpl.content.querySelector(".wk-head"), svg = tpl.content.querySelector(".wk-svg");
+  if (!head || !svg) { render(); return; }
+  sec.querySelector(".wk-head").replaceWith(head); sec.querySelector(".wk-svg").replaceWith(svg);
+}
+function wkCol(ov, clientX) {
+  var svg = ov.parentNode.querySelector("svg"), r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal;
+  var vx = (clientX - r.left) * vb.width / r.width, pl = 34, step = (vb.width - pl) / 7, k = Math.floor((vx - pl) / step);
+  return k >= 0 && k < 7 ? k : -1;
+}
+document.addEventListener("mousemove", function (ev) {
+  var ov = ev.target.closest && ev.target.closest(".wk-ov"); if (!ov) return;
+  var k = wkCol(ov, ev.clientX);
+  ov.parentNode.querySelectorAll("g.hov").forEach(function (g, n) { g.classList.toggle("hl", n === k); });
+});
+document.addEventListener("mouseout", function (ev) {
+  if (ev.target.classList && ev.target.classList.contains("wk-ov")) ev.target.parentNode.querySelectorAll("g.hov.hl").forEach(function (g) { g.classList.remove("hl"); });
+});
+document.addEventListener("click", function (ev) {
+  var ov = ev.target.closest && ev.target.closest(".wk-ov"); if (!ov || !S.m.wkSel) return;
+  var k = wkCol(ov, ev.clientX); if (k >= 0) mDayModal(addDays(S.m.wkSel, k));
+});
 function mSplitTools(html) {
   var tpl = document.createElement("template"); tpl.innerHTML = html;
   var tb = tpl.content.querySelector(".mtools"); if (!tb) return { tools: "", body: html };
