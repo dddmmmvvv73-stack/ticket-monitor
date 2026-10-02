@@ -128,7 +128,7 @@ def apply_op(op: dict) -> tuple[dict, str]:
 def apply_edits(rows: list[dict], cur: dict) -> None:
     """Ручные правки мероприятий поверх данных парсера (исходные значения — в row["orig"])."""
     for r in rows:
-        e = cur["edits"].get(r["keys"][0])
+        e = next((cur["edits"][k] for k in r["keys"] if k in cur["edits"]), None)  # строка могла склеиться с другой
         if e:
             r["orig"] = {f: r.get(f) for f in e["fields"]}
             r.update(e["fields"])

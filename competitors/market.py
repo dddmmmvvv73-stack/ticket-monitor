@@ -32,11 +32,13 @@ import os
 import re
 import sys
 import time
+import html as html_lib
 import urllib.error
 import urllib.request
 from collections import Counter, defaultdict
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
+from difflib import SequenceMatcher
 
 from competitors import curation
 from competitors.classifier import GENRES, classify_by_rules, classify_with_ai, title_key
@@ -52,6 +54,7 @@ LOG_FILE = MARKET_DIR / "market.log"
 CITIES_FILE = CONFIG_DIR / "market.json"
 KASSIR_REGIONS_FILE = CONFIG_DIR / "market_kassir_regions.json"
 YANDEX_CITIES_CACHE = MARKET_DIR / "yandex_cities.json"
+KASSIR_TITLES_FILE = MARKET_DIR / "kassir_titles.json"   # заголовки страниц Кассира для спорных склеек: адрес → [название, дата]
 OVERRIDES_FILE = CONFIG_DIR / "classification_overrides.json"
 AI_CACHE_FILE = DATA_DIR / "ai_cache.json"
 PROTOTYPE_DATA = BASE_DIR / "Design" / "prototype" / "market-data.js"
@@ -278,6 +281,164 @@ def tour_key(t: str) -> str:
     return re.sub(r"[^a-zа-я0-9]", "", t)
 
 
+# ---------------------------------------------------------------- склейка Кассир ↔ Яндекс
+
+_LAT = [("zz", "цц"), ("shch", "щ"), ("sch", "щ"), ("sh", "ш"), ("ch", "ч"), ("zh", "ж"), ("kh", "х"), ("ts", "ц"), ("ya", "я"), ("yu", "ю"),
+        ("yo", "ё"), ("ph", "ф"), ("th", "т"), ("ck", "к"), ("x", "кс"), ("w", "в"), ("q", "к")]
+_LAT1 = dict(zip("abcdefghijklmnoprstuvyz", "абкдефгхийклмнопрстувиз"))
+TITLE_STOP = {"концерт", "спектакль", "шоу", "программа", "оркестр", "оркестра", "симфония", "симфонический", "свечах", "при",
+              "абонемент", "вечер", "музыка", "музыки", "тур", "группа", "новая", "новый", "show", "the", "and", "live", "фестиваль",
+              "праздник", "детский", "сольный", "юбилейный", "творческий", "театр", "трибьют", "tribute", "cagmo", "кагмо",
+              "новогодний", "новогоднее", "новогодняя", "рождественский", "стендап", "standup", "квартет", "хиты", "лучшее"}
+VENUE_STOP = {"театр", "дворец", "культуры", "центр", "концертный", "зал", "клуб", "дом", "имени", "государственный",
+              "областной", "городской", "краевой", "краевая", "областная", "сцена", "основная", "искусств", "искусства",
+              "народного", "творчества", "музыкальный", "драматический", "академический", "уральский", "культурное", "пространство"}
+
+
+def _lat2cyr(t: str) -> str:
+    for a, b in _LAT:
+        t = t.replace(a, b)
+    return "".join(_LAT1.get(ch, ch) for ch in t)
+
+
+def _words(t: str, stop: set) -> set:
+    """Значимые слова по основе — первые 5 букв: «Богдана Лисевского» и «Богдан Лисевский», Scorpions и «Скорпионс»."""
+    t = (t or "").lower().replace("ё", "е")
+    out = set()
+    for w in re.findall(r"[^\W_]+", t):  # любые буквы: «Дөр», «Мӑнаккасем»
+        c = _lat2cyr(w)
+        if len(w) >= 3 and w not in stop and c not in stop:
+            out.add(c[:5] if len(c) >= 7 else c[:4] if len(c) >= 5 else c)  # «Коцкой» и «Коцкая» → «коцк»
+    return out
+
+
+def _sorted_key(t: str) -> str:
+    """Слова по алфавиту и в кириллице — для сравнения без учёта порядка («Симфония Queen…» и «…Квин…»)."""
+    return " ".join(sorted(_lat2cyr(w) for w in re.findall(r"[^\W_]+", (t or "").lower().replace("ё", "е"))))
+
+
+def similar_title(a: str, b: str) -> bool:
+    """Одно мероприятие под разными названиями: общие слова, перестановка, транслит, опечатка («Гуф/Guf» и «Guf»)."""
+    ka, kb = tour_key(a), tour_key(b)
+    if not ka or not kb:  # название из одних служебных слов («Мюзикл-шоу») — сравниваем как есть
+        return bool(_sorted_key(a)) and _sorted_key(a) == _sorted_key(b)
+    if ka == kb or (min(len(ka), len(kb)) >= 4 and (ka in kb or kb in ka)):
+        return True
+    if _words(a, TITLE_STOP) & _words(b, TITLE_STOP):
+        return True
+    # Короткое название — первое слово длинного: «NЮ» и «NЮ. Юрий Николаенко»
+    fa, fb = re.findall(r"[^\W_]+", a.lower()), re.findall(r"[^\W_]+", b.lower())
+    if fa and fb and (len(fa) == 1 or len(fb) == 1) and fa[0] == fb[0] and len(fa[0]) >= 2:
+        return True
+    ca, cb = _lat2cyr(ka), _lat2cyr(kb)
+    return ca == cb or SequenceMatcher(None, ca, cb).ratio() >= 0.8 or SequenceMatcher(None, _sorted_key(a), _sorted_key(b)).ratio() >= 0.85
+
+
+def same_venue(a: str, b: str, city: str = "") -> bool:
+    """«Окружной Дом Офицеров» и «Дом офицеров», «Джипси офис (Gipsy Office)» и «Gipsy Office»."""
+    na = _lat2cyr(re.sub(r"[^a-zа-я0-9]", "", (a or "").lower().replace("ё", "е")))
+    nb = _lat2cyr(re.sub(r"[^a-zа-я0-9]", "", (b or "").lower().replace("ё", "е")))
+    if not na or not nb:
+        return False
+    if na in nb or nb in na:
+        return True
+    town = _lat2cyr((city or "").lower().replace("ё", "е"))[:4]  # «Новосибирская филармония» и «Новосибирский театр» — не одно
+    wa = {w for w in _words(a, VENUE_STOP) if not (town and w.startswith(town))}
+    wb = {w for w in _words(b, VENUE_STOP) if not (town and w.startswith(town))}
+    return bool(wa & wb) or SequenceMatcher(None, na, nb).ratio() >= 0.7
+
+
+def _merge(hit: dict, r: dict) -> None:
+    """Строка Кассира r — в строку Яндекса hit: название и ссылка Яндекса, ссылка и Пушкинская — с Кассира."""
+    hit["src"] = "ky"
+    hit["keys"] = hit["keys"] + r["keys"]
+    hit["url_k"] = r["url_k"]
+    hit["pushkin"] = hit["pushkin"] or r["pushkin"]
+    hit["time"] = hit["time"] or r["time"]
+    if hit["pmin"] is None:
+        hit["pmin"], hit["pmax"] = r["pmin"], r["pmax"]
+    hit["genre"] = hit["genre"] or r["genre"]
+
+
+def merge_by_slot(rows: list[dict]) -> tuple[list[dict], list[tuple[dict, dict]]]:
+    """
+    Вторая склейка: тот же город, дата, время и площадка, а название записано по-разному. Если названия совсем
+    разные — спорный случай (бывает и два зала в один час): его проверяет resolve_kassir_titles по странице Кассира.
+    """
+    slot = defaultdict(list)
+    for y in rows:
+        if y["src"] == "y" and y["time"]:
+            slot[(y["city"], y["date"], y["time"])].append(y)
+    keep, conflicts, merged = [], [], 0
+    for r in rows:
+        if r["src"] != "k" or not r["time"]:
+            keep.append(r)
+            continue
+        cands = [y for y in slot.get((r["city"], r["date"], r["time"]), []) if y["src"] == "y" and same_venue(r["venue"], y["venue"], r["city"])]
+        hit = next((y for y in cands if similar_title(r["title"], y["title"])), None)
+        if hit:
+            _merge(hit, r)
+            merged += 1
+            continue
+        keep.append(r)
+        if len(cands) == 1:
+            conflicts.append((r, cands[0]))
+    log(f"Склейка по месту и времени: {merged} мероприятий Кассира — те же, что на Яндексе; спорных {len(conflicts)}")
+    return keep, conflicts
+
+
+def _kassir_page_title(url: str) -> str | None:
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "text/html"})
+        with urllib.request.urlopen(req, timeout=40) as r:
+            page = r.read().decode("utf-8", errors="ignore")
+    except (OSError, http.client.HTTPException) as e:
+        log(f"✖ {url[:110]} — {e}")
+        return None
+    m = re.search(r"<h1[^>]*>(.*?)</h1>", page, re.S)
+    title = re.sub(r"\s+", " ", html_lib.unescape(re.sub(r"<[^>]+>", "", m.group(1)))).strip() if m else ""
+    if len(title) > 2 and title[0] + title[-1] in ('""', "«»"):  # «"Чудо в большом городе"» — кавычки вокруг всего названия
+        title = title[1:-1].strip()
+    return title or None
+
+
+def resolve_kassir_titles(rows: list[dict], conflicts: list[tuple[dict, dict]], today: str) -> list[dict]:
+    """
+    Спорные склейки: Кассир и Яндекс в один час на одной площадке под совсем разными названиями. Кассир бывает
+    отдаёт в поиске старое название карточки, а на странице — новое («Чудо в большом городе» →
+    «Жениться нельзя расстаться»). Сверяем заголовок страницы: совпал с Яндексом — одно мероприятие; иначе
+    оставляем две строки, но у Кассира — название со страницы.
+    """
+    if not conflicts:
+        return rows
+    cache = load_json(KASSIR_TITLES_FILE, {})
+    fresh_from = (datetime.fromisoformat(today) - timedelta(days=3)).date().isoformat()
+    drop, merged, renamed = set(), 0, 0
+    for r, y in conflicts:
+        url = r.get("url_k")
+        if not url:
+            continue
+        got = cache.get(url)
+        if not got or got[1] < fresh_from:
+            title = _kassir_page_title(url)
+            time.sleep(KASSIR_PAUSE)
+            if title is None:
+                continue
+            got = cache[url] = [title, today]
+        title = got[0]
+        if similar_title(title, y["title"]) and y["src"] == "y":
+            _merge(y, r)
+            drop.add(id(r))
+            merged += 1
+        elif title and tour_key(title) != tour_key(r["title"]):
+            r["title_api"], r["title"] = r["title"], title
+            renamed += 1
+    cache = {u: v for u, v in cache.items() if v[1] >= fresh_from}
+    _save_lines(KASSIR_TITLES_FILE, cache)
+    log(f"Страницы Кассира для спорных склеек: проверено {len(conflicts)}, склеено {merged}, название исправлено {renamed}")
+    return [r for r in rows if id(r) not in drop]
+
+
 def _clean_venue(v: str, city: str) -> str:
     return re.sub(r"\s*\((%s)\)\s*$" % re.escape(city), "", v or "").strip() or "—"
 
@@ -411,19 +572,13 @@ def parse(kassir: list[dict], yandex: list[dict], cities: list[str], today: str,
                 hit = y
                 break
         if hit:
-            hit["src"] = "ky"
-            hit["keys"] = hit["keys"] + r["keys"]
-            hit["url_k"] = r["url_k"]
-            hit["pushkin"] = hit["pushkin"] or r["pushkin"]
-            hit["time"] = hit["time"] or r["time"]
-            if hit["pmin"] is None:
-                hit["pmin"], hit["pmax"] = r["pmin"], r["pmax"]
-            hit["genre"] = hit["genre"] or r["genre"]
+            _merge(hit, r)
         else:
             out.append(r)
     out += [r for r in rows if r["src"] != "k"]
+    out, conflicts = merge_by_slot(out)
     out.sort(key=lambda r: (r["date"], r["time"] or "99", r["city"], r["title"]))
-    return out, dropped
+    return out, dropped, conflicts
 
 
 def classify_missing(rows: list[dict], ai: dict | None) -> int:
@@ -479,7 +634,8 @@ def run() -> bool:
         log(f"Кассир: {len(plan)} запросов по {len({p[0] for p in plan})} регионам, записей {sum(len(p['items']) for p in kassir)}")
         log(f"Яндекс Афиша: {len(yandex)} городов, записей {sum(len(p['items']) for p in yandex)}")
 
-        rows, dropped = parse(kassir, yandex, cities, today, load_json(OVERRIDES_FILE, {}))
+        rows, dropped, conflicts = parse(kassir, yandex, cities, today, load_json(OVERRIDES_FILE, {}))
+        rows = resolve_kassir_titles(rows, conflicts, today)
         previous = load_json(EVENTS_FILE, [])
         by_src_now = Counter(s for r in rows for s in r["src"])
         by_src_before = Counter(s for r in previous for s in r["src"])
@@ -562,9 +718,10 @@ def update_archive(rows: list[dict], cur: dict, today: str) -> int:
         e["last_seen"], e["status"] = today, "on_sale"
         arch[k] = e
     local = {k for k, m in cur["projects"].items() if m["type"] == "local"}
-    for k in list(arch):
+    on_sale = {k for r in rows for k in r["keys"]}  # в афише, но уже не отдельная гастроль: склеилась с другой строкой
+    for k in list(arch):                             # или признак сменился на «местное» — это не «снято»
         e = arch[k]
-        if e.get("pk") in local:          # вы отметили проект местным — из архива гастролей убираем
+        if e.get("pk") in local or (k in on_sale and k not in now):  # отмечен местным, склеен или больше не гастроль
             del arch[k]
         elif k not in now and e["status"] == "on_sale":
             # Сбор в 21:00: дневные и вечерние события этого дня уже сняты с продажи — это «прошло», не «снято»
