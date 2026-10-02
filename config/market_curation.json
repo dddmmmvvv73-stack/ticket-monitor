@@ -78,7 +78,7 @@
   },
   "edits": {},
   "filters": {
-    "show": "tour",
+    "show": "local",
     "pmin": 900,
     "pmax": null,
     "noprice": true
