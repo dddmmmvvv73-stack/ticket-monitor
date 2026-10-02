@@ -286,7 +286,7 @@
     }
   },
   "filters": {
-    "show": "local",
+    "show": "all",
     "pmin": null,
     "pmax": null,
     "noprice": false
