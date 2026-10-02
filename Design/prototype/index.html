@@ -691,6 +691,37 @@ button.sbar:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px
 @media (prefers-reduced-motion: reduce) { .wk-grow rect.wseg { animation: none; } }
 .hov-cell { cursor: pointer; }
 .hov-cell:hover rect { stroke: var(--soot); stroke-width: 1.5; }
+.pc-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 12px; align-items: baseline; padding: 10px 0; border-top: 1px solid var(--line-soft); }
+.pc-label { font-size: 13px; color: var(--ink-3); }
+.pc-val { display: flex; flex-direction: column; gap: 2px; }
+.pc-val b { font-size: 20px; font-weight: 500; font-family: var(--display); letter-spacing: -0.01em; }
+.pc-mk { font-size: 12px; color: var(--muted); text-align: right; white-space: nowrap; }
+.ps-cards { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 12px 0 18px; }
+.ps-card { all: unset; box-sizing: border-box; display: flex; flex-direction: column; gap: 6px; padding: 14px; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; background: var(--card); }
+.ps-card:hover { border-color: var(--line-strong); }
+.ps-card.on { border-color: var(--soot); box-shadow: 0 0 0 1px var(--soot); }
+.ps-card:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.ps-top { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.ps-top b { font-weight: 600; }
+.ps-top .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.ps-state { margin-inline-start: auto; font-size: 11px; font-weight: 600; border-radius: 9999px; padding: 1px 8px; white-space: nowrap; }
+.ps-state.free { color: var(--good); background: var(--good-bg); }
+.ps-state.busy { color: var(--risk); background: var(--risk-bg); }
+.ps-state.even, .ps-state.rare { color: var(--ink-3); background: #f0efed; }
+.ps-n { display: flex; align-items: baseline; gap: 8px; }
+.ps-n b { font-size: 24px; font-weight: 500; font-family: var(--display); }
+.ps-bar { position: relative; height: 6px; background: var(--line-soft); border-radius: 3px; }
+.ps-bar i { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; }
+.ps-bar .mk { position: absolute; top: -3px; width: 2px; height: 12px; background: var(--ink); margin-left: -1px; }
+.pl-row { cursor: pointer; }
+.pl-row:hover rect { fill: #f5f5f4; }
+.ps-list { margin-top: 14px; border-top: 1px solid var(--line-soft); padding-top: 12px; display: flex; flex-direction: column; }
+.ps-item { all: unset; box-sizing: border-box; display: grid; grid-template-columns: 110px minmax(0, 1fr) auto; gap: 12px; padding: 7px 4px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+.ps-item:hover { background: #f5f5f4; }
+.ps-item:focus-visible { outline: 2px solid var(--focus); }
+.ps-t { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+@media (max-width: 900px) { .ps-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .pc-row { grid-template-columns: minmax(0, 1fr); gap: 2px; } .pc-mk { text-align: left; } .ps-item { grid-template-columns: minmax(0, 1fr); gap: 2px; } }
 .pb-list { display: flex; flex-direction: column; gap: 8px; }
 .pb-row { display: grid; grid-template-columns: minmax(110px, 170px) minmax(0, 1fr) 150px; gap: 14px; align-items: center; }
 .pb-name { font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -3173,8 +3204,8 @@ function mCity() {
   if (!list.length) return tools + mDayPanel(city) + '<div class="empty"><h2>' + esc(city) + ': за ' + rangeLabel(from, to) + ' мероприятий нет</h2><p style="margin:0">Выберите другие даты в шапке.</p></div>';
   return tools + mDayPanel(city) +
     (S.m.myFormat ? mCompCard(city, from, to) : '') +
-    '<div class="mcity-grid">' + mStructure(list, all, from, to) + mPriceCorridor(list, from, to) + '</div>' +
-    mWeeks(list, from, to) + mVenueDays(list, from, to);
+    '<div class="mcity-grid">' + mStructure(list, all, from, to) + mPriceSummary(list, from, to) + '</div>' +
+    mPriceSegments(list, from, to) + mWeeks(list, from, to) + mVenueDays(list, from, to);
 }
 
 // Структура афиши: доля каждой сферы в периоде + «обычно в городе» (вся афиша города) + «по рынку» (все города, тот же период)
@@ -3333,28 +3364,113 @@ function mVenueDays(list, from, to) {
     '<div style="overflow-x:auto" tabindex="0" role="region" aria-label="Площадки по дням месяца"><svg width="' + W + '" height="' + H + '" style="display:block;margin-top:10px">' + marks + colBg + wdRow + cells + '</svg></div></section>';
 }
 
-// Сколько стоит билет: по формату — доли мероприятий по цене самого дешёвого билета («от»);
-// справа — типичная цена «от–до» в городе и по рынку
-var PRICE_STEPS = [[0, 500, "до 500 ₽"], [500, 1000, "500–1 000"], [1000, 2000, "1–2 тыс."], [2000, 3000, "2–3 тыс."], [3000, 5000, "3–5 тыс."], [5000, 1e12, "от 5 тыс."]];
-function mPriceCorridor(list, from, to) {
-  var fm = mTop(mCount(list.filter(function (e) { return e.pmin; }), "format"), 8).filter(function (f) { return list.filter(function (e) { return e.format === f && e.pmin; }).length >= 3; });
-  if (!fm.length) return '';
-  var mk = MRV.filter(function (e) { return e.date >= from && e.date <= to && e.pmin; });
-  var typ = function (l) { return l.length ? num(median(l.map(function (e) { return e.pmin; }))) + "–" + num(median(l.map(function (e) { return e.pmax || e.pmin; }))) + " ₽" : "—"; };
-  var rows = fm.map(function (f) {
-    var l = list.filter(function (e) { return e.format === f && e.pmin; }), lm = mk.filter(function (e) { return e.format === f; });
-    var cnt = PRICE_STEPS.map(function (b) { return l.filter(function (e) { return e.pmin >= b[0] && e.pmin < b[1]; }).length; });
-    var bar = PRICE_STEPS.map(function (b, k) {
-      if (!cnt[k]) return '';
-      var p = cnt[k] / l.length * 100;
-      return '<span class="pb-seg" style="width:' + p.toFixed(2) + '%;background:' + HEAT[k] + ';color:' + (k >= 3 ? "#ffffff" : "#1c1917") + '" data-ct="' + esc(f + ", " + b[2] + ": " + cnt[k] + " из " + l.length + " (" + Math.round(p) + "%)") + '">' + (p >= 11 ? Math.round(p) + "%" : "") + '</span>';
-    }).join("");
-    return '<div class="pb-row"><span class="pb-name">' + esc(f) + ' <span class="sub2 num">' + l.length + '</span></span><span class="pb-bar">' + bar + '</span>' +
-      '<span class="pb-val"><b class="num">' + typ(l) + '</b><span class="sub2 num">рынок ' + typ(lm) + '</span></span></div>';
+// ---------- Цены по формату: коридор (сводка) и ценовые сегменты с «лестницей цен».
+// Вопросы: какой минимум и максимум ставят конкуренты, сколько стоят билеты у сильных постановок,
+// в каком ценовом сегменте тесно, а где пусто. Сегмент — по максимальной цене: потолок отражает уровень постановки
+var PRICE_SEGS = [["econ", "Эконом", 0, 2000, "максимум до 2 000 ₽"], ["mid", "Средний", 2000, 4000, "максимум 2 000–4 000 ₽"],
+  ["high", "Высокий", 4000, 7000, "максимум 4 000–7 000 ₽"], ["prem", "Премиум", 7000, 1e12, "максимум от 7 000 ₽"]];
+var PSEG_COLOR = { econ: "#7ab9e8", mid: "#3b8fd1", high: "#1d6fae", prem: "#104a78" };
+function pTop(e) { return e.pmax || e.pmin; }
+function pSeg(e) { var v = pTop(e); return PRICE_SEGS.filter(function (s) { return v >= s[2] && v < s[3]; })[0][0]; }
+// Формат блока: «Мой формат», если он есть в городе, иначе самый частый с ценами
+function pFormat(list) {
+  var fm = mTop(mCount(list.filter(function (e) { return e.pmin || e.pmax; }), "format"));
+  if (S.m.pfmt && fm.indexOf(S.m.pfmt) >= 0) return { f: S.m.pfmt, all: fm };
+  return { f: S.m.myFormat && fm.indexOf(S.m.myFormat) >= 0 ? S.m.myFormat : fm[0], all: fm };
+}
+function pRange(arr) { var lo = pct(arr, 0.25), hi = pct(arr, 0.75); return lo == null ? "—" : lo === hi ? num(lo) + " ₽" : num(lo) + "–" + num(hi) + " ₽"; }
+function pStats(l) {
+  var mins = l.map(function (e) { return e.pmin || e.pmax; }), maxs = l.map(pTop);
+  var top = l.slice().sort(function (a, b) { return pTop(b) - pTop(a); }).slice(0, Math.max(1, Math.ceil(l.length * 0.2)));
+  return { n: l.length, minMed: median(mins), minRange: pRange(mins), maxMed: median(maxs), maxRange: pRange(maxs),
+    topMin: median(top.map(function (e) { return e.pmin || e.pmax; })), topMax: median(top.map(pTop)), topN: top.length };
+}
+function pFormatSelect(fm, f) {
+  return '<select class="flat-select" data-flat-label="Формат" data-flat-always data-msel="pfmt" aria-label="Формат для цен">' +
+    fm.all.map(function (v) { return '<option' + (v === f ? " selected" : "") + '>' + esc(v) + '</option>'; }).join("") + '</select>';
+}
+function mPriceSummary(list, from, to) {
+  var fm = pFormat(list), f = fm.f;
+  if (!f) return '';
+  var l = list.filter(function (e) { return e.format === f && (e.pmin || e.pmax); });
+  var mk = MRV.filter(function (e) { return e.date >= from && e.date <= to && e.format === f && (e.pmin || e.pmax); });
+  var c = pStats(l), m = pStats(mk);
+  var row = function (label, val, med, mval, tip) {
+    return '<div class="pc-row" data-ct="' + esc(tip) + '"><span class="pc-label">' + label + '</span><span class="pc-val"><b class="num">' + val + '</b>' +
+      (med ? '<span class="sub2 num">медиана ' + num(med) + ' ₽</span>' : '') + '</span><span class="pc-mk num">рынок ' + mval + '</span></div>';
+  };
+  return '<section class="card card-pad"><div class="card-head" style="align-items:center"><h2>Коридор цен</h2>' + pFormatSelect(fm, f) + '</div>' +
+    '<p class="sub" style="margin:2px 0 12px">' + c.n + ' ' + plural(c.n, "мероприятие", "мероприятия", "мероприятий") + ' с ценами · обычно — средняя половина мероприятий</p>' +
+    row("Минимальная цена", c.minRange, c.minMed, m.minRange, "Самый дешёвый билет: у половины мероприятий формата в этих пределах") +
+    row("Максимальная цена", c.maxRange, c.maxMed, m.maxRange, "Самый дорогой билет: у половины мероприятий формата в этих пределах") +
+    row("Высокий уровень", num(c.topMin) + "–" + num(c.topMax) + " ₽", null, num(m.topMin) + "–" + num(m.topMax) + " ₽",
+      "Верхние 20% по максимальной цене (" + c.topN + "): медиана минимальной и максимальной цены") +
+    '<p class="sub" style="margin:12px 0 0">Это цены на афише, а не цены, по которым купили: дешёвые места бывают в продаже почти всегда.</p></section>';
+}
+function mPriceSegments(list, from, to) {
+  var fm = pFormat(list), f = fm.f;
+  if (!f) return '';
+  var l = list.filter(function (e) { return e.format === f && (e.pmin || e.pmax); });
+  var mk = MRV.filter(function (e) { return e.date >= from && e.date <= to && e.format === f && (e.pmin || e.pmax); });
+  if (!l.length) return '';
+  var sel = S.m.pseg && PRICE_SEGS.some(function (s) { return s[0] === S.m.pseg; }) ? S.m.pseg : null;
+  var segs = PRICE_SEGS.map(function (s) {
+    var ls = l.filter(function (e) { return pSeg(e) === s[0]; }), ms = mk.filter(function (e) { return pSeg(e) === s[0]; });
+    var sh = ls.length / l.length * 100, shm = mk.length ? ms.length / mk.length * 100 : 0;
+    var state = !ls.length && shm < 5 ? ["rare", "редко и по рынку"] : sh < shm * 0.6 ? ["free", "свободно"] : sh > shm * 1.4 && ls.length >= 3 ? ["busy", "тесно"] : ["even", "как по рынку"];
+    return { s: s, l: ls, sh: sh, shm: shm, state: state,
+      typ: ls.length ? num(median(ls.map(function (e) { return e.pmin || e.pmax; }))) + "–" + num(median(ls.map(pTop))) + " ₽" : "—" };
+  });
+  var cards = segs.map(function (g) {
+    return '<button class="ps-card' + (sel === g.s[0] ? ' on' : '') + '" data-pseg="' + g.s[0] + '" aria-pressed="' + (sel === g.s[0]) + '">' +
+      '<span class="ps-top"><i class="sw" style="background:' + PSEG_COLOR[g.s[0]] + '"></i><b>' + g.s[1] + '</b><span class="ps-state ' + g.state[0] + '">' + g.state[1] + '</span></span>' +
+      '<span class="sub2">' + g.s[4] + '</span>' +
+      '<span class="ps-n"><b class="num">' + g.l.length + '</b><span class="sub2 num">' + Math.round(g.sh) + '% · рынок ' + Math.round(g.shm) + '%</span></span>' +
+      '<span class="ps-bar"><i style="width:' + g.sh.toFixed(1) + '%;background:' + PSEG_COLOR[g.s[0]] + '"></i><b class="mk" style="left:' + g.shm.toFixed(1) + '%"></b></span>' +
+      '<span class="sub2 num">обычно ' + g.typ + '</span></button>';
   }).join("");
-  return '<section class="card card-pad"><h2>Сколько стоит билет</h2><p class="sub">Самый дешёвый билет по форматам — доля мероприятий в каждой ценовой ступени. Справа — типичная цена «от–до».</p>' +
-    '<div class="legend" style="flex-wrap:wrap;gap:6px 14px;margin:10px 0 8px">' + PRICE_STEPS.map(function (b, k) { return '<span><i class="sw" style="background:' + HEAT[k] + '"></i>' + b[2] + '</span>'; }).join("") + '</div>' +
-    '<div class="pb-list">' + rows + '</div></section>';
+  // Лестница цен: отрезок от минимальной до максимальной цены, сверху вниз — от самых дорогих
+  var all = l.slice().sort(function (a, b) { return pTop(b) - pTop(a) || (b.pmin || 0) - (a.pmin || 0); });
+  var rows = sel ? all.filter(function (e) { return pSeg(e) === sel; }) : all;
+  var limit = S.m.pall ? rows.length : Math.min(rows.length, 30), shown = rows.slice(0, limit);
+  // Шкала по сегментам: у каждого равная ширина, внутри — линейно; премиум — до цены, выше которой 5% мероприятий
+  var cap = Math.max(10000, Math.ceil((pct(all.map(pTop), 0.95) || 0) / 1000) * 1000);
+  var W = 1100, pl = 12, pr = 16, rh = 14, top = 26, H = top + shown.length * rh + 26, bw4 = (W - pl - pr) / PRICE_SEGS.length;
+  var x = function (v) {
+    v = Math.min(v, cap);
+    for (var k = 0; k < PRICE_SEGS.length; k++) {
+      var lo = PRICE_SEGS[k][2], hi = Math.min(PRICE_SEGS[k][3], cap);
+      if (v < hi || k === PRICE_SEGS.length - 1) return pl + (k + Math.max(0, Math.min(1, (v - lo) / (hi - lo)))) * bw4;
+    }
+  };
+  var bands = PRICE_SEGS.map(function (s) {
+    var a = x(s[2]), b = x(Math.min(s[3], cap));
+    if (s[2] >= cap) return '';
+    return '<rect x="' + a.toFixed(1) + '" y="' + top + '" width="' + Math.max(0, b - a).toFixed(1) + '" height="' + (shown.length * rh) + '" fill="' + PSEG_COLOR[s[0]] + '" opacity="' + (sel && sel !== s[0] ? 0.03 : 0.08) + '"/>' +
+      '<text x="' + ((a + b) / 2).toFixed(1) + '" y="16" font-size="11" fill="#57534e" text-anchor="middle">' + s[1] + '</text>';
+  }).join("");
+  var ticks = [0, 1000, 2000, 3000, 4000, 5500, 7000].concat([cap]).filter(function (v, k, arr) { return v <= cap && arr.indexOf(v) === k; }).map(function (v) {
+    return '<line x1="' + x(v) + '" x2="' + x(v) + '" y1="' + top + '" y2="' + (top + shown.length * rh) + '" stroke="' + ([0, 2000, 4000, 7000, cap].indexOf(v) >= 0 ? "#d6d3d1" : "#f0efed") + '"/><text x="' + x(v) + '" y="' + (H - 8) + '" font-size="11" fill="#78716c" text-anchor="' + (v === 0 ? "start" : v === cap ? "end" : "middle") + '">' + num(v) + (v === cap ? " ₽" : "") + '</text>';
+  }).join("");
+  var lines = shown.map(function (e, k) {
+    var y = top + k * rh + rh / 2, a = x(e.pmin || pTop(e)), b = x(pTop(e)), col = PSEG_COLOR[pSeg(e)], over = pTop(e) > cap;
+    var tip = e.title + " · " + e.venue + " · " + dayLabel(e.date) + ": " + (e.pmin && e.pmin !== pTop(e) ? num(e.pmin) + "–" : "") + num(pTop(e)) + " ₽";
+    return '<g class="pl-row" data-ct="' + esc(tip) + '" data-mopen="' + e.i + '"><rect x="0" y="' + (y - rh / 2) + '" width="' + W + '" height="' + rh + '" fill="transparent"/>' +
+      '<line x1="' + a.toFixed(1) + '" x2="' + b.toFixed(1) + '" y1="' + y + '" y2="' + y + '" stroke="' + col + '" stroke-width="3" stroke-linecap="round"/>' +
+      '<circle cx="' + a.toFixed(1) + '" cy="' + y + '" r="3.5" fill="#ffffff" stroke="' + col + '" stroke-width="2"/><circle cx="' + b.toFixed(1) + '" cy="' + y + '" r="3.5" fill="' + col + '"/>' +
+      (over ? '<text x="' + (b + 6).toFixed(1) + '" y="' + (y + 4) + '" font-size="10" fill="#57534e">' + num(pTop(e)) + '</text>' : '') + '</g>';
+  }).join("");
+  var listHtml = sel ? '<div class="ps-list"><div class="field-label" style="margin-top:0">' + PRICE_SEGS.filter(function (s) { return s[0] === sel; })[0][1] + ' · ' + rows.length + ' ' + plural(rows.length, "мероприятие", "мероприятия", "мероприятий") + '</div>' +
+    rows.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; }).map(function (e) {
+      return '<button class="ps-item" data-mopen="' + e.i + '"><span class="nowrap">' + human(e.date) + ', ' + dparts(e.date).wd + '</span><span class="ps-t">' + esc(e.title) + '<span class="sub2"> · ' + esc(e.venue) + '</span></span><span class="num nowrap">' + prices(e) + '</span></button>';
+    }).join("") + '</div>' : '';
+  return '<section class="card card-pad"><h2>Ценовые сегменты · ' + esc(f) + '</h2><p class="sub" style="margin:2px 0 0">Сегмент — по максимальной цене билета. Формат выбирается в «Коридоре цен». Нажмите на сегмент — покажу его мероприятия.</p>' +
+    '<div class="ps-cards">' + cards + '</div>' +
+    '<div class="field-label">Лестница цен — от минимальной до максимальной цены' + (sel ? ' · сегмент «' + PRICE_SEGS.filter(function (s) { return s[0] === sel; })[0][1] + '»' : '') + '</div>' +
+    '<div class="legend" style="gap:6px 14px;flex-wrap:wrap;margin:2px 0 4px"><span><svg width="26" height="10" aria-hidden="true"><line x1="4" x2="22" y1="5" y2="5" stroke="#1d6fae" stroke-width="3"/><circle cx="4" cy="5" r="3" fill="#fff" stroke="#1d6fae" stroke-width="2"/><circle cx="22" cy="5" r="3" fill="#1d6fae"/></svg>минимальная — максимальная цена</span><span>сверху — самые дорогие; нажмите — карточка мероприятия</span></div>' +
+    '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Лестница цен" style="display:block">' + bands + ticks + lines + '</svg>' +
+    (rows.length > 30 ? '<div style="display:flex;justify-content:center;margin-top:6px"><button class="btn-ghost" data-pall>' + (S.m.pall ? 'Свернуть до 30' : 'Показать все ' + rows.length) + '</button></div>' : '') +
+    listHtml + '</section>';
 }
 
 // Индекс конкуренции по дням + лучшие пт–вс
@@ -3765,7 +3881,7 @@ $("view").addEventListener("click", function (ev) {
   if (S.view !== "market" || ev.target.closest(".resizer") || ev.target.closest("a")) return;
   var pr = ev.target.closest("[data-mprice],[data-mprice-preset],[data-mprice-done],[data-mprice-reset]");
   if (pr) { mPriceAction(pr); return; }
-  var t = ev.target.closest("[data-mcur-show],[data-mproject-type],[data-mtab],[data-mf],[data-msort],[data-mset],[data-mopen],[data-maction],[data-mclear],[data-msph],[data-mproj],[data-mcity],[data-mcity-go],[data-mweekcity],[data-mwk],[data-mvd],.seg-btn,[data-mday],[data-mweek],[data-mvenue],.cell-btn,tr[data-mi]");
+  var t = ev.target.closest("[data-mcur-show],[data-mproject-type],[data-mtab],[data-mf],[data-msort],[data-mset],[data-mopen],[data-maction],[data-mclear],[data-msph],[data-mproj],[data-mcity],[data-mcity-go],[data-mweekcity],[data-mwk],[data-mvd],[data-pseg],[data-pall],.seg-btn,[data-mday],[data-mweek],[data-mvenue],.cell-btn,tr[data-mi]");
   if (!t) return;
   if (t.hasAttribute("data-mcur-show")) { CUR.filters.show = t.getAttribute("data-mcur-show"); curSave({ op: "filters", filters: CUR.filters }); return; }
   if (t.hasAttribute("data-mproject-type")) { mMarkProject(t); return; }
@@ -3795,6 +3911,8 @@ $("view").addEventListener("click", function (ev) {
   else if (t.hasAttribute("data-mproj")) { S.m.project = t.getAttribute("data-mproj"); S.m.candAll = false; S.m.datesAll = false; S.m.tab = "projects"; S.enter = true; closeDrawer(); render(); window.scrollTo(0, 0); }
   else if (t.hasAttribute("data-mcity-go")) { S.period = "custom"; S.from = t.getAttribute("data-from"); S.to = t.getAttribute("data-to"); S.m.myFormat = t.getAttribute("data-fmt"); S.m.myGenre = t.getAttribute("data-genre"); S.m.day = null; mGo({ tab: "city", city: t.getAttribute("data-mcity-go"), venue: "" }); }
   else if (t.hasAttribute("data-mcity")) { S.m.day = null; mGo({ city: t.getAttribute("data-mcity"), venue: "", tab: t.getAttribute("data-mcity-tab") || S.m.tab }); }
+  else if (t.hasAttribute("data-pseg")) { var ps = t.getAttribute("data-pseg"); S.m.pseg = S.m.pseg === ps ? null : ps; S.m.pall = false; render(); }
+  else if (t.hasAttribute("data-pall")) { S.m.pall = !S.m.pall; render(); }
   else if (t.hasAttribute("data-mwk")) { S.m.wkSel = t.getAttribute("data-mwk") || null; S.m.wkAnim = true; render(); }
   else if (t.hasAttribute("data-mvd")) { if (t.getAttribute("data-mvd")) { S.m.vdMonth = t.getAttribute("data-mvd"); render(); } }
   else if (t.hasAttribute("data-mweekcity")) { var wk0 = t.getAttribute("data-mweekcity"); S.period = "custom"; S.from = wk0; S.to = addDays(wk0, 6); mGo({ tab: "table" }); }
