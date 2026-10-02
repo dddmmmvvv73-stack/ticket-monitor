@@ -724,7 +724,13 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 .pc-table tr.pc-top { cursor: pointer; }
 .pc-table tr.pc-top:hover { background: #f8f7f6; }
 .pc-table tr.pc-top th { font-weight: 600; }
-.pc-table th.pc-wide { white-space: nowrap; }  /* занимает и колонку «Все»: её для этой строки нет */
+.pc-table th.pc-wide { white-space: nowrap; }
+@media (max-width: 520px) {
+  .pc-table td { font-size: 13px; padding: 10px 3px; }
+  .pc-table thead th { padding: 0 3px 6px; }
+  .pc-table tbody th { white-space: normal; padding-right: 4px; }
+  .pc-table th.pc-wide { white-space: normal; }
+}  /* занимает и колонку «Все»: её для этой строки нет */
 .pc-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) auto; gap: 12px; align-items: baseline; padding: 10px 0; border-top: 1px solid var(--line-soft); }
 .pc-label { font-size: 13px; color: var(--ink-3); }
 .pc-val { display: flex; flex-direction: column; gap: 2px; }
