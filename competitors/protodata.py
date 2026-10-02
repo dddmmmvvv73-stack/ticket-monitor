@@ -298,6 +298,17 @@ def build() -> dict:
     freed.sort(key=lambda x: x.pop("_t"), reverse=True)
     prices.sort(key=lambda x: x.pop("_t"), reverse=True)
 
+    # История занятых мест для графика в карточке: [время, занято (без брони площадки), подтверждено продаж накопительно].
+    # В history/ — занято вместе с бронью; сдвигаем на текущую бронь, чтобы последняя точка совпала с «занято» карточки
+    hist = {}
+    for uid, h in histories.items():
+        e = by_uid[uid]
+        pts = [p for p in h if p.get("seats_taken") is not None]
+        if not pts or e.get("seats_taken_sellable") is None:
+            continue
+        shift = pts[-1]["seats_taken"] - e["seats_taken_sellable"]
+        hist[str(_key(e))] = [[p["ts"][:16], max(0, p["seats_taken"] - shift), p.get("sold_confirmed") or 0] for p in pts]
+
     # Кто определил нишу у предстоящих событий
     upcoming = [e for e in events if (e.get("date") or "9999") >= today]
     class_src = {f: dict(Counter((e.get("class_source") or {}).get(f) or "none" for e in upcoming)) for f in ("sphere", "format", "genre")}
@@ -331,7 +342,7 @@ def build() -> dict:
         "trackFrom": {k: v[:16] for k, v in sorted(track_from.items(), key=lambda kv: kv[1])},
         "runs": [r["ts"].isoformat(timespec="minutes") for r in runs],
         "prevRun": prev_run.isoformat(timespec="minutes") if prev_run else None,
-        "freed": freed[:300], "prices": prices[:300], "changes": changes,
+        "hist": hist, "freed": freed[:300], "prices": prices[:300], "changes": changes,
         "classSrc": class_src, "srcCounts": dict(src_counts), "last": last,
         "log": log_lines[-LOG_LINES:],
     }
