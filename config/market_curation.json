@@ -472,9 +472,9 @@
     }
   },
   "filters": {
-    "show": "all",
+    "show": "tour",
     "pmin": null,
-    "pmax": 1000,
+    "pmax": null,
     "noprice": false
   }
 }
