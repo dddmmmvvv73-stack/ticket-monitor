@@ -537,8 +537,8 @@ button.mday:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px
 .vtable tbody tr { border-top: 1px solid var(--line-soft); }
 .vtable .r { text-align: right; }
 .vtable tbody th { font-weight: 400; max-width: 280px; }
-.vbar { display: flex; align-items: center; gap: 8px; justify-content: flex-end; min-width: 120px; }
-.vbar i { display: block; height: 6px; border-radius: 3px; background: var(--data); max-width: 80px; flex-shrink: 0; order: -1; }
+.mvbar { display: flex; align-items: center; gap: 8px; justify-content: flex-end; min-width: 120px; }
+.mvbar i { display: block; height: 6px; border-radius: 3px; background: var(--data); max-width: 80px; flex-shrink: 0; order: -1; }
 @media (max-width: 1180px) { .mcal-grid { grid-template-columns: minmax(0, 1fr); } }
 @media (max-width: 820px) {
   .mcal-months { grid-template-columns: minmax(0, 1fr); }
@@ -3347,7 +3347,7 @@ function mVenues() {
         var sc = mCount(v.l, "sphere"), top = mTop(sc, 3), share = Math.round(v.l.length / cityTot[v.city] * 100), next = v.l.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; })[0];
         var pmin = med(v.l.map(function (e) { return e.pmin; })), pmax = med(v.l.map(function (e) { return e.pmax; }));
         return '<tr><th scope="row"><button class="ev-title" data-mvenue="' + esc(v.venue) + '" data-mvenue-city="' + esc(v.city) + '">' + esc(v.venue) + '</button><div class="sub2">' + esc(v.city) + '</div></th>' +
-          '<td class="r"><div class="vbar"><span class="num">' + v.l.length + '</span><i style="width:' + Math.max(4, Math.round(v.l.length / maxN * 100)) + '%"></i></div></td>' +
+          '<td class="r"><div class="mvbar"><span class="num">' + v.l.length + '</span><i style="width:' + Math.max(4, Math.round(v.l.length / maxN * 100)) + '%"></i></div></td>' +
           '<td class="nowrap"><span class="num">' + share + '%</span><span class="sub2"> из ' + cityTot[v.city] + '</span></td>' +
           '<td class="sub2" style="font-size:13px">' + top.map(function (s) { return esc(s) + ' ' + Math.round(sc[s] / v.l.length * 100) + '%'; }).join(" · ") + '</td>' +
           '<td class="r num nowrap">' + (pmin ? prices({ pmin: pmin, pmax: pmax || pmin }) : '<span class="muted">—</span>') + '</td>' +
