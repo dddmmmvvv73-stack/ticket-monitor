@@ -474,7 +474,7 @@
   "filters": {
     "show": "all",
     "pmin": null,
-    "pmax": null,
+    "pmax": 1000,
     "noprice": false
   }
 }
