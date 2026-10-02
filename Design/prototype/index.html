@@ -694,6 +694,14 @@ button.sbar:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px
 .nav-arrow:focus-visible, .nav-text:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px; }
 .nav-arrow:disabled { opacity: 0.25; cursor: default; }
 @media (prefers-reduced-motion: reduce) { .nav-arrow, .nav-text { transition: none; } .nav-arrow:active, .nav-text:active { transform: none; } }
+.vd-wrap { display: flex; align-items: flex-start; }
+.vd-wrap > svg { flex: none; }
+.vd-scroll { flex: 1 1 auto; min-width: 0; overflow-x: auto; overscroll-behavior-x: contain; scroll-behavior: auto; scrollbar-width: thin; }
+.vd-scroll:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* «Описание» у сегментов — серым, без стрелки, чуть жирнее */
+details.how[data-how="psegs"] > summary { list-style: none; color: var(--muted); font-weight: 500; }
+details.how[data-how="psegs"] > summary::-webkit-details-marker { display: none; }
+details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 .ps-desc { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 16px; font-size: 13px; color: var(--ink-2); }
 .ps-desc li { display: flex; align-items: center; gap: 8px; }
 .ps-desc .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
@@ -3350,51 +3358,74 @@ function mWeeks(list, from, to) {
 // (сб, вс — красным), снизу — числа. Цвет клетки — сфера; цифра — несколько мероприятий в этот день
 var MONTH_NOM = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
 function mVenueDays(list, from, to) {
-  var m0 = from.slice(0, 7), m1 = to.slice(0, 7);
-  if (!S.m.vdMonth || S.m.vdMonth < m0 || S.m.vdMonth > m1) S.m.vdMonth = m0;
-  var mon = S.m.vdMonth, first = mon + "-01", last = addDays(shiftMonth(first, 1), -1), days = daysList(first, last);
-  var ml = list.filter(function (e) { return e.date >= first && e.date <= last; });
-  var prev = mon > m0 ? shiftMonth(first, -1).slice(0, 7) : "", next = mon < m1 ? shiftMonth(first, 1).slice(0, 7) : "";
-  var nav = '<div class="wk-nav"><button class="nav-arrow lg" data-mvd="' + prev + '"' + (prev ? '' : ' disabled') + ' aria-label="Предыдущий месяц"><svg width="22" height="22" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4L6 9l5 5"/></svg></button>' +
-    '<b style="font-weight:500;min-width:120px;text-align:center">' + MONTH_NOM[+mon.slice(5) - 1] + ' ' + mon.slice(0, 4) + '</b>' +
-    '<button class="nav-arrow lg" data-mvd="' + next + '"' + (next ? '' : ' disabled') + ' aria-label="Следующий месяц"><svg width="22" height="22" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4l5 5-5 5"/></svg></button></div>';
-  var vs = mTop(mCount(ml, "venue"), 12), names = SPH.concat(["Прочее"]).filter(function (s) { return ml.some(function (e) { return sphOf(e) === s; }); });
+  // Весь период одной лентой по дням: прокручивается двумя пальцами (плавно, родная прокрутка), названия площадок
+  // закреплены слева; стрелки — к началу соседнего месяца, заголовок — месяц, который сейчас виден
+  var days = daysList(from, to);
+  if (!S.m.vdMonth || S.m.vdMonth < from.slice(0, 7) || S.m.vdMonth > to.slice(0, 7)) S.m.vdMonth = from.slice(0, 7);
+  var mon = S.m.vdMonth;
+  var ARL = '<svg width="22" height="22" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4L6 9l5 5"/></svg>';
+  var ARR = '<svg width="22" height="22" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4l5 5-5 5"/></svg>';
+  var nav = '<div class="wk-nav"><button class="nav-arrow lg" data-vdstep="-1" aria-label="Предыдущий месяц">' + ARL + '</button>' +
+    '<b class="vd-month" style="font-weight:500;min-width:120px;text-align:center">' + MONTH_NOM[+mon.slice(5) - 1] + ' ' + mon.slice(0, 4) + '</b>' +
+    '<button class="nav-arrow lg" data-vdstep="1" aria-label="Следующий месяц">' + ARR + '</button></div>';
+  var vs = mTop(mCount(list, "venue"), 12), names = SPH.concat(["Прочее"]).filter(function (s) { return list.some(function (e) { return sphOf(e) === s; }); });
   var headHtml = '<div class="card-head" style="align-items:center"><h2>Площадки × дни</h2>' + nav + '</div>';
-  if (!vs.length) return '<section class="card card-pad">' + headHtml + '<p class="sub">В этом месяце в афише города мероприятий нет.</p></section>';
-  var lw = 190, cw = 26, rh = 24, top = 46, W = lw + days.length * cw, H = top + vs.length * rh + 22;
-  var mid = days[Math.floor(days.length / 2)];
-  var marks = [[days[0], "start"], [mid, "middle"], [days[days.length - 1], "end"]].map(function (m) {
-    var k = days.indexOf(m[0]), x = lw + k * cw + (m[1] === "start" ? 0 : m[1] === "end" ? cw : cw / 2);
-    return '<text x="' + x + '" y="13" font-size="11" fill="#57534e" text-anchor="' + m[1] + '">' + dparts(m[0]).day + ' ' + dparts(m[0]).mon + '</text>';
+  if (!vs.length) return '<section class="card card-pad">' + headHtml + '<p class="sub">В афише города за этот период мероприятий нет.</p></section>';
+  var lw = 190, cw = 26, rh = 24, top = 46, W = days.length * cw, H = top + vs.length * rh + 22;
+  var labels = '<svg width="' + lw + '" height="' + H + '" style="display:block">' + vs.map(function (v, r) {
+    return '<text x="' + (lw - 8) + '" y="' + (top + r * rh + 16) + '" font-size="12" fill="#44403c" text-anchor="end">' + esc(v.length > 26 ? v.slice(0, 25) + "…" : v) + '</text>';
+  }).join("") + '</svg>';
+  var marks = days.map(function (d, k) {
+    var dd = +d.slice(8), lastDay = k === days.length - 1;
+    if (dd !== 1 && dd !== 16 && k !== 0 && !lastDay) return '';
+    if (k !== 0 && !lastDay && dd === 16 && days.length - k < 6) return '';
+    return '<text x="' + (k * cw + (lastDay ? cw : 2)) + '" y="13" font-size="11" fill="#57534e" text-anchor="' + (lastDay ? "end" : "start") + '">' + dparts(d).day + ' ' + dparts(d).mon + '</text>' +
+      (dd === 1 && k ? '<line x1="' + (k * cw) + '" x2="' + (k * cw) + '" y1="18" y2="' + (top + vs.length * rh) + '" stroke="#d6d3d1"/>' : '');
   }).join("");
-  var vlines = days.map(function (d, k) { return '<line x1="' + (lw + k * cw) + '" x2="' + (lw + k * cw) + '" y1="' + top + '" y2="' + (top + vs.length * rh) + '" stroke="#ecebe9"/>'; }).join("") +
-    '<line x1="' + W + '" x2="' + W + '" y1="' + top + '" y2="' + (top + vs.length * rh) + '" stroke="#ecebe9"/>';
-  var colBg = days.map(function (d, k) {
-    var out = d < from || d > to;
-    return out ? '<rect x="' + (lw + k * cw) + '" y="' + top + '" width="' + cw + '" height="' + (vs.length * rh) + '" fill="#f5f5f4"/>'
-      : isFriSun(d) && wdOf(d) !== 5 ? '<rect x="' + (lw + k * cw) + '" y="' + top + '" width="' + cw + '" height="' + (vs.length * rh) + '" fill="#fbf4f3"/>' : '';
-  }).join("");
+  var colBg = days.map(function (d, k) { return isFriSun(d) && wdOf(d) !== 5 ? '<rect x="' + (k * cw) + '" y="' + top + '" width="' + cw + '" height="' + (vs.length * rh) + '" fill="#fbf4f3"/>' : ''; }).join("");
+  var grid = days.map(function (d, k) { return '<line x1="' + (k * cw) + '" x2="' + (k * cw) + '" y1="' + top + '" y2="' + (top + vs.length * rh) + '" stroke="#ecebe9"/>'; }).join("") +
+    vs.map(function (v, r) { return '<line x1="0" x2="' + W + '" y1="' + (top + (r + 1) * rh) + '" y2="' + (top + (r + 1) * rh) + '" stroke="#f0efed"/>'; }).join("");
   var wdRow = days.map(function (d, k) {
     var w = (wdOf(d) + 6) % 7, red = w >= 5;
-    return '<text x="' + (lw + k * cw + cw / 2) + '" y="34" font-size="10.5" fill="' + (red ? "#b91c1c" : "#78716c") + '" text-anchor="middle">' + WD_SHORT[w] + '</text>' +
-      '<text x="' + (lw + k * cw + cw / 2) + '" y="' + (H - 6) + '" font-size="10.5" fill="' + (red ? "#b91c1c" : "#78716c") + '" text-anchor="middle">' + dparts(d).day + '</text>';
+    return '<text x="' + (k * cw + cw / 2) + '" y="34" font-size="10.5" fill="' + (red ? "#b91c1c" : "#78716c") + '" text-anchor="middle">' + WD_SHORT[w] + '</text>' +
+      '<text x="' + (k * cw + cw / 2) + '" y="' + (H - 6) + '" font-size="10.5" fill="' + (red ? "#b91c1c" : "#78716c") + '" text-anchor="middle">' + dparts(d).day + '</text>';
   }).join("");
+  var idx = {}; days.forEach(function (d, k) { idx[d] = k; });
   var cells = vs.map(function (v, r) {
-    var mine = ml.filter(function (e) { return e.venue === v; }), yy = top + r * rh;
-    return '<text x="' + (lw - 8) + '" y="' + (yy + 16) + '" font-size="12" fill="#44403c" text-anchor="end">' + esc(v.length > 26 ? v.slice(0, 25) + "…" : v) + '</text>' +
-      '<line x1="' + lw + '" x2="' + W + '" y1="' + (yy + rh) + '" y2="' + (yy + rh) + '" stroke="#f0efed"/>' +
-      days.map(function (d, k) {
-        var hit = mine.filter(function (e) { return e.date === d; });
-        if (!hit.length) return '';
-        var tip = v + " · " + dayLabel(d) + ": " + hit.map(function (e) { return e.title + (e.time ? " (" + e.time + ")" : ""); }).join("; ");
-        var x = lw + k * cw + 2;
-        return '<g class="hov-cell" data-ct="' + esc(tip) + '" data-mday="' + d + '"><rect x="' + x + '" y="' + (yy + 3) + '" width="' + (cw - 4) + '" height="' + (rh - 6) + '" rx="4" fill="' + sphColor(sphOf(hit[0])) + '"/>' +
-          (hit.length > 1 ? '<text x="' + (x + (cw - 4) / 2) + '" y="' + (yy + 16) + '" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle" pointer-events="none">' + hit.length + '</text>' : '') + '</g>';
-      }).join("");
+    var yy = top + r * rh, byDay = {};
+    list.forEach(function (e) { if (e.venue === v && e.date in idx) (byDay[e.date] = byDay[e.date] || []).push(e); });
+    return Object.keys(byDay).map(function (d) {
+      var hit = byDay[d], x = idx[d] * cw + 2;
+      var tip = v + " · " + dayLabel(d) + ": " + hit.map(function (e) { return e.title + (e.time ? " (" + e.time + ")" : ""); }).join("; ");
+      return '<g class="hov-cell" data-ct="' + esc(tip) + '" data-mday="' + d + '"><rect x="' + x + '" y="' + (yy + 3) + '" width="' + (cw - 4) + '" height="' + (rh - 6) + '" rx="4" fill="' + sphColor(sphOf(hit[0])) + '"/>' +
+        (hit.length > 1 ? '<text x="' + (x + (cw - 4) / 2) + '" y="' + (yy + 16) + '" font-size="11" font-weight="600" fill="#ffffff" text-anchor="middle" pointer-events="none">' + hit.length + '</text>' : '') + '</g>';
+    }).join("");
   }).join("");
-  return '<section class="card card-pad">' + headHtml + legendOf("sphere", names) +
-    '<div style="overflow-x:auto" tabindex="0" role="region" aria-label="Площадки по дням месяца"><svg width="' + W + '" height="' + H + '" style="display:block;margin-top:10px">' + marks + colBg + vlines + wdRow + cells + '</svg></div></section>';
+  return '<section class="card card-pad" data-vd>' + headHtml + legendOf("sphere", names) +
+    '<div class="vd-wrap" style="margin-top:10px">' + labels +
+      '<div class="vd-scroll" tabindex="0" role="region" aria-label="Площадки по дням — прокрутите вбок" data-from="' + from + '" data-cw="' + cw + '">' +
+        '<svg width="' + W + '" height="' + H + '" style="display:block">' + colBg + grid + marks + wdRow + cells + '</svg></div></div></section>';
 }
+// Лента «Площадки × дни»: после перерисовки — к месяцу, который смотрели; при прокрутке — заголовок и стрелки
+function vdSync(sc, write) {
+  var from = sc.getAttribute("data-from"), cw = +sc.getAttribute("data-cw");
+  var d = addDays(from, Math.round(sc.scrollLeft / cw)), mon = d.slice(0, 7);
+  if (write) S.m.vdMonth = mon;
+  var sec = sc.closest("[data-vd]"), t = sec && sec.querySelector(".vd-month");
+  if (t) t.textContent = MONTH_NOM[+mon.slice(5) - 1] + " " + mon.slice(0, 4);
+  var b = sec ? sec.querySelectorAll("[data-vdstep]") : [];
+  if (b[0]) b[0].disabled = sc.scrollLeft <= 2;
+  if (b[1]) b[1].disabled = sc.scrollLeft >= sc.scrollWidth - sc.clientWidth - 2;
+}
+function vdRestore() {
+  var sc = document.querySelector(".vd-scroll"); if (!sc) return;
+  var from = sc.getAttribute("data-from"), cw = +sc.getAttribute("data-cw"), first = S.m.vdMonth + "-01";
+  sc.scrollLeft = Math.max(0, Math.round((Date.parse(first > from ? first : from) - Date.parse(from)) / 864e5)) * cw;
+  vdSync(sc, false);
+}
+document.addEventListener("scroll", function (ev) {
+  var sc = ev.target; if (sc && sc.classList && sc.classList.contains("vd-scroll")) vdSync(sc, true);
+}, true);
 
 // ---------- Цены по формату: коридор (сводка) и ценовые сегменты с «лестницей цен».
 // Вопросы: какой минимум и максимум ставят конкуренты, сколько стоят билеты у сильных постановок,
@@ -3928,7 +3959,7 @@ $("view").addEventListener("click", function (ev) {
   if (S.view !== "market" || ev.target.closest(".resizer") || ev.target.closest("a")) return;
   var pr = ev.target.closest("[data-mprice],[data-mprice-preset],[data-mprice-done],[data-mprice-reset]");
   if (pr) { mPriceAction(pr); return; }
-  var t = ev.target.closest("[data-mcur-show],[data-mproject-type],[data-mtab],[data-mf],[data-msort],[data-mset],[data-mopen],[data-maction],[data-mclear],[data-msph],[data-mproj],[data-mcity],[data-mcity-go],[data-mweekcity],[data-mwk],[data-mvd],[data-pseg],[data-pall],[data-ptop],[data-ptopall],.seg-btn,[data-mday],[data-mweek],[data-mvenue],.cell-btn,tr[data-mi]");
+  var t = ev.target.closest("[data-mcur-show],[data-mproject-type],[data-mtab],[data-mf],[data-msort],[data-mset],[data-mopen],[data-maction],[data-mclear],[data-msph],[data-mproj],[data-mcity],[data-mcity-go],[data-mweekcity],[data-mwk],[data-vdstep],[data-pseg],[data-pall],[data-ptop],[data-ptopall],.seg-btn,[data-mday],[data-mweek],[data-mvenue],.cell-btn,tr[data-mi]");
   if (!t) return;
   if (t.hasAttribute("data-mcur-show")) { CUR.filters.show = t.getAttribute("data-mcur-show"); curSave({ op: "filters", filters: CUR.filters }); return; }
   if (t.hasAttribute("data-mproject-type")) { mMarkProject(t); return; }
@@ -3963,7 +3994,14 @@ $("view").addEventListener("click", function (ev) {
   else if (t.hasAttribute("data-pseg")) { var ps = t.getAttribute("data-pseg"); S.m.pseg = S.m.pseg === ps ? null : ps; S.m.pall = false; render(); }
   else if (t.hasAttribute("data-pall")) { S.m.pall = !S.m.pall; render(); }
   else if (t.hasAttribute("data-mwk")) { S.m.wkSel = t.getAttribute("data-mwk") || null; S.m.wkAnim = true; render(); }
-  else if (t.hasAttribute("data-mvd")) { if (t.getAttribute("data-mvd")) { S.m.vdMonth = t.getAttribute("data-mvd"); render(); } }
+  else if (t.hasAttribute("data-vdstep")) {
+    var sc = document.querySelector(".vd-scroll"); if (!sc) return;
+    var from0 = sc.getAttribute("data-from"), cw0 = +sc.getAttribute("data-cw");
+    var cur = addDays(from0, Math.round(sc.scrollLeft / cw0)).slice(0, 7) + "-01", tgt = shiftMonth(cur, +t.getAttribute("data-vdstep"));
+    if (tgt < from0.slice(0, 7) + "-01") tgt = from0;
+    var reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    sc.scrollTo({ left: Math.max(0, Math.round((Date.parse(tgt > from0 ? tgt : from0) - Date.parse(from0)) / 864e5)) * cw0, behavior: reduce ? "auto" : "smooth" });
+  }
   else if (t.hasAttribute("data-mweekcity")) { var wk0 = t.getAttribute("data-mweekcity"); S.period = "custom"; S.from = wk0; S.to = addDays(wk0, 6); mGo({ tab: "table" }); }
   else if (t.hasAttribute("data-mweek")) { var w = t.getAttribute("data-mweek"); S.period = "custom"; S.from = w; S.to = addDays(w, 6); mGo({ tab: "table", city: t.getAttribute("data-mweek-city") }); }
   else if (t.hasAttribute("data-mvenue")) mGo({ tab: "table", venue: t.getAttribute("data-mvenue"), city: t.getAttribute("data-mvenue-city") });
@@ -4426,9 +4464,12 @@ window.addEventListener("click", function (ev) {
 // Неделя по дням: свайп двумя пальцами по трекпаду влево / вправо — соседняя неделя, одна за жест
 // (жест закончился — когда 220 мс нет событий прокрутки, включая инерцию)
 var WK_SWIPE = { acc: 0, lock: false, t: null };
+// Блок ищем по положению курсора, а не по ev.target: после перелистывания он перерисован, а браузер до
+// следующего движения мыши шлёт прокрутку старому, уже удалённому элементу — из-за этого второй свайп не срабатывал
 document.addEventListener("wheel", function (ev) {
-  var sec = ev.target.closest && ev.target.closest("[data-wkswipe]");
-  if (!sec || !S.m || !S.m.wkSel || Math.abs(ev.deltaX) <= Math.abs(ev.deltaY)) return;
+  if (!S.m || !S.m.wkSel || Math.abs(ev.deltaX) <= Math.abs(ev.deltaY)) return;
+  var sec = document.querySelector("[data-wkswipe]"), r = sec && sec.getBoundingClientRect();
+  if (!r || ev.clientX < r.left || ev.clientX > r.right || ev.clientY < r.top || ev.clientY > r.bottom) return;
   ev.preventDefault();  // и не даём браузеру уйти «назад» по истории
   clearTimeout(WK_SWIPE.t); WK_SWIPE.t = setTimeout(function () { WK_SWIPE.acc = 0; WK_SWIPE.lock = false; }, 220);
   if (WK_SWIPE.lock) return;
@@ -4459,7 +4500,7 @@ function render() {
   $("dateBtn").style.borderColor = S.period === "custom" ? "var(--soot)" : "";
   $("view").innerHTML = S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? renderVenues() : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "market" ? renderMarket() : renderEvents();
   $("view").classList.toggle("enter", !!S.enter); S.enter = false; S.colsAnim = false;
-  ddClose(false); enhanceSelects(document.querySelector(".top")); enhanceSelects($("view"));
+  ddClose(false); enhanceSelects(document.querySelector(".top")); enhanceSelects($("view")); vdRestore();
   var mt = document.querySelector('.mtabs [aria-selected="true"]');  // на телефоне полоса вкладок «Рынка» прокручивается к выбранной
   if (mt) { var mp = mt.parentNode; mp.scrollLeft += mt.getBoundingClientRect().left - mp.getBoundingClientRect().left - 16; }
   renderCal();
