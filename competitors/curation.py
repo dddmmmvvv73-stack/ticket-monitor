@@ -138,7 +138,8 @@ def classify(rows: list[dict], cur: dict) -> None:
     """row["tour"] = "tour"|"local", row["tour_src"] = project|venue|auto, row["tour_why"] — причина словами."""
     groups: dict[str, dict[str, list]] = defaultdict(lambda: defaultdict(list))
     for r in rows:
-        r["pk"] = project_key(r["title"])
+        # Проект — по названию парсера: переименование правкой не выводит мероприятие из его тура (копия — mClassify / curApply)
+        r["pk"] = project_key((r.get("orig") or {}).get("title") or r["title"])
         groups[r["pk"]][r["city"]].append(r)
     for r in rows:
         mark = cur["projects"].get(r["pk"])

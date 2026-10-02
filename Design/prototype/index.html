@@ -3758,7 +3758,7 @@ function curApply() {
     if (ov) ["sphere", "format", "genre"].forEach(function (f) { if (ov[f] && ov[f] !== e[f]) { e.o[f] = e[f]; e[f] = ov[f]; } });
     var ed = CUR.edits[e.key];
     if (ed) { for (var f2 in ed.fields) { if (!(f2 in e.o)) e.o[f2] = e[f2]; e[f2] = ed.fields[f2]; } e.edited = ed.at; }
-    e.pk = projKey(e.title);
+    e.pk = projKey("title" in e.o ? e.o.title : e.title);  // проект — по названию парсера, как curation.classify
   });
   MR_CITY = {}; MR.forEach(function (e) { (MR_CITY[e.city] = MR_CITY[e.city] || []).push(e); });
   mClassify(); CUR_VER++; PROJ_CACHE.key = null;
@@ -3855,7 +3855,7 @@ function saveFilters() { clearTimeout(filterTimer); filterTimer = setTimeout(fun
 // Блок «гастроль или местное» — в карточке мероприятия и проекта
 function tourBox(e) {
   var pm = e.pk && CUR.projects[e.pk], vk = venueKey(e.city, e.venue), vm = CUR.venues[vk], av = autoVenueType(e.venue);
-  var btn = function (t, label) { return '<button class="chip-btn" data-mproject-type="' + t + '" data-title="' + esc(e.title) + '" aria-pressed="' + ((pm ? pm.type : "") === t) + '">' + label + '</button>'; };
+  var btn = function (t, label) { return '<button class="chip-btn" data-mproject-type="' + t + '" data-title="' + esc("title" in e.o ? e.o.title : e.title) + '" aria-pressed="' + ((pm ? pm.type : "") === t) + '">' + label + '</button>'; };
   return '<div class="tourbox"><div class="tb-row"><span class="kpi-label" style="margin:0">Тип</span><b class="' + (e.tour === "tour" ? "tb-tour" : "tb-local") + '">' + (e.tour === "tour" ? "Гастроль" : "Местное") + '</b><span class="sub2">' + esc(e.tsrc === "auto" ? "авто: " + e.twhy : e.twhy) + '</span></div>' +
     '<div class="tb-row"><span class="sub2">Проект — во всех городах и датах:</span>' + btn("tour", "Гастроль") + btn("local", "Местное") + btn("", "Авто") + '</div>' +
     '<div class="tb-row"><label class="sub2" for="vt-' + e.i + '">Площадка «' + esc(e.venue) + '»:</label>' + venueSelect(e.city, e.venue, "vt-" + e.i) + '</div></div>';
