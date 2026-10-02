@@ -214,5 +214,17 @@
     "revenue_est": 3392100,
     "sold_confirmed": 20,
     "revenue_confirmed": 82600
+  },
+  {
+    "ts": "2026-10-03T01:43:19",
+    "price_min": 2900,
+    "price_max": 7700,
+    "seats_free": 299,
+    "seats_taken": 800,
+    "seats_total": 1099,
+    "gross": 4965400,
+    "revenue_est": 3406200,
+    "sold_confirmed": 23,
+    "revenue_confirmed": 96700
   }
 ]

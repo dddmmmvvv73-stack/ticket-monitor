@@ -120,7 +120,7 @@
       "format": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": null,
     "seats_taken_sellable": null,
     "reserve_seats": null,
@@ -142,8 +142,8 @@
     "date": "2026-10-09",
     "time": "19:00",
     "duration": "2 часа с антрактом",
-    "price_min": 2000,
-    "price_max": 3700,
+    "price_min": 1700,
+    "price_max": 2200,
     "price_text": "",
     "pushkin": false,
     "description": "",
@@ -153,8 +153,8 @@
       "Спектакль"
     ],
     "age": null,
-    "seats_free": 298,
-    "seats_taken": 449,
+    "seats_free": 354,
+    "seats_taken": 393,
     "seats_total": 747,
     "vk_event_id": "10908",
     "alt_title": "Спектакль «Ночной гость»",
@@ -168,13 +168,13 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
-    "seats_taken_sellable": 444,
+    "seats_taken_sellable": 388,
     "reserve_seats": 5,
-    "gross": 2356600,
-    "revenue_est": 1447600,
-    "avg_price_taken": 3260,
+    "gross": 1570200,
+    "revenue_est": 859400,
+    "avg_price_taken": 2215,
     "gross_confidence": 0.957,
     "sold_confirmed": 25,
     "revenue_confirmed": 85300,
@@ -216,7 +216,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 61,
     "reserve_seats": 5,
@@ -265,7 +265,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 227,
     "reserve_seats": 5,
@@ -309,7 +309,7 @@
       "format": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": null,
     "seats_taken_sellable": null,
     "reserve_seats": null,
@@ -357,7 +357,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 223,
     "reserve_seats": 5,
@@ -402,7 +402,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": null,
     "seats_taken_sellable": null,
     "reserve_seats": null,
@@ -448,7 +448,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 58,
     "reserve_seats": 5,
@@ -492,7 +492,7 @@
       "format": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": null,
     "seats_taken_sellable": null,
     "reserve_seats": null,
@@ -537,7 +537,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": null,
     "seats_taken_sellable": null,
     "reserve_seats": null,
@@ -570,8 +570,8 @@
       "Концерт"
     ],
     "age": null,
-    "seats_free": 454,
-    "seats_taken": 293,
+    "seats_free": 450,
+    "seats_taken": 297,
     "seats_total": 747,
     "vk_event_id": "11159",
     "source_id": "odk33",
@@ -584,16 +584,16 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
-    "seats_taken_sellable": 288,
+    "seats_taken_sellable": 292,
     "reserve_seats": 5,
     "gross": 3104700,
-    "revenue_est": 1179800,
-    "avg_price_taken": 4097,
+    "revenue_est": 1197200,
+    "avg_price_taken": 4100,
     "gross_confidence": 0.96,
-    "sold_confirmed": 23,
-    "revenue_confirmed": 90800,
+    "sold_confirmed": 27,
+    "revenue_confirmed": 108200,
     "tracking_since": "2026-09-29T19:31:46"
   },
   "odk33:xor-sretenskogo-monastyirya": {
@@ -631,7 +631,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 522,
     "reserve_seats": 5,
@@ -679,7 +679,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 100,
     "reserve_seats": 5,
@@ -726,7 +726,7 @@
       "format": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 273,
     "reserve_seats": 5,
@@ -774,7 +774,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 105,
     "reserve_seats": 5,
@@ -821,7 +821,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 154,
     "reserve_seats": 5,
@@ -868,7 +868,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 472,
     "reserve_seats": 5,
@@ -916,7 +916,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 33,
     "reserve_seats": 5,
@@ -963,7 +963,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 254,
     "reserve_seats": 5,
@@ -1009,7 +1009,7 @@
       "format": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 76,
     "reserve_seats": 5,
@@ -1056,7 +1056,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 330,
     "reserve_seats": 5,
@@ -1103,7 +1103,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 339,
     "reserve_seats": 5,
@@ -1150,7 +1150,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 242,
     "reserve_seats": 5,
@@ -1197,7 +1197,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 379,
     "reserve_seats": 5,
@@ -1244,7 +1244,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 294,
     "reserve_seats": 5,
@@ -1291,7 +1291,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 219,
     "reserve_seats": 5,
@@ -1338,7 +1338,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 219,
     "reserve_seats": 5,
@@ -1385,7 +1385,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 291,
     "reserve_seats": 5,
@@ -1432,7 +1432,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 275,
     "reserve_seats": 5,
@@ -1479,7 +1479,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 217,
     "reserve_seats": 5,
@@ -1526,7 +1526,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 248,
     "reserve_seats": 5,
@@ -1573,7 +1573,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 225,
     "reserve_seats": 5,
@@ -1620,7 +1620,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 223,
     "reserve_seats": 5,
@@ -1667,7 +1667,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 218,
     "reserve_seats": 5,
@@ -1714,7 +1714,7 @@
       "sphere": "site"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 232,
     "reserve_seats": 5,
@@ -1763,7 +1763,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 100,
     "reserve_seats": 5,
@@ -1811,7 +1811,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 12,
     "reserve_seats": 5,
@@ -1859,7 +1859,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 108,
     "reserve_seats": 5,
@@ -1906,7 +1906,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 128,
     "reserve_seats": 5,
@@ -1954,7 +1954,7 @@
       "genre": "manual"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 98,
     "reserve_seats": 5,
@@ -2002,7 +2002,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-29T17:26:49",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 742,
     "seats_taken_sellable": 23,
     "reserve_seats": 5,
@@ -2094,7 +2094,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 358,
     "seats_taken_sellable": 135,
     "reserve_seats": 451,
@@ -2140,7 +2140,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 224,
     "reserve_seats": 28,
@@ -2186,7 +2186,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 720,
     "seats_taken_sellable": 275,
     "reserve_seats": 67,
@@ -2232,7 +2232,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 371,
     "seats_taken_sellable": 338,
     "reserve_seats": 84,
@@ -2278,7 +2278,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 807,
     "seats_taken_sellable": 171,
     "reserve_seats": 0,
@@ -2311,8 +2311,8 @@
     "time": "19:00",
     "price_min": 1700,
     "price_max": 5200,
-    "seats_free": 735,
-    "seats_taken": 52,
+    "seats_free": 733,
+    "seats_taken": 54,
     "seats_total": 787,
     "source_id": "vk-1",
     "sphere": "Театр",
@@ -2324,16 +2324,16 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
-    "seats_taken_sellable": 24,
+    "seats_taken_sellable": 26,
     "reserve_seats": 28,
     "gross": 2689000,
-    "revenue_est": 92400,
-    "avg_price_taken": 3850,
+    "revenue_est": 95800,
+    "avg_price_taken": 3685,
     "gross_confidence": 1.0,
-    "sold_confirmed": 4,
-    "revenue_confirmed": 14400,
+    "sold_confirmed": 6,
+    "revenue_confirmed": 17800,
     "tracking_since": "2026-09-29T19:20:23"
   },
   "vk:11424": {
@@ -2368,7 +2368,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 375,
     "seats_taken_sellable": 338,
     "reserve_seats": 84,
@@ -2414,7 +2414,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 167,
     "reserve_seats": 28,
@@ -2461,7 +2461,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 18,
     "reserve_seats": 28,
@@ -2507,7 +2507,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 202,
     "seats_taken_sellable": 138,
     "reserve_seats": 253,
@@ -2553,7 +2553,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 69,
     "reserve_seats": 28,
@@ -2586,8 +2586,8 @@
     "time": "19:00",
     "price_min": 1600,
     "price_max": 3100,
-    "seats_free": 656,
-    "seats_taken": 131,
+    "seats_free": 654,
+    "seats_taken": 133,
     "seats_total": 787,
     "source_id": "vk-1",
     "sphere": "Театр",
@@ -2598,16 +2598,16 @@
       "format": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
-    "seats_taken_sellable": 103,
+    "seats_taken_sellable": 105,
     "reserve_seats": 28,
     "gross": 1905000,
-    "revenue_est": 249300,
-    "avg_price_taken": 2420,
+    "revenue_est": 253300,
+    "avg_price_taken": 2412,
     "gross_confidence": 1.0,
-    "sold_confirmed": 6,
-    "revenue_confirmed": 15000,
+    "sold_confirmed": 8,
+    "revenue_confirmed": 19000,
     "tracking_since": "2026-09-29T19:20:23"
   },
   "vk:11762": {
@@ -2644,7 +2644,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 87,
     "reserve_seats": 28,
@@ -2690,7 +2690,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 100,
     "reserve_seats": 28,
@@ -2735,7 +2735,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 350,
     "seats_taken_sellable": 19,
     "reserve_seats": 105,
@@ -2781,7 +2781,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 64,
     "reserve_seats": 28,
@@ -2827,7 +2827,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 771,
     "seats_taken_sellable": 292,
     "reserve_seats": 16,
@@ -2862,8 +2862,8 @@
     "time": "19:00",
     "price_min": 2000,
     "price_max": 4200,
-    "seats_free": 172,
-    "seats_taken": 599,
+    "seats_free": 168,
+    "seats_taken": 603,
     "seats_total": 771,
     "source_id": "vk-1",
     "sphere": "Комедия и юмор",
@@ -2875,16 +2875,16 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
-    "seats_taken_sellable": 587,
+    "seats_taken_sellable": 591,
     "reserve_seats": 12,
-    "gross": 2022210,
-    "revenue_est": 1479210,
-    "avg_price_taken": 2520,
+    "gross": 2020320,
+    "revenue_est": 1492120,
+    "avg_price_taken": 2525,
     "gross_confidence": 0.701,
-    "sold_confirmed": 183,
-    "revenue_confirmed": 542200,
+    "sold_confirmed": 187,
+    "revenue_confirmed": 557000,
     "tracking_since": "2026-09-29T19:20:23"
   },
   "vk:11566": {
@@ -2921,7 +2921,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 229,
     "reserve_seats": 28,
@@ -2967,7 +2967,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 484,
     "reserve_seats": 28,
@@ -3013,7 +3013,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 634,
     "reserve_seats": 28,
@@ -3059,7 +3059,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 498,
     "reserve_seats": 28,
@@ -3105,7 +3105,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 767,
     "seats_taken_sellable": 436,
     "reserve_seats": 20,
@@ -3151,7 +3151,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 757,
     "seats_taken_sellable": 174,
     "reserve_seats": 50,
@@ -3197,7 +3197,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 757,
     "seats_taken_sellable": 12,
     "reserve_seats": 50,
@@ -3245,7 +3245,7 @@
       "genre": "site"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 94,
     "reserve_seats": 28,
@@ -3291,7 +3291,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 757,
     "seats_taken_sellable": 20,
     "reserve_seats": 50,
@@ -3336,7 +3336,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 322,
     "reserve_seats": 28,
@@ -3382,7 +3382,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 272,
     "reserve_seats": 28,
@@ -3427,7 +3427,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 720,
     "seats_taken_sellable": 410,
     "reserve_seats": 67,
@@ -3474,7 +3474,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 202,
     "seats_taken_sellable": 137,
     "reserve_seats": 253,
@@ -3520,7 +3520,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 679,
     "reserve_seats": 28,
@@ -3566,7 +3566,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 186,
     "reserve_seats": 28,
@@ -3612,7 +3612,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 91,
     "reserve_seats": 48,
@@ -3660,7 +3660,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 445,
     "reserve_seats": 28,
@@ -3706,7 +3706,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 202,
     "seats_taken_sellable": 78,
     "reserve_seats": 253,
@@ -3754,7 +3754,7 @@
       "genre": "site"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 472,
     "reserve_seats": 28,
@@ -3799,7 +3799,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 291,
     "reserve_seats": 28,
@@ -3845,7 +3845,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 18,
     "reserve_seats": 28,
@@ -3891,7 +3891,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 61,
     "reserve_seats": 28,
@@ -3938,7 +3938,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 18,
     "reserve_seats": 28,
@@ -3984,7 +3984,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 358,
     "seats_taken_sellable": 89,
     "reserve_seats": 451,
@@ -4030,7 +4030,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 66,
     "reserve_seats": 28,
@@ -4076,7 +4076,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 47,
     "reserve_seats": 28,
@@ -4122,7 +4122,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 84,
     "reserve_seats": 28,
@@ -4168,7 +4168,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 720,
     "seats_taken_sellable": 140,
     "reserve_seats": 67,
@@ -4214,7 +4214,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 720,
     "seats_taken_sellable": 168,
     "reserve_seats": 67,
@@ -4306,7 +4306,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 53,
     "reserve_seats": 28,
@@ -4352,7 +4352,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 757,
     "seats_taken_sellable": 413,
     "reserve_seats": 50,
@@ -4398,7 +4398,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 757,
     "seats_taken_sellable": 116,
     "reserve_seats": 50,
@@ -4444,7 +4444,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 358,
     "seats_taken_sellable": 123,
     "reserve_seats": 451,
@@ -4536,7 +4536,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 23,
     "reserve_seats": 28,
@@ -4582,7 +4582,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 358,
     "seats_taken_sellable": 118,
     "reserve_seats": 451,
@@ -4628,7 +4628,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-29T17:57:37",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 358,
     "seats_taken_sellable": 109,
     "reserve_seats": 451,
@@ -4661,8 +4661,8 @@
     "time": "19:00",
     "price_min": 2900,
     "price_max": 7700,
-    "seats_free": 302,
-    "seats_taken": 797,
+    "seats_free": 299,
+    "seats_taken": 800,
     "seats_total": 1099,
     "source_id": "ivanovokoncert-2",
     "sphere": "Музыка",
@@ -4674,16 +4674,16 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
-    "seats_taken_sellable": 765,
+    "seats_taken_sellable": 768,
     "reserve_seats": 32,
     "gross": 4965400,
-    "revenue_est": 3392100,
-    "avg_price_taken": 4434,
+    "revenue_est": 3406200,
+    "avg_price_taken": 4435,
     "gross_confidence": 0.89,
-    "sold_confirmed": 20,
-    "revenue_confirmed": 82600,
+    "sold_confirmed": 23,
+    "revenue_confirmed": 96700,
     "tracking_since": "2026-09-30T12:11:34"
   },
   "ivanovokoncert:12901": {
@@ -4722,7 +4722,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 573,
     "reserve_seats": 32,
@@ -4768,7 +4768,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 224,
     "reserve_seats": 32,
@@ -4814,7 +4814,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 284,
     "reserve_seats": 32,
@@ -4860,7 +4860,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 333,
     "reserve_seats": 32,
@@ -4906,7 +4906,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 252,
     "reserve_seats": 32,
@@ -4952,7 +4952,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 216,
     "reserve_seats": 32,
@@ -4998,7 +4998,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 142,
     "reserve_seats": 32,
@@ -5044,7 +5044,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 139,
     "reserve_seats": 32,
@@ -5090,7 +5090,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 105,
     "reserve_seats": 32,
@@ -5136,7 +5136,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 46,
     "reserve_seats": 32,
@@ -5182,7 +5182,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 79,
     "reserve_seats": 32,
@@ -5228,7 +5228,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 112,
     "reserve_seats": 32,
@@ -5274,7 +5274,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 140,
     "reserve_seats": 32,
@@ -5320,7 +5320,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 95,
     "reserve_seats": 32,
@@ -5366,7 +5366,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 239,
     "reserve_seats": 32,
@@ -5412,7 +5412,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 127,
     "reserve_seats": 32,
@@ -5458,7 +5458,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 185,
     "reserve_seats": 32,
@@ -5503,7 +5503,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 138,
     "reserve_seats": 32,
@@ -5549,7 +5549,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 141,
     "reserve_seats": 32,
@@ -5595,7 +5595,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 18,
     "reserve_seats": 32,
@@ -5641,7 +5641,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 484,
     "reserve_seats": 32,
@@ -5687,7 +5687,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 846,
     "reserve_seats": 32,
@@ -5733,7 +5733,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 369,
     "reserve_seats": 32,
@@ -5779,7 +5779,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 590,
     "reserve_seats": 32,
@@ -5813,8 +5813,8 @@
     "time": "19:00",
     "price_min": 1800,
     "price_max": 4000,
-    "seats_free": 475,
-    "seats_taken": 624,
+    "seats_free": 473,
+    "seats_taken": 626,
     "seats_total": 1099,
     "source_id": "ivanovokoncert-2",
     "sphere": "Музыка",
@@ -5826,16 +5826,16 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
-    "seats_taken_sellable": 592,
+    "seats_taken_sellable": 594,
     "reserve_seats": 32,
     "gross": 2994963,
-    "revenue_est": 1666563,
-    "avg_price_taken": 2815,
+    "revenue_est": 1673963,
+    "avg_price_taken": 2818,
     "gross_confidence": 0.622,
-    "sold_confirmed": 11,
-    "revenue_confirmed": 35200,
+    "sold_confirmed": 13,
+    "revenue_confirmed": 42600,
     "tracking_since": "2026-09-30T12:11:34"
   },
   "ivanovokoncert:13203": {
@@ -5872,7 +5872,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 463,
     "reserve_seats": 32,
@@ -5918,7 +5918,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 604,
     "reserve_seats": 32,
@@ -5964,7 +5964,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 400,
     "reserve_seats": 32,
@@ -6011,7 +6011,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 469,
     "reserve_seats": 32,
@@ -6057,7 +6057,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 391,
     "reserve_seats": 32,
@@ -6103,7 +6103,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 218,
     "reserve_seats": 32,
@@ -6151,7 +6151,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 576,
     "reserve_seats": 32,
@@ -6199,7 +6199,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 14,
     "reserve_seats": 32,
@@ -6245,7 +6245,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 666,
     "reserve_seats": 32,
@@ -6292,7 +6292,7 @@
       "format": "site"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 433,
     "reserve_seats": 32,
@@ -6337,7 +6337,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 15,
     "reserve_seats": 32,
@@ -6383,7 +6383,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 678,
     "reserve_seats": 32,
@@ -6429,7 +6429,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1067,
     "seats_taken_sellable": 321,
     "reserve_seats": 32,
@@ -6475,7 +6475,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 954,
     "seats_taken_sellable": 486,
     "reserve_seats": 508,
@@ -6521,7 +6521,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1338,
     "seats_taken_sellable": 582,
     "reserve_seats": 129,
@@ -6567,7 +6567,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 954,
     "seats_taken_sellable": 560,
     "reserve_seats": 508,
@@ -6614,7 +6614,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1353,
     "seats_taken_sellable": 241,
     "reserve_seats": 109,
@@ -6660,7 +6660,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1354,
     "seats_taken_sellable": 302,
     "reserve_seats": 108,
@@ -6706,7 +6706,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1338,
     "seats_taken_sellable": 296,
     "reserve_seats": 124,
@@ -6752,7 +6752,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1336,
     "seats_taken_sellable": 851,
     "reserve_seats": 131,
@@ -6798,7 +6798,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1342,
     "seats_taken_sellable": 587,
     "reserve_seats": 120,
@@ -6844,7 +6844,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1340,
     "seats_taken_sellable": 194,
     "reserve_seats": 122,
@@ -6891,7 +6891,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1354,
     "seats_taken_sellable": 225,
     "reserve_seats": 108,
@@ -6937,7 +6937,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1359,
     "seats_taken_sellable": 256,
     "reserve_seats": 103,
@@ -6983,7 +6983,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 954,
     "seats_taken_sellable": 161,
     "reserve_seats": 508,
@@ -7029,7 +7029,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1338,
     "seats_taken_sellable": 369,
     "reserve_seats": 124,
@@ -7077,7 +7077,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1360,
     "seats_taken_sellable": 118,
     "reserve_seats": 102,
@@ -7123,7 +7123,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1339,
     "seats_taken_sellable": 395,
     "reserve_seats": 123,
@@ -7169,7 +7169,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1362,
     "seats_taken_sellable": 176,
     "reserve_seats": 100,
@@ -7216,7 +7216,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1364,
     "seats_taken_sellable": 113,
     "reserve_seats": 98,
@@ -7263,7 +7263,7 @@
       "genre": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1368,
     "seats_taken_sellable": 132,
     "reserve_seats": 94,
@@ -7309,7 +7309,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1332,
     "seats_taken_sellable": 218,
     "reserve_seats": 130,
@@ -7355,7 +7355,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1365,
     "seats_taken_sellable": 125,
     "reserve_seats": 97,
@@ -7401,7 +7401,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 954,
     "seats_taken_sellable": 56,
     "reserve_seats": 508,
@@ -7447,7 +7447,7 @@
       "format": "rules"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1346,
     "seats_taken_sellable": 267,
     "reserve_seats": 116,
@@ -7493,7 +7493,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-09-30T12:11:34",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 1353,
     "seats_taken_sellable": 38,
     "reserve_seats": 109,
@@ -7539,7 +7539,7 @@
       "genre": "ai"
     },
     "first_seen": "2026-10-01T16:45:23",
-    "last_seen": "2026-10-03T00:42:31",
+    "last_seen": "2026-10-03T01:43:19",
     "seats_sellable": 759,
     "seats_taken_sellable": 661,
     "reserve_seats": 28,
