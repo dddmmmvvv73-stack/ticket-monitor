@@ -261,6 +261,7 @@ button.status:hover { color: var(--ink); }
 .card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
 .big-status { display: flex; align-items: center; gap: 10px; font-family: var(--display); font-size: 26px; letter-spacing: -0.01em; margin-top: 10px; }
 .big-status .dot { width: 10px; height: 10px; }
+.big-status.warn .dot { background: var(--risk); }
 .facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; background: var(--line-soft); border: 1px solid var(--line-soft); border-radius: 10px; overflow: hidden; margin-top: 16px; }
 .facts > div { background: var(--card); padding: 10px 12px; min-width: 0; }
 .facts b { display: block; font-family: var(--display); font-weight: 400; font-size: 20px; margin-top: 2px; }
@@ -658,6 +659,8 @@ button.sbar:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px
 .mp-count b { font-weight: 600; }
 .mp-count .link-btn { margin-inline-start: 10px; }
 .mp-tabcount { flex-wrap: wrap; justify-content: flex-end; }
+.gh-ok { color: var(--good); } .gh-warn { color: var(--risk); } .gh-run { color: var(--data-dark); font-weight: 500; }
+.gh-list li { padding: 12px 0; }
 .mp-active { max-width: 440px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
 .mp-tab { background: #fcfcfb; border-radius: 0 0 12px 12px; }
 @media (max-width: 820px) {
@@ -2160,6 +2163,113 @@ var LOG = CD.log;  // хвост data/competitors/collector.log
 var APPS_SCRIPT = "function doPost(e) {\n  var data = JSON.parse(e.postData.contents);\n  var ss = SpreadsheetApp.getActiveSpreadsheet();\n  var sheet = ss.getSheetByName(data.sheet) || ss.insertSheet(data.sheet);\n  sheet.clearContents();\n  var values = [data.header].concat(data.rows);\n  sheet.getRange(1, 1, values.length, data.header.length).setValues(values);\n  sheet.setFrozenRows(1);\n  return ContentService\n    .createTextOutput(JSON.stringify({ok: true, rows: data.rows.length}))\n    .setMimeType(ContentService.MimeType.JSON);\n}";
 var INTERVALS = [[30, "каждые 30 мин"], [60, "каждый час"], [180, "каждые 3 часа"], [360, "каждые 6 часов"], [1440, "раз в сутки"]];
 S.cfg = JSON.parse(JSON.stringify(CFG0));
+// ---------- Настройки через приложение: площадки (config/competitors.json → GitHub), нейросеть и выгрузка
+// (config/settings.json — только этот компьютер), сбор на GitHub (gh), обновление данных (./pull_data.sh)
+function srcFromServer(x) {
+  var site = x.type === "odk33" ? "odk33.ru" : (x.site || "vladimirkoncert.ru"), c = CD.srcCounts[x.label] || null;
+  return { raw: x, name: x.label || x.name, site: site, afisha: site, sales: x.type === "odk33" ? "vladimirkoncert.ru" : site, venueId: x.venue_id,
+    city: x.dcity || x.city, on: x.enabled !== false, n: c ? c[0] : null, mapped: c ? c[1] : 0, removable: x.type !== "odk33" };
+}
+function srcToServer(s) {
+  if (s.raw) { var r = Object.assign({}, s.raw, { enabled: s.on }); delete r.label; delete r.dcity; return r; }
+  var pre = s.site === "vladimirkoncert.ru" ? "vk" : s.site.split(".")[0];
+  var o = { id: pre + "-" + s.venueId, type: "vladimirkoncert", venue_id: s.venueId, name: s.name, city: s.city, enabled: s.on };
+  if (s.site !== "vladimirkoncert.ru") o.site = s.site;
+  return o;
+}
+if (CD.sources && CD.sources.length) { CFG0.sources = CD.sources.map(srcFromServer); S.cfg.sources = CD.sources.map(srcFromServer); }
+function apiJson(method, url, body) {
+  return fetch(url, { method: method, headers: { "Content-Type": "application/json" }, body: body === undefined ? undefined : JSON.stringify(body) })
+    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }, function () { return { ok: false, d: {} }; }); });
+}
+var NO_APP = "приложение не отвечает — запущен ли python3 app.py?";
+function settingsApply(st) {
+  var ai = S.cfg.ai;
+  ai.provider = st.ai_provider || ai.provider; ai.model = st.gigachat_model || ai.model; ai.scope = st.gigachat_scope || ai.scope;
+  ai.gigaKey = !!st.gigachat_auth_key_set; ai.claudeKey = !!st.anthropic_api_key_set;
+  S.cfg.sheets.url = st.sheets_webhook_url || ""; S.cfg.sheets.auto = !!st.sheets_auto_export;
+}
+function settingsLoad() {
+  if (!ON_APP) return;
+  apiJson("GET", "/api/competitors/settings").then(function (x) { if (x.ok) { settingsApply(x.d); if (S.view === "settings") render(); } }, function () {});
+}
+function settingsSave(body, okMsg) {
+  if (!ON_APP) { if (okMsg) toast(okMsg + " — в прототипе, открытом файлом, не сохраняется"); return; }
+  apiJson("POST", "/api/competitors/settings", body).then(function (x) {
+    if (!x.ok) { toast("Не сохранено: " + (x.d.error || "ошибка")); settingsLoad(); return; }
+    settingsApply(x.d); if (S.view === "settings") render(); if (okMsg) toast(okMsg);
+  }, function () { toast("Не сохранено: " + NO_APP); });
+}
+// Список площадок уходит на сервер целиком; приложение коммитит его и отправляет на GitHub
+function pushSources() {
+  var d = new Date(); S.lastPush = "сегодня в " + (d.getHours() < 10 ? "0" : "") + d.getHours() + ":" + (d.getMinutes() < 10 ? "0" : "") + d.getMinutes();
+  if (!ON_APP) return;
+  apiJson("POST", "/api/competitors/sources", S.cfg.sources.map(srcToServer)).then(function (x) {
+    if (!x.ok) { toast("Список площадок не сохранён: " + (x.d.error || "ошибка")); return; }
+    var byId = {}; x.d.forEach(function (r) { byId[r.id] = r; });
+    S.cfg.sources.forEach(function (s) { var r = byId[srcToServer(s).id]; if (r) s.raw = Object.assign({ label: s.name, dcity: s.city }, r); });
+  }, function () { toast("Список площадок не сохранён: " + NO_APP); });
+}
+// Площадки билетного сайта — с самого сайта в момент выбора; если сайт не ответил, остаётся сохранённый список
+function loadVenues(siteId) {
+  if (!ON_APP) return;
+  var site = siteById(siteId); S.venuesLoading = siteId;
+  apiJson("GET", "/api/competitors/vk_venues?site=" + encodeURIComponent(siteId)).then(function (x) {
+    S.venuesLoading = null;
+    if (x.ok && Array.isArray(x.d) && x.d.length) site.venues = x.d.map(function (v) { return [String(v.venue_id), v.name]; });
+    else toast("Список площадок с " + siteId + " не загрузился" + (x.d && x.d.error ? ": " + x.d.error : "") + " — показан сохранённый.");
+    if (S.conn && S.conn.site === siteId) rerender('[data-sa="connect-site"][data-sv="' + siteId + '"]');
+  }, function () { S.venuesLoading = null; toast("Список площадок не загрузился: " + NO_APP); });
+}
+// Сбор на GitHub: запуск и ход последних запусков
+function collectNow(what) {
+  what = what === "market" ? "market" : "collect";
+  if (!ON_APP) { toast("В прототипе, открытом файлом, сбор не запускается. Через приложение кнопка запускает сбор на GitHub."); return; }
+  apiJson("POST", "/api/github/collect", { what: what }).then(function (x) {
+    if (!x.ok) { toast("Сбор не запущен: " + (x.d.error || "ошибка")); return; }
+    toast(x.d.label + " запущен на GitHub — идёт около " + (what === "market" ? "20–25" : "15–20") + " минут. Потом нажмите «Обновить данные с GitHub» в «Настройках».");
+    setTimeout(ghRunsLoad, 8000);
+  }, function () { toast("Сбор не запущен: " + NO_APP); });
+}
+function ghRunsLoad() {
+  if (!ON_APP) return;
+  apiJson("GET", "/api/github/runs").then(function (x) {
+    S.gh = x.ok ? { data: x.d, at: new Date() } : { err: x.d.error || "ошибка" };
+    if (S.view === "settings" && (S.setTab || "collect") === "collect") render();
+  }, function () { S.gh = { err: NO_APP }; });
+}
+function dataPull() {
+  if (!ON_APP) { toast("В прототипе, открытом файлом, данные обновляет команда ./pull_data.sh && python3 -m competitors.protodata export"); return; }
+  S.pulling = true; render();
+  apiJson("POST", "/api/data/pull").then(function (x) {
+    S.pulling = false;
+    if (!x.ok) { toast("Данные не обновлены: " + (x.d.error || "ошибка")); render(); return; }
+    toast(x.d.message + " — перезагружаю страницу"); setTimeout(function () { location.reload(); }, 1200);
+  }, function () { S.pulling = false; toast("Данные не обновлены: " + NO_APP); render(); });
+}
+function ghRunText(r) {
+  var at = function (iso) { var d = new Date(iso); return isoLocal(d) === TODAY ? "сегодня в " + hhmm(d.getHours() * 60 + d.getMinutes()) : human(isoLocal(d)) + ", " + hhmm(d.getHours() * 60 + d.getMinutes()); };
+  var mins = Math.max(1, Math.round((Date.parse(r.status === "completed" ? r.updatedAt : new Date().toISOString()) - Date.parse(r.createdAt)) / 60000));
+  if (r.status !== "completed") return { cls: "run", text: "идёт сейчас · " + mins + " мин", at: at(r.createdAt) };
+  return r.conclusion === "success" ? { cls: "ok", text: "без ошибок · " + mins + " мин", at: at(r.createdAt) }
+    : { cls: "warn", text: r.conclusion === "cancelled" ? "отменён" : "с ошибкой", at: at(r.createdAt) };
+}
+function ghCard() {
+  var rows = [["collect", "Сбор конкурентов", "каждый час в :25", "площадки, схемы залов, продажи"], ["market", "Афиша рынка", "каждый день в 21:00", "98 городов, Кассир и Яндекс Афиша"]];
+  var g = S.gh;
+  return '<section class="card card-pad"><h2>Сбор на GitHub</h2>' +
+    '<p class="sub">Сборы идут на серверах GitHub — ноутбук для этого не нужен. Расписание задаёт cron-job.org; здесь можно запустить сбор вне расписания и подтянуть результат на этот компьютер.</p>' +
+    '<ul class="list gh-list">' + rows.map(function (w) {
+      var last = g && g.data && g.data[w[0]] && g.data[w[0]].runs[0], t = last && ghRunText(last);
+      return '<li style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap"><div style="min-width:0"><div style="font-weight:500">' + w[1] + ' · <span class="sub" style="margin:0">' + w[2] + '</span></div>' +
+        '<div class="sub" style="margin:0">' + (t ? 'Последний запуск ' + t.at + ' — <span class="gh-' + t.cls + '">' + t.text + '</span>' + (last.url ? ' · <a href="' + esc(last.url) + '" target="_blank" rel="noopener">журнал ↗</a>' : '') : (ON_APP ? (g && g.err ? 'Не удалось узнать: ' + esc(g.err) : 'Загружаю…') : w[3])) + '</div></div>' +
+        '<button class="btn-ghost" data-sa="gh-run" data-sv="' + w[0] + '"' + (t && t.cls === "run" ? " disabled" : "") + '>' + (t && t.cls === "run" ? "Идёт…" : "Запустить сейчас") + '</button></li>';
+    }).join("") + '</ul>' +
+    '<div class="act-row"><button class="btn-dark" data-sa="pull"' + (S.pulling ? " disabled" : "") + '>' + (S.pulling ? "Обновляю…" : "Обновить данные с GitHub") + '</button>' +
+      '<span class="sub" style="margin:0">На этом компьютере — сбор ' + atText(LAST_RUN) + '</span></div>' +
+    '<div class="callout">Токен cron-job.org продлить до конца сентября 2027 (GitHub → Settings → Personal access tokens). Если сборы перестали идти — история заданий в cron-job.org: ответ 401 — токен истёк.</div>' +
+  '</section>';
+}
 S.setTab = "collect"; S.logFilter = "all"; S.keyEdit = false; S.how = {}; S.sheetsDraft = null; S.sheetsErr = "";
 
 function plural(n, one, few, many) { var a = Math.abs(n) % 100, b = a % 10; return a > 10 && a < 20 ? many : b === 1 ? one : b >= 2 && b <= 4 ? few : many; }
@@ -2192,7 +2302,8 @@ function setCollect() {
   var fchip = function (k, label, n) { return '<button class="chip-btn" data-sa="logf" data-sv="' + k + '" aria-pressed="' + (S.logFilter === k) + '">' + label + (n != null ? '<span class="cnt num">' + n + '</span>' : '') + '</button>'; };
   return '<div class="set-grid">' +
     '<section class="card card-pad"><h2>Последний сбор</h2>' +
-      '<div class="big-status"><span class="dot" aria-hidden="true"></span>Прошёл без ошибок</div>' +
+      (L.ok ? '<div class="big-status"><span class="dot" aria-hidden="true"></span>Прошёл без ошибок</div>'
+        : '<div class="big-status warn"><span class="dot" aria-hidden="true"></span>С ошибкой</div>' + (L.error ? '<div class="callout warn">' + esc(L.error) + '</div>' : '')) +
       '<div class="sub">' + L.day + ', ' + L.from + '–' + L.to + ' · ' + L.trigger + ' · ' + Math.floor(L.took / 60) + ' мин ' + (L.took % 60) + ' с</div>' +
       '<div class="facts">' +
         '<div><span class="sub" style="margin:0">Мероприятий</span><b class="num">' + L.found + '</b></div>' +
@@ -2202,14 +2313,7 @@ function setCollect() {
       '<p class="sub" style="margin-top:8px">Подтверждённые продажи — места, которые были свободны в прошлом сборе и стали заняты: ' + num(L.soldRub) + ' ₽.</p>' +
       '<div class="act-row"><button class="btn-dark" data-sa="run">Собрать сейчас</button><span class="sub" style="margin:0">' + nextRunLabel() + '</span></div>' +
     '</section>' +
-    '<section class="card card-pad"><div class="card-head"><h2>Автосбор</h2>' + toggle("auto", c.auto, "", "Автосбор") + '</div>' +
-      '<p class="sub">Приложение само обходит площадки и сохраняет снимок: цены, занятые места, новые мероприятия.</p>' +
-      '<div class="field-label">Как часто</div>' +
-      '<div class="opt-row' + (c.auto ? '' : ' off') + '">' + INTERVALS.map(function (i) { return '<button class="chip-btn" data-sa="interval" data-sv="' + i[0] + '" aria-pressed="' + (c.interval === i[0]) + '">' + i[1] + '</button>'; }).join("") +
-        '<label class="chip-btn" style="display:inline-flex;align-items:center;gap:6px' + (preset ? '' : ';border-color:var(--soot)') + '">каждые <input type="number" min="5" step="5" data-sc="interval-custom" value="' + (preset ? "" : c.interval) + '" placeholder="—" aria-label="Свой интервал в минутах" style="width:48px;border:0;outline:0;background:none;text-align:right"> мин</label></div>' +
-      '<div class="callout">Один сбор идёт 6–8 минут. Чем чаще сборы, тем точнее динамика и подтверждённые продажи, но тем больше запросов к сайтам площадок. Меньше 5 минут поставить нельзя.</div>' +
-      '<div class="callout warn">Автосбор работает, пока запущено приложение (<code>python3 app.py</code>). Когда ноутбук спит, сборов нет — первый пройдёт сразу после пробуждения.</div>' +
-    '</section>' +
+    ghCard() +
   '</div>' +
   '<section class="card card-pad"><div class="card-head"><div><h2>Журнал</h2><p class="sub">Что делал сбор и нейросеть — новые записи сверху</p></div>' +
     '<div class="opt-row">' + fchip("all", "Все", lines.length) + fchip("run", "Начало и итог", null) + fchip("warn", "Ошибки", warnCount) + '</div></div>' +
@@ -2325,7 +2429,7 @@ function setAi() {
             '<div class="field"><label for="giga-scope">Тип доступа</label><select id="giga-scope" data-sc="scope">' + GIGA_SCOPES.map(function (s) { return '<option value="' + s[0] + '"' + (s[0] === ai.scope ? " selected" : "") + '>' + s[1] + '</option>'; }).join("") + '</select></div>' +
           '</div>' +
           '<div class="act-row"><button class="btn-ghost" data-sa="test"' + (keySet ? "" : " disabled") + '>Проверить подключение</button>' +
-            '<span class="sub" style="margin:0">' + (keySet ? 'Последняя проверка 29 сент., 18:54 — работает, доступно 6 моделей' : 'Сначала вставьте ключ') + '</span></div>' +
+            '<span class="sub" style="margin:0">' + (!keySet ? 'Сначала вставьте ключ' : S.aiTest && S.aiTest.busy ? 'Проверяю…' : S.aiTest ? 'Проверка ' + S.aiTest.at + ' — ' + esc(S.aiTest.message) + (S.aiTest.models ? ', моделей: ' + S.aiTest.models.length : '') : ON_APP ? 'Проверьте ключ, сохранённый на этом компьютере' : 'В прототипе, открытом файлом, проверка не выполняется') + '</span></div>' +
           '<p class="sub">Если бесплатный лимит выбранной модели закончится, программа сама переключится на GigaChat-2 (Lite).</p>' +
           how("giga", "Как получить ключ — бесплатно, около 5 минут",
             '<ol class="steps"><li>Откройте <b>developers.sber.ru/studio</b> и войдите через Сбер ID.</li><li>Создайте проект «GigaChat API» для физического лица.</li><li>В настройках проекта нажмите «Получить ключ» и скопируйте <b>Authorization key</b> — он показывается один раз.</li><li>Вставьте его сюда, сохраните и нажмите «Проверить подключение».</li></ol>' +
@@ -2347,9 +2451,9 @@ function setAi() {
       '<div class="cls-bars">' + bars + '</div>' +
       '<div class="legend" style="flex-wrap:wrap;gap:8px 14px;margin-top:14px">' + CLASS_PARTS.map(function (p) { return '<span><i class="sw" style="background:' + p[2] + '"></i>' + p[1] + '</span>'; }).join("") + '</div>' +
       '<div class="callout">Жанр не определён у <b>38</b> мероприятий. У части из них жанра нет по сути — например, у творческих встреч.</div>' +
-      '<div class="act-row"><button class="btn-dark" data-sa="reclass"' + (ai.provider === "off" || !keySet ? " disabled" : "") + '>Доклассифицировать</button>' +
+      '<div class="act-row"><button class="btn-dark" data-sa="reclass"' + (!ON_APP && (ai.provider === "off" || !keySet) ? " disabled" : "") + '>Доклассифицировать</button>' +
         '<button class="link-btn" data-sa="goto-nogenre">Показать мероприятия без жанра →</button></div>' +
-      '<p class="sub">Доклассификация отправляет в нейросеть только мероприятия без полной ниши и не обходит сайты заново.</p>' +
+      '<p class="sub">Нейросеть доопределяет ниши при каждом сборе на GitHub — ключом из секрета GIGACHAT_AUTH_KEY, модель GigaChat-2-Max. «Доклассифицировать» запускает сбор вне расписания. Ключ и модель выше — для проверки на этом компьютере.</p>' +
     '</section>' +
   '</div>';
 }
@@ -2394,8 +2498,6 @@ function toast(msg) {
   clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove("show"); }, 3600);
 }
 // В приложении: коммит config/competitors.json и git push — сбор на GitHub подхватит список со следующего запуска
-function pushSources() { var d = new Date(); S.lastPush = "сегодня в " + (d.getHours() < 10 ? "0" : "") + d.getHours() + ":" + (d.getMinutes() < 10 ? "0" : "") + d.getMinutes(); }
-function collectNow() { toast("В прототипе сбор не запускается. В приложении кнопка запустит сбор — он идёт 6–8 минут, ход виден в журнале."); }
 // Перерисовать и вернуть фокус на тот же элемент управления — чтобы клавиатура не теряла место
 function rerender(selector) { render(); var el = selector && document.querySelector(selector); if (el) el.focus(); }
 
@@ -2405,7 +2507,9 @@ $("view").addEventListener("click", function (ev) {
   var c = S.cfg;
   if (t.hasAttribute("data-st")) { S.setTab = t.getAttribute("data-st"); S.keyEdit = false; S.enter = true; rerender('[data-st="' + S.setTab + '"]'); return; }
   var a = t.getAttribute("data-sa"), v = t.getAttribute("data-sv"), same = '[data-sa="' + a + '"]' + (v != null ? '[data-sv="' + v + '"]' : '');
-  if (a === "run") collectNow();
+  if (a === "run") collectNow("collect");
+  else if (a === "gh-run") collectNow(v);
+  else if (a === "pull") dataPull();
   else if (a === "interval") { c.interval = +v; rerender(same); }
   else if (a === "logf") { S.logFilter = v; rerender(same); }
   else if (a === "remove") {
@@ -2417,7 +2521,7 @@ $("view").addEventListener("click", function (ev) {
   }
   else if (a === "connect-open") { S.conn = { site: "", picked: {}, city: {} }; rerender('[data-sa="connect-site"]'); }
   else if (a === "connect-close") { S.conn = null; rerender('[data-sa="connect-open"]'); }
-  else if (a === "connect-site") { S.conn = { site: v, picked: {}, city: {} }; rerender(same); }
+  else if (a === "connect-site") { S.conn = { site: v, picked: {}, city: {} }; rerender(same); loadVenues(v); }
   else if (a === "connect-save") {
     var site = siteById(S.conn.site), added = [];
     site.venues.forEach(function (w) {
@@ -2443,35 +2547,49 @@ $("view").addEventListener("click", function (ev) {
     rerender("#yaUrl");
     if (m) toast("Ссылка добавлена. Название, площадку и дату приложение возьмёт со страницы при первой проверке.");
   }
-  else if (a === "provider") { c.ai.provider = v; S.keyEdit = false; rerender(same); }
+  else if (a === "provider") { c.ai.provider = v; S.keyEdit = false; rerender(same); settingsSave({ ai_provider: v }, "Нейросеть: " + t.textContent.trim()); }
   else if (a === "key-edit") { S.keyEdit = true; rerender("#keyInput"); }
   else if (a === "key-cancel") { S.keyEdit = false; rerender('[data-sa="key-edit"]'); }
   else if (a === "key-save") {
-    if (!$("keyInput").value.trim()) { $("keyInput").focus(); return; }
+    var key = $("keyInput").value.trim();
+    if (!key) { $("keyInput").focus(); return; }
     c.ai[c.ai.provider === "gigachat" ? "gigaKey" : "claudeKey"] = true; S.keyEdit = false;
-    rerender('[data-sa="key-edit"]'); toast("Ключ сохранён.");
+    rerender('[data-sa="key-edit"]');
+    var kb = {}; kb[c.ai.provider === "gigachat" ? "gigachat_auth_key" : "anthropic_api_key"] = key; settingsSave(kb, "Ключ сохранён на этом компьютере");
   }
   else if (a === "key-del") {
     askConfirm("Удалить ключ?", "Нейросеть перестанет доклассифицировать мероприятия, пока вы не вставите новый.", "Удалить ключ", function () {
       c.ai[c.ai.provider === "gigachat" ? "gigaKey" : "claudeKey"] = false; rerender('[data-sa="key-edit"]');
+      var kd = {}; kd["clear_" + (c.ai.provider === "gigachat" ? "gigachat_auth_key" : "anthropic_api_key")] = true; settingsSave(kd, "Ключ удалён");
     });
   }
-  else if (a === "test") toast("В прототипе проверка не выполняется. Последняя настоящая проверка — 29 сент., 18:54: подключение работает.");
-  else if (a === "reclass") toast("В приложении нейросеть получит 38 мероприятий без жанра. В прототипе запрос не отправляется.");
+  else if (a === "test") {
+    if (!ON_APP) { toast("В прототипе, открытом файлом, проверка не выполняется."); return; }
+    S.aiTest = { busy: true }; rerender(same);
+    apiJson("POST", "/api/competitors/ai_test").then(function (x) {
+      var d = new Date(); S.aiTest = { ok: x.ok && x.d.ok, message: x.d.message || x.d.error || "ошибка", models: x.d.models, at: "сегодня в " + hhmm(d.getHours() * 60 + d.getMinutes()) };
+      rerender('[data-sa="test"]'); toast(S.aiTest.message);
+    }, function () { S.aiTest = null; toast("Проверка не выполнена: " + NO_APP); rerender('[data-sa="test"]'); });
+  }
+  else if (a === "reclass") collectNow("collect");  // ниши доопределяются при каждом сборе на GitHub
   else if (a === "goto-nogenre") { S.view = "events"; S.tab = "nogenre"; S.enter = true; location.hash = "events"; render(); window.scrollTo(0, 0); }
   else if (a === "sheets-save") {
     var url = $("sheetsUrl").value.trim();
     S.sheetsErr = url && !/^https:\/\/script\.google\.com\/.+\/exec$/.test(url) ? "Нужна ссылка вида https://script.google.com/macros/s/…/exec" : "";
-    if (!S.sheetsErr) { c.sheets.url = url; S.sheetsDraft = null; if (!url) c.sheets.auto = false; toast(url ? "Ссылка сохранена." : "Google Таблица отключена."); }
+    if (!S.sheetsErr) { c.sheets.url = url; S.sheetsDraft = null; if (!url) c.sheets.auto = false; settingsSave({ sheets_webhook_url: url, sheets_auto_export: c.sheets.auto }, url ? "Ссылка сохранена" : "Google Таблица отключена"); }
     rerender("#sheetsUrl");
   }
-  else if (a === "sheets-now") toast("В прототипе выгрузка не выполняется.");
+  else if (a === "sheets-now") {
+    if (!ON_APP) { toast("В прототипе, открытом файлом, выгрузка не выполняется."); return; }
+    toast("Выгружаю в Google Таблицу…");
+    apiJson("POST", "/api/competitors/export_sheets" + (c.csvPast ? "?past=1" : "")).then(function (x) { toast(x.ok ? (x.d.message || "Выгружено") : "Не выгружено: " + (x.d.error || "ошибка")); }, function () { toast("Не выгружено: " + NO_APP); });
+  }
   else if (a === "copy") {
     var done = function () { toast("Код скопирован."); };
     try { navigator.clipboard.writeText(APPS_SCRIPT).then(done, function () { toast("Не удалось скопировать — выделите код и нажмите ⌘C."); }); }
     catch (e) { toast("Не удалось скопировать — выделите код и нажмите ⌘C."); }
   }
-  else if (a === "csv") toast("В прототипе файл не скачивается. В приложении — все " + (c.csvPast ? "" : "будущие ") + "мероприятия, 32 столбца.");
+  else if (a === "csv") { if (ON_APP) location.href = "/api/competitors/export.csv" + (c.csvPast ? "?past=1" : ""); else toast("В прототипе, открытом файлом, файл не скачивается. Через приложение — все " + (c.csvPast ? "" : "будущие ") + "мероприятия, 32 столбца."); }
 });
 $("view").addEventListener("change", function (ev) {
   var k = ev.target.getAttribute("data-sc"); if (!k) return;
@@ -2481,9 +2599,9 @@ $("view").addEventListener("change", function (ev) {
   else if (k.indexOf("pick:") === 0) { S.conn.picked[k.slice(5)] = ev.target.checked; }
   else if (k.indexOf("city:") === 0) { S.conn.city[k.slice(5)] = ev.target.value; }
   else if (k.indexOf("ya:") === 0) S.yaList[+k.slice(3)].on = ev.target.checked;
-  else if (k === "model") c.ai.model = ev.target.value;
-  else if (k === "scope") c.ai.scope = ev.target.value;
-  else if (k === "sheets-auto") c.sheets.auto = ev.target.checked;
+  else if (k === "model") { c.ai.model = ev.target.value; settingsSave({ gigachat_model: c.ai.model }, "Модель: " + c.ai.model); }
+  else if (k === "scope") { c.ai.scope = ev.target.value; settingsSave({ gigachat_scope: c.ai.scope }, "Тип доступа сохранён"); }
+  else if (k === "sheets-auto") { c.sheets.auto = ev.target.checked; settingsSave({ sheets_auto_export: c.sheets.auto }, c.sheets.auto ? "Выгрузка после сбора включена" : "Выгрузка после сбора выключена"); }
   else if (k === "past") c.csvPast = ev.target.checked;
   else if (k === "interval-custom") { if (ev.target.value === "") return; c.interval = Math.max(5, Math.round(+ev.target.value) || 5); }
   rerender('[data-sc="' + k + '"]');
@@ -3977,6 +4095,7 @@ S.enter = true;  // первый показ страницы тоже с ани�
 var fitTimer = null;
 window.addEventListener("resize", function () { if (S.view !== "events" && S.view !== "market") return; clearTimeout(fitTimer); fitTimer = setTimeout(render, 150); });
 curLoad();  // разметка рынка: из приложения (или из браузера, если прототип открыт файлом)
+settingsLoad(); ghRunsLoad();  // настройки этого компьютера и ход сборов на GitHub — только через приложение
 window.addEventListener("hashchange", function () {
   var v = location.hash.slice(1);
   if (VIEWS.indexOf(v) >= 0 && v !== S.view) { S.view = v; S.enter = true; closeDrawer(); render(); }

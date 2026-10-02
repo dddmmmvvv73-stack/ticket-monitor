@@ -24,6 +24,7 @@ from alerts import check_alerts
 from competitors import collector, edits, sync
 from competitors.api import bp as app_api
 from competitors.market_api import bp as market_api
+from competitors.github_api import bp as github_api
 from competitors import vladimirkoncert
 from competitors.classifier import FORMATS, GENRES, SPHERES
 from processor import process_snapshot
@@ -38,6 +39,7 @@ from main import (
 app = Flask(__name__, static_folder=str(BASE_DIR / "static"))
 app.register_blueprint(app_api)
 app.register_blueprint(market_api)  # прототип на /proto/ и ручная разметка рынка
+app.register_blueprint(github_api)  # сбор на GitHub из интерфейса: запуск, ход, обновление данных
 
 EVENTS_FILE = CONFIG_DIR / "events.json"
 EXCLUSIONS_FILE = CONFIG_DIR / "exclusions.json"

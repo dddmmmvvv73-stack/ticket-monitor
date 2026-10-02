@@ -336,6 +336,9 @@ def build() -> dict:
     return {
         "at": last_at.isoformat(timespec="minutes"),
         "edits": edit_map, "custom": custom,
+        # Площадки из config/competitors.json — как есть (прототип отправляет список обратно целиком) + подпись и город
+        "sources": [{**src, "label": venues.get(src["id"], ("", src["name"], ""))[1], "dcity": venues.get(src["id"], ("", "", src.get("city") or ""))[2]}
+                    for src in collector.load_sources()],
         "venue": {v[0]: v[1] for v in venues.values()},
         "venueCity": {v[0]: v[2] for v in venues.values()},
         "ev": ev_rows, "rows": rows, "halls": halls, "sales": sales,
