@@ -32,6 +32,7 @@ import os
 import re
 import sys
 import time
+import gzip
 import html as html_lib
 import urllib.error
 import urllib.request
@@ -54,8 +55,12 @@ LOG_FILE = MARKET_DIR / "market.log"
 CITIES_FILE = CONFIG_DIR / "market.json"
 KASSIR_REGIONS_FILE = CONFIG_DIR / "market_kassir_regions.json"
 YANDEX_CITIES_CACHE = MARKET_DIR / "yandex_cities.json"
-KASSIR_TITLES_FILE = MARKET_DIR / "kassir_titles.json"
-VENUE_ALIASES_FILE = MARKET_DIR / "venue_aliases.json"   # одна площадка под разными названиями: {город: [[a, b], …]}   # заголовки страниц Кассира для спорных склеек: адрес → [название, дата]
+KASSIR_TITLES_FILE = MARKET_DIR / "kassir_titles.json"     # заголовки страниц Кассира для спорных склеек: адрес → [название, дата]
+VENUE_ALIASES_FILE = MARKET_DIR / "venue_aliases.json"     # одна площадка под разными названиями: {город: [[a, b], …]}
+ORGANIZERS_FILE = MARKET_DIR / "organizers.json"   # карточка Кассира → [организатор, дата проверки]
+ORG_BUDGET_MIN = 30     # страниц Кассира за сбор — не дольше стольких минут (первый проход растягивается на несколько вечеров)
+ORG_RECHECK_DAYS = 30   # организатор карточки перепроверяется раз в месяц
+ORG_THREADS = 3         # страницы разных региональных сайтов Кассира — в три потока (~90 страниц в минуту)
 OVERRIDES_FILE = CONFIG_DIR / "classification_overrides.json"
 AI_CACHE_FILE = DATA_DIR / "ai_cache.json"
 PROTOTYPE_DATA = BASE_DIR / "Design" / "prototype" / "market-data.js"
@@ -427,6 +432,7 @@ def _merge(hit: dict, r: dict) -> None:
     if hit["pmin"] is None:
         hit["pmin"], hit["pmax"] = r["pmin"], r["pmax"]
     hit["genre"] = hit["genre"] or r["genre"]
+    hit["org"] = hit.get("org") or r.get("org") or ""
 
 
 def dedupe_source(rows: list[dict], aliases: Aliases | None = None) -> list[dict]:
@@ -549,6 +555,70 @@ def resolve_kassir_titles(rows: list[dict], conflicts: list[tuple[dict, dict]], 
     return [r for r in rows if id(r) not in drop]
 
 
+# ---------------------------------------------------------------- организатор (Кассир)
+
+def _org_from_page(page: str) -> str:
+    """Строка после «Организатор мероприятия:» — без ИНН, ОГРН и адреса. На части страниц она только во всплывающей
+    подсказке «Организатор: … ИНН/ ОГРН: …/ …» (у рекламных блоков внизу вместо второго номера «Токен» — их не берём)."""
+    text = re.sub(r"\s+", " ", html_lib.unescape(re.sub(r"<[^>]+>", " ", page)))
+    m = (re.search(r"Организатор мероприятия:\s*(.+?)\s*ИНН", text)
+         or re.search(r"Организатор:\s*(.+?)\s*ИНН/\s*ОГРН:\s*[\d-]+\s*/", text))
+    return m.group(1).strip()[:200] if m else ""
+
+
+def fetch_organizers(rows: list[dict], today: str) -> None:
+    """Организатор карточек Кассира: страница открывается один раз и перепроверяется раз в месяц; за сбор — не
+    дольше ORG_BUDGET_MIN минут, остальное — в следующие вечера. Сначала новые карточки и ближайшие даты."""
+    cache = load_json(ORGANIZERS_FILE, {})
+    stale = (datetime.fromisoformat(today) - timedelta(days=ORG_RECHECK_DAYS)).date().isoformat()
+    need: dict[str, str] = {}
+    for r in sorted(rows, key=lambda r: r["date"]):
+        acts = [k for k in r["keys"] if k.startswith("k:activity:")]
+        if len(acts) == 1 and r.get("url_k") and (acts[0] not in cache or cache[acts[0]][1] < stale):
+            need.setdefault(acts[0], r["url_k"])
+    order = sorted(need, key=lambda k: k in cache)  # ещё не проверенные — первыми
+    by_host = defaultdict(list)
+    for k in order:
+        by_host[need[k].split("/")[2]].append(k)
+    queues = [[k for host in sorted(by_host)[n::ORG_THREADS] for k in by_host[host]] for n in range(ORG_THREADS)]
+    deadline = time.time() + ORG_BUDGET_MIN * 60
+    done = Counter()
+
+    def work(keys: list[str]) -> None:
+        for k in keys:
+            if time.time() > deadline:
+                return
+            try:
+                req = urllib.request.Request(need[k], headers={"User-Agent": UA, "Accept": "text/html", "Accept-Encoding": "gzip"})
+                with urllib.request.urlopen(req, timeout=40) as resp:  # сжатая страница — ~120 КБ вместо ~500
+                    body = resp.read()
+                    if resp.headers.get("Content-Encoding") == "gzip":
+                        body = gzip.decompress(body)
+                    page = body.decode("utf-8", errors="ignore")
+            except (OSError, http.client.HTTPException):
+                done["error"] += 1
+                time.sleep(KASSIR_PAUSE)
+                continue
+            org = _org_from_page(page)
+            cache[k] = [org, today]
+            done["found" if org else "empty"] += 1
+            time.sleep(KASSIR_PAUSE)
+
+    with ThreadPoolExecutor(max_workers=ORG_THREADS) as pool:
+        list(pool.map(work, queues))
+    _save_lines(ORGANIZERS_FILE, cache)
+    left = len(need) - sum(done.values())
+    log(f"Организаторы Кассира: страниц {sum(done.values())} — найдено {done['found']}, без организатора {done['empty']}, "
+        f"ошибок {done['error']}; осталось {max(0, left)} на следующие сборы, всего известно {sum(1 for v in cache.values() if v[0])}")
+
+
+def apply_organizers(rows: list[dict]) -> None:
+    cache = load_json(ORGANIZERS_FILE, {})
+    for r in rows:
+        if not r.get("org"):
+            r["org"] = next((cache[k][0] for k in r["keys"] if k in cache and cache[k][0]), "")
+
+
 def _clean_venue(v: str, city: str) -> str:
     return re.sub(r"\s*\((%s)\)\s*$" % re.escape(city), "", v or "").strip() or "—"
 
@@ -620,6 +690,8 @@ def parse(kassir: list[dict], yandex: list[dict], cities: list[str], today: str,
                          "pushkin": bool(o.get("isPushkin")),
                          "age": (o.get("ageGroup") or (o.get("ageGroups") or [{}])[0] or {}).get("name", ""),
                          "url_k": o.get("url"), "url_y": None, "more": more,
+                         # У сеанса организатор есть прямо в поиске; у карточки — только на странице (fetch_organizers)
+                         "org": ((o.get("eventPlanners") or [{}])[0] or {}).get("title", "").strip() if it["type"] == "event" else "",
                          "until": (dr.get("endsAt") or "")[:10] if more else ""})
 
     # --- Яндекс Афиша: строка на каждую дату; если дат больше 12 — одна строка с периодом
@@ -658,7 +730,7 @@ def parse(kassir: list[dict], yandex: list[dict], cities: list[str], today: str,
                     "title": ev["title"].strip(), "sphere": nc.get("sphere", ""), "format": nc["format"], "genre": nc.get("genre", ""),
                     "pmin": int(min(prices)) if prices else None, "pmax": int(max(prices)) if prices else None,
                     "pushkin": False, "age": ev.get("contentRating") or "", "url_k": None,
-                    "url_y": "https://afisha.yandex.ru" + ev["url"], "more": 0, "until": "", "ytour": ytour}
+                    "url_y": "https://afisha.yandex.ru" + ev["url"], "more": 0, "until": "", "ytour": ytour, "org": ""}
             # Номер строки — с городом: у Яндекса тур бывает одним событием сразу на несколько городов
             if len(dates) > LONG_RUN_DAYS:
                 rows.append({**base, "keys": [f"y:{ev['id']}@{city}"], "date": dates[0], "time": "",
@@ -751,6 +823,11 @@ def run() -> bool:
         aliases = Aliases(load_json(VENUE_ALIASES_FILE, {}))
         rows, dropped, conflicts = parse(kassir, yandex, cities, today, load_json(OVERRIDES_FILE, {}), aliases)
         rows = resolve_kassir_titles(rows, conflicts, today)
+        try:
+            fetch_organizers(rows, today)
+        except Exception as e:  # организатор — дополнение: сбор афиши из-за него не прерываем
+            log(f"✖ Организаторы Кассира: {e}")
+        apply_organizers(rows)
         previous = load_json(EVENTS_FILE, [])
         by_src_now = Counter(s for r in rows for s in r["src"])
         by_src_before = Counter(s for r in previous for s in r["src"])
@@ -885,7 +962,8 @@ def export_js() -> str:
         packed.append([idx(cities, r["city"]), idx(lists["venues"], r["venue"]), r["title"], r["date"], r["time"] or "",
                        idx(lists["spheres"], r["sphere"] or ""), idx(lists["formats"], r["format"]), idx(lists["genres"], r["genre"] or ""),
                        r["pmin"] or 0, r["pmax"] or 0, 1 if r["pushkin"] else 0, r["src"], r["url_k"] or "", r["url_y"] or "",
-                       r["more"] or 0, r["until"] or "", r["first_seen"], r["age"] or "", 1 if r.get("ytour") else 0, _row_key(r)])
+                       r["more"] or 0, r["until"] or "", r["first_seen"], r["age"] or "", 1 if r.get("ytour") else 0, _row_key(r),
+                       r.get("org") or ""])
     arch = [[e["city"], e["venue"], e["title"], e["date"], e.get("format") or "", e.get("genre") or "", e.get("pmin") or 0,
              e.get("pmax") or 0, e["status"], e.get("first_seen") or "", e.get("last_seen") or "", e.get("url_y") or e.get("url_k") or ""]
             for e in (_arch_now(x) for x in load_json(ARCHIVE_FILE, {}).values()) if e["status"] != "on_sale"]
@@ -897,7 +975,7 @@ def export_js() -> str:
     return (f"// Снимок «Афиши рынка»: Кассир + Яндекс Афиша по {len(all_cities)} городам, сбор {label}.\n"
             "// Пересобрать: ./pull_data.sh && python3 -m competitors.market export (через app.py — собирается сам)\n"
             "// Строка: [город, площадка, название, дата, время, сфера, формат, жанр, цена от, цена до, Пушкинская,\n"
-            "//  источник k/y/ky, ссылка Кассир, ссылка Яндекс, ещё дат, до, впервые замечено, возраст, «Тур артиста», номер]\n"
+            "//  источник k/y/ky, ссылка Кассир, ссылка Яндекс, ещё дат, до, впервые замечено, возраст, «Тур артиста», номер, организатор]\n"
             "// Архив (arch): [город, площадка, название, дата, формат, жанр, цена от, цена до, итог past|gone, впервые, в последний раз, ссылка]\n"
             "var MK = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n")
 

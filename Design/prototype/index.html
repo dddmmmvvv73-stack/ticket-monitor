@@ -2747,7 +2747,7 @@ function tourKey(t) {
 var MR = typeof MK === "undefined" ? [] : MK.rows.map(function (r, i) {
   return { i: i, city: MK.cities[r[0]], venue: MK.venues[r[1]], title: r[2], date: r[3], time: r[4], sphere: MK.spheres[r[5]] || "",
     format: MK.formats[r[6]], genre: MK.genres[r[7]] || "", pmin: r[8] || null, pmax: r[9] || null, pushkin: !!r[10], src: r[11],
-    urlK: r[12], urlY: r[13], more: r[14], until: r[15], seen: r[16], age: r[17], yt: !!r[18], key: r[19] || "row" + i, tk: tourKey(r[2]) };
+    urlK: r[12], urlY: r[13], more: r[14], until: r[15], seen: r[16], age: r[17], yt: !!r[18], key: r[19] || "row" + i, tk: tourKey(r[2]), org: r[20] || "" };
 }).filter(function (e) { return e.date >= TODAY; });  // снимок мог быть сделан вчера — прошедшие даты не показываем
 MR.forEach(function (e, i) { e.i = i; });
 (function () {  // одна площадка под разными написаниями (Кассир и Яндекс) — одно название: самое частое в городе
@@ -2788,7 +2788,7 @@ function mIsNew(e, days) { return e.seen > MK.first && e.seen > addDays(MR_LAST,
 function mBase(opts) {
   var q = S.q.trim().toLowerCase(); opts = opts || {};
   return MRV.filter(function (e) {
-    return mInScope(e) && inPeriod(e) && (!q || (e.title + " " + e.venue + " " + e.city).toLowerCase().indexOf(q) >= 0) &&
+    return mInScope(e) && inPeriod(e) && (!q || (e.title + " " + e.venue + " " + e.city + " " + e.org).toLowerCase().indexOf(q) >= 0) &&
       (!S.m.sphere || e.sphere === S.m.sphere) && (!S.m.format || e.format === S.m.format) && (!S.m.genre || e.genre === S.m.genre) &&
       (opts.noVenue || !S.m.venue || e.venue === S.m.venue) &&
       (!S.m.src || (S.m.src === "k" ? e.src === "k" : S.m.src === "y" ? e.src === "y" : e.src === "ky"));
@@ -2825,12 +2825,13 @@ var M_COLS = [
   { id: "city", label: "Город", w: 140, sort: "city" },
   { id: "venue", label: "Площадка", w: 170 },
   { id: "title", label: "Мероприятие", w: 300, lock: true },
+  { id: "org", label: "Организатор", w: 170, tip: "С Кассира — строка «Организатор мероприятия». Есть у мероприятий, которые продаёт Кассир; у тех, что только на Яндекс Афише, — пусто. Собирается с сентября–октября постепенно: первые вечера не у всех." },
   { id: "niche", label: "Ниша", w: 180 },
   { id: "prices", label: "Цены", w: 124, sort: "pmin", r: true, tip: "Цена билета от и до — как на сайте продажи." },
   { id: "src", label: "Источник", w: 120, tip: "Где найдено мероприятие. «Кассир и Яндекс» — одно и то же событие на обоих сайтах, склеено по городу, дате и названию." },
   { id: "seen", label: "Замечено", w: 104, sort: "seen", tip: "Когда сбор впервые увидел мероприятие. Первый сбор — " + (typeof MK === "undefined" ? "" : human(MK.first)) + ": всё, что было в продаже на эту дату." }
 ];
-var M_FIT = [["title", 200], ["venue", 110], ["niche", 124], ["city", 96], ["src", 90], ["date", 96], ["seen", 88], ["prices", 104]];
+var M_FIT = [["title", 200], ["org", 110], ["venue", 110], ["niche", 124], ["city", 96], ["src", 90], ["date", 96], ["seen", 88], ["prices", 104]];
 function mVisibleCols() { return M_COLS.filter(function (c) { return S.m.hidden.indexOf(c.id) < 0; }); }
 function mFitted(cols) {
   var w = {}, total = 0, view = $("view"), pad = parseFloat(getComputedStyle(view).paddingLeft) || 0;
@@ -2847,6 +2848,7 @@ var M_CELL = {
   date: function (e) { var d = dparts(e.date), w = d.weekend ? " wknd" : ""; return '<div class="d-day' + w + '">' + d.day + ' ' + d.mon + '</div><div class="d-sub' + w + '">' + d.wd + timeText(e) + '</div>'; },
   city: function (e) { return '<div style="font-weight:500;overflow:hidden;text-overflow:ellipsis" class="nowrap" title="' + esc(e.city) + '">' + esc(e.city) + '</div><div class="sub2 nowrap" style="overflow:hidden;text-overflow:ellipsis">' + esc(MK.fo[e.city]) + ' ФО</div>'; },
   venue: function (e) { return '<div class="nowrap" style="overflow:hidden;text-overflow:ellipsis" title="' + esc(e.venue) + '">' + esc(e.venue) + '</div>'; },
+  org: function (e) { return e.org ? '<div style="font-size:13px;line-height:1.35;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical" title="' + esc(e.org) + '">' + esc(e.org) + '</div>' : '<span class="muted">—</span>'; },
   title: function (e) {
     var b = (CUR.filters.show === "all" && e.tour === "tour" ? '<span class="badge-new">гастроль</span>' : '') + (mIsNew(e, 1) ? '<span class="badge-new">новое</span>' : '') + (e.pushkin ? '<span class="badge-new">Пушкинская карта</span>' : '') + moreBadge(e);
     return '<button class="ev-title" data-mopen="' + e.i + '">' + esc(e.title) + '</button>' + (b ? '<div class="ev-badges">' + b + '</div>' : '');
@@ -3623,6 +3625,8 @@ function mDrawer(e) {
       '<div><div class="kpi-label">Других дат в городе</div><div class="kpi-value num">' + (here.length + e.more) + '</div><div class="sub" style="margin:0">' + (e.more ? "по Кассиру ещё " + e.more + (e.until ? " до " + human(e.until) : "") : "в снимке") + '</div></div>' +
       '<div><div class="kpi-label">В других городах</div><div class="kpi-value num">' + mUniq(away, "city").length + '</div><div class="sub" style="margin:0">из списка</div></div>' +
       '<div><div class="kpi-label">Впервые замечено</div><div class="kpi-value">' + human(e.seen) + '</div><div class="sub" style="margin:0">' + srcText(e) + '</div></div>' +
+      '<div style="grid-column:1/-1"><div class="kpi-label">Организатор</div><div style="font-size:15px;line-height:1.4;margin-top:4px">' +
+        (e.org ? esc(e.org) : '<span class="muted">' + (e.urlK ? 'ещё не собран — страницы Кассира проверяются по вечерам' : 'неизвестен — мероприятие только на Яндекс Афише') + '</span>') + '</div></div>' +
     '</div>' +
     '<div class="note">Для рынка собирается только афиша — заполняемость, вал и выручка не считаются. Чтобы следить за продажами площадки, подключите её в «Настройки → Площадки».</div>' +
     (here.length ? '<section><h3 style="font-weight:500;font-size:15px;margin-bottom:4px">Другие даты в ' + esc(e.city) + '</h3><ul class="list">' + here.slice(0, 12).map(line).join("") + '</ul></section>' : '') +
