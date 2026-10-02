@@ -503,6 +503,29 @@ def merge_by_slot(rows: list[dict], aliases: Aliases | None = None) -> tuple[lis
     return rest, conflicts
 
 
+def merge_unique_strict(rows: list[dict], aliases: Aliases | None = None) -> tuple[list[dict], int]:
+    """Одно и то же название (строго: порядок слов, опечатки) в городе в ту же дату и час, и такое у Яндекса одно —
+    одно мероприятие, даже если площадка записана непохоже («ОЦКНТ» и «Центр культуры, народного творчества и кино»):
+    артист не выступает в двух местах города одновременно. Пара площадок запоминается для следующих склеек."""
+    slot = defaultdict(list)
+    for y in rows:
+        if y["src"] == "y" and y["time"]:
+            slot[(y["city"], y["date"], y["time"])].append(y)
+    keep, merged = [], 0
+    for r in rows:
+        if r["src"] == "k" and r["time"]:
+            cands = [y for y in slot.get((r["city"], r["date"], r["time"]), []) if y["src"] == "y" and strict_title(r["title"], y["title"])]
+            if len(cands) == 1:
+                if aliases:
+                    aliases.learn(r["city"], r["venue"], cands[0]["venue"])
+                _merge(cands[0], r)
+                merged += 1
+                continue
+        keep.append(r)
+    log(f"Склейка «то же название в тот же час, площадка записана иначе»: {merged}")
+    return keep, merged
+
+
 def _kassir_page_title(url: str) -> str | None:
     try:
         req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "text/html"})
@@ -763,6 +786,9 @@ def parse(kassir: list[dict], yandex: list[dict], cities: list[str], today: str,
             out.append(r)
     out += [r for r in rows if r["src"] != "k"]
     out, conflicts = merge_by_slot(out, aliases)
+    out, strict_merged = merge_unique_strict(out, aliases)
+    if strict_merged:  # выученные пары площадок склеивают и остальные мероприятия на них
+        out, conflicts = merge_by_slot(out, aliases)
     out.sort(key=lambda r: (r["date"], r["time"] or "99", r["city"], r["title"]))
     return out, dropped, conflicts
 
