@@ -643,6 +643,25 @@ button.sbar:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px
 
 /* ---------- «Рынок»: единый блок фильтров ---------- */
 .mpanel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
+/* «Рынок»: строка фильтров — без рамки и подписей, фильтры словом заглавными со стрелкой; справа число и столбцы */
+.mpanel.fbar { background: none; border: 0; border-radius: 0; display: flex; align-items: center; justify-content: space-between; gap: 6px 24px; flex-wrap: wrap; padding: 2px 0; }
+.fbar-left, .fbar-right { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 22px; min-width: 0; }
+.fbar-right { margin-inline-start: auto; }
+.dd-btn.dd-flat, .fbtn { height: 36px; padding: 0 2px; border: 0; background: none; color: var(--ink-3); font: inherit; font-size: 13px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; max-width: 300px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+.dd-btn.dd-flat:hover, .fbtn:hover, .dd-btn.dd-flat.on, .fbtn.on { color: var(--ink); }
+.fbtn:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 4px; }
+.fbtn .dd-chev { flex-shrink: 0; color: var(--muted); transition: transform 160ms var(--ease); }
+.fbtn[aria-expanded="true"] .dd-chev { transform: rotate(180deg); }
+.fbar .chip-active { height: 30px; }
+.price-pop { width: 320px; }
+.price-pop .price-field { width: 100%; height: 40px; }
+.price-pop .price-field input { width: 100%; font-size: 15px; }
+.price-pop .pp-presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.price-pop .pp-presets .chip-btn { height: 30px; padding: 0 10px; font-size: 12px; }
+.price-pop .pp-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 14px; }
+.fcount { font-size: 13px; color: var(--muted); white-space: nowrap; }
+.fcount b { color: var(--ink); font-weight: 600; }
+.fhidden { font-size: 12px; color: var(--ink-3); max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mp-row { display: grid; grid-template-columns: 104px minmax(0, 1fr); align-items: start; gap: 12px; padding: 14px 18px; }
 .mp-body { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; min-width: 0; }
 .mp-row + .mp-row { border-top: 1px solid var(--line-soft); }
@@ -2775,7 +2794,7 @@ function mCount(list, key) { var c = {}; list.forEach(function (e) { var k = e[k
 function mTop(c, n) { return Object.keys(c).sort(function (a, b) { return c[b] - c[a]; }).slice(0, n || 999); }
 function srcText(e) { return e.src === "ky" ? "Кассир и Яндекс" : e.src === "k" ? "Кассир" : "Яндекс Афиша"; }
 function mSelect(key, label, values) {
-  return '<select class="chip-select" data-msel="' + key + '" aria-label="' + label + '"><option value="">' + label + ': все</option>' +
+  return '<select class="flat-select" data-flat-label="' + label + '" data-msel="' + key + '" aria-label="' + label + '"><option value="">Все</option>' +
     values.map(function (v) { return '<option' + (S.m[key] === v ? " selected" : "") + '>' + esc(v) + '</option>'; }).join("") + '</select>';
 }
 function mNicheSelects(list) {
@@ -2870,11 +2889,10 @@ function mTable() {
     '<button class="btn-ghost" data-maction="reset-cols" style="margin-top:10px;width:100%">Вернуть столбцы и ширину как было</button></div>' : '';
   var activeChip = function (key, label) { return S.m[key] ? '<button class="chip-btn chip-active" data-mclear="' + key + '" aria-label="Убрать фильтр: ' + label.toLowerCase() + '">' + label + ': ' + esc(S.m[key]) + ' ✕</button>' : ''; };
   var venueChip = activeChip("venue", "Площадка") + activeChip("genre", "Жанр");
-  return '<div class="toolbar mtools"><select class="chip-select" data-mfsel aria-label="Показать">' + chips.map(function (t) { return '<option value="' + t[0] + '"' + (S.m.filter === t[0] ? " selected" : "") + '>' + (t[0] === "all" ? "Показать: все" : t[1]) + ' · ' + num(base.filter(M_FILTERS[t[0]]).length) + '</option>'; }).join("") + '</select>' +
-      venueChip + '<div style="flex-grow:1"></div>' + mNicheSelects(mBase({ noVenue: true })) +
-      '<select class="chip-select" data-msel="src" aria-label="Источник"><option value="">Источник: все</option>' +
+  return '<div class="toolbar mtools">' + mNicheSelects(mBase({ noVenue: true })) +
+      '<select class="flat-select" data-flat-label="Источник" data-msel="src" aria-label="Источник"><option value="">Все</option>' +
         [["k", "Только Кассир"], ["y", "Только Яндекс"], ["ky", "На обоих сайтах"]].map(function (o) { return '<option value="' + o[0] + '"' + (S.m.src === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
-      '<div class="pop-anchor cols-anchor"><button class="chip-btn" data-action="cols" aria-expanded="' + S.colsOpen + '" style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M6 2.5v11M10 2.5v11"/></svg>Столбцы' + (S.m.hidden.length ? ' <span class="cnt">−' + S.m.hidden.length + '</span>' : '') + '</button>' + colsPop + '</div>' +
+      venueChip + '<div class="pop-anchor cols-anchor mright"><button class="fbtn' + (S.m.hidden.length ? ' on' : '') + '" data-action="cols" aria-expanded="' + S.colsOpen + '" aria-haspopup="dialog">Столбцы' + (S.m.hidden.length ? ' · скрыто ' + S.m.hidden.length : '') + DD_CHEV + '</button>' + colsPop + '</div>' +
     '</div>' +
     '<section class="card ev-card-table"><table class="ev-table" id="evTable" style="width:' + totalW + 'px"><colgroup>' + cols.map(function (c) { return '<col data-col="' + c.id + '" style="width:' + fitW[c.id] + 'px">'; }).join("") + '</colgroup><thead><tr>' + thead + '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' + empty + '</section>' +
     '<div class="m-list">' + mobile + (list.length ? "" : empty) + '</div>' +
@@ -3613,10 +3631,17 @@ function mGo(patch) { for (var k in patch) S.m[k] = patch[k]; S.m.limit = 200; S
 
 $("view").addEventListener("click", function (ev) {
   if (S.view !== "market" || ev.target.closest(".resizer") || ev.target.closest("a")) return;
+  var pr = ev.target.closest("[data-mprice],[data-mprice-preset],[data-mprice-done],[data-mprice-reset]");
+  if (pr) { mPriceAction(pr); return; }
   var t = ev.target.closest("[data-mcur-show],[data-mproject-type],[data-mtab],[data-mf],[data-msort],[data-mset],[data-mopen],[data-maction],[data-mclear],[data-msph],[data-mproj],[data-mcity],[data-mcity-go],[data-mweekcity],.seg-btn,[data-mday],[data-mweek],[data-mvenue],.cell-btn,tr[data-mi]");
   if (!t) return;
   if (t.hasAttribute("data-mcur-show")) { CUR.filters.show = t.getAttribute("data-mcur-show"); curSave({ op: "filters", filters: CUR.filters }); return; }
   if (t.hasAttribute("data-mproject-type")) { mMarkProject(t); return; }
+  if (t.getAttribute("data-maction") === "all-reset") {
+    (M_TAB_KEYS[S.m.tab] || []).forEach(function (k) { S.m[k] = M_TAB_DEFAULT[k]; });
+    S.q = ""; $("q").value = ""; S.m.limit = 200; S.m.priceOpen = false;
+    curSave({ op: "filters", filters: { show: "tour", pmin: null, pmax: null, noprice: false } }); return;
+  }
   if (t.getAttribute("data-maction") === "tab-reset") {
     (M_TAB_KEYS[S.m.tab] || []).forEach(function (k) { S.m[k] = M_TAB_DEFAULT[k]; });
     S.q = ""; $("q").value = ""; S.m.limit = 200; render(); return;
@@ -3660,6 +3685,8 @@ $("view").addEventListener("change", function (ev) {
     MRV_KEY = null; render(); saveFilters(); return;
   }
   if (ev.target.hasAttribute("data-mvenue-type")) { mMarkVenue(ev.target); return; }
+  if (ev.target.hasAttribute("data-mtype")) { CUR.filters.show = ev.target.value; curSave({ op: "filters", filters: CUR.filters }); return; }
+  if (ev.target.hasAttribute("data-mpf")) return;  // цена применяется кнопкой «Готово» или Enter
   if (ev.target.hasAttribute("data-mfsel")) { S.m.filter = ev.target.value; S.m.limit = 200; render(); return; }
   var sel = ev.target.getAttribute("data-msel"), chk = ev.target.getAttribute("data-mcheck"), vis = ev.target.getAttribute("data-mcolvis");
   if (sel) { S.m[sel] = ev.target.value; if (sel === "myFormat") S.m.myGenre = ""; S.m.limit = 200; render(); }
@@ -3890,7 +3917,7 @@ function enhanceSelects(root) {
     var btn = sel.nextElementSibling && sel.nextElementSibling.classList.contains("dd-btn") ? sel.nextElementSibling : null;
     if (!btn) {
       btn = document.createElement("button"); btn.type = "button";
-      btn.className = "dd-btn " + (sel.id === "city" ? "dd-bare" : sel.classList.contains("chip-select") ? "dd-chip" : "dd-field");
+      btn.className = "dd-btn " + (sel.id === "city" ? "dd-bare" : sel.classList.contains("flat-select") ? "dd-flat" : sel.classList.contains("chip-select") ? "dd-chip" : "dd-field");
       btn.setAttribute("aria-haspopup", "listbox"); btn.setAttribute("aria-expanded", "false");
       if (sel.id) {
         btn.id = sel.id + "-dd";
@@ -3900,7 +3927,9 @@ function enhanceSelects(root) {
       sel.parentNode.insertBefore(btn, sel.nextSibling);
     }
     btn._sel = sel; btn.disabled = sel.disabled;
-    btn.innerHTML = '<span class="dd-text">' + esc(ddText(sel)) + '</span>' + (btn.classList.contains("dd-bare") ? '' : DD_CHEV);
+    var fl = sel.getAttribute("data-flat-label"), shown = fl ? (sel.value || sel.hasAttribute("data-flat-always") ? fl + ": " + ddText(sel) : fl) : ddText(sel);
+    if (fl) btn.classList.toggle("on", !!sel.value && sel.value !== sel.getAttribute("data-flat-default"));
+    btn.innerHTML = '<span class="dd-text">' + esc(shown) + '</span>' + (btn.classList.contains("dd-bare") ? '' : DD_CHEV);
     var name = sel.getAttribute("aria-label") || ((document.querySelector('label[for="' + btn.id + '"]') || {}).textContent || "");
     btn.setAttribute("aria-label", (name ? name + ": " : "") + ddText(sel));
   });
@@ -3979,7 +4008,7 @@ var M_TAB_NAME = { table: "Таблица", city: "Город", projects: "Пр�
 // Фильтры вкладки рядом с её числом: часть фильтров (сфера, формат, жанр, источник, площадка) общая для нескольких вкладок —
 // выставленная в «Таблице», она продолжает действовать в «Городах × нишах», «Новых» и «Календаре». Здесь видно, что именно включено.
 var M_BASE_KEYS = ["sphere", "format", "genre", "src", "venue"];
-var M_TAB_KEYS = { table: ["filter"].concat(M_BASE_KEYS), heat: M_BASE_KEYS, "new": ["win"].concat(M_BASE_KEYS), cal: M_BASE_KEYS.concat(["myFormat", "wkOnly"]),
+var M_TAB_KEYS = { table: M_BASE_KEYS, heat: M_BASE_KEYS, "new": ["win"].concat(M_BASE_KEYS), cal: M_BASE_KEYS.concat(["myFormat", "wkOnly"]),
   venues: ["vmark", "sphere", "format", "genre", "src"], city: ["myFormat", "myGenre"], projects: ["sphere", "format", "pmark", "pminCities", "repOff", "pmode"] };
 var M_TAB_DEFAULT = { filter: "all", sphere: "", format: "", genre: "", src: "", venue: "", win: "1", myFormat: "", myGenre: "", wkOnly: false, vmark: "", pmark: "", pminCities: "2", repOff: true, pmode: "in" };
 var M_COUNT = null;  // [число, «одно», «два», «пять»] — что показывает вкладка; ставит функция вкладки
@@ -4002,26 +4031,75 @@ function mTabCount() {
     (active.length ? '<span class="sub2 mp-active" title="' + esc(active.join(" · ")) + '">' + (c ? ' · ' : '') + esc(active.join(" · ")) + '</span><button class="link-btn" data-maction="tab-reset">Сбросить фильтры вкладки</button>'
       : '<span class="sub2"> · фильтры вкладки не заданы</span>') + '</div>';
 }
+function mPriceLabel(f) {
+  if (f.pmin == null && f.pmax == null) return "Цена";
+  return "Цена: " + (f.pmin != null && f.pmax != null ? num(f.pmin) + " / " + num(f.pmax) + " ₽" : f.pmin != null ? "от " + num(f.pmin) + " ₽" : "до ≥ " + num(f.pmax) + " ₽");
+}
+function mPricePop(f) {
+  var field = function (k, label, tip) {
+    return '<label class="price-field" title="' + tip + '"><span class="pf-pre">' + label + '</span><input type="number" data-mpf="' + k + '" min="0" step="100" inputmode="numeric" placeholder="любая" value="' + (f[k] == null ? "" : f[k]) + '" aria-label="' + tip + ', рублей"><span class="pf-suf">₽</span></label>';
+  };
+  var presets = [500, 1000, 2000, 3000, 5000];
+  return '<div class="popover price-pop" role="dialog" aria-label="Цена билета">' +
+    '<div class="field-label" style="margin-top:0">Самый дешёвый билет — не ниже</div>' + field("pmin", "от&nbsp;≥", "Самый дешёвый билет — не ниже") +
+    '<div class="pp-presets">' + presets.map(function (v) { return '<button class="chip-btn" data-mprice-preset="' + v + '" aria-pressed="' + (f.pmin === v) + '">от ' + num(v) + '</button>'; }).join("") + '</div>' +
+    '<div class="field-label">Самый дорогой билет — не ниже</div>' + field("pmax", "до&nbsp;≥", "Самый дорогой билет — не ниже") +
+    '<label class="toggle-inline" style="margin-top:12px;display:flex"><input type="checkbox" data-mpf="noprice"' + (f.noprice ? " checked" : "") + '> показывать мероприятия без цены</label>' +
+    '<div class="pp-actions"><button class="link-btn" data-mprice-reset>Любая цена</button><button class="btn-dark" data-mprice-done style="height:36px">Готово</button></div>' +
+  '</div>';
+}
 function mPanel(tabTools) {
   var f = CUR.filters, inScope = MR.filter(function (e) { return mInScope(e) && inPeriod(e); }), shown = inScope.filter(mPass).length;
-  var seg = [["tour", "Гастрольные"], ["local", "Местные"], ["all", "Все"]].map(function (s) { return '<button data-mcur-show="' + s[0] + '" aria-pressed="' + (f.show === s[0]) + '">' + s[1] + '</button>'; }).join("");
-  var price = function (k, label, tip) {
-    return '<label class="price-field" title="' + tip + '"><span class="pf-pre">' + label + '</span><input type="number" data-mcurf="' + k + '" min="0" step="100" inputmode="numeric" placeholder="любая" value="' + (f[k] == null ? "" : f[k]) + '" aria-label="' + tip + ', рублей"><span class="pf-suf">₽</span></label>';
-  };
-  var custom = f.show !== "tour" || f.pmin != null || f.pmax != null;
-  return '<section class="mpanel" aria-label="Фильтры раздела">' +
-    '<div class="mp-row"><span class="mp-label">Весь раздел</span><div class="mp-body">' +
-      '<div class="seg" role="group" aria-label="Какие мероприятия считать">' + seg + '</div>' +
-      '<div class="mp-price" role="group" aria-label="Порог цены билета"><span class="mp-sub">Цена билета</span>' +
-        price("pmin", "от&nbsp;≥", "Самый дешёвый билет — не ниже") + price("pmax", "до&nbsp;≥", "Самый дорогой билет — не ниже") +
-        ((f.pmin != null || f.pmax != null) ? '<label class="toggle-inline"><input type="checkbox" data-mcurf="noprice"' + (f.noprice ? " checked" : "") + '> без цены</label>' : '') + '</div>' +
-      '<div class="mp-count"><b class="num">' + num(shown) + '</b><span class="sub2"> из ' + num(inScope.length) + ' в расчётах</span>' +
-        (custom ? '<button class="link-btn" data-maction="filters-reset">сбросить</button>' : '') + '</div></div></div>' +
-    (tabTools || M_COUNT || mTabActive().length ? '<div class="mp-row mp-tab"><span class="mp-label">' + esc(M_TAB_NAME[S.m.tab] || "") + '</span><div class="mp-body">' + tabTools + mTabCount() + '</div></div>' : '') +
+  // Столбцы и прочее с пометкой .mright — в правую часть строки
+  var tpl = document.createElement("template"); tpl.innerHTML = tabTools || "";
+  var right = Array.prototype.map.call(tpl.content.querySelectorAll(".mright"), function (el) { el.remove(); return el.outerHTML; }).join("");
+  var left = tpl.innerHTML;
+  var type = '<select class="flat-select" data-flat-label="Тип" data-flat-always data-flat-default="tour" data-mtype aria-label="Тип мероприятий">' +
+    [["tour", "Гастрольные"], ["local", "Местные"], ["all", "Все"]].map(function (o) { return '<option value="' + o[0] + '"' + (f.show === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>';
+  var priceOn = f.pmin != null || f.pmax != null;
+  var price = '<div class="pop-anchor price-anchor"><button class="fbtn' + (priceOn ? ' on' : '') + '" data-mprice aria-haspopup="dialog" aria-expanded="' + !!S.m.priceOpen + '">' + esc(mPriceLabel(f)) + DD_CHEV + '</button>' +
+    (S.m.priceOpen ? mPricePop(f) : '') + '</div>';
+  // Число — что показывает вкладка; фильтры, у которых на вкладке нет своего списка, — подписью рядом
+  var hidden = mTabActive().filter(function (t) { return !/^поиск/.test(t); }).filter(function (t, k) {
+    var key = (M_TAB_KEYS[S.m.tab] || []).filter(function (x) { return S.m[x] !== M_TAB_DEFAULT[x]; })[k];
+    return key && left.indexOf('data-msel="' + key + '"') < 0 && left.indexOf('data-mclear="' + key + '"') < 0 && left.indexOf('data-mset="' + key + '"') < 0 && left.indexOf('data-mcheck="' + key + '"') < 0;
+  });
+  var q = S.q.trim(), custom = f.show !== "tour" || priceOn || mTabActive().length;
+  var c = M_COUNT || [shown, "мероприятие", "мероприятия", "мероприятий"];
+  var count = '<span class="fcount" title="После типа и цены — ' + num(shown) + ' из ' + num(inScope.length) + ' мероприятий раздела' + (M_COUNT ? '; на вкладке — ' + num(M_COUNT[0]) : '') + '"><b class="num">' + num(c[0]) + '</b> ' + plural(c[0], c[1], c[2], c[3]) + '</span>';
+  return '<section class="mpanel fbar" aria-label="Фильтры">' +
+      '<div class="fbar-left">' + type + price + left + '</div>' +
+      '<div class="fbar-right">' + (hidden.length || q ? '<span class="fhidden" title="' + esc(hidden.concat(q ? ["поиск «" + q + "»"] : []).join(" · ")) + '">ещё: ' + esc(hidden.concat(q ? ["поиск «" + q + "»"] : []).join(" · ")) + '</span>' : '') +
+        count + (custom ? '<button class="link-btn" data-maction="all-reset">Сбросить</button>' : '') + right + '</div>' +
     '</section>' +
     (CAN_SAVE ? '' : '<div class="note warn-note">Прототип открыт файлом — разметка и правки сохраняются только в этом браузере. Чтобы они записывались и уходили на GitHub, откройте через приложение: <b>python3 app.py</b> → <b>http://127.0.0.1:5050/proto/</b></div>');
 }
 // Панель вкладки (div.toolbar.mtools) переносится в общий блок; легенды (.mkeep) остаются у графика
+// Цена: окошко с полями «от» и «до», быстрые пороги; применяется «Готово» или Enter, закрывается Esc и кликом мимо
+function mPriceRead() {
+  var v = function (k) { var el = document.querySelector('[data-mpf="' + k + '"]'); return !el || el.value === "" ? null : Math.max(0, Math.round(+el.value)); };
+  var np = document.querySelector('[data-mpf="noprice"]');
+  return { pmin: v("pmin"), pmax: v("pmax"), noprice: !!(np && np.checked) };
+}
+function mPriceApply(vals, keepOpen) {
+  CUR.filters = Object.assign({}, CUR.filters, vals); S.m.priceOpen = !!keepOpen; MRV_KEY = null; render(); saveFilters();
+  var b = document.querySelector("[data-mprice]"); if (b && !keepOpen) b.focus();
+}
+function mPriceAction(t) {
+  if (t.hasAttribute("data-mprice")) { S.m.priceOpen = !S.m.priceOpen; render(); var i = document.querySelector('[data-mpf="pmin"]'); if (i) i.focus(); else { var b = document.querySelector("[data-mprice]"); if (b) b.focus(); } }
+  else if (t.hasAttribute("data-mprice-preset")) { var v = mPriceRead(); v.pmin = +t.getAttribute("data-mprice-preset"); mPriceApply(v, true); }
+  else if (t.hasAttribute("data-mprice-done")) mPriceApply(mPriceRead(), false);
+  else if (t.hasAttribute("data-mprice-reset")) mPriceApply({ pmin: null, pmax: null, noprice: false }, false);
+}
+document.addEventListener("keydown", function (ev) {
+  if (!S.m || !S.m.priceOpen || S.view !== "market") return;
+  if (ev.key === "Escape") { S.m.priceOpen = false; render(); var b = document.querySelector("[data-mprice]"); if (b) b.focus(); }
+  else if (ev.key === "Enter" && ev.target.hasAttribute && ev.target.hasAttribute("data-mpf")) { ev.preventDefault(); mPriceApply(mPriceRead(), false); }
+});
+document.addEventListener("click", function (ev) {
+  if (!S.m || !S.m.priceOpen || S.view !== "market") return;
+  if (!ev.target.closest(".price-anchor")) { S.m.priceOpen = false; render(); }
+});
 function mSplitTools(html) {
   var tpl = document.createElement("template"); tpl.innerHTML = html;
   var tb = tpl.content.querySelector(".mtools"); if (!tb) return { tools: "", body: html };
