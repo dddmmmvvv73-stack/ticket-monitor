@@ -736,6 +736,7 @@
     "seats": 1462,
     "events": 23,
     "layouts": [
+      "0a5af889a76d",
       "0c9df169e57a",
       "0e5ba4bbdfdb",
       "276a837cbb83",
@@ -748,7 +749,6 @@
       "781c3caee588",
       "98216eba9f75",
       "9a5b43007c37",
-      "a802a528ceab",
       "ae459a2ac500",
       "bc735c8e2c05",
       "db1cd7f3f18b",
