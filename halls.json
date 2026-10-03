@@ -143,7 +143,7 @@
     "auto_reserve": 83,
     "series_reserve": {
       "6194d2029068": 50,
-      "9cd9b7c7f375": 439,
+      "9cd9b7c7f375": 440,
       "afabcb541b13": 67
     },
     "auto_possible": true,
@@ -760,7 +760,7 @@
     "auto_enabled": true,
     "auto_reserve": 82,
     "series_reserve": {
-      "98216eba9f75": 307
+      "98216eba9f75": 309
     },
     "auto_possible": true,
     "manual_rows": [],
