@@ -31,5 +31,5 @@ sudo chown root:tm /etc/ticket-monitor.env && sudo chmod 640 /etc/ticket-monitor
 # Расписание (systemd): синхронизация каждый час, копия базы каждую ночь
 sudo cp "$APP"/deploy/systemd/*.service "$APP"/deploy/systemd/*.timer /etc/systemd/system/
 sudo systemctl daemon-reload
-for t in tm-sync tm-backup; do sudo systemctl enable --now "$t.timer"; done
+for t in tm-sync tm-backup tm-sales; do sudo systemctl enable --now "$t.timer"; done
 systemctl list-timers 'tm-*' --no-pager

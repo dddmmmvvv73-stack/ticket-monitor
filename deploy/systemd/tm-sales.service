@@ -1,0 +1,12 @@
+[Unit]
+Description=ticket-monitor: сбор продаж гастролей (Кассир, Яндекс Афиша) в базу
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=tm
+WorkingDirectory=/opt/ticket-monitor
+EnvironmentFile=/etc/ticket-monitor.env
+ExecStart=/opt/ticket-monitor/.venv/bin/python -m sales.run --budget 40
+TimeoutStartSec=3600

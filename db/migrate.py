@@ -26,8 +26,10 @@ from db.projects import Registry, homonym_keys, title_key
 
 DATA = collector.DATA_DIR
 MARKET = DATA / "market"
-TABLES = ["migrations_log", "collection_runs", "settings", "ai_cache", "niche_overrides", "session_edits", "price_maps",
-          "seat_sales", "observations", "pools", "listing_seen", "listings", "sessions", "project_suggestions",
+# Справочная часть — пересобирается из JSON. Живая (pools / observations / seat_sales / price_sales / live_halls /
+# collection_runs / migrations_log) не стирается: из неё удаляется только то, что тоже пришло из JSON (pools.source = 'json')
+TABLES = ["settings", "ai_cache", "niche_overrides", "session_edits", "price_maps",
+          "listing_seen", "listings", "sessions", "project_suggestions",
           "project_names", "projects", "artists", "hall_reserve", "layouts", "hall_seats", "halls", "venue_names",
           "venues", "cities", "operators"]
 
@@ -287,9 +289,8 @@ class Migration:
             lid = (self.cur.fetchone() or [None])[0]
             st = states.get(collector.seat_state_path(uid).stem)
             sale_op = "vladimirkoncert" if (e.get("vk_event_id") or op == "vladimirkoncert") else op
-            self.cur.execute("INSERT INTO pools (session_id, operator_id, service, listing_id, has_scheme) VALUES (%s,%s,%s,%s,%s) "
-                             "ON CONFLICT (session_id, operator_id, service) DO UPDATE SET has_scheme = EXCLUDED.has_scheme RETURNING id",
-                             (sid, sale_op, e.get("site") or "", lid, bool(st)))
+            self.cur.execute("INSERT INTO pools (session_id, operator_id, service, listing_id, listing_key, source, has_scheme) "
+                             "VALUES (%s,%s,%s,%s,%s,'json',%s) RETURNING id", (sid, sale_op, e.get("site") or "", lid, uid, bool(st)))
             pool = self.cur.fetchone()[0]
             # Наблюдения — история сборов (точки «весь зал занят» уже помечены anomaly)
             hist = load_json(collector.history_path(uid), [])
@@ -370,6 +371,7 @@ class Migration:
         if flag and flag[0] is True:
             raise SystemExit("База уже главная (settings.db_authoritative) — пересборка из JSON запрещена")
         self.cur.execute("TRUNCATE " + ", ".join(TABLES) + " RESTART IDENTITY CASCADE")
+        self.cur.execute("DELETE FROM pools WHERE source = 'json'")  # наблюдения и продажи площадок прямого сбора — заново из файлов
         self.cur_marks = curation.load()
         rows = load_json(MARKET / "events.json", [])
         curation.apply_edits(rows, self.cur_marks)
@@ -396,6 +398,10 @@ class Migration:
         self.direct(reg, pid_db, rows)
         self.user_data()
         self.report["гастроль / местное"] = self.compare_tour(rows)
+        # Живые запасы касс (сбор продаж) — к новым номерам сеансов и карточек по постоянному номеру карточки
+        self.cur.execute("UPDATE pools p SET session_id = l.session_id, listing_id = l.id FROM listings l "
+                         "WHERE p.source = 'live' AND l.operator_id = p.operator_id AND l.ext_key = p.listing_key")
+        self.report["живые запасы касс"] = {"привязано": self.cur.rowcount}
         self.cur.execute("INSERT INTO migrations_log (step, report) VALUES ('json_import', %s)", (Json(self.report),))
         self.conn.commit()
 
@@ -421,7 +427,7 @@ def verify(conn) -> dict:
     bad = []
     for uid in events:
         st = states.get(collector.seat_state_path(uid).stem) or {}
-        cur.execute("SELECT count(*), coalesce(sum(price), 0) FROM seat_sales WHERE pool_id IN (SELECT p.id FROM pools p JOIN listings l ON l.id = p.listing_id WHERE l.ext_key = %s)", (uid,))
+        cur.execute("SELECT count(*), coalesce(sum(price), 0) FROM seat_sales WHERE pool_id IN (SELECT id FROM pools WHERE source = 'json' AND listing_key = %s)", (uid,))
         n, s = cur.fetchone()
         want = (len(st.get("sold", {})), sum(x.get("price") or 0 for x in st.get("sold", {}).values()))
         if (n, int(s)) != (want[0], int(want[1])):

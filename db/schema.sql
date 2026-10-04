@@ -284,3 +284,47 @@ CREATE TABLE IF NOT EXISTS migrations_log (
     step        text NOT NULL,
     report      jsonb
 );
+
+-- ---------------------------------------------------------------- 04.10: живые данные продаж (шаг 5)
+-- Справочная часть (афиша, проекты, сеансы, карточки) пока пересобирается из JSON каждый час (db.migrate);
+-- живая часть (запасы касс, наблюдения, продажи, залы из схем) не стирается никогда и привязана к постоянному
+-- номеру карточки у оператора (listing_key = listings.ext_key), а не к номерам строк, которые при пересборке меняются.
+
+ALTER TABLE pools DROP CONSTRAINT IF EXISTS pools_session_id_fkey;
+ALTER TABLE pools DROP CONSTRAINT IF EXISTS pools_listing_id_fkey;
+ALTER TABLE pools ALTER COLUMN session_id DROP NOT NULL;
+ALTER TABLE pools ADD COLUMN IF NOT EXISTS listing_key text;
+ALTER TABLE pools ADD COLUMN IF NOT EXISTS source text NOT NULL DEFAULT 'json';   -- json — из файлов (пересобирается), live — сбор продаж
+ALTER TABLE pools ADD COLUMN IF NOT EXISTS ext jsonb NOT NULL DEFAULT '{}';       -- номер сеанса у оператора, кассы Яндекса, зал …
+ALTER TABLE pools ADD COLUMN IF NOT EXISTS next_check timestamptz;
+ALTER TABLE pools DROP CONSTRAINT IF EXISTS pools_session_id_operator_id_service_key;
+CREATE UNIQUE INDEX IF NOT EXISTS pools_live_key ON pools (operator_id, listing_key, service) WHERE source = 'live';
+CREATE INDEX IF NOT EXISTS pools_listing ON pools (listing_key);
+
+ALTER TABLE observations ADD COLUMN IF NOT EXISTS summary jsonb;        -- сводка оператора (у Яндекса — только для поиска изменений)
+ALTER TABLE observations ADD COLUMN IF NOT EXISTS seat_prices jsonb;    -- свободные места схемы: {место: цена} — распоясовка по версиям
+
+-- Продажи по ценам между наблюдениями (где нет схемы мест — только так)
+CREATE TABLE IF NOT EXISTS price_sales (
+    pool_id     bigint NOT NULL REFERENCES pools(id) ON DELETE CASCADE,
+    ts_from     timestamptz NOT NULL,
+    ts_to       timestamptz NOT NULL,
+    price       numeric NOT NULL,
+    qty         int NOT NULL,                       -- > 0 продано, < 0 вернулось / открыли места
+    anomaly     boolean NOT NULL DEFAULT false,
+    PRIMARY KEY (pool_id, ts_to, price)
+);
+
+-- Залы из схем операторов (эталон мест): ключ — 'yandex:<номер зала>' и т. п.; площадка — по городу и названию
+CREATE TABLE IF NOT EXISTS live_halls (
+    key         text PRIMARY KEY,
+    city        text,
+    venue       text,
+    capacity    int,
+    seats       jsonb NOT NULL,                     -- [[место, зона, ряд, номер, x, y], …] без «не кресел»
+    updated     timestamptz NOT NULL DEFAULT now()
+);
+-- Живые таблицы не должны стираться каскадом при пересборке справочной части (TRUNCATE operators CASCADE)
+ALTER TABLE pools DROP CONSTRAINT IF EXISTS pools_operator_id_fkey;
+ALTER TABLE collection_runs DROP CONSTRAINT IF EXISTS collection_runs_operator_id_fkey;
+ALTER TABLE collection_runs ADD COLUMN IF NOT EXISTS report jsonb;

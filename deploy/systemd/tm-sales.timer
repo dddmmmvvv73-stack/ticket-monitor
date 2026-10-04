@@ -1,0 +1,9 @@
+[Unit]
+Description=ticket-monitor: сбор продаж каждый час в :05 (40 минут, до синхронизации базы в :50)
+
+[Timer]
+OnCalendar=*-*-* *:05:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
