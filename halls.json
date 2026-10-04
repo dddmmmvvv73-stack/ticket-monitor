@@ -143,7 +143,7 @@
     "auto_reserve": 83,
     "series_reserve": {
       "6194d2029068": 50,
-      "9cd9b7c7f375": 442,
+      "9cd9b7c7f375": 440,
       "afabcb541b13": 68
     },
     "auto_possible": true,
@@ -743,6 +743,7 @@
       "409a97dc4806",
       "4946664ccfff",
       "49d0f1690633",
+      "4fc002b452d7",
       "527d53786c92",
       "60f19ff0e1e3",
       "61e54e8fa6d7",
@@ -751,7 +752,6 @@
       "9a5b43007c37",
       "ae459a2ac500",
       "bc735c8e2c05",
-      "c2ae866855f1",
       "c6b6daa440fe",
       "db1cd7f3f18b",
       "f81ccd22d417",
@@ -760,7 +760,7 @@
     "auto_enabled": true,
     "auto_reserve": 82,
     "series_reserve": {
-      "98216eba9f75": 313
+      "98216eba9f75": 312
     },
     "auto_possible": true,
     "manual_rows": [],
