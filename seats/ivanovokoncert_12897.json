@@ -2572,6 +2572,7 @@
   "sold": {},
   "returned": 0,
   "tracking_since": "2026-09-30T12:11:34",
+  "flips_repaired": 1,
   "layout": "306d218130fd",
   "seats": [
     [

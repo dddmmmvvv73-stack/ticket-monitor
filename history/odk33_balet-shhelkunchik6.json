@@ -28,8 +28,9 @@
     "seats_total": 747,
     "gross": 2136500,
     "revenue_est": 2136500,
-    "sold_confirmed": 730,
-    "revenue_confirmed": 2136500
+    "sold_confirmed": 0,
+    "revenue_confirmed": 0,
+    "anomaly": true
   },
   {
     "ts": "2026-10-04T11:42:00",

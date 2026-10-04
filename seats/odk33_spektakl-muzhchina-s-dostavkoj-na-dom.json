@@ -1456,8 +1456,9 @@
       "ts": "2026-10-04T12:47:59"
     }
   },
-  "returned": 708,
+  "returned": 0,
   "tracking_since": "2026-09-29T19:31:46",
+  "flips_repaired": 1,
   "layout": "83ed02b4ac14",
   "seats": [
     [

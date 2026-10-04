@@ -52,7 +52,8 @@
     "seats_total": 787,
     "gross": 1793800,
     "revenue_est": 1793800,
-    "sold_confirmed": 477,
-    "revenue_confirmed": 1793800
+    "sold_confirmed": 0,
+    "revenue_confirmed": 0,
+    "anomaly": true
   }
 ]
