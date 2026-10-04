@@ -1009,7 +1009,7 @@ def export_js() -> str:
                        idx(lists["spheres"], r["sphere"] or ""), idx(lists["formats"], r["format"]), idx(lists["genres"], r["genre"] or ""),
                        r["pmin"] or 0, r["pmax"] or 0, 1 if r["pushkin"] else 0, r["src"], r["url_k"] or "", r["url_y"] or "",
                        r["more"] or 0, r["until"] or "", r["first_seen"], r["age"] or "", 1 if r.get("ytour") else 0, _row_key(r),
-                       r.get("org") or "", best_sales(r["keys"]) or 0, direct.get(i, "")])
+                       r.get("org") or "", best_sales(r["keys"]) or 0, direct.get(i, ""), r["keys"]])
     arch = [[e["city"], e["venue"], e["title"], e["date"], e.get("format") or "", e.get("genre") or "", e.get("pmin") or 0,
              e.get("pmax") or 0, e["status"], e.get("first_seen") or "", e.get("last_seen") or "", e.get("url_y") or e.get("url_k") or ""]
             for e in (_arch_now(x) for x in load_json(ARCHIVE_FILE, {}).values()) if e["status"] != "on_sale"]
@@ -1017,13 +1017,14 @@ def export_js() -> str:
     months = ["янв.", "февр.", "мар.", "апр.", "мая", "июн.", "июл.", "авг.", "сент.", "окт.", "нояб.", "дек."]
     label = f"{at.day} {months[at.month - 1]}, {at:%H:%M}"
     data = {"at": label, "first": status.get("first_run"), "cities": cities, "fo": fo, **lists, "rows": packed, "arch": arch,
-            "salesAt": snap.get("at"), "directOnly": direct_only,
+            "salesAt": snap.get("at"), "directOnly": direct_only, "salesOps": snap.get("operators", []),
             "stats": {"merged": Counter(r["src"] for r in rows)["ky"], "dropped": status.get("dropped", {}), "bySrc": status.get("by_src", {})}}
     return (f"// Снимок «Афиши рынка»: Кассир + Яндекс Афиша по {len(all_cities)} городам, сбор {label}.\n"
             "// Пересобрать: ./pull_data.sh && python3 -m competitors.market export (через app.py — собирается сам)\n"
             "// Строка: [город, площадка, название, дата, время, сфера, формат, жанр, цена от, цена до, Пушкинская,\n"
             "//  источник k/y/ky, ссылка Кассир, ссылка Яндекс, ещё дат, до, впервые замечено, возраст, «Тур артиста», номер, организатор,\n"
-            "//  продажи (сводка с сервера, sales/export.py) или 0, uid мероприятия площадки прямого сбора (тот же сеанс) или \"\"]\n"
+            "//  продажи (сводка с сервера, sales/export.py) или 0, uid мероприятия площадки прямого сбора (тот же сеанс) или \"\",\n"
+            "//  номера карточек у касс (для подробностей продаж в карточке)]\n"
             "// directOnly — мероприятия площадок прямого сбора, которых нет в афише рынка (строки — из competitors-data.js)\n"
             "// Архив (arch): [город, площадка, название, дата, формат, жанр, цена от, цена до, итог past|gone, впервые, в последний раз, ссылка]\n"
             "var MK = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n")

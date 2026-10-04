@@ -50,6 +50,50 @@ SELECT p.operator_id, p.listing_key, p.ext, l.free, l.total, w.g, w.total, f.sin
 """
 
 
+OPS_SQL = {
+    "registry": "SELECT id, name, kind, engine, sites, caps FROM operators ORDER BY id",
+    # Сеансы в продаже по оператору и сколько из них видно только у него — польза оператора
+    "coverage": """
+        WITH s AS (SELECT s.id, array_agg(DISTINCT l.operator_id) AS ops, bool_or(s.track_sales) AS tour
+                     FROM sessions s JOIN listings l ON l.session_id = s.id WHERE s.status = 'on_sale' GROUP BY s.id)
+        SELECT op, count(*), count(*) FILTER (WHERE array_length(ops, 1) = 1), count(*) FILTER (WHERE tour)
+          FROM s, unnest(ops) AS op GROUP BY op""",
+    "tracked": """SELECT operator_id, count(*), count(*) FILTER (WHERE (ext->>'shared')::boolean), count(*) FILTER (WHERE (ext->>'no_tickets')::boolean)
+                    FROM pools WHERE source = 'live' GROUP BY 1""",
+    "runs": """SELECT operator_id, count(*), max(finished), sum(sessions), sum(errors), sum(blocked),
+                      (array_agg(report ORDER BY started DESC))[1], (array_agg(summary ORDER BY started DESC))[1]
+                 FROM collection_runs WHERE kind = 'sales' AND started > now() - interval '24 hours' GROUP BY 1""",
+    "obs": """SELECT p.operator_id, count(*) FROM observations o JOIN pools p ON p.id = o.pool_id
+               WHERE p.source = 'live' AND o.ts > now() - interval '24 hours' GROUP BY 1""",
+}
+
+
+def operators(conn) -> list:
+    """Экран «Билетные операторы»: реестр + охват + слежение + сборы за сутки."""
+    cur = conn.cursor()
+    res = {}
+    for name, sql in OPS_SQL.items():
+        cur.execute(sql)
+        res[name] = cur.fetchall()
+    cov = {r[0]: r[1:] for r in res["coverage"]}
+    trk = {r[0]: r[1:] for r in res["tracked"]}
+    runs = {r[0]: r[1:] for r in res["runs"]}
+    obs = {r[0]: r[1] for r in res["obs"]}
+    out = []
+    for oid, name, kind, engine, sites, caps in res["registry"]:
+        c, t, r = cov.get(oid, (0, 0, 0)), trk.get(oid, (0, 0, 0)), runs.get(oid)
+        o = {"id": oid, "name": name, "kind": kind, "engine": engine, "sites": sites, "caps": caps,
+             "sessions": c[0], "only": c[1], "tours": c[2], "tracked": t[0], "shared": t[1], "no_tickets": t[2],
+             "snaps24": obs.get(oid, 0)}
+        if r:
+            rep = (r[5] or {}).get("сбор", {})
+            o["runs24"] = {"runs": r[0], "last": r[1].isoformat(timespec="minutes") if r[1] else None, "queue": r[2], "errors": r[3],
+                           "stopped": r[4], "summary": r[6],
+                           "sold": sum(v for k, v in rep.items() if "продано" in k), "snapped": sum(v for k, v in rep.items() if k.endswith("снято"))}
+        out.append(o)
+    return out
+
+
 def build(conn) -> dict:
     cur = conn.cursor()
     cur.execute(SQL)
@@ -75,7 +119,7 @@ def build(conn) -> dict:
         if ext.get("shared"):
             r["shared"] = 1
         rows[key] = r
-    return {"at": datetime.now().astimezone().isoformat(timespec="minutes"), "rows": rows}
+    return {"at": datetime.now().astimezone().isoformat(timespec="minutes"), "rows": rows, "operators": operators(conn)}
 
 
 def main() -> None:

@@ -8,6 +8,7 @@
     POST /api/market/curation     одна правка {"op": "project"|"venue"|"edit"|"revert"|"filters"|"niche", …}
     GET  /api/market/myprojects   избранные проекты и ваши записи о них (competitors/myprojects.py)
     POST /api/market/myprojects   одна правка {"op": "fav"|"notes"|"seen"|"link"|"skip", …}
+    GET  /api/sales/detail?keys=… продажи сеанса для карточки — с сервера в Яндекс Облаке по SSH (sales/detail.py)
 
 Каждая правка сразу записывается в config/ и в фоне отправляется на GitHub (competitors/sync.py),
 поэтому сбор на сервере применяет её с ближайшего запуска. Избранное и записи о проектах — только на этом
@@ -16,6 +17,12 @@
 
 from __future__ import annotations
 
+import json
+import os
+import re
+import shlex
+import subprocess
+
 from flask import Blueprint, Response, jsonify, redirect, request, send_from_directory
 
 from competitors import collector, curation, edits, market, myprojects, protodata, sync
@@ -23,6 +30,8 @@ from competitors.classifier import FORMATS, GENRES, SPHERES
 from competitors.storage import BASE_DIR, load_json
 
 bp = Blueprint("market_api", __name__)
+SERVER_FILE = BASE_DIR / "config" / "server.json"   # {"ssh": "tm@<адрес>", "key": "~/.ssh/…"} — только на этом компьютере
+_KEY = re.compile(r"^[kyd]:[\w:.@\-]{1,120}$")
 PROTOTYPE_DIR = BASE_DIR / "Design" / "prototype"
 _cache = {"key": None, "js": ""}
 _cd_cache = {"key": None, "js": ""}
@@ -65,6 +74,29 @@ def proto_competitors_data():
         # Файлы поменялись, пока собирали (пересчёт брони, правка) — отдаём, но не запоминаем: следующий запрос соберёт заново
         _cd_cache.update(key=key if stamp() == key else None, js=js)
     return Response(_cd_cache["js"], mimetype="application/javascript", headers={"Cache-Control": "no-store"})
+
+
+@bp.get("/api/sales/detail")
+def sales_detail():
+    """Продажи сеанса (кассы, снимки, зал по рядам, последние продажи) — спрашиваем сервер; данные в git не попадают."""
+    keys = [k for k in (request.args.get("keys") or "").split(",") if _KEY.match(k)][:10]
+    if not keys:
+        return jsonify(error="нет номеров карточек"), 400
+    cfg = load_json(SERVER_FILE, {})
+    if not cfg.get("ssh"):
+        return jsonify(error="сервер не настроен на этом компьютере (config/server.json)"), 503
+    remote = "set -a; . /etc/ticket-monitor.env; set +a; cd /opt/ticket-monitor && .venv/bin/python -m sales.detail " + " ".join(shlex.quote(k) for k in keys)
+    cmd = ["ssh", "-i", os.path.expanduser(cfg.get("key", "")), "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", cfg["ssh"], remote]
+    try:
+        r = subprocess.run(cmd, capture_output=True, timeout=40)
+    except subprocess.TimeoutExpired:
+        return jsonify(error="сервер не ответил за 40 с"), 504
+    if r.returncode != 0:
+        return jsonify(error="сервер недоступен (адрес сменился или нет сети)"), 502
+    try:
+        return jsonify(json.loads(r.stdout))
+    except ValueError:
+        return jsonify(error="сервер вернул непонятный ответ"), 502
 
 
 @bp.get("/proto/<path:name>")

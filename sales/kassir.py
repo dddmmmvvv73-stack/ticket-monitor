@@ -62,7 +62,8 @@ def remaining(net: Net, sid: str, domain: str) -> tuple[dict | None, bytes]:
 
 
 def seats(net: Net, sid: str, domain: str, prices: dict) -> tuple[dict | None, bytes]:
-    """Схема: {all: [«сектор|ряд|место»], free: {место: цена}}. 204 — схема ещё готовится (повтор в следующий раз)."""
+    """Схема: {all: [«сектор|ряд|место»], free: {место: цена}, geo: [[место, сектор, ряд, номер, x, y]]}.
+    204 — схема ещё готовится (повтор в следующий раз)."""
     for attempt in range(2):
         st, body = net.req("%s/order-kit/%s/scheme?domain=%s&platformState=website" % (API, sid, domain), data=b"{}", headers=_h(domain), kind="scheme")
         if st != 204:
@@ -72,7 +73,7 @@ def seats(net: Net, sid: str, domain: str, prices: dict) -> tuple[dict | None, b
     if not isinstance(d, dict):
         return None, body
     quota = {int(k): v for k, v in (d.get("seatQuota") or {}).items()}
-    all_keys, free = [], {}
+    all_keys, free, geo = [], {}, []
     for e in d.get("entities", []):
         if e.get("type") != "rowBlock":
             continue
@@ -80,6 +81,8 @@ def seats(net: Net, sid: str, domain: str, prices: dict) -> tuple[dict | None, b
             for s in row.get("seats", []):
                 k = "%s|%s|%s" % (e.get("name"), row.get("name"), s.get("name"))
                 all_keys.append(k)
+                pos = s.get("position") or {}
+                geo.append([k, e.get("name"), row.get("name"), s.get("name"), pos.get("x"), pos.get("y")])
                 if s["id"] in quota:
                     free[k] = prices.get(quota[s["id"]])
-    return {"all": all_keys, "free": free}, body
+    return {"all": all_keys, "free": free, "geo": geo}, body

@@ -148,6 +148,8 @@ def _kassir_job(conn, net: Net, items: list, stats: Counter) -> None:
                     seats, total = sch["free"], len(sch["all"])
                     g = metrics.gross(sch["all"], sch["free"])  # вал выставленных мест кассы
                     archive.save("kassir", "scheme", key, sbody)
+                    p["ext"]["hall"] = "kassir:%s" % eid   # схема кассы этого сеанса — для «Зала по рядам»
+                    store.save_hall(cur, p["ext"]["hall"], city, venue, sch["geo"])
             ref = archive.save("kassir", "kit", key, kbody) if changed else None
             res = store.record(cur, p["id"], now, free=rem["free"], by_price=rem["by_price"], total=total or p["ext"].get("total"),
                                seats=seats if seats is not None else None, hidden=rem["hidden"],

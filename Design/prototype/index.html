@@ -885,6 +885,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
     <button class="nav-item nav-parent" id="repBtn" aria-expanded="false" aria-controls="repSub"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="3.5" cy="12" r="1.5"/><circle cx="12.5" cy="4" r="1.5"/><path d="M5 12h4.5a2 2 0 0 0 0-4h-3a2 2 0 0 1 0-4H11"/></svg>Репертуар<svg class="nav-chev" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></button>
     <div class="nav-sub" id="repSub" hidden><button class="nav-item" data-view="projects">Проекты</button><button class="nav-item" data-view="touring">Гастролирует</button><button class="nav-item" data-view="favorites">Избранное</button></div>
     <button class="nav-item" data-view="venues"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 14V6l6-4 6 4v8M6 14v-4h4v4"/></svg>Площадки</button>
+    <button class="nav-item" data-view="operators"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 2v4M11 2v4M3.5 6h9v2.5a4.5 4.5 0 0 1-9 0z"/><path d="M8 13v1.5"/></svg>Билетные операторы</button>
     <button class="nav-item" data-view="archive"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2.5" width="12" height="3.5" rx="1"/><path d="M3 6v7.5h10V6M6.5 9h3"/></svg>Архив</button>
     <div class="nav-group" aria-hidden="true">Продажи</div>
     <button class="nav-item" data-view="sales"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3.5 1.8h9v12.4l-1.8-1.1-1.8 1.1-1.9-1.1-1.8 1.1-1.7-1.1z"/><path d="M6 5.5h4M6 8.5h4"/></svg>История продаж</button>
@@ -925,7 +926,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <nav class="bottom-nav" aria-label="Разделы">
   <button data-view="city">Город</button><button data-view="events">Мероприятия</button><button data-view="projects">Репертуар</button><button data-view="archive">Архив</button><button type="button" id="moreBtn" aria-expanded="false" aria-controls="moreSheet">Ещё</button>
 </nav>
-<div class="more-sheet" id="moreSheet" hidden><button data-view="overview">Обзор</button><button data-view="niches">Ниши</button><button data-view="calendar">Календарь событий</button><button data-view="new">Новые события</button><button data-view="venues">Площадки</button><button data-view="sales">История продаж</button><button data-view="dynamics">Динамика продаж</button><button data-view="settings">Настройки</button></div>
+<div class="more-sheet" id="moreSheet" hidden><button data-view="overview">Обзор</button><button data-view="niches">Ниши</button><button data-view="calendar">Календарь событий</button><button data-view="new">Новые события</button><button data-view="venues">Площадки</button><button data-view="operators">Билетные операторы</button><button data-view="sales">История продаж</button><button data-view="dynamics">Динамика продаж</button><button data-view="settings">Настройки</button></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <dialog class="confirm" id="confirmDlg" aria-labelledby="cdTitle" aria-describedby="cdText">
   <h2 id="cdTitle"></h2><p id="cdText" class="sub"></p>
@@ -2945,7 +2946,7 @@ function tourKey(t) {
 var MR = typeof MK === "undefined" ? [] : MK.rows.map(function (r, i) {
   return { i: i, city: MK.cities[r[0]], venue: MK.venues[r[1]], title: r[2], date: r[3], time: r[4], sphere: MK.spheres[r[5]] || "",
     format: MK.formats[r[6]], genre: MK.genres[r[7]] || "", pmin: r[8] || null, pmax: r[9] || null, pushkin: !!r[10], src: r[11],
-    urlK: r[12], urlY: r[13], more: r[14], until: r[15], seen: r[16], age: r[17], yt: !!r[18], key: r[19] || "row" + i, tk: tourKey(r[2]), org: r[20] || "", sales: r[21] || null, duid: r[22] || "" };
+    urlK: r[12], urlY: r[13], more: r[14], until: r[15], seen: r[16], age: r[17], yt: !!r[18], key: r[19] || "row" + i, tk: tourKey(r[2]), org: r[20] || "", sales: r[21] || null, duid: r[22] || "", keys: r[23] || [] };
 }).filter(function (e) { return e.date >= TODAY; });  // снимок мог быть сделан вчера — прошедшие даты не показываем
 MR.forEach(function (e, i) { e.i = i; });
 // Одна таблица «Мероприятий»: строки рынка + мероприятия площадок прямого сбора, которых нет в афише рынка (в т. ч. свои
@@ -3067,6 +3068,48 @@ function repSwitch() {
     return '<button role="tab" data-rep-go="' + v + '" aria-selected="' + (S.view === v) + '">' + VIEW_TITLE[v] + '</button>';
   }).join("") + '</div>';
 }
+// ---------------------------------------------------------------- Билетные операторы (TICKET_PLATFORMS.md, раздел 7)
+var OP_KIND = { regional: "Региональная касса", federal: "Федеральный оператор", aggregator: "Витрина-агрегатор", venue_site: "Сайт площадки" };
+var OP_WHERE = {
+  kassir: "Сервер в Яндекс Облаке · продажи гастролей каждый час · не чаще запроса в 6 с, «предохранитель» при ошибках",
+  yandex: "Сервер в Яндекс Облаке · продажи гастролей каждый час · свободные места — по схеме, сводка только чтобы заметить изменение",
+  vladimirkoncert: "GitHub Actions · все мероприятия подключённых площадок каждый час в :25 · схема зала по местам",
+  odk33: "GitHub Actions · афиша площадки каждый час в :25, продажи — через vladimirkoncert"
+};
+var OP_GIVES = {
+  kassir: "Остаток по ценам; схема мест (у части сеансов); организатор; номер сеанса — со страницы карточки",
+  yandex: "Свободные места по схеме, зал по геометрии схемы, через какие кассы продаётся, дата открытия продаж",
+  vladimirkoncert: "Схема зала со всеми местами и ценами — 5 сайтов одного движка (Владимир, Иваново, Кострома, Ярославль, Ковров)",
+  odk33: "Полная афиша ОДКиИ (Кассир и Яндекс видят 4 из 43)"
+};
+function renderOperators() {
+  var ops = (typeof MK !== "undefined" && MK.salesOps || []).filter(function (o) { return o.kind !== "custom"; });
+  if (!ops.length) return head("Билетные операторы", "") + '<div class="empty"><h2>Сводки операторов пока нет</h2><p style="margin:0">Она приходит с сервера вместе с продажами: «Настройки → Сбор и журнал → Обновить данные с GitHub».</p></div>';
+  var lastDirect = LAST_RUN ? atText(String(LAST_RUN)) : "";
+  var card = function (o) {
+    var r = o.runs24, live = o.id === "kassir" || o.id === "yandex";
+    var stale = live && (!r || !r.last || Date.now() - Date.parse(r.last) > 3 * 3600e3);
+    var state = live ? (stale ? ["warn", "сбор давно не шёл"] : r && r.stopped ? ["warn", "срабатывал «предохранитель»"] : ["ok", "работает"]) : ["ok", "работает"];
+    var only = o.sessions ? Math.round(o.only / o.sessions * 100) : 0;
+    var kpi = function (label, value, sub) { return '<div><div class="kpi-label">' + label + '</div><div class="kpi-value num">' + value + '</div><div class="sub" style="margin:0">' + sub + '</div></div>'; };
+    return '<section class="card card-pad"><div class="card-head" style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><h2>' + esc(o.name) + '</h2>' +
+      '<p class="sub">' + esc(OP_KIND[o.kind] || o.kind) + (o.sites && o.sites.length ? ' · ' + esc(o.sites.join(", ")) : '') + '</p></div>' +
+      '<span class="' + (state[0] === "ok" ? "badge-good" : "badge-risk") + '">' + state[1] + '</span></div>' +
+      '<div class="kgrid">' +
+        kpi("Сеансов в продаже", num(o.sessions), "в афише сейчас") +
+        kpi("Только здесь", num(o.only), only + "% — польза: этих нет у других касс") +
+        kpi(live ? "Под слежением продаж" : "Собирается", live ? num(o.tracked) : "все", live ? (o.shared ? "общий запас с Яндексом — " + num(o.shared) : "гастроли") + (o.no_tickets ? " · не продаёт сам — " + num(o.no_tickets) : "") : "мероприятия подключённых площадок") +
+        kpi("За сутки", live ? num(o.snaps24) + " снимков" : lastDirect ? "сбор " + lastDirect : "—", live ? (r ? num(r.runs) + " прогонов · продано " + num(r.sold) + " мест · ошибок ответа " + num(r.errors) : "прогонов ещё не было") : "по журналу сбора") +
+      '</div>' +
+      '<dl style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:12px 0 0;font-size:13px"><dt class="sub" style="margin:0">Где идёт сбор</dt><dd style="margin:0">' + esc(OP_WHERE[o.id] || "—") + '</dd>' +
+      '<dt class="sub" style="margin:0">Что отдаёт</dt><dd style="margin:0">' + esc(OP_GIVES[o.id] || "—") + '</dd>' +
+      (r && r.last ? '<dt class="sub" style="margin:0">Последний прогон</dt><dd style="margin:0">' + atText(r.last) + (r.summary ? ' · ' + esc(r.summary) : '') + '</dd>' : '') + '</dl></section>';
+  };
+  return head("Билетные операторы", "Кто продаёт билеты, что мы у них собираем и сколько мероприятий видно только у них · сводка " + (MK.salesAt ? atText(MK.salesAt) : "—")) +
+    '<div class="note" style="margin-bottom:16px">Каждая касса видит только свой запас билетов: «занято» у одной — это и проданное, и квоты других касс (TICKET_PLATFORMS.md). Новые региональные кассы подключаются по чек-листу: польза (сколько мероприятий только у неё), что отдаёт, общий ли запас с Кассиром и Яндексом, ограничения, пробный сбор.</div>' +
+    '<div class="grid-2" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,460px),1fr));gap:16px">' + ops.map(card).join("") + '</div>';
+}
+
 function renderMarket() {
   if (!MR.length) return head("Рынок", "Снимок афиши не загружен") + '<div class="empty"><h2>Нет файла market-data.js</h2><p style="margin:0">Он лежит рядом с index.html.</p></div>';
   mVisible(); M_COUNT = null;
@@ -3169,6 +3212,80 @@ var M_CELL = {
       '<div class="sub2 nowrap">с ' + human(s.since.slice(0, 10)) + '</div>';
   }
 };
+// ---------- Карточка мероприятия рынка: продажи (сводка — сразу, подробности — с сервера, /api/sales/detail)
+var OP_NAME = { k: "Кассир", y: "Яндекс Афиша", kassir: "Кассир", yandex: "Яндекс Афиша" };
+function mSalesBlock(e) {
+  var s = e.sales, x = s && mSalesFill(s);
+  var head = '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><h3 style="font-weight:500;font-size:15px">Продажи</h3>' +
+    (s && s.at ? '<span class="sub2">снимок ' + atText(s.at) + ' · ' + OP_NAME[s.op] + '</span>' : '') + '</div>';
+  var kpi = function (label, value, sub) { return '<div><div class="kpi-label">' + label + '</div><div class="kpi-value num">' + value + '</div><div class="sub" style="margin:0">' + sub + '</div></div>'; };
+  var body;
+  if (!e.tour || e.tour !== "tour") body = '<div class="note">Продажи собираются только у гастролей (решение 4 октября). Это мероприятие размечено как местное — в афише, без продаж.</div>';
+  else if (!s || s.free == null) body = '<div class="note">' + (s && s.nt ? 'Яндекс сам не продаёт билеты на это мероприятие — остаток смотрим у Кассира.' : 'Данных о продажах ещё нет: сбор продаж гастролей идёт с 4 октября, ближние даты — первыми.') + '</div>';
+  else body = '<div class="kgrid">' +
+    kpi("Заполняемость", x ? x.f + "%" : "—", x ? (x.exp ? "занято " + num(x.taken) + " из " + num(x.total) : "по залу: свободно " + num(x.left) + " из " + num(x.total)) : "") +
+    kpi("Свободно сейчас", num(s.free), s.exp ? "из " + num(s.exp) + " выставленных" : s.hall ? "из " + num(s.hall) + " мест в зале" : "") +
+    kpi("Вал", s.g ? money(s.g) : "—", s.g ? "от " + money(s.glo) + " до " + money(s.ghi) + (s.gx != null ? " · точно " + Math.round(s.gx * 100) + "%" : "") : "появится со схемой мест") +
+    kpi("Выручка", s.sold ? money(s.rev) : "—", s.since ? (s.sold ? num(s.sold) + " мест · " : "продаж пока нет · ") + "с " + human(s.since.slice(0, 10)) : "") +
+    '</div>';
+  return '<section id="mSales">' + head + body + '<div id="mSalesMore" style="margin-top:12px">' +
+    (ON_APP ? (e.keys && e.keys.length && e.tour === "tour" ? '<div class="sub">Загружаем подробности с сервера…</div>' : '') :
+      '<div class="note">Подробности продаж (кассы, график по снимкам, зал по рядам) — когда прототип открыт через приложение: python3 app.py → http://127.0.0.1:5050/proto/</div>') + '</div></section>';
+}
+function mSalesLoad(e) {
+  if (!ON_APP || !e.keys || !e.keys.length || e.tour !== "tour") return;
+  var box = function () { return $("mSalesMore"); };
+  apiJson("GET", "/api/sales/detail?keys=" + encodeURIComponent(e.keys.join(","))).then(function (x) {
+    if (!box() || S.m.sel !== e.i) return;  // карточку уже закрыли или открыли другую
+    if (!x.ok) { box().innerHTML = '<div class="note">' + esc((x.d && x.d.error) || "сервер не ответил") + '</div>'; return; }
+    var pools = (x.d.pools || []).filter(function (p) { return p.snapshots || p.nt; });
+    box().innerHTML = pools.length ? pools.map(mSalesPool).join("") : '<div class="sub">Снимков у этого сеанса ещё не было.</div>';
+  }, function () { if (box()) box().innerHTML = '<div class="note">' + NO_APP + '</div>'; });
+}
+function mSalesPool(p) {
+  var name = OP_NAME[p.op] || p.op;
+  if (p.nt) return '<div class="note"><b style="font-weight:500">' + name + '</b> — сам не продаёт билеты на это мероприятие (ссылка на другую кассу). Перепроверяем раз в неделю.</div>';
+  var g = p.gross, total = p.exp || p.hall;
+  var facts = [
+    ["Свободно", num(p.free) + (total ? " из " + num(total) + (p.exp ? " выставленных" : " в зале") : "")],
+    ["Продано с начала слежения", num(p.sold) + " " + plural(p.sold, "место", "места", "мест") + (p.rev ? " · " + money(p.rev) : "") + (p.returned ? " (возвратов " + num(p.returned) + ")" : "")],
+    ["Вал", g ? money(g.gross) + " · от " + money(g.gross_lo) + " до " + money(g.gross_hi) + " · точно " + Math.round((g.exact_share || 0) * 100) + "%" : "—"],
+    ["Слежение", "с " + atText(p.since) + " · снимков " + num(p.snapshots) + (p.anomalies ? " · сбоев «весь зал занят» " + p.anomalies : "") + (p.sale_opening ? " · продажи открыты " + human(p.sale_opening.slice(0, 10)) : "")]
+  ];
+  var tags = (p.shared ? '<span class="chip">запас общий с другой кассой</span>' : '') + (p.op === "yandex" && p.services && p.services.length ? '<span class="chip" title="Через какие кассы продаёт Яндекс">' + esc(p.services.join(", ")) + '</span>' : '') +
+    (p.scheme ? '' : '<span class="chip" style="border-style:dashed">без схемы мест — по ценам</span>');
+  var recent = (p.recent || []).slice(0, 10).map(function (r) {
+    var seat = r[1] ? r[1].split("|") : null;
+    return '<li style="display:flex;gap:10px;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--line)"><span class="nowrap">' + atText(r[0]) + '</span><span style="flex-grow:1;min-width:0">' +
+      (seat ? esc(seat[0]) + ', ряд ' + esc(seat[1]) + ', место ' + esc(seat[2]) : num(r[4] || 1) + ' мест') + '</span><span class="num nowrap">' + (r[2] ? num(r[2]) + ' ₽' : '') + '</span><span class="nowrap" style="color:' + (r[3] === "sale" ? "var(--good)" : "var(--ink-3)") + '">' + (r[3] === "sale" ? "продажа" : "возврат") + '</span></li>';
+  }).join("");
+  return '<div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px">' +
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><b style="font-weight:500">' + name + (p.op === "kassir" ? " · схема кассы" : " · по залу") + '</b><span class="sub2">снимок ' + atText(p.at) + '</span></div>' +
+    (tags ? '<div class="chips" style="margin-top:6px">' + tags + '</div>' : '') +
+    '<dl class="facts" style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0;font-size:13px">' + facts.map(function (f) { return '<dt class="sub" style="margin:0">' + f[0] + '</dt><dd style="margin:0">' + f[1] + '</dd>'; }).join("") + '</dl>' +
+    mFreeChart(p.history || []) +
+    (p.rows && p.rows.length ? '<h4 style="font-weight:500;font-size:14px;margin:14px 0 6px">Зал по рядам</h4>' + hallRows(p.rows.map(function (z) { return [z[0], z[1].map(function (r) { return [r[0], r[1], r[1] - r[2], r[3]]; })]; })) : '') +
+    (recent ? '<h4 style="font-weight:500;font-size:14px;margin:14px 0 4px">Последние продажи и возвраты</h4><ul style="list-style:none;margin:0;padding:0">' + recent + '</ul>' : '') +
+    '</div>';
+}
+// «Свободно по снимкам»: ступенька на каждый снимок с изменением; «весь зал занят» — точкой без линии
+function mFreeChart(hist) {
+  var pts = hist.filter(function (h) { return !h[2] && h[1] != null; }).map(function (h) { return { t: Date.parse(h[0]), v: h[1], iso: h[0] }; });
+  if (pts.length < 2) return '<div class="note">Свободно ' + (pts[0] ? num(pts[0].v) + ' — так с ' + atText(pts[0].iso) : '—') + '. Линия появится, когда остаток изменится.</div>';
+  var t0 = pts[0].t, t1 = Math.max(Date.now(), pts[pts.length - 1].t), lo = Math.min.apply(null, pts.map(function (p) { return p.v; })), hi = Math.max.apply(null, pts.map(function (p) { return p.v; }));
+  var pad = Math.max(2, Math.round((hi - lo) * 0.15)); lo = Math.max(0, lo - pad); hi = hi + pad;
+  var W = 380, H = 160, pl = 40, pr = 14, pt = 12, pb = 30;
+  var x = function (t) { return pl + (t - t0) / Math.max(1, t1 - t0) * (W - pl - pr); }, y = function (v) { return pt + (1 - (v - lo) / Math.max(1, hi - lo)) * (H - pt - pb); };
+  var d = "M" + x(pts[0].t).toFixed(1) + "," + y(pts[0].v).toFixed(1);
+  pts.slice(1).forEach(function (p) { d += "H" + x(p.t).toFixed(1) + "V" + y(p.v).toFixed(1); });
+  d += "H" + x(t1).toFixed(1);
+  var dots = pts.map(function (p) { return '<circle cx="' + x(p.t).toFixed(1) + '" cy="' + y(p.v).toFixed(1) + '" r="3" fill="#1d6fae" stroke="#fff" stroke-width="1.5"><title>' + atText(p.iso) + ': свободно ' + num(p.v) + '</title></circle>'; }).join("");
+  var label = function (t, anchor) { return '<text x="' + x(t).toFixed(1) + '" y="' + (H - pb + 18) + '" font-size="11" fill="#78716c" text-anchor="' + anchor + '">' + atText(new Date(t).toISOString().slice(0, 16)) + '</text>'; };
+  return '<div class="pace"><b style="font-weight:500">Свободно по снимкам</b><svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Свободно: ' + num(pts[0].v) + ' в начале, ' + num(pts[pts.length - 1].v) + ' сейчас" style="display:block;margin-top:6px">' +
+    [hi, lo].map(function (v) { return '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="' + (v === lo ? "#d6d3d1" : "#f0efed") + '"/><text x="' + (pl - 6) + '" y="' + (y(v) + 4) + '" font-size="11" fill="#78716c" text-anchor="end">' + num(v) + '</text>'; }).join("") +
+    '<path d="' + d + '" fill="none" stroke="#1d6fae" stroke-width="2" stroke-linejoin="round"/>' + dots + label(t0, "start") + label(t1, "end") + '</svg>' +
+    '<p class="sub" style="margin:6px 0 0">Линия вниз — продажи, вверх — возвраты или открытые места. Снимки «весь зал занят» (сбой сайта) не показаны.</p></div>';
+}
 function mSalesFill(s) {
   var total = s.exp || s.hall;
   if (s.free == null || !total) return null;
@@ -4427,7 +4544,7 @@ function mDrawer(e) {
       '<div style="grid-column:1/-1"><div class="kpi-label">Организатор</div><div style="font-size:15px;line-height:1.4;margin-top:4px">' +
         (e.org ? esc(e.org) : '<span class="muted">' + (e.urlK ? 'ещё не собран — страницы Кассира проверяются по вечерам' : 'неизвестен — мероприятие только на Яндекс Афише') + '</span>') + '</div></div>' +
     '</div>' +
-    '<div class="note">Для рынка собирается только афиша — заполняемость, вал и выручка не считаются. Чтобы следить за продажами площадки, подключите её в «Настройки → Площадки».</div>' +
+    mSalesBlock(e) +
     (here.length ? '<section><h3 style="font-weight:500;font-size:15px;margin-bottom:4px">Другие даты в ' + esc(e.city) + '</h3><ul class="list">' + here.slice(0, 12).map(line).join("") + '</ul></section>' : '') +
     '<section><h3 style="font-weight:500;font-size:15px;margin-bottom:4px">Гастроли — в других городах</h3>' + (away.length ? '<ul class="list">' + away.slice(0, 30).map(line).join("") + '</ul>' + (away.length > 30 ? '<p class="sub">И ещё ' + (away.length - 30) + '.</p>' : '') : '<div class="note" style="margin-top:8px">В других городах списка такого названия нет.</div>') + '</section>' +
     '<div style="display:flex;gap:10px;flex-wrap:wrap">' + links + (mUniq(same, "city").filter(function (c) { return c !== e.city; }).length ? '<button class="pill" data-mproj="' + esc(e.pk) + '" style="justify-content:center;height:44px;font-weight:500;flex:1">Открыть проект: маршрут и где его нет →</button>' : '') + '</div>';
@@ -4435,7 +4552,7 @@ function mDrawer(e) {
 function openMDrawer(i) {
   var e = MR[i]; if (!e) return;
   var dd = mDirect(e); if (dd && findEvent(dd.i)) { openDrawer(dd.i); return; }
-  S.m.sel = i; S.m.editing = false; showDrawer(mDrawer(e));
+  S.m.sel = i; S.m.editing = false; showDrawer(mDrawer(e)); mSalesLoad(e);
   document.querySelectorAll(".ev-table tbody tr[data-mi]").forEach(function (tr) { tr.classList.toggle("sel", +tr.getAttribute("data-mi") === i); });
 }
 function mGo(patch) { for (var k in patch) S.m[k] = patch[k]; S.m.limit = 200; S.m.filter = "all"; buildCitySelect(); render(); window.scrollTo(0, 0); }
@@ -5188,7 +5305,7 @@ function mSplitTools(html) {
 
 // ---------------------------------------------------------------- рендер и события
 // Разделы, которые на телефоне спрятаны в «Ещё»
-var MORE_VIEWS = ["overview", "niches", "calendar", "new", "venues", "sales", "dynamics", "settings"];
+var MORE_VIEWS = ["overview", "niches", "calendar", "new", "venues", "operators", "sales", "dynamics", "settings"];
 function render() {
   syncMarketView(); S.city = S.m.city;  // раздел — по вкладке «Рынка», если её переключил код; город шапки один на все разделы
   var ip = $("infoPop"); if (ip) ip.hidden = true;  // элемент под курсором заменится — его подсказка не должна «висеть»
@@ -5204,7 +5321,7 @@ function render() {
   $("dateLabel").textContent = S.period === "custom" ? rangeLabel(S.from, S.to) : "Даты";
   $("dateBtn").style.borderColor = S.period === "custom" ? "var(--soot)" : "";
   HEAD_SUB = !isM() && SUBS[S.view] ? subSwitch(S.view) : "";
-  $("view").innerHTML = isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? renderVenues() : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : renderEvents();
+  $("view").innerHTML = isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? renderVenues() : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : renderEvents();
   $("view").classList.toggle("enter", !!S.enter); S.enter = false; S.colsAnim = false;
   ddClose(false); enhanceSelects(document.querySelector(".top")); enhanceSelects($("view")); vdRestore();
   var mt = document.querySelector('.mtabs [aria-selected="true"]');  // на телефоне полоса вкладок «Рынка» прокручивается к выбранной
@@ -5269,7 +5386,7 @@ $("view").addEventListener("change", function (ev) {
     savePrefs(); render();
   }
 });
-var VIEWS = ["overview", "city", "niches", "calendar", "new", "events", "projects", "touring", "favorites", "venues", "archive", "sales", "dynamics", "settings", "market"];
+var VIEWS = ["overview", "city", "niches", "calendar", "new", "events", "projects", "touring", "favorites", "venues", "operators", "archive", "sales", "dynamics", "settings", "market"];
 if (VIEWS.indexOf(location.hash.slice(1)) >= 0) S.view = location.hash.slice(1);
 // Кнопки «назад/вперёд» браузера переключают разделы
 S.enter = true;  // первый показ страницы тоже с анимацией
