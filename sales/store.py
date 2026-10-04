@@ -58,7 +58,7 @@ def _last(cur, pool_id: int, normal_with_seats: bool = False):
 
 def record(cur, pool_id: int, now: datetime, *, free: int | None, by_price: dict | None, total: int | None,
            seats: dict | None = None, sale_status: str | None = None, hidden: bool = False, summary: dict | None = None,
-           raw_ref: str | None = None) -> dict:
+           raw_ref: str | None = None, gross: dict | None = None) -> dict:
     """
     Пишет наблюдение, если что-то изменилось, и продажи с прошлого нормального наблюдения.
     seats — свободные места схемы {место: цена} (если скачана); by_price — свободно по ценам.
@@ -88,10 +88,12 @@ def record(cur, pool_id: int, now: datetime, *, free: int | None, by_price: dict
         anomaly = is_flip(len(prev_seats), len(set(prev_seats) - set(seats)))
     else:
         anomaly = bool(normal and normal["free"] is not None and free is not None and is_flip(normal["free"], max(0, normal["free"] - free)))
-    cur.execute("INSERT INTO observations (pool_id, ts, checked_at, free, free_by_price, total, sale_status, hidden, anomaly, summary, seat_prices, raw_ref) "
-                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
+    if gross:
+        summary = {**(summary or {}), "gross": gross}
+    cur.execute("INSERT INTO observations (pool_id, ts, checked_at, free, free_by_price, total, sale_status, hidden, anomaly, summary, seat_prices, raw_ref, gross) "
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)",
                 (pool_id, now, now, free, Json(by_price) if by_price is not None else None, total, sale_status, hidden, anomaly,
-                 Json(summary) if summary else None, Json(seats) if seats is not None else None, raw_ref))
+                 Json(summary) if summary else None, Json(seats) if seats is not None else None, raw_ref, (gross or {}).get("gross")))
     out = {"changed": True, "anomaly": anomaly, "sold": 0, "returned": 0}
     if anomaly or not normal:
         return out
@@ -119,6 +121,12 @@ def save_hall(cur, key: str, city: str, venue: str, seats: list) -> None:
     cur.execute("INSERT INTO live_halls (key, city, venue, capacity, seats, updated) VALUES (%s,%s,%s,%s,%s,now()) "
                 "ON CONFLICT (key) DO UPDATE SET capacity = EXCLUDED.capacity, seats = EXCLUDED.seats, updated = now()",
                 (key, city, venue, len(seats), Json(seats)))
+
+
+def hall_keys(cur, key: str) -> list[str]:
+    cur.execute("SELECT seats FROM live_halls WHERE key = %s", (key,))
+    r = cur.fetchone()
+    return [s[0] for s in r[0]] if r else []
 
 
 def hall_capacity(cur, key: str) -> int | None:

@@ -19,7 +19,7 @@ from zoneinfo import ZoneInfo
 
 from psycopg2.extras import Json, execute_values
 
-from competitors import collector, curation, market, protodata, seatmap, vladimirkoncert
+from competitors import collector, curation, direct_match, market, protodata, seatmap, vladimirkoncert
 from competitors.storage import CONFIG_DIR, load_json
 from db import connect
 from db.projects import Registry, homonym_keys, title_key
@@ -40,14 +40,6 @@ OPERATORS = [
     ("odk33", "ОДКиИ (odk33.ru)", "venue_site", "odk33", ["odk33.ru"], {"scheme": "через vladimirkoncert"}),
     ("custom", "Свои мероприятия", "custom", None, [], {}),
 ]
-
-
-# Площадки прямого сбора: как они пишутся в афише рынка (Кассир / Яндекс) — одна площадка в базе
-DIRECT_VENUE_ALIASES = {
-    ("Владимир", "ОДКиИ"): ["Областной Дворец культуры и искусства", "Дворец культуры и искусства"],
-    ("Иваново", "Центр культуры и отдыха"): ["ЦКиО"],
-    ("Иваново", "Ивановский музыкальный театр"): ["Музыкальный театр"],
-}
 
 
 def _op(key: str) -> str:
@@ -71,7 +63,7 @@ class Migration:
         self.city_tz: dict[str, str] = {}
         self.venue_id: dict[tuple, int] = {}
         self.venue_kind: dict[tuple, str] = {}
-        self.alias_to = {(city, curation.venue_key(city, a)): name for (city, name), al in DIRECT_VENUE_ALIASES.items() for a in al}
+        self.alias_to = direct_match.ALIAS_TO
 
     # ------------------------------------------------------------ справочники
     def operators(self):
@@ -254,10 +246,7 @@ class Migration:
             # Тот же сеанс уже есть в афише рынка (Кассир / Яндекс) — одна строка, ещё одна карточка
             # Та же площадка и время + похожее название (DATA_MODEL.md, правило 1): закрытый «Стинг» и новый «Хор русского
             # рока» CAGMO в один вечер в Арт Холле — разные сеансы
-            twin = next((m for m in slot.get((city, date, time), [])
-                         if (market.same_venue(m["venue"], e["venue"], city, aliases)
-                             or self.alias_to.get((city, curation.venue_key(city, m["venue"]))) == e["venue"])
-                         and market.similar_title(m["title"], e["title"])), None)
+            twin = next((m for m in slot.get((city, date, time), []) if direct_match.same_session(m, e, aliases)), None)
             if twin:
                 sid = twin["_sid"]
                 rep["склеено с рынком"] += 1

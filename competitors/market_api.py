@@ -41,7 +41,7 @@ def proto_index():
 @bp.get("/proto/market-data.js")
 def proto_market_data():
     # Свежие данные после ./pull_data.sh без отдельной команды экспорта; пересобираем, только если данные изменились
-    files = [market.EVENTS_FILE, market.STATUS_FILE, market.ARCHIVE_FILE]
+    files = [market.EVENTS_FILE, market.STATUS_FILE, market.ARCHIVE_FILE, market.SALES_SNAPSHOT, collector.EVENTS_FILE]
     key = tuple(f.stat().st_mtime if f.exists() else 0 for f in files)
     if _cache["key"] != key:
         try:

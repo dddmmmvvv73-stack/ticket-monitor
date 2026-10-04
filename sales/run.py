@@ -19,7 +19,7 @@ from datetime import datetime
 from psycopg2.extras import Json
 
 from db import connect
-from sales import archive, kassir, store, yandex
+from sales import archive, kassir, metrics, store, yandex
 from sales.net import Net, Stopped
 
 WORK_SQL = """
@@ -86,8 +86,9 @@ def _yandex_job(conn, net: Net, items: list, stats: Counter) -> None:
             else:
                 seats, hp_body = (None, b"") if s.get("admission") else yandex.free_seats(net, skey, wcookie)
                 ref = archive.save("yandex", "hallplan" if seats is not None else "summary", key, hp_body if seats is not None else sbody)
+                g = metrics.gross(store.hall_keys(cur, hall_key), seats) if seats and hall_key else None  # вал по залу — оценка
                 res = store.record(cur, p["id"], now, free=len(seats) if seats is not None else avail, by_price=None, total=capacity,
-                                   seats=seats, sale_status=sale, summary=info, raw_ref=ref)
+                                   seats=seats, sale_status=sale, summary=info, raw_ref=ref, gross=g)
                 obs_by_price = None
                 if seats is not None:
                     obs_by_price = {str(k): v for k, v in Counter(seats.values()).items()}
@@ -140,16 +141,17 @@ def _kassir_job(conn, net: Net, items: list, stats: Counter) -> None:
                 conn.commit()
                 continue
             changed = p["ext"].get("by_price") != rem["by_price"] or not p["ext"].get("seen")
-            seats = total = None
+            seats = total = g = None
             if changed and rem["scheme"]:
                 sch, sbody = kassir.seats(net, eid, domain, rem["prices"])
                 if sch:
                     seats, total = sch["free"], len(sch["all"])
+                    g = metrics.gross(sch["all"], sch["free"])  # вал выставленных мест кассы
                     archive.save("kassir", "scheme", key, sbody)
             ref = archive.save("kassir", "kit", key, kbody) if changed else None
             res = store.record(cur, p["id"], now, free=rem["free"], by_price=rem["by_price"], total=total or p["ext"].get("total"),
                                seats=seats if seats is not None else None, hidden=rem["hidden"],
-                               summary={"sectors": rem["sectors"], "scheme": rem["scheme"]} if changed else None, raw_ref=ref)
+                               summary={"sectors": rem["sectors"], "scheme": rem["scheme"]} if changed else None, raw_ref=ref, gross=g)
             p["ext"].update(sid=eid, domain=domain, by_price=rem["by_price"], free=rem["free"], seen=True, total=total or p["ext"].get("total"))
             store.save_ext(cur, p)
             store.schedule(cur, p["id"], d, now)
