@@ -6,16 +6,19 @@
     GET  /proto/competitors-data.js  мероприятия, залы и продажи конкурентов — из data/competitors (competitors/protodata.py)
     GET  /api/market/curation     разметка: проекты, площадки, правки мероприятий, фильтры
     POST /api/market/curation     одна правка {"op": "project"|"venue"|"edit"|"revert"|"filters"|"niche", …}
+    GET  /api/market/myprojects   избранные проекты и ваши записи о них (competitors/myprojects.py)
+    POST /api/market/myprojects   одна правка {"op": "fav"|"notes"|"seen"|"link"|"skip", …}
 
 Каждая правка сразу записывается в config/ и в фоне отправляется на GitHub (competitors/sync.py),
-поэтому сбор на сервере применяет её с ближайшего запуска. Ошибки проверки — 400 {"error": текст}.
+поэтому сбор на сервере применяет её с ближайшего запуска. Избранное и записи о проектах — только на этом
+компьютере (config/my_projects.json вне git: там контакты). Ошибки проверки — 400 {"error": текст}.
 """
 
 from __future__ import annotations
 
 from flask import Blueprint, Response, jsonify, redirect, request, send_from_directory
 
-from competitors import collector, curation, edits, market, protodata, sync
+from competitors import collector, curation, edits, market, myprojects, protodata, sync
 from competitors.classifier import FORMATS, GENRES, SPHERES
 from competitors.storage import BASE_DIR, load_json
 
@@ -92,3 +95,18 @@ def curation_post():
         return jsonify({"error": str(e)}), 400
     sync.publish_files([str(curation.FILE.relative_to(BASE_DIR))], f"Рынок: {note}", collector.log)
     return jsonify({"curation": cur})
+
+
+@bp.get("/api/market/myprojects")
+def myprojects_get():
+    return jsonify(myprojects.load())
+
+
+@bp.post("/api/market/myprojects")
+def myprojects_post():
+    op = request.get_json(silent=True) or {}
+    try:
+        data, _note = myprojects.apply_op(op)
+    except myprojects.MyProjectsError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify(data)  # не отправляется на GitHub — репозиторий публичный
