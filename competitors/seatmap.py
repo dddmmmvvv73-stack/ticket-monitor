@@ -185,21 +185,43 @@ def price_seats(seats: list[dict], registry: dict[str, int]) -> None:
 
 # ---------------------------------------------------------------- состояние между сборами
 
+# «Весь зал разом занят» — не продажи: сбой сайта, ночное закрытие продаж или снятый сеанс (CAGMO в Арт Холле
+# заменил программы 26.12 и 06.02 — старые сеансы закрылись целиком). Признак: за один сбор недоступны стали
+# ≥ 90% мест, свободных в прошлый раз, и таких мест не меньше 20.
+FLIP_SHARE = 0.9
+FLIP_MIN_SEATS = 20
+
+
+def is_flip(free_before: int, became_taken: int) -> bool:
+    return free_before >= FLIP_MIN_SEATS and became_taken >= FLIP_SHARE * free_before
+
+
 def update_state(state: dict, seats: list[dict], now_iso: str) -> dict:
     """
     state (на событие): {
       registry:  {seat_id: цена}      — цены всех мест, когда-либо виденных свободными
-      last_free: [seat_id]            — свободные места прошлого сбора
+      last_free: [seat_id]            — свободные места прошлого нормального сбора
       sold:      {seat_id: {price, ts}} — подтверждённые продажи
       returned:  число возвратов (место снова стало свободным)
+      suspect:   {since, last, free_before, free_now} — сейчас «весь зал занят» (см. is_flip)
     }
     Возвращает обновлённый state; подтверждённые продажи — переход свободно → занято.
+    «Весь зал занят» продажами не считается: state остаётся как после прошлого нормального
+    сбора (следующий сбор сравнивается с ним), отмечается только suspect.
     """
     registry = dict(state.get("registry", {}))
     last_free = set(state.get("last_free", []))
     sold = dict(state.get("sold", {}))
     returned = state.get("returned", 0)
     first_snapshot = "last_free" not in state
+
+    if not first_snapshot:
+        free_ids = {seat["id"] for seat in seats if not seat["taken"]}
+        became_taken = len(last_free - free_ids - set(sold))
+        if is_flip(len(last_free - set(sold)), became_taken):
+            suspect = dict(state.get("suspect") or {"since": now_iso, "free_before": len(last_free)})
+            suspect.update(last=now_iso, free_now=len(free_ids))
+            return {**{k: v for k, v in state.items() if k not in ("seats", "layout")}, "suspect": suspect}
 
     free_now = set()
     for seat in seats:
@@ -219,7 +241,54 @@ def update_state(state: dict, seats: list[dict], now_iso: str) -> dict:
         "sold": sold,
         "returned": returned,
         "tracking_since": state.get("tracking_since", now_iso),
+        **({"flips_repaired": state["flips_repaired"]} if "flips_repaired" in state else {}),
     }
+
+
+def repair_flips(state: dict, history: list[dict]) -> dict:
+    """
+    Разовая починка состояний, записанных до правила is_flip (меняет state и history на месте):
+    точки истории «весь зал занят» помечаются anomaly (продажи в них — как в прошлой нормальной точке);
+    ложные продажи такого сбора убираются, если зал так и остался закрыт (места снова считаются
+    свободными прошлого нормального сбора), или переносятся на время возврата зала — это настоящие
+    продажи за тот промежуток; «возвраты» после возврата зала вычитаются. Возвращает отчёт.
+    """
+    report = {"anomalies": 0, "removed": 0, "moved": 0, "returned_fixed": 0}
+    sold = state.get("sold", {})
+    normal = None  # последняя нормальная точка
+    for i, p in enumerate(history):
+        if normal is None or p.get("seats_free") is None:
+            normal = p if p.get("seats_free") is not None else normal
+            continue
+        free_before = normal.get("seats_free") or 0
+        if not (free_before >= FLIP_MIN_SEATS and p["seats_free"] <= (1 - FLIP_SHARE) * free_before):
+            normal = p
+            continue
+        report["anomalies"] += 1
+        raw_sold = p.get("sold_confirmed")
+        p["anomaly"] = True
+        p["sold_confirmed"], p["revenue_confirmed"] = normal.get("sold_confirmed"), normal.get("revenue_confirmed")
+        back = next((q for q in history[i + 1:] if q.get("seats_free") is not None
+                     and q["seats_free"] > (1 - FLIP_SHARE) * free_before), None)
+        fake = [s for s, sale in sold.items() if sale.get("ts") == p["ts"]]
+        if back is None:  # зал так и остался закрыт — продаж не было
+            for s in fake:
+                sold.pop(s)
+            state["last_free"] = sorted(set(state.get("last_free", [])) | set(fake))
+            state["suspect"] = {"since": p["ts"], "last": history[-1]["ts"], "free_before": free_before,
+                                "free_now": p["seats_free"]}
+            report["removed"] += len(fake)
+        else:  # зал вернулся: оставшиеся занятыми — продажи за промежуток, по времени возврата
+            for s in fake:
+                sold[s]["ts"] = back["ts"]
+            report["moved"] += len(fake)
+            if raw_sold is not None and back.get("sold_confirmed") is not None:
+                fixed = min(state.get("returned", 0), max(0, raw_sold - back["sold_confirmed"]))
+                state["returned"] = state.get("returned", 0) - fixed
+                report["returned_fixed"] += fixed
+    state["sold"] = sold
+    state["flips_repaired"] = 1
+    return report
 
 
 # ---------------------------------------------------------------- бронь зала

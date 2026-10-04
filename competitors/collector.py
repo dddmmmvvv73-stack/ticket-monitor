@@ -213,6 +213,27 @@ def _expand_seats(compact: list[list]) -> list[dict]:
     return seats
 
 
+def _repair_flips_once() -> None:
+    """Разовая починка «весь зал занят», записанного до правила seatmap.is_flip (у каждого события — один раз)."""
+    total = {"anomalies": 0, "removed": 0, "moved": 0, "returned_fixed": 0}
+    for path in SEATS_DIR.glob("*.json") if SEATS_DIR.exists() else []:
+        state = load_json(path, {})
+        if not state or state.get("flips_repaired"):
+            continue
+        hpath = HISTORY_DIR / path.name
+        history = load_json(hpath, [])
+        report = seatmap.repair_flips(state, history)
+        save_json(path, state)
+        if report["anomalies"]:
+            save_json(hpath, history)
+            log(f"Починка «весь зал занят»: {state.get('title', path.stem)} — сбоев {report['anomalies']}, "
+                f"ложных продаж убрано {report['removed']}, перенесено {report['moved']}, возвратов вычтено {report['returned_fixed']}")
+        for k in total:
+            total[k] += report[k]
+    if total["anomalies"]:
+        log(f"Починка «весь зал занят» завершена: сбоев {total['anomalies']}, ложных продаж убрано {total['removed']}")
+
+
 def _update_seat_states(rows: list[dict], now_iso: str) -> None:
     """Сохраняет схему зала каждого события и отмечает подтверждённые продажи."""
     new_sales = new_sales_rub = 0
@@ -223,6 +244,12 @@ def _update_seat_states(rows: list[dict], now_iso: str) -> None:
         path = seat_state_path(row["uid"])
         previous = load_json(path, {})
         state = seatmap.update_state(previous, seats, now_iso)
+        suspect = state.get("suspect")
+        if suspect and suspect.get("last") == now_iso:  # «весь зал занят» — продажами не считаем
+            row["seats_suspect"] = suspect["since"]
+            if suspect["since"] == now_iso:
+                log(f"⚠ {row['title']} ({row.get('date')}): разом недоступны {suspect['free_before'] - suspect['free_now']} "
+                    f"из {suspect['free_before']} свободных мест — не считаю продажами (сбой сайта или сеанс снят с продажи)")
         fresh = set(state["sold"]) - set(previous.get("sold", {}))
         new_sales += len(fresh)
         new_sales_rub += sum(state["sold"][s]["price"] or 0 for s in fresh)
@@ -353,6 +380,8 @@ def _append_history(uid: str, row: dict, now_iso: str) -> None:
     point = {f: row.get(f) for f in HISTORY_FIELDS}
     if history and all(history[-1].get(f) == point[f] for f in HISTORY_FIELDS):
         return  # ничего не поменялось — не раздуваем историю
+    if row.get("seats_suspect"):
+        point["anomaly"] = True  # «весь зал занят» — графики и «что изменилось» эту точку пропускают
     history.append({"ts": now_iso, **point})
     save_json(path, history)
 
@@ -394,6 +423,7 @@ def run_collection(trigger: str = "manual") -> bool:
         now_iso = datetime.now().isoformat(timespec="seconds")
         for row in rows:
             row["date"] = row["date"].isoformat() if isinstance(row.get("date"), date) else row.get("date")
+        _repair_flips_once()
         _update_seat_states(rows, now_iso)
 
         events = load_events()

@@ -186,7 +186,8 @@ def build() -> dict:
     venues = _venues(events)
     by_stem = {collector.seat_state_path(e["uid"]).stem: e for e in events}
     states = collector.load_seat_states()
-    histories = {e["uid"]: load_json(collector.history_path(e["uid"]), []) for e in events}
+    # Точки «весь зал занят» (anomaly, см. seatmap.is_flip) — не продажи и не освобождение мест: пропускаем
+    histories = {e["uid"]: [p for p in load_json(collector.history_path(e["uid"]), []) if not p.get("anomaly")] for e in events}
 
     def vinfo(e):
         return venues.get(e.get("source_id") or e.get("source"), ("?", e.get("venue") or "", e.get("city") or ""))
