@@ -1,0 +1,3 @@
+# База данных (DATA_MODEL.md). pgserver — Postgres 16 для ноутбука, в облаке не нужен (там DATABASE_URL).
+psycopg2-binary==2.9.12
+pgserver==0.1.4

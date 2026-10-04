@@ -43,6 +43,16 @@ MARKET_ONLY="Владимир,Иваново" python3 -m competitors.market   # 
 сайт → площадка → город. Список сохраняется в `config/competitors.json` и
 сам уходит на GitHub, сбор подхватывает его со следующего запуска.
 
+**База данных** (шаг 4 плана, [DATA_MODEL.md](DATA_MODEL.md)) — пока параллельно файлам: сбор и прототип
+её не читают. На ноутбуке — локальный Postgres 16 (пакет `pgserver`, файлы в `data/pgdata`, не в git):
+
+```bash
+python3 -m pip install --user -r requirements-db.txt   # один раз
+python3 -m db.migrate          # пересобрать базу из data/competitors и config/ и сверить с файлами
+python3 -m db.migrate verify   # только сверка
+python3 -m db.migrate stop     # остановить локальный Postgres
+```
+
 ## 1. Установка (один раз)
 
 ```bash
