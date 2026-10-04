@@ -3095,11 +3095,11 @@ function renderOperators() {
     return '<section class="card card-pad"><div class="card-head" style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><h2>' + esc(o.name) + '</h2>' +
       '<p class="sub">' + esc(OP_KIND[o.kind] || o.kind) + (o.sites && o.sites.length ? ' · ' + esc(o.sites.join(", ")) : '') + '</p></div>' +
       '<span class="' + (state[0] === "ok" ? "badge-good" : "badge-risk") + '">' + state[1] + '</span></div>' +
-      '<div class="kgrid">' +
+      '<div class="kgrid" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
         kpi("Сеансов в продаже", num(o.sessions), "в афише сейчас") +
         kpi("Только здесь", num(o.only), only + "% — польза: этих нет у других касс") +
         kpi(live ? "Под слежением продаж" : "Собирается", live ? num(o.tracked) : "все", live ? (o.shared ? "общий запас с Яндексом — " + num(o.shared) : "гастроли") + (o.no_tickets ? " · не продаёт сам — " + num(o.no_tickets) : "") : "мероприятия подключённых площадок") +
-        kpi("За сутки", live ? num(o.snaps24) + " снимков" : lastDirect ? "сбор " + lastDirect : "—", live ? (r ? num(r.runs) + " прогонов · продано " + num(r.sold) + " мест · ошибок ответа " + num(r.errors) : "прогонов ещё не было") : "по журналу сбора") +
+        kpi(live ? "За сутки" : "Сбор", live ? num(o.snaps24) + " снимков" : "каждый час", live ? (r ? num(r.runs) + " прогонов · продано " + num(r.sold) + " мест · ошибок ответа " + num(r.errors) : "прогонов ещё не было") : (lastDirect ? "последний — " + lastDirect : "по журналу сбора")) +
       '</div>' +
       '<dl style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:12px 0 0;font-size:13px"><dt class="sub" style="margin:0">Где идёт сбор</dt><dd style="margin:0">' + esc(OP_WHERE[o.id] || "—") + '</dd>' +
       '<dt class="sub" style="margin:0">Что отдаёт</dt><dd style="margin:0">' + esc(OP_GIVES[o.id] || "—") + '</dd>' +
@@ -3222,7 +3222,7 @@ function mSalesBlock(e) {
   var body;
   if (!e.tour || e.tour !== "tour") body = '<div class="note">Продажи собираются только у гастролей (решение 4 октября). Это мероприятие размечено как местное — в афише, без продаж.</div>';
   else if (!s || s.free == null) body = '<div class="note">' + (s && s.nt ? 'Яндекс сам не продаёт билеты на это мероприятие — остаток смотрим у Кассира.' : 'Данных о продажах ещё нет: сбор продаж гастролей идёт с 4 октября, ближние даты — первыми.') + '</div>';
-  else body = '<div class="kgrid">' +
+  else body = '<div class="kgrid" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
     kpi("Заполняемость", x ? x.f + "%" : "—", x ? (x.exp ? "занято " + num(x.taken) + " из " + num(x.total) : "по залу: свободно " + num(x.left) + " из " + num(x.total)) : "") +
     kpi("Свободно сейчас", num(s.free), s.exp ? "из " + num(s.exp) + " выставленных" : s.hall ? "из " + num(s.hall) + " мест в зале" : "") +
     kpi("Вал", s.g ? money(s.g) : "—", s.g ? "от " + money(s.glo) + " до " + money(s.ghi) + (s.gx != null ? " · точно " + Math.round(s.gx * 100) + "%" : "") : "появится со схемой мест") +
@@ -3247,7 +3247,7 @@ function mSalesPool(p) {
   if (p.nt) return '<div class="note"><b style="font-weight:500">' + name + '</b> — сам не продаёт билеты на это мероприятие (ссылка на другую кассу). Перепроверяем раз в неделю.</div>';
   var g = p.gross, total = p.exp || p.hall;
   var facts = [
-    ["Свободно", num(p.free) + (total ? " из " + num(total) + (p.exp ? " выставленных" : " в зале") : "")],
+    ["Свободно", num(p.free) + (total ? " из " + num(total) + (p.exp ? " выставленных" : " в зале") : "") + (p.adm ? " + входных билетов " + num(p.adm) : "")],
     ["Продано с начала слежения", num(p.sold) + " " + plural(p.sold, "место", "места", "мест") + (p.rev ? " · " + money(p.rev) : "") + (p.returned ? " (возвратов " + num(p.returned) + ")" : "")],
     ["Вал", g ? money(g.gross) + " · от " + money(g.gross_lo) + " до " + money(g.gross_hi) + " · точно " + Math.round((g.exact_share || 0) * 100) + "%" : "—"],
     ["Слежение", "с " + atText(p.since) + " · снимков " + num(p.snapshots) + (p.anomalies ? " · сбоев «весь зал занят» " + p.anomalies : "") + (p.sale_opening ? " · продажи открыты " + human(p.sale_opening.slice(0, 10)) : "")]

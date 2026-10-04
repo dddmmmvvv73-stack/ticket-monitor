@@ -85,7 +85,7 @@ def detail(conn, keys: list[str]) -> dict:
             "gross": g, "scheme": free_seats is not None,
             "history": [[o[0].isoformat(timespec="minutes"), o[1], bool(o[3])] for o in obs[-HISTORY:]],
             "rows": rows, "sold": sold - ret, "rev": round(sold_rub - ret_rub), "sold_gross": sold, "returned": ret,
-            "recent": recent, "sectors": summary.get("sectors"),
+            "recent": recent, "sectors": summary.get("sectors"), "adm": summary.get("admission_free"),
         })
     return {"pools": out}
 

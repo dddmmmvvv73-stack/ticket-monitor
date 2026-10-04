@@ -151,10 +151,15 @@ def _kassir_job(conn, net: Net, items: list, stats: Counter) -> None:
                     p["ext"]["hall"] = "kassir:%s" % eid   # схема кассы этого сеанса — для «Зала по рядам»
                     store.save_hall(cur, p["ext"]["hall"], city, venue, sch["geo"])
             ref = archive.save("kassir", "kit", key, kbody) if changed else None
-            res = store.record(cur, p["id"], now, free=rem["free"], by_price=rem["by_price"], total=total or p["ext"].get("total"),
-                               seats=seats if seats is not None else None, hidden=rem["hidden"],
-                               summary={"sectors": rem["sectors"], "scheme": rem["scheme"]} if changed else None, raw_ref=ref, gross=g)
-            p["ext"].update(sid=eid, domain=domain, by_price=rem["by_price"], free=rem["free"], seen=True, total=total or p["ext"].get("total"))
+            # Остаток Кассира включает входные билеты (танцпол); «свободно» для заполняемости — кресла схемы, входные — отдельно
+            free = len(seats) if seats is not None else rem["free"]
+            summ = {"sectors": rem["sectors"], "scheme": rem["scheme"]} if changed else None
+            if seats is not None and rem["free"] > len(seats):
+                summ = {**(summ or {}), "admission_free": rem["free"] - len(seats)}
+            res = store.record(cur, p["id"], now, free=free, by_price=rem["by_price"], total=total or p["ext"].get("total"),
+                               seats=seats if seats is not None else None, hidden=rem["hidden"], summary=summ, raw_ref=ref, gross=g)
+            p["ext"].update(sid=eid, domain=domain, by_price=rem["by_price"], free=free if seats is not None else p["ext"].get("free", free), seen=True,
+                            total=total or p["ext"].get("total"))
             store.save_ext(cur, p)
             store.schedule(cur, p["id"], d, now)
             conn.commit()
