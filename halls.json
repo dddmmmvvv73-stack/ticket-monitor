@@ -143,8 +143,8 @@
     "auto_reserve": 83,
     "series_reserve": {
       "6194d2029068": 50,
-      "9cd9b7c7f375": 440,
-      "afabcb541b13": 67
+      "9cd9b7c7f375": 442,
+      "afabcb541b13": 68
     },
     "auto_possible": true,
     "manual_rows": [],
@@ -474,7 +474,7 @@
     "auto_enabled": true,
     "auto_reserve": 117,
     "series_reserve": {
-      "555588a017c5": 257
+      "555588a017c5": 260
     },
     "auto_possible": true,
     "manual_rows": [],
@@ -760,7 +760,7 @@
     "auto_enabled": true,
     "auto_reserve": 82,
     "series_reserve": {
-      "98216eba9f75": 312
+      "98216eba9f75": 313
     },
     "auto_possible": true,
     "manual_rows": [],
