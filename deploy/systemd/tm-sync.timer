@@ -1,0 +1,9 @@
+[Unit]
+Description=ticket-monitor: синхронизация каждый час в :50 (после сбора конкурентов в :25 на GitHub)
+
+[Timer]
+OnCalendar=*-*-* *:50:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

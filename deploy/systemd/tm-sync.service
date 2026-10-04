@@ -1,0 +1,14 @@
+[Unit]
+Description=ticket-monitor: свежий код и данные с GitHub → пересборка базы
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=tm
+WorkingDirectory=/opt/ticket-monitor
+EnvironmentFile=/etc/ticket-monitor.env
+ExecStart=/usr/bin/git -C /opt/ticket-monitor pull -q --ff-only
+ExecStart=/opt/ticket-monitor/pull_data.sh
+ExecStart=/opt/ticket-monitor/.venv/bin/python -m db.migrate
+TimeoutStartSec=1800

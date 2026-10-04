@@ -1,0 +1,10 @@
+[Unit]
+Description=ticket-monitor: ночная копия базы в Object Storage
+After=postgresql.service
+
+[Service]
+Type=oneshot
+User=tm
+WorkingDirectory=/opt/ticket-monitor
+EnvironmentFile=/etc/ticket-monitor.env
+ExecStart=/opt/ticket-monitor/.venv/bin/python -m db.backup
