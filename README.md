@@ -5,22 +5,30 @@
 
 ## 0. Где сейчас идёт сбор
 
-С 30.09.2026 сбор конкурентов идёт не на ноутбуке, а на GitHub Actions: раз в
-час, в публичном репозитории github.com/dddmmmvvv73-stack/ticket-monitor. Данные лежат в ветке `data`, подробности —
-в [HANDOFF.md](HANDOFF.md), раздел «Где идёт сбор».
+**С 05.10.2026 все сборы идут на сервере в Яндекс Облаке** (раньше — GitHub Actions + cron-job.org, теперь
+отключены; ветка `data` на GitHub заморожена на 05.10). Расписание — systemd на сервере: площадки прямого сбора
+(`tm-collect`) — каждый час в :25, афиша рынка (`tm-market`) — в 21:00, продажи гастролей (`tm-sales`) — каждый час
+в :05, пересборка базы (`tm-sync`) — в :58, копия базы (`tm-backup`) — в 03:30. Данные — на сервере, история —
+локальный git в `/opt/ticket-monitor/data/competitors`; на ноутбук — по SSH (адрес — `config/server.json`, не в git).
+Подробности — [HANDOFF.md](HANDOFF.md), раздел 0, «Яндекс Облако».
+
+**Интерфейс в браузере с любого компьютера (с 05.10):** сервер сам показывает прототип — `https://<IP через дефисы>.sslip.io`
+(бесплатный адрес без покупки домена; точный адрес, логин и пароль — у владельца, в git их нет). Служба `tm-web`
+за Caddy (https, вход по паролю — `/etc/caddy/Caddyfile`, образец — `deploy/Caddyfile.example`). Правки на сайте
+сохраняются на сервере и сами уходят на GitHub; кнопка «Собрать сейчас» запускает сбор на сервере.
 
 ```bash
-./pull_data.sh                  # подтянуть свежие данные с GitHub в data/competitors
+./pull_data.sh                  # данные и сводку продаж — с сервера в data/competitors
 python3 app.py                  # открыть интерфейс, как раньше
-gh workflow run collect.yml     # запустить сбор на GitHub прямо сейчас
-gh run list --workflow=collect.yml --limit 5   # последние сборы
+ssh -i ~/.ssh/ticket_monitor_yc tm@<сервер> 'sudo systemctl start tm-collect'   # собрать сейчас (или кнопкой в «Настройках»)
+ssh -i ~/.ssh/ticket_monitor_yc tm@<сервер> 'journalctl -u tm-collect -n 30'   # журнал сбора
 ```
 
-**Афиша рынка** (98 городов по Кассиру и Яндекс Афише, раз в сутки в 21:00 МСК —
-запускает cron-job.org) — `competitors/market.py`, данные — `data/competitors/market`:
+**Афиша рынка** (98 городов по Кассиру и Яндекс Афише, раз в сутки в 21:00 МСК, на сервере) —
+`competitors/market.py`, данные — `data/competitors/market`:
 
 ```bash
-gh workflow run market.yml                      # собрать рынок на GitHub прямо сейчас (~20 мин)
+ssh … 'sudo systemctl start tm-market'          # собрать рынок на сервере прямо сейчас (~50 мин)
 ./pull_data.sh && python3 -m competitors.market export   # свежий снимок → раздел «Рынок» прототипа
 MARKET_ONLY="Владимир,Иваново" python3 -m competitors.market   # проверочный сбор по паре городов (пишет в data/!)
 ```
@@ -35,7 +43,7 @@ MARKET_ONLY="Владимир,Иваново" python3 -m competitors.market   # 
 Мероприятия, залы и продажи конкурентов прототип берёт так же — из `data/competitors`
 (`/proto/competitors-data.js`). Для прототипа, открытого файлом, снимок пересобирается командой
 `./pull_data.sh && python3 -m competitors.protodata export`.
-Избранные проекты и ваши записи о них («Проекты → Избранные», «Мои записи») хранятся только на этом
+Избранные проекты и ваши записи о них («Репертуар → Избранное», «Мои записи») хранятся только на этом
 компьютере — `config/my_projects.json`, файл исключён из git и на GitHub не уходит.
 Через приложение в прототипе всё рабочее: правки и свои мероприятия, бронь залов, площадки и настройки
 сохраняются (и уходят на GitHub, кроме ключей), «Собрать сейчас» запускает сбор на GitHub, а
@@ -50,8 +58,8 @@ MARKET_ONLY="Владимир,Иваново" python3 -m competitors.market   # 
 
 ```bash
 python3 -m pip install --user -r requirements-db.txt   # один раз
-python3 -m db.migrate          # пересобрать базу из data/competitors и config/ и сверить с файлами
-python3 -m db.migrate verify   # только сверка
+python3 -m db.sync             # пополнить базу из data/competitors и config/ (с 05.10 база главная — ничего не стирается)
+python3 -m db.sync verify      # только сверка с файлами
 python3 -m db.migrate stop     # остановить локальный Postgres
 ```
 
