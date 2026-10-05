@@ -28,8 +28,9 @@ if ! sudo grep -q '^DATABASE_URL=' /etc/ticket-monitor.env 2>/dev/null; then
 fi
 sudo chown root:tm /etc/ticket-monitor.env && sudo chmod 640 /etc/ticket-monitor.env
 
-# Расписание (systemd): синхронизация каждый час, копия базы каждую ночь
+# Расписание (systemd): сборы (площадки прямого сбора — каждый час, рынок — в 21:00, продажи — каждый час),
+# пересборка базы каждый час, копия базы каждую ночь
 sudo cp "$APP"/deploy/systemd/*.service "$APP"/deploy/systemd/*.timer /etc/systemd/system/
 sudo systemctl daemon-reload
-for t in tm-sync tm-backup tm-sales; do sudo systemctl enable --now "$t.timer"; done
+for t in tm-sync tm-backup tm-sales tm-collect tm-market; do sudo systemctl enable --now "$t.timer"; done
 systemctl list-timers 'tm-*' --no-pager

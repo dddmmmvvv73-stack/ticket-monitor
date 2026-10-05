@@ -61,13 +61,16 @@ VENUE_ALIASES_FILE = MARKET_DIR / "venue_aliases.json"     # одна площа
 ORGANIZERS_FILE = MARKET_DIR / "organizers.json"   # карточка Кассира → [организатор, дата проверки]
 ORG_BUDGET_MIN = 30     # страниц Кассира за сбор — не дольше стольких минут (первый проход растягивается на несколько вечеров)
 ORG_RECHECK_DAYS = 30   # организатор карточки перепроверяется раз в месяц
-ORG_THREADS = 3         # страницы разных региональных сайтов Кассира — в три потока (~90 страниц в минуту)
+# Темп Кассира: на GitHub (адреса меняются) — быстро; на сервере (один адрес, на нём же сбор продаж) — бережно,
+# задаётся в tm-market.service: Кассир ограничивает адрес после сотен запросов подряд (TICKET_PLATFORMS.md, 8.6)
+ORG_THREADS = int(os.environ.get("MARKET_ORG_THREADS", 3))   # страницы организаторов: на GitHub — 3 потока (~90 в минуту)
 OVERRIDES_FILE = CONFIG_DIR / "classification_overrides.json"
 AI_CACHE_FILE = DATA_DIR / "ai_cache.json"
 PROTOTYPE_DATA = BASE_DIR / "Design" / "prototype" / "market-data.js"
 
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36"
-KASSIR_PAUSE = 0.8      # пауза между запросами — сайты не нагружаем
+KASSIR_PAUSE = float(os.environ.get("MARKET_KASSIR_PAUSE", 0.8))   # пауза между запросами — сайты не нагружаем
+ORG_PAUSE = float(os.environ.get("MARKET_ORG_PAUSE", KASSIR_PAUSE))  # пауза между страницами организаторов
 YANDEX_PAUSE = 1.2
 BIG_DOMAINS = ("msk.kassir.ru", "spb.kassir.ru")   # Москву и Петербург не собираем — только города списка вокруг них
 LONG_RUN_DAYS = 12      # идёт больше 12 дней — одна строка с периодом, а не строка на каждый день
@@ -621,12 +624,12 @@ def fetch_organizers(rows: list[dict], today: str) -> None:
                     page = body.decode("utf-8", errors="ignore")
             except (OSError, http.client.HTTPException):
                 done["error"] += 1
-                time.sleep(KASSIR_PAUSE)
+                time.sleep(ORG_PAUSE)
                 continue
             org = _org_from_page(page)
             cache[k] = [org, today]
             done["found" if org else "empty"] += 1
-            time.sleep(KASSIR_PAUSE)
+            time.sleep(ORG_PAUSE)
 
     with ThreadPoolExecutor(max_workers=ORG_THREADS) as pool:
         list(pool.map(work, queues))

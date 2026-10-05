@@ -1,0 +1,9 @@
+[Unit]
+Description=ticket-monitor: сбор площадок прямого сбора каждый час в :25 (вместо GitHub Actions + cron-job.org)
+
+[Timer]
+OnCalendar=*-*-* *:25:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -15,6 +15,7 @@ import threading
 import time
 from collections import Counter
 from datetime import datetime
+from pathlib import Path
 
 from psycopg2.extras import Json
 
@@ -43,6 +44,7 @@ SELECT s.id, s.local_date, to_char(s.local_time, 'HH24:MI'), c.name, v.name, l.o
    AND (%(cities)s::text[] IS NULL OR c.name = ANY(%(cities)s::text[]))
  ORDER BY s.local_date, p.next_check NULLS FIRST
 """
+MARKET_RUNNING = Path(__file__).resolve().parent.parent / "data" / ".market_running"   # ставит tm-market.service
 TOLERANCE = 3   # мест: запас Кассира и Яндекса «общий», если отличается не больше чем на max(3, 2%) — продажи за минуты между запросами
 
 
@@ -121,6 +123,9 @@ def _kassir_job(conn, net: Net, items: list, stats: Counter) -> None:
     pages = {}
     for (sid, d, t, city, venue, _op, key, url, has_yandex, ext, y_nt, y_measured), prio in items:
         if net.time_left() < 30:
+            break
+        if MARKET_RUNNING.exists():  # идёт афиша рынка — она тоже ходит к Кассиру с этого адреса; Кассир — в следующем прогоне
+            stats["кассир: пропуск — идёт афиша рынка"] += 1
             break
         if prio == "wait":  # сеанс есть на Яндексе, но Яндекс ещё не снят — сначала он (хватит ли его, станет ясно)
             stats["кассир: ждём снимка Яндекса"] += 1

@@ -1,0 +1,9 @@
+[Unit]
+Description=ticket-monitor: афиша рынка каждый день в 21:00
+
+[Timer]
+OnCalendar=*-*-* 21:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target

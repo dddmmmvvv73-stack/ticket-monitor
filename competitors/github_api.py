@@ -1,17 +1,19 @@
 """
-Сбор на GitHub Actions из интерфейса: запуск, ход последних сборов и обновление данных на этом компьютере.
+Сборы из интерфейса: запуск, ход последних сборов и обновление данных на этом компьютере.
 
     GET  /api/github/runs              последние запуски «Сбора конкурентов» и «Афиши рынка»
-    POST /api/github/collect           {"what": "collect" | "market"} — запустить сбор сейчас (gh workflow run)
-    POST /api/data/pull                ./pull_data.sh — подтянуть собранное с GitHub в data/competitors
+    POST /api/github/collect           {"what": "collect" | "market"} — запустить сбор сейчас
+    POST /api/data/pull                ./pull_data.sh — подтянуть собранное в data/competitors
 
-Нужен `gh`, авторизованный в репозитории (на этом компьютере — да, см. HANDOFF, раздел 2).
-Расписание сборов задаёт cron-job.org, а не приложение: конкуренты — каждый час в :25, рынок — в 21:00.
+С 05.10.2026 сборы идут на сервере в Яндекс Облаке (systemd: tm-collect — каждый час в :25, tm-market — в 21:00).
+Если есть config/server.json — всё через сервер по SSH; без него — как раньше, GitHub Actions через `gh`
+(адреса маршрутов /api/github/* оставлены, чтобы прототип не менять).
 """
 
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 
 from flask import Blueprint, jsonify, request
@@ -21,6 +23,54 @@ from competitors.storage import BASE_DIR
 
 bp = Blueprint("github_api", __name__)
 WORKFLOWS = {"collect": ("collect.yml", "Сбор конкурентов"), "market": ("market.yml", "Афиша рынка")}
+UNITS = {"collect": "tm-collect", "market": "tm-market"}   # те же сборы на сервере
+SERVER_FILE = BASE_DIR / "config" / "server.json"
+
+
+def _server():
+    try:
+        cfg = json.loads(SERVER_FILE.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    return cfg if cfg.get("ssh") else None
+
+
+def _ssh(cfg: dict, command: str, timeout: int = 40) -> subprocess.CompletedProcess:
+    return _run("ssh", "-i", os.path.expanduser(cfg.get("key", "")), "-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
+                cfg["ssh"], command, timeout=timeout)
+
+
+def _server_runs(cfg: dict):
+    """Ход сборов на сервере — в том же виде, что gh run list (status / conclusion / createdAt / updatedAt)."""
+    props = "Id,ActiveState,Result,ExecMainStartTimestamp,ExecMainExitTimestamp"
+    r = _ssh(cfg, "systemctl show %s -p %s --timestamp=utc" % (" ".join(u + ".service" for u in UNITS.values()), props))
+    if r.returncode != 0:
+        return None
+    blocks, cur = [], {}
+    for line in r.stdout.splitlines():
+        if not line.strip():
+            blocks.append(cur); cur = {}
+            continue
+        k, _, v = line.partition("=")
+        cur[k] = v
+    blocks.append(cur)
+    by_unit = {b.get("Id", "").removesuffix(".service"): b for b in blocks if b.get("Id")}
+
+    def iso(ts: str) -> str | None:  # «Mon 2026-10-05 08:25:00 UTC» → ISO
+        parts = ts.split()
+        return parts[1] + "T" + parts[2] + "Z" if len(parts) >= 3 else None
+    out = {}
+    for key, unit in UNITS.items():
+        b = by_unit.get(unit, {})
+        start = iso(b.get("ExecMainStartTimestamp", ""))
+        runs = []
+        if start:
+            active = b.get("ActiveState") in ("activating", "active")
+            runs.append({"status": "in_progress" if active else "completed",
+                         "conclusion": None if active else ("success" if b.get("Result") == "success" else "failure"),
+                         "createdAt": start, "updatedAt": iso(b.get("ExecMainExitTimestamp", "")) or start, "url": ""})
+        out[key] = {"label": WORKFLOWS[key][1] + " · сервер", "runs": runs}
+    return out
 
 
 @bp.before_request
@@ -45,6 +95,13 @@ def _gh_error(e: Exception | subprocess.CompletedProcess) -> str:
 
 @bp.get("/api/github/runs")
 def github_runs():
+    cfg = _server()
+    if cfg:
+        try:
+            runs = _server_runs(cfg)
+        except subprocess.TimeoutExpired:
+            runs = None
+        return jsonify(runs) if runs is not None else (jsonify({"error": "сервер недоступен (адрес сменился или нет сети)"}), 502)
     out = {}
     for key, (file, label) in WORKFLOWS.items():
         try:
@@ -64,6 +121,16 @@ def github_collect():
     if what not in WORKFLOWS:
         return jsonify({"error": "неизвестный сбор"}), 400
     file, label = WORKFLOWS[what]
+    cfg = _server()
+    if cfg:  # сбор на сервере: запустить сейчас, не дожидаясь расписания
+        try:
+            r = _ssh(cfg, "sudo systemctl start --no-block %s.service" % UNITS[what])
+        except subprocess.TimeoutExpired:
+            return jsonify({"error": "сервер не ответил вовремя"}), 502
+        if r.returncode != 0:
+            return jsonify({"error": "сервер недоступен (адрес сменился или нет сети)"}), 502
+        collector.log(f"Запущен сбор на сервере вручную: {label}")
+        return jsonify({"ok": True, "label": label})
     try:
         r = _run("gh", "workflow", "run", file, "--ref", "main")
     except (FileNotFoundError, subprocess.TimeoutExpired) as e:
