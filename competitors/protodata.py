@@ -216,6 +216,8 @@ def build() -> dict:
             e.get("gross"), e.get("revenue_est"), 1 if e.get("pushkin") else 0, _price_text(e.get("price_text")), _ref(e),
             e["uid"], e.get("sold_confirmed"), e.get("revenue_confirmed"), (e.get("first_seen") or "")[:16],
             (e.get("last_seen") or "")[:16], status(e),
+            # «Весь зал занят» (seatmap.is_flip): с какого момента — сбой сайта или сеанс снят с продажи; иначе ""
+            ((states.get(collector.seat_state_path(e["uid"]).stem) or {}).get("suspect") or {}).get("since", "")[:16],
         ])
 
     # Зал по рядам у каждого события со схемой

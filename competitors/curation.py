@@ -32,6 +32,10 @@ THEATRE_FORMATS = {"Спектакль", "Балет", "Опера", "Мюзик
 REPERTORY = re.compile(r"драм|тюз|юного зрител|кукол|молод[её]жн\w* театр|оперы и балета|опера балет|музыкальн\w* театр|"
                        r"камерн\w* театр|академическ|театр-студ|театр на |государственн\w* театр|гостеатр|театр драмы|театр им", re.I)
 RENTAL = re.compile(r"(?<![а-яё])дк(?![а-яё])|дом культуры|дворец|концертн|арена|холл|hall|клуб|club|центр культуры|цко|бар(?![а-яё])", re.I)
+# Одинаковое название в разных городах, но это местные вечера (решение пользователя 05.10): 1) общие названия;
+# 2) разные организаторы в разных городах и дешёвые билеты. Ваша пометка проекта / площадки — сильнее этих правил.
+GENERIC_LOCAL = re.compile(r"открыт\w*\s+микрофон|open[\s-]?mic|проверк\w*\s+(нового\s+)?материал|тестирован\w*\s+материал", re.I)
+CHEAP_MAX = 700   # ₽: максимальная цена билета, при которой «разные организаторы» считаются местными вечерами
 _STOP = set("концерт шоу тур tour группа гр спектакль балет мюзикл опера stand up standup стендап программа при и в на с со the".split())
 
 
@@ -155,7 +159,22 @@ def classify(rows: list[dict], cur: dict) -> None:
         r["tour"], r["tour_why"] = _auto(r, groups)
 
 
+def _local_lookalike(g: dict) -> bool:
+    """Одно название в 2+ городах, но у каждого города свой организатор (известны хотя бы два) и все билеты до CHEAP_MAX."""
+    rows = [x for c in g.values() for x in c]
+    if not rows or not all(x.get("pmax") and x["pmax"] <= CHEAP_MAX for x in rows):
+        return False
+    orgs_by_city = {c: {x["org"] for x in xs if x.get("org")} for c, xs in g.items()}
+    seen: dict[str, int] = {}
+    for orgs in orgs_by_city.values():
+        for o in orgs:
+            seen[o] = seen.get(o, 0) + 1
+    return len(seen) >= 2 and all(n == 1 for n in seen.values())
+
+
 def _auto(r: dict, groups) -> tuple[str, str]:
+    if GENERIC_LOCAL.search((r.get("orig") or {}).get("title") or r["title"]):
+        return "local", "общее название — местные вечера в каждом городе (открытый микрофон и т. п.)"
     if r.get("ytour"):
         return "tour", "«Тур артиста» на Яндекс Афише"
     g = groups.get(r["pk"]) if r["pk"] else None
@@ -170,4 +189,6 @@ def _auto(r: dict, groups) -> tuple[str, str]:
             return "local", "одноимённые постановки в репертуарных театрах"
         if max(len(c) for c in g.values()) >= 4:
             return "local", "репертуар: 4+ даты в одном городе"
+    if _local_lookalike(g):
+        return "local", f"одно название, но в каждом городе свой организатор и билеты до {CHEAP_MAX} ₽"
     return "tour", f"в {len(g)} городах"
