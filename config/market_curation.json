@@ -615,7 +615,13 @@
     }
   },
   "rejected": {},
-  "artists": {},
+  "artists": {
+    "concord orchestra": {
+      "type": "tour",
+      "name": "Concord Orchestra",
+      "at": "2026-10-05T12:03:30"
+    }
+  },
   "filters": {
     "show": "tour",
     "pmin": null,
