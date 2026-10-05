@@ -25,12 +25,18 @@ from sales.net import Net, Stopped
 WORK_SQL = """
 SELECT s.id, s.local_date, to_char(s.local_time, 'HH24:MI'), c.name, v.name, l.operator_id, l.ext_key, l.url,
        EXISTS (SELECT 1 FROM listings y WHERE y.session_id = s.id AND y.operator_id = 'yandex') AS has_yandex,
-       p.ext
+       p.ext, y.nt, y.measured
   FROM sessions s
   JOIN venues v ON v.id = s.venue_id
   JOIN cities c ON c.id = v.city_id
   JOIN listings l ON l.session_id = s.id AND l.operator_id IN ('kassir', 'yandex')
   LEFT JOIN pools p ON p.source = 'live' AND p.operator_id = l.operator_id AND p.listing_key = l.ext_key AND p.service = ''
+  -- для Кассира: снят ли уже Яндекс этого сеанса и продаёт ли он сам
+  LEFT JOIN LATERAL (
+    SELECT bool_or(coalesce((yp.ext->>'no_tickets')::boolean, false)) AS nt,
+           bool_or(EXISTS (SELECT 1 FROM observations o WHERE o.pool_id = yp.id)) AS measured
+      FROM listings yl JOIN pools yp ON yp.source = 'live' AND yp.operator_id = 'yandex' AND yp.listing_key = yl.ext_key AND yp.service = ''
+     WHERE yl.session_id = s.id AND yl.operator_id = 'yandex') y ON l.operator_id = 'kassir'
  WHERE s.track_sales AND s.status = 'on_sale'
    AND (s.starts_at > now() OR (s.starts_at IS NULL AND s.local_date >= current_date))   -- уже начавшиеся — не снимаем
    AND (p.next_check IS NULL OR p.next_check <= now())
@@ -43,7 +49,7 @@ TOLERANCE = 3   # мест: запас Кассира и Яндекса «общ
 def _yandex_job(conn, net: Net, items: list, stats: Counter) -> None:
     cur = conn.cursor()
     pages, wcookie = {}, [False]
-    for (sid, d, t, city, venue, _op, key, url, _hy, _ext) in items:
+    for (sid, d, t, city, venue, _op, key, url, _hy, _ext, _ynt, _ym) in items:
         if net.time_left() < 30:
             break
         now = datetime.now().astimezone()
@@ -113,13 +119,15 @@ def _yandex_job(conn, net: Net, items: list, stats: Counter) -> None:
 def _kassir_job(conn, net: Net, items: list, stats: Counter) -> None:
     cur = conn.cursor()
     pages = {}
-    for (sid, d, t, city, venue, _op, key, url, has_yandex, ext) in items:
+    for (sid, d, t, city, venue, _op, key, url, has_yandex, ext, y_nt, y_measured), prio in items:
         if net.time_left() < 30:
             break
-        ext = ext or {}
+        if prio == "wait":  # сеанс есть на Яндексе, но Яндекс ещё не снят — сначала он (хватит ли его, станет ясно)
+            stats["кассир: ждём снимка Яндекса"] += 1
+            continue
         now = datetime.now().astimezone()
         p = store.pool(cur, "kassir", key, sid)
-        if has_yandex and ext.get("shared") and ext.get("shared_at", "") > (datetime.now() - store.SHARED_RECHECK).isoformat():
+        if prio == "shared":
             stats["кассир: общий запас с Яндексом — пропуск"] += 1   # хватает Яндекса; перепроверка — через неделю
             store.schedule(cur, p["id"], d, now)
             conn.commit()
@@ -175,6 +183,19 @@ def _kassir_job(conn, net: Net, items: list, stats: Counter) -> None:
             stats["кассир: ошибка " + type(e).__name__] += 1
 
 
+def kassir_priority(r) -> str:
+    """need — опросить; check — недельная проверка «общий ли запас с Яндексом»; shared — хватает Яндекса; wait — ждём Яндекс."""
+    has_yandex, ext, y_nt, y_measured = r[8], r[9] or {}, r[10], r[11]
+    if not has_yandex or y_nt:
+        return "need"
+    if not y_measured:
+        return "wait"
+    fresh = ext.get("shared_at", "") > (datetime.now() - store.SHARED_RECHECK).isoformat()
+    if fresh:
+        return "shared" if ext.get("shared") else "need"   # запас поделён — нужны обе кассы
+    return "check"
+
+
 def update_shared(conn) -> int:
     """Общий ли запас: последние снимки Кассира и Яндекса одного сеанса (не дальше 3 часов друг от друга) совпали."""
     cur = conn.cursor()
@@ -210,7 +231,11 @@ def main() -> None:
     cities = [c.strip() for c in a.cities.split(",") if c.strip()] or None
     cur.execute(WORK_SQL, {"cities": cities})
     rows = cur.fetchall()
-    work = {"yandex": [r for r in rows if r[5] == "yandex"], "kassir": [r for r in rows if r[5] == "kassir"]}
+    work = {"yandex": [r for r in rows if r[5] == "yandex"], "kassir": [(r, kassir_priority(r)) for r in rows if r[5] == "kassir"]}
+    # Кассир: сначала то, где без него нельзя (только Кассир, Яндекс сам не продаёт, запас поделён), потом недельная проверка
+    # «общий ли запас», последними — пропуски без запросов
+    order = {"need": 0, "check": 1, "shared": 2, "wait": 3}
+    work["kassir"].sort(key=lambda x: order[x[1]])
     if a.limit:
         work = {k: v[:a.limit] for k, v in work.items()}
     stats: Counter = Counter()

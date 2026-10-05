@@ -1,5 +1,5 @@
 [Unit]
-Description=ticket-monitor: сбор продаж каждый час в :05 (40 минут, до синхронизации базы в :50)
+Description=ticket-monitor: сбор продаж каждый час в :05 (до 50 минут, до синхронизации базы в :58)
 
 [Timer]
 OnCalendar=*-*-* *:05:00

@@ -17,6 +17,7 @@ from competitors.seatmap import is_flip
 TIERS = [(7, timedelta(hours=8)), (30, timedelta(hours=24)), (90, timedelta(hours=72))]
 FAR = timedelta(days=7)
 SHARED_RECHECK = timedelta(days=7)   # общий ли запас Кассира и Яндекса — перепроверять раз в неделю
+RELEASE_MIN = 20   # разом освободилось столько мест и больше — «открыли места» (новая квота), а не возвраты
 
 
 def interval(local_date: date, today: date) -> timedelta:
@@ -99,21 +100,26 @@ def record(cur, pool_id: int, now: datetime, *, free: int | None, by_price: dict
         return out
     if prev_seats is not None and seats is not None:
         sold = [(pool_id, k, now, prev_seats[k], "sale") for k in set(prev_seats) - set(seats)]
-        back = [(pool_id, k, now, seats[k], "return") for k in set(seats) - set(prev_seats)]
+        new_free = set(seats) - set(prev_seats)
+        kind = "release" if len(new_free) >= RELEASE_MIN else "return"   # массово — организатор открыл места
+        back = [(pool_id, k, now, seats[k], kind) for k in new_free]
         if sold or back:
             execute_values(cur, "INSERT INTO seat_sales (pool_id, seat_key, ts, price, kind) VALUES %s ON CONFLICT DO NOTHING", sold + back)
-        out["sold"], out["returned"] = len(sold), len(back)
+        out["sold"] = len(sold)
+        out["returned" if kind == "return" else "released"] = len(back)
     if by_price is not None and normal.get("by_price") is not None:
         rows = []
         for p in set(normal["by_price"]) | set(by_price):
             d = normal["by_price"].get(p, 0) - by_price.get(p, 0)
             if d and p not in ("None", ""):
                 rows.append((pool_id, normal["ts"], now, float(p), d))
+        released = -sum(r[4] for r in rows if r[4] < 0) >= RELEASE_MIN
         if rows:
-            execute_values(cur, "INSERT INTO price_sales (pool_id, ts_from, ts_to, price, qty) VALUES %s ON CONFLICT DO NOTHING", rows)
+            execute_values(cur, "INSERT INTO price_sales (pool_id, ts_from, ts_to, price, qty, released) VALUES %s ON CONFLICT DO NOTHING",
+                           [r + (released and r[4] < 0,) for r in rows])
         if prev_seats is None:
             out["sold"] = sum(r[4] for r in rows if r[4] > 0)
-            out["returned"] = -sum(r[4] for r in rows if r[4] < 0)
+            out["released" if released else "returned"] = -sum(r[4] for r in rows if r[4] < 0)
     return out
 
 

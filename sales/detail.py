@@ -69,13 +69,14 @@ def detail(conn, keys: list[str]) -> dict:
         if not seat_tot:  # схемы нет — продажи по ценам
             cur.execute("SELECT coalesce(sum(qty) FILTER (WHERE qty > 0), 0), coalesce(sum(qty * price) FILTER (WHERE qty > 0), 0), "
                         "coalesce(-sum(qty) FILTER (WHERE qty < 0), 0), coalesce(-sum(qty * price) FILTER (WHERE qty < 0), 0) "
-                        "FROM price_sales WHERE pool_id = %s AND NOT anomaly", (pid,))
+                        "FROM price_sales WHERE pool_id = %s AND NOT anomaly AND NOT released", (pid,))
             a, b, c, d = cur.fetchone()
             seat_tot = {"sale": (int(a), float(b)), "return": (int(c), float(d))}
             cur.execute("SELECT ts_to, price, qty FROM price_sales WHERE pool_id = %s ORDER BY ts_to DESC LIMIT %s", (pid, RECENT))
             recent = [[t.isoformat(timespec="minutes"), None, float(p), "sale" if q > 0 else "return", abs(q)] for t, p, q in cur.fetchall()]
         sold, sold_rub = seat_tot.get("sale", (0, 0))
         ret, ret_rub = seat_tot.get("return", (0, 0))
+        released = seat_tot.get("release", (0, 0))[0]
         summary = last[5] or {}
         out.append({
             "op": op, "key": key, "shared": ext.get("shared"), "services": ext.get("services"), "sale_opening": ext.get("sale_opening"),
@@ -84,7 +85,7 @@ def detail(conn, keys: list[str]) -> dict:
             "free": last[1], "exp": (g or {}).get("exposed") if op == "kassir" else None, "hall": last[2] if op == "yandex" else None,
             "gross": g, "scheme": free_seats is not None,
             "history": [[o[0].isoformat(timespec="minutes"), o[1], bool(o[3])] for o in obs[-HISTORY:]],
-            "rows": rows, "sold": sold - ret, "rev": round(sold_rub - ret_rub), "sold_gross": sold, "returned": ret,
+            "rows": rows, "sold": sold - ret, "rev": round(sold_rub - ret_rub), "sold_gross": sold, "returned": ret, "released": released,
             "recent": recent, "sectors": summary.get("sectors"), "adm": summary.get("admission_free"),
         })
     return {"pools": out}

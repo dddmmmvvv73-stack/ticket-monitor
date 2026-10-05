@@ -8,7 +8,7 @@ Type=oneshot
 User=tm
 WorkingDirectory=/opt/ticket-monitor
 EnvironmentFile=/etc/ticket-monitor.env
-ExecStart=/opt/ticket-monitor/.venv/bin/python -m sales.run --budget 40
+ExecStart=/opt/ticket-monitor/.venv/bin/python -m sales.run --budget 50
 # Сводка продаж для прототипа (ноутбук забирает её по SSH в ./pull_data.sh) — после каждого прогона
 ExecStartPost=/opt/ticket-monitor/.venv/bin/python -m sales.export
 TimeoutStartSec=3600

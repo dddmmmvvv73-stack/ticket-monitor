@@ -1,8 +1,8 @@
 [Unit]
-Description=ticket-monitor: синхронизация каждый час в :50 (после сбора конкурентов в :25 на GitHub)
+Description=ticket-monitor: синхронизация каждый час в :58 (после сбора конкурентов на GitHub и сбора продаж)
 
 [Timer]
-OnCalendar=*-*-* *:50:00
+OnCalendar=*-*-* *:58:00
 Persistent=true
 
 [Install]

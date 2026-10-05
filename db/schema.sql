@@ -328,3 +328,8 @@ CREATE TABLE IF NOT EXISTS live_halls (
 ALTER TABLE pools DROP CONSTRAINT IF EXISTS pools_operator_id_fkey;
 ALTER TABLE collection_runs DROP CONSTRAINT IF EXISTS collection_runs_operator_id_fkey;
 ALTER TABLE collection_runs ADD COLUMN IF NOT EXISTS report jsonb;
+
+-- 05.10: «открыли места» (разом освободилось ≥ 20 мест — новая квота, а не возвраты)
+ALTER TABLE seat_sales DROP CONSTRAINT IF EXISTS seat_sales_kind_check;
+ALTER TABLE seat_sales ADD CONSTRAINT seat_sales_kind_check CHECK (kind IN ('sale', 'return', 'release'));
+ALTER TABLE price_sales ADD COLUMN IF NOT EXISTS released boolean NOT NULL DEFAULT false;

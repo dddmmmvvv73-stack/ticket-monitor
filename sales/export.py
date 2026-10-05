@@ -34,9 +34,9 @@ withgross AS (
    WHERE p.source = 'live' AND NOT o.anomaly AND o.gross IS NOT NULL
    ORDER BY o.pool_id, o.ts DESC),
 first AS (SELECT pool_id, min(ts) AS since FROM observations GROUP BY pool_id),
-seat AS (SELECT pool_id, sum(CASE WHEN kind = 'sale' THEN 1 ELSE -1 END) AS n,
-                sum(CASE WHEN kind = 'sale' THEN price ELSE -price END) AS rub FROM seat_sales GROUP BY pool_id),
-price AS (SELECT pool_id, sum(qty) AS n, sum(qty * price) AS rub FROM price_sales WHERE NOT anomaly GROUP BY pool_id)
+seat AS (SELECT pool_id, sum(CASE kind WHEN 'sale' THEN 1 WHEN 'return' THEN -1 ELSE 0 END) AS n,   -- «открыли места» — не возвраты
+                sum(CASE kind WHEN 'sale' THEN price WHEN 'return' THEN -price ELSE 0 END) AS rub FROM seat_sales GROUP BY pool_id),
+price AS (SELECT pool_id, sum(qty) AS n, sum(qty * price) AS rub FROM price_sales WHERE NOT anomaly AND NOT released GROUP BY pool_id)
 SELECT p.operator_id, p.listing_key, p.ext, l.free, l.total, w.g, w.total, f.since, l.at,
        coalesce(s.n, pr.n, 0), coalesce(s.rub, pr.rub, 0), lh.capacity
   FROM pools p

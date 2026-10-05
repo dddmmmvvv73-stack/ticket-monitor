@@ -17,7 +17,7 @@ import urllib.request
 from collections import Counter, deque
 
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0 Safari/537.36"
-PAUSE = {"kassir": 6.0, "yandex": 1.3}       # секунд между запросами
+PAUSE = {"kassir": 4.0, "yandex": 1.0}       # секунд между запросами (с сервера за первые сутки — 0 ошибок Кассира)
 PAUSE_MAX = 120.0
 WINDOW, BAD_SHARE, STOP_AFTER = 20, 0.3, 25   # окно ответов, доля 500 для замедления, подряд ошибок для остановки
 
