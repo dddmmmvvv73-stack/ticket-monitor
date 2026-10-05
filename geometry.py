@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import json
 
-from playwright.sync_api import sync_playwright
 
 MDS_URL_MARKER = "mds?key="
 
@@ -123,6 +122,7 @@ def _attempt_geometry(event_url: str, timeout_ms: int) -> dict | None:
     """Одна попытка получить геометрию. Возвращает данные или None."""
     captured = {"data": None}
     seen_mds_requests = []  # для диагностики, если основной запрос не поймаем
+    from playwright.sync_api import sync_playwright  # здесь: на сервере браузера нет, интерфейс без него работает
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)

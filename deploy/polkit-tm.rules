@@ -1,0 +1,8 @@
+// Пользователю tm (интерфейс tm-web) разрешено только запускать сборы вручную — без sudo.
+// Кладётся в /etc/polkit-1/rules.d/50-ticket-monitor.rules (deploy/setup.sh).
+polkit.addRule(function (action, subject) {
+    if (action.id == "org.freedesktop.systemd1.manage-units" && subject.user == "tm") {
+        var unit = action.lookup("unit"), verb = action.lookup("verb");
+        if ((unit == "tm-collect.service" || unit == "tm-market.service") && verb == "start") return polkit.Result.YES;
+    }
+});

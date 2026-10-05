@@ -1,0 +1,19 @@
+[Unit]
+Description=ticket-monitor: интерфейс (прототип) — за Caddy, https и вход по паролю
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+User=tm
+WorkingDirectory=/opt/ticket-monitor
+EnvironmentFile=/etc/ticket-monitor.env
+Environment=TZ=Europe/Moscow TM_ON_SERVER=1 PYTHONUNBUFFERED=1
+ExecStart=/opt/ticket-monitor/.venv/bin/python app.py
+Restart=always
+RestartSec=5
+# Наружу смотрит только Caddy; у интерфейса — никаких лишних прав (sudo из него не сработает)
+NoNewPrivileges=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

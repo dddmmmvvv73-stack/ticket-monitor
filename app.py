@@ -6,12 +6,15 @@
 
 Откроется страница в браузере на http://127.0.0.1:5050
 Останавливается через Ctrl+C в терминале.
+
+На сервере — служба tm-web (TM_ON_SERVER=1, без браузера) за Caddy: https и вход по паролю (deploy/Caddyfile).
 """
 
 from __future__ import annotations
 
 import csv
 import io
+import os
 import re
 import webbrowser
 from datetime import date, datetime
@@ -40,6 +43,19 @@ app = Flask(__name__, static_folder=str(BASE_DIR / "static"))
 app.register_blueprint(app_api)
 app.register_blueprint(market_api)  # прототип на /proto/ и ручная разметка рынка
 app.register_blueprint(github_api)  # сбор на GitHub из интерфейса: запуск, ход, обновление данных
+
+ON_SERVER = os.environ.get("TM_ON_SERVER") == "1"
+
+
+@app.before_request
+def _same_site_only():
+    # На сервере браузер сам подставляет пароль входа к любому запросу на наш адрес — даже со страницы чужого сайта.
+    # Поэтому изменения (POST) — только со своих страниц: чужой Origin отклоняется.
+    if ON_SERVER and request.method not in ("GET", "HEAD", "OPTIONS"):
+        origin = request.headers.get("Origin")
+        if origin and origin.split("://", 1)[-1] != request.host:
+            return jsonify({"error": "запрос не с этого сайта"}), 403
+
 
 EVENTS_FILE = CONFIG_DIR / "events.json"
 EXCLUSIONS_FILE = CONFIG_DIR / "exclusions.json"
@@ -406,6 +422,9 @@ if __name__ == "__main__":
     compressed, freed = rotate_raw()
     if compressed:
         print(f"Сжато старых сырых снимков: {compressed}, освобождено {freed / 1024 / 1024:.0f} МБ.")
-    collector.start_scheduler()
-    Timer(1.0, lambda: webbrowser.open("http://127.0.0.1:5050")).start()
-    app.run(port=5050, debug=False, threaded=True)
+    if ON_SERVER:  # сборы на сервере — по расписанию systemd; свой автосбор и браузер не нужны
+        app.run(host="127.0.0.1", port=5050, debug=False, threaded=True)
+    else:
+        collector.start_scheduler()
+        Timer(1.0, lambda: webbrowser.open("http://127.0.0.1:5050")).start()
+        app.run(port=5050, debug=False, threaded=True)

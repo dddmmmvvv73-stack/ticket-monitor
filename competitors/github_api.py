@@ -6,8 +6,8 @@
     POST /api/data/pull                ./pull_data.sh — подтянуть собранное в data/competitors
 
 С 05.10.2026 сборы идут на сервере в Яндекс Облаке (systemd: tm-collect — каждый час в :25, tm-market — в 21:00).
-Если есть config/server.json — всё через сервер по SSH; без него — как раньше, GitHub Actions через `gh`
-(адреса маршрутов /api/github/* оставлены, чтобы прототип не менять).
+Если есть config/server.json — всё через сервер по SSH; на самом сервере (tm-web, TM_ON_SERVER=1) — те же команды
+на месте; иначе — как раньше, GitHub Actions через `gh` (адреса /api/github/* оставлены, чтобы прототип не менять).
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ import subprocess
 from flask import Blueprint, jsonify, request
 
 from competitors import collector
-from competitors.storage import BASE_DIR
+from competitors.storage import BASE_DIR, ON_SERVER
 
 bp = Blueprint("github_api", __name__)
 WORKFLOWS = {"collect": ("collect.yml", "Сбор конкурентов"), "market": ("market.yml", "Афиша рынка")}
@@ -28,6 +28,8 @@ SERVER_FILE = BASE_DIR / "config" / "server.json"
 
 
 def _server():
+    if ON_SERVER:
+        return {"local": True}
     try:
         cfg = json.loads(SERVER_FILE.read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -36,6 +38,8 @@ def _server():
 
 
 def _ssh(cfg: dict, command: str, timeout: int = 40) -> subprocess.CompletedProcess:
+    if cfg.get("local"):  # на сервере: та же команда здесь (запуск сборов разрешён tm правилом polkit, без sudo)
+        return _run("bash", "-c", command, timeout=timeout)
     return _run("ssh", "-i", os.path.expanduser(cfg.get("key", "")), "-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
                 cfg["ssh"], command, timeout=timeout)
 
@@ -124,7 +128,7 @@ def github_collect():
     cfg = _server()
     if cfg:  # сбор на сервере: запустить сейчас, не дожидаясь расписания
         try:
-            r = _ssh(cfg, "sudo systemctl start --no-block %s.service" % UNITS[what])
+            r = _ssh(cfg, ("" if cfg.get("local") else "sudo ") + "systemctl start --no-block %s.service" % UNITS[what])
         except subprocess.TimeoutExpired:
             return jsonify({"error": "сервер не ответил вовремя"}), 502
         if r.returncode != 0:
@@ -143,6 +147,8 @@ def github_collect():
 
 @bp.post("/api/data/pull")
 def data_pull():
+    if ON_SERVER:  # сборы идут здесь же — данные всегда свежие, подтягивать нечего
+        return jsonify({"ok": True, "message": "Данные на сервере — всегда свежие"})
     try:
         r = _run("./pull_data.sh", timeout=300)
     except subprocess.TimeoutExpired as e:

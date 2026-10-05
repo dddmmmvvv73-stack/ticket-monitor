@@ -22,12 +22,13 @@ import os
 import re
 import shlex
 import subprocess
+import sys
 
 from flask import Blueprint, Response, jsonify, redirect, request, send_from_directory
 
 from competitors import collector, curation, edits, market, myprojects, protodata, sync
 from competitors.classifier import FORMATS, GENRES, SPHERES
-from competitors.storage import BASE_DIR, load_json
+from competitors.storage import BASE_DIR, ON_SERVER, load_json
 
 bp = Blueprint("market_api", __name__)
 SERVER_FILE = BASE_DIR / "config" / "server.json"   # {"ssh": "tm@<адрес>", "key": "~/.ssh/…"} — только на этом компьютере
@@ -83,12 +84,15 @@ def sales_detail():
     if not keys:
         return jsonify(error="нет номеров карточек"), 400
     cfg = load_json(SERVER_FILE, {})
-    if not cfg.get("ssh"):
+    if ON_SERVER:  # на сервере — та же команда здесь (окружение с адресом базы — у tm-web из /etc/ticket-monitor.env)
+        cmd = [sys.executable, "-m", "sales.detail", *keys]
+    elif not cfg.get("ssh"):
         return jsonify(error="сервер не настроен на этом компьютере (config/server.json)"), 503
-    remote = "set -a; . /etc/ticket-monitor.env; set +a; cd /opt/ticket-monitor && .venv/bin/python -m sales.detail " + " ".join(shlex.quote(k) for k in keys)
-    cmd = ["ssh", "-i", os.path.expanduser(cfg.get("key", "")), "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", cfg["ssh"], remote]
+    else:
+        remote = "set -a; . /etc/ticket-monitor.env; set +a; cd /opt/ticket-monitor && .venv/bin/python -m sales.detail " + " ".join(shlex.quote(k) for k in keys)
+        cmd = ["ssh", "-i", os.path.expanduser(cfg.get("key", "")), "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", cfg["ssh"], remote]
     try:
-        r = subprocess.run(cmd, capture_output=True, timeout=40)
+        r = subprocess.run(cmd, capture_output=True, timeout=40, cwd=BASE_DIR)
     except subprocess.TimeoutExpired:
         return jsonify(error="сервер не ответил за 40 с"), 504
     if r.returncode != 0:

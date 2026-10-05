@@ -11,7 +11,8 @@ EnvironmentFile=/etc/ticket-monitor.env
 Environment=TZ=Europe/Moscow
 # Кассир — бережно: с этого же адреса идёт сбор продаж (TICKET_PLATFORMS.md, 8.6); пока идёт афиша, сбор продаж Кассир не трогает
 Environment=MARKET_KASSIR_PAUSE=2.0 MARKET_ORG_THREADS=1 MARKET_ORG_PAUSE=3.0
-ExecStartPre=/usr/bin/git -C /opt/ticket-monitor pull -q --ff-only
+# «-»: если подтянуть не удалось (сеть, расхождение) — сбор всё равно идёт на текущем коде
+ExecStartPre=-/usr/bin/git -C /opt/ticket-monitor pull -q --ff-only
 ExecStartPre=/usr/bin/touch /opt/ticket-monitor/data/.market_running
 ExecStart=/opt/ticket-monitor/.venv/bin/python -m competitors.market
 ExecStartPost=/opt/ticket-monitor/deploy/commit_data.sh Рынок

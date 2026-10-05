@@ -33,4 +33,12 @@ sudo chown root:tm /etc/ticket-monitor.env && sudo chmod 640 /etc/ticket-monitor
 sudo cp "$APP"/deploy/systemd/*.service "$APP"/deploy/systemd/*.timer /etc/systemd/system/
 sudo systemctl daemon-reload
 for t in tm-sync tm-backup tm-sales tm-collect tm-market; do sudo systemctl enable --now "$t.timer"; done
+
+# Интерфейс: tm-web на 127.0.0.1:5050, наружу — Caddy (https + пароль). Запускать сборы из интерфейса tm может без sudo
+sudo cp "$APP/deploy/polkit-tm.rules" /etc/polkit-1/rules.d/50-ticket-monitor.rules
+sudo systemctl enable --now tm-web.service
+command -v caddy >/dev/null || sudo apt-get install -y -q caddy
+# /etc/caddy/Caddyfile — по образцу deploy/Caddyfile.example (адрес и пароль — только на сервере), затем: sudo systemctl reload caddy
+# Правки из интерфейса сервер отправляет на GitHub сам: ключ ~/.ssh/github_deploy (ключ развёртывания с записью),
+# git config user.email — адрес noreply (репозиторий публичный), pushurl — git@github.com:…
 systemctl list-timers 'tm-*' --no-pager

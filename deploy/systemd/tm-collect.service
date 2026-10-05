@@ -10,7 +10,8 @@ WorkingDirectory=/opt/ticket-monitor
 EnvironmentFile=/etc/ticket-monitor.env
 Environment=TZ=Europe/Moscow
 # Свежий код и ваша разметка / площадки (config/ уходит на GitHub из приложения)
-ExecStartPre=/usr/bin/git -C /opt/ticket-monitor pull -q --ff-only
+# «-»: если подтянуть не удалось (сеть, расхождение) — сбор всё равно идёт на текущем коде
+ExecStartPre=-/usr/bin/git -C /opt/ticket-monitor pull -q --ff-only
 ExecStart=/opt/ticket-monitor/.venv/bin/python -m competitors.collector auto
 ExecStartPost=/opt/ticket-monitor/deploy/commit_data.sh Сбор
 TimeoutStartSec=2400

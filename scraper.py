@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from playwright.sync_api import sync_playwright
 
 HALLPLAN_URL_MARKER = "hallplan/async"
 
@@ -74,6 +73,8 @@ def _attempt(event_url: str, timeout_ms: int) -> tuple[dict | None, str | None]:
     Возвращает (данные_или_None, причина_неудачи_или_None).
     """
     captured = {"data": None}
+
+    from playwright.sync_api import sync_playwright  # здесь, а не наверху: на сервере браузера нет, интерфейс без него работает
 
     with sync_playwright() as p:
         browser = p.chromium.launch(headless=True)

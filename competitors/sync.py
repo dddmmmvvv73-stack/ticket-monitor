@@ -4,7 +4,8 @@
 Сбор идёт на GitHub Actions и берёт настройки из ветки main: список площадок (config/competitors.json),
 ручную разметку рынка (config/market_curation.json), ручные ниши (config/classification_overrides.json).
 Поэтому после сохранения в интерфейсе файл коммитится и отправляется в фоне — интерфейс не ждёт.
-Итог пишется в журнал.
+Итог пишется в журнал. Перед отправкой — чужие коммиты (правки с другого компьютера, код) подтягиваются поверх:
+на сервере интерфейс и сборы живут в одном репозитории, и без этого сборы перестали бы получать свежий код.
 """
 
 from __future__ import annotations
@@ -33,6 +34,11 @@ def _publish(paths: list[str], message: str, log: Callable[[str], None]) -> None
         commit = _git("commit", "-q", "-m", message, "--", *changed)
         if commit.returncode != 0:
             log(f"✖ Не отправлено на GitHub: не удался коммит — {commit.stderr.strip()[:200]}")
+            return
+        pull = _git("pull", "-q", "--rebase", "origin", "main")
+        if pull.returncode != 0:
+            _git("rebase", "--abort")
+            log(f"✖ Сохранено, но не отправлено на GitHub: не удалось подтянуть свежие изменения — {pull.stderr.strip()[:200]}")
             return
         # Большой буфер: без него GitHub иногда обрывает отправку с HTTP 400
         push = _git("-c", "http.postBuffer=524288000", "push", "-q", "origin", "main")

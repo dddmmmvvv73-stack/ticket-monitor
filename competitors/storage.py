@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+# Интерфейс запущен на самом сервере (systemd tm-web): сборы и продажи — здесь же, без SSH
+ON_SERVER = os.environ.get("TM_ON_SERVER") == "1"
 CONFIG_DIR = BASE_DIR / "config"
 DATA_DIR = BASE_DIR / "data" / "competitors"
 
