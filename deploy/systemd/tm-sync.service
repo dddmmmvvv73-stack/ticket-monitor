@@ -8,6 +8,7 @@ Type=oneshot
 User=tm
 WorkingDirectory=/opt/ticket-monitor
 EnvironmentFile=/etc/ticket-monitor.env
-ExecStart=/usr/bin/git -C /opt/ticket-monitor pull -q --ff-only
+# «-»: не удалось подтянуть код (сеть, расхождение) — база всё равно пополняется
+ExecStart=-/usr/bin/git -C /opt/ticket-monitor pull -q --ff-only
 ExecStart=/opt/ticket-monitor/.venv/bin/python -m db.sync
 TimeoutStartSec=1800
