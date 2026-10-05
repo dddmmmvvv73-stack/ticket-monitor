@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 
-from competitors.curation import REPERTORY, THEATRE_FORMATS, _STOP as CURATION_STOP
+from competitors.curation import REPERTORY, THEATRE_FORMATS, _STOP as CURATION_STOP, artist_part  # артист — одно правило везде
 
 # Слова, которые меняются от сезона к сезону, а проект — тот же (пункт 4)
 SEASON_WORDS = {"юбилейный", "юбилейная", "юбилейное", "юбилейные", "новый", "новая", "новое", "новые", "премьера",
@@ -23,13 +23,6 @@ STOP = CURATION_STOP | SEASON_WORDS
 YEAR = re.compile(r"\b(19|20)\d\d\b")
 GENRE_PHRASES = re.compile(r"рок[- ]опер\w*|рок[- ]мюзикл\w*|муз\w* спектакл\w*|танцевальн\w* шоу|стенд[- ]?ап\w*", re.I)
 
-# Начало названия, после которого — программа: «Артист. Программа», «Артист — …», «Артист: …», «Артист «Программа»»
-ARTIST_SPLIT = re.compile(r"\.\s|\s[—–-]\s|:\s|\s[«\"]|\sс\s(?:новой\s)?(?:концертной\s)?программой", re.I)
-NOT_ARTIST = re.compile(r"^(концерт|спектакль|балет|опера|мюзикл|шоу|стендап|лекция|вечер|фестиваль|праздник|ёлка|елка|"
-                        r"новогодн|рождеств|сказка|встреча|выставка|мастер|экскурс|детск|музыкальн|симфони|сольный|"
-                        r"большой|юбилейн|творческ|программа|абонемент|кино|квест)", re.I)
-# Одно общее слово — не артист («Группа. …», «Цирк. …», «Филармония. …»)
-GENERIC_HEADS = {"группа", "ансамбль", "цирк", "цирк-шапито", "филармония", "виа", "оркестр", "хор", "театр", "студия"}
 
 
 def _norm(title: str) -> str:
@@ -43,19 +36,6 @@ def title_key(title: str) -> str:
     """Ключ названия: слова без служебных, сезонных и года, по алфавиту (развитие curation.project_key)."""
     words = sorted({w for w in re.split(r"[^a-zа-я0-9]+", _norm(title)) if len(w) >= 2 and w not in STOP})
     return " ".join(words) if any(len(w) >= 3 for w in words) else ""
-
-
-def artist_part(title: str) -> str:
-    """Начало названия, похожее на артиста / коллектив («Валентин Сидоров. Юбилейный тур» → «Валентин Сидоров»)."""
-    t = (title or "").strip()
-    m = ARTIST_SPLIT.search(t)
-    if not m or m.start() < 3:
-        return ""
-    head = t[:m.start()].strip(" .,«»\"")
-    words = head.split()
-    if not 1 <= len(words) <= 4 or NOT_ARTIST.search(head) or head.lower() in GENERIC_HEADS:
-        return ""
-    return head
 
 
 def artist_key(name: str) -> str:

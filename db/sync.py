@@ -103,6 +103,7 @@ class Sync(Migration):
                 pid = add(m.get("title") or old_pk, key, source="migrated")
             reg.add_name(pid, old_pk, "", m.get("title") or old_pk, "legacy_key")
             reg.projects[pid]["mark"], reg.projects[pid]["mark_at"] = m["type"], m.get("at")
+        self.apply_aliases(reg)
         homonyms = homonym_keys(rows, lambda r: self.venue_kind.get((r["city"], curation.venue_key(r["city"], r["venue"]))))
         for r in rows:
             # пустой ключ (в названии одни служебные слова) — ищем и храним проект под тем же запасным ключом, иначе
@@ -123,6 +124,41 @@ class Sync(Migration):
         self.rep["артистов"] = artists
         return reg
 
+    def apply_aliases(self, reg: Registry) -> None:
+        """Ваше «это тот же проект» (подсказки): новое название — написание проекта; если по нему уже был отдельный
+        проект — его сеансы и написания переходят к проекту, а сам он удаляется."""
+        for pk_new, a in self.cur_marks.get("aliases", {}).items():
+            tgt = reg.find(title_key(a.get("target") or "")) or reg.find("", "", legacy=a["to"])
+            if tgt is None:
+                continue
+            new_keys = [k for k in {title_key(a.get("title") or ""), pk_new} if k]
+            olds = {reg.names.get((k, "")) for k in new_keys} - {None, tgt}
+            for k in new_keys:
+                reg.names[(k, "")] = tgt
+                reg.projects[tgt]["names"].setdefault((k, ""), (a.get("title"), "user"))
+                if (k, "") in self._known_names:
+                    self.cur.execute("UPDATE project_names SET project_id = %s, source = 'user' WHERE key = %s AND scope = ''", (tgt, k))
+            for old in olds:
+                self.cur.execute("UPDATE sessions SET project_id = %s WHERE project_id = %s", (tgt, old))
+                self.cur.execute("UPDATE project_names SET project_id = %s WHERE project_id = %s", (tgt, old))
+                self.cur.execute("DELETE FROM project_suggestions WHERE project_id = %s", (old,))
+                self.cur.execute("DELETE FROM projects WHERE id = %s", (old,))
+                for k, pid in list(reg.names.items()):
+                    if pid == old:
+                        reg.names[k] = tgt
+                reg.projects.pop(old, None)
+                self.rep["проектов склеено по вашим подсказкам"] += 1
+
+    def classify(self, rows: list[dict], reg: Registry) -> None:
+        """Как в переносе, плюс пометка артиста из вашей разметки (по началу названия или названию целиком)."""
+        super().classify(rows, reg)
+        for r in rows:
+            if r["_tour_src"] in ("project", "artist"):
+                continue
+            am = curation.artist_mark(self.cur_marks, r["_title"])
+            if am:
+                r["_tour"], r["_tour_src"], r["_tour_why"] = am["type"], "artist", f"артист «{am['name']}» — отмечено вручную"
+
     def save_projects(self, reg: Registry) -> dict[int, int]:
         """Новые написания, артисты (по ключу), пометки — в базу; подсказки — заново (принятые / отклонённые остаются)."""
         new_names = [(k, s, pid, reg.projects[pid]["names"][(k, s)][0], reg.projects[pid]["names"][(k, s)][1])
@@ -131,16 +167,22 @@ class Sync(Migration):
             execute_values(self.cur, "INSERT INTO project_names (key, scope, project_id, example, source) VALUES %s ON CONFLICT DO NOTHING", new_names)
         self.rep["написаний новых"] = len(new_names)
         artist_db = {}
+        marks = self.cur_marks.get("artists", {})
         for ak, a in reg.artists.items():
-            self.cur.execute("INSERT INTO artists (name, key) VALUES (%s,%s) ON CONFLICT (key) DO UPDATE SET name = EXCLUDED.name RETURNING id",
-                             (a["name"], ak))
+            m = marks.get(curation.project_key(a["name"])) or {}
+            self.cur.execute("INSERT INTO artists (name, key, mark, mark_at) VALUES (%s,%s,%s,%s) ON CONFLICT (key) DO UPDATE "
+                             "SET name = EXCLUDED.name, mark = EXCLUDED.mark, mark_at = EXCLUDED.mark_at RETURNING id",
+                             (a["name"], ak, m.get("type"), m.get("at")))
             artist_db[ak] = self.cur.fetchone()[0]
         execute_values(self.cur, "UPDATE projects p SET artist_id = v.a::int, mark = v.m::text, mark_at = v.t::timestamptz FROM (VALUES %s) v(id, a, m, t) "
                                  "WHERE p.id = v.id AND (p.artist_id IS DISTINCT FROM v.a::int OR p.mark IS DISTINCT FROM v.m::text)",
                        [(pid, artist_db.get(p["artist"]), p["mark"], p["mark_at"]) for pid, p in reg.projects.items()], page_size=2000)
         self.rep["проектов с вашей пометкой"] = sum(1 for p in reg.projects.values() if p["mark"])
         self.cur.execute("DELETE FROM project_suggestions WHERE status = 'open'")
-        sugg = reg.suggestions()
+        rejected, aliases = self.cur_marks.get("rejected", {}), self.cur_marks.get("aliases", {})
+        sugg = [s for s in reg.suggestions()  # отклонённые и уже привязанные вами — не предлагаем
+                if curation.project_key(s["title"]) not in aliases
+                and curation.project_key(s["title"]) + " → " + curation.project_key(reg.projects[s["project_id"]]["title"]) not in rejected]
         if sugg:
             execute_values(self.cur, "INSERT INTO project_suggestions (key, title, project_id, reason, score) VALUES %s ON CONFLICT DO NOTHING",
                            [(s["key"], s["title"], s["project_id"], s["reason"], s["score"]) for s in sugg])

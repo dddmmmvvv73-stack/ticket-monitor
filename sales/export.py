@@ -119,7 +119,19 @@ def build(conn) -> dict:
         if ext.get("shared"):
             r["shared"] = 1
         rows[key] = r
-    return {"at": datetime.now().astimezone().isoformat(timespec="minutes"), "rows": rows, "operators": operators(conn)}
+    return {"at": datetime.now().astimezone().isoformat(timespec="minutes"), "rows": rows, "operators": operators(conn),
+            "suggest": suggestions(conn)}
+
+
+def suggestions(conn) -> list:
+    """Подсказки «похоже на размеченный проект» (db.sync) — для страницы «Репертуар → Подсказки» в прототипе.
+    Ключи — как в разметке (curation.project_key): по ним прототип и сохраняет «да, это он» / «нет, другой»."""
+    from competitors.curation import project_key
+    cur = conn.cursor()
+    cur.execute("SELECT g.title, p.title, p.mark, g.reason, g.score FROM project_suggestions g JOIN projects p ON p.id = g.project_id "
+                "WHERE g.status = 'open' ORDER BY g.score DESC, g.title")
+    return [{"title": t, "pk": project_key(t), "target": tt, "tpk": project_key(tt), "mark": m, "reason": r, "score": round(sc, 2)}
+            for t, tt, m, r, sc in cur.fetchall()]
 
 
 def main() -> None:

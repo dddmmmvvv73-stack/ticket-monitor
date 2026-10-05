@@ -6,11 +6,15 @@ app.py и сразу отправляет на GitHub, сбор рынка на 
 При переходе на базу данных файл переносится в таблицу как есть.
 
     {"projects": {ключ проекта: {"type": "tour"|"local", "title", "at"}},
+     "aliases":  {ключ нового названия: {"to": ключ проекта, "title", "target", "at"}} — «это тот же проект» (подсказки),
+     "rejected": {"ключ нового → ключ проекта": дата} — «нет, другой»,
+     "artists":  {ключ имени артиста: {"type": "tour"|"local", "name", "at"}} — пометка на все программы артиста,
      "venues":   {"город|ключ площадки": {"type": "rental"|"repertory"|"mixed", "name", "city", "at"}},
      "edits":    {номер строки: {"fields": {поле: значение}, "at"}},
      "filters":  {"show": "tour"|"local"|"all", "pmin": число|null, "pmax": число|null, "noprice": bool}}
 
-Гастроль или местное — по порядку: пометка проекта → пометка площадки → автоматические признаки.
+Гастроль или местное — по порядку: пометка проекта (с его написаниями) → пометка артиста → пометка площадки →
+автоматические признаки.
 Те же правила повторены в прототипе (Design/prototype/index.html, mClassify) — менять вместе.
 """
 
@@ -23,7 +27,8 @@ from datetime import datetime
 from competitors.storage import CONFIG_DIR, load_json, save_json
 
 FILE = CONFIG_DIR / "market_curation.json"
-DEFAULT = {"projects": {}, "venues": {}, "edits": {}, "filters": {"show": "tour", "pmin": None, "pmax": None, "noprice": False}}
+DEFAULT = {"projects": {}, "venues": {}, "edits": {}, "aliases": {}, "rejected": {}, "artists": {},
+           "filters": {"show": "tour", "pmin": None, "pmax": None, "noprice": False}}
 TYPES = {"tour", "local"}
 VENUE_TYPES = {"rental", "repertory", "mixed"}
 EDIT_FIELDS = {"title", "date", "time", "city", "venue", "sphere", "format", "genre", "pmin", "pmax"}
@@ -44,6 +49,45 @@ def project_key(title: str) -> str:
     words = re.split(r"[^a-zа-я0-9]+", re.sub(r"\([^)]*\)", " ", (title or "").lower().replace("ё", "е")))
     words = sorted({w for w in words if len(w) >= 2 and w not in _STOP})
     return " ".join(words) if any(len(w) >= 3 for w in words) else ""
+
+
+# Начало названия, после которого — программа: «Артист. Программа», «Артист — …», «Артист: …», «Артист «Программа»»
+# (то же правило — в db/projects.py и в прототипе: artistPart)
+ARTIST_SPLIT = re.compile(r"\.\s|\s[—–-]\s|:\s|\s[«\"]|\sс\s(?:новой\s)?(?:концертной\s)?программой", re.I)
+NOT_ARTIST = re.compile(r"^(концерт|спектакль|балет|опера|мюзикл|шоу|стендап|лекция|вечер|фестиваль|праздник|ёлка|елка|"
+                        r"новогодн|рождеств|сказка|встреча|выставка|мастер|экскурс|детск|музыкальн|симфони|сольный|"
+                        r"большой|юбилейн|творческ|программа|абонемент|кино|квест)", re.I)
+# Одно общее слово — не артист («Группа. …», «Цирк. …», «Филармония. …»)
+GENERIC_HEADS = {"группа", "ансамбль", "цирк", "цирк-шапито", "филармония", "виа", "оркестр", "хор", "театр", "студия"}
+
+
+def artist_part(title: str) -> str:
+    """Начало названия, похожее на артиста / коллектив («Валентин Сидоров. Юбилейный тур» → «Валентин Сидоров»)."""
+    t = (title or "").strip()
+    m = ARTIST_SPLIT.search(t)
+    if not m or m.start() < 3:
+        return ""
+    head = t[:m.start()].strip(" .,«»\"")
+    head = re.sub(r"\s+(?:г|гор|пос|с)$", "", head)  # «ВИА Синяя птица г. Мелеуз» — точка после «г», не конец имени
+    words = head.split()
+    if not 1 <= len(words) <= 4 or NOT_ARTIST.search(head) or head.lower() in GENERIC_HEADS:
+        return ""
+    return head
+
+
+def artist_mark(cur: dict, title: str) -> dict | None:
+    """Пометка артиста: по началу названия («Сергей Орлов. Новый концерт») или по названию целиком («Сергей Орлов»)."""
+    marks = cur.get("artists", {})
+    if not marks:
+        return None
+    head = artist_part(title)
+    return (marks.get(project_key(head)) if head else None) or marks.get(project_key(title))
+
+
+def canonical(cur: dict, pk: str) -> str:
+    """Ключ проекта с учётом «это тот же проект»: новое название → ключ проекта, к которому его привязали."""
+    a = cur.get("aliases", {}).get(pk)
+    return a["to"] if a else pk
 
 
 def venue_key(city: str, venue: str) -> str:
@@ -118,6 +162,32 @@ def apply_op(op: dict) -> tuple[dict, str]:
     elif kind == "revert":
         cur["edits"].pop(op.get("key"), None)
         note = f"вернуть данные парсера {op.get('key')}"
+    elif kind == "alias":   # подсказка: «да, это тот же проект» — новое название навсегда за проектом
+        key, to = project_key(op.get("title", "")), project_key(op.get("target", ""))
+        if not key or not to or key == to:
+            raise CurationError("не удалось определить проекты по названиям")
+        cur["aliases"][key] = {"to": to, "title": op.get("title", ""), "target": op.get("target", ""), "at": now}
+        cur["rejected"].pop(key + " → " + to, None)
+        note = f"«{op.get('title')}» — тот же проект, что «{op.get('target')}»"
+    elif kind == "unalias":
+        cur["aliases"].pop(project_key(op.get("title", "")), None)
+        note = f"«{op.get('title')}» — отдельный проект"
+    elif kind == "reject":  # подсказка: «нет, другой» — больше не предлагать
+        key, to = project_key(op.get("title", "")), project_key(op.get("target", ""))
+        if not key or not to:
+            raise CurationError("не удалось определить проекты по названиям")
+        cur["rejected"][key + " → " + to] = now
+        note = f"«{op.get('title')}» — не то же, что «{op.get('target')}»"
+    elif kind == "artist":  # пометка на артиста — для всех его программ
+        name = (op.get("name") or "").strip()
+        key = project_key(name)
+        if not key:
+            raise CurationError("не удалось определить артиста")
+        if op.get("type") in TYPES:
+            cur["artists"][key] = {"type": op["type"], "name": name, "at": now}
+        else:
+            cur["artists"].pop(key, None)
+        note = f"артист «{name}» — {({'tour': 'гастроль', 'local': 'местное'}).get(op.get('type'), 'авто')}"
     elif kind == "filters":
         f = op.get("filters") or {}
         cur["filters"] = {"show": f.get("show") if f.get("show") in ("tour", "local", "all") else "tour",
@@ -143,12 +213,16 @@ def classify(rows: list[dict], cur: dict) -> None:
     groups: dict[str, dict[str, list]] = defaultdict(lambda: defaultdict(list))
     for r in rows:
         # Проект — по названию парсера: переименование правкой не выводит мероприятие из его тура (копия — mClassify / curApply)
-        r["pk"] = project_key((r.get("orig") or {}).get("title") or r["title"])
+        r["pk"] = canonical(cur, project_key((r.get("orig") or {}).get("title") or r["title"]))
         groups[r["pk"]][r["city"]].append(r)
     for r in rows:
         mark = cur["projects"].get(r["pk"])
         if mark:
             r["tour"], r["tour_src"], r["tour_why"] = mark["type"], "project", "отмечено вручную"
+            continue
+        amark = artist_mark(cur, (r.get("orig") or {}).get("title") or r["title"])
+        if amark:
+            r["tour"], r["tour_src"], r["tour_why"] = amark["type"], "artist", f"артист «{amark['name']}» — отмечено вручную"
             continue
         vmark = cur["venues"].get(venue_key(r["city"], r["venue"]))
         if vmark and vmark["type"] in ("rental", "repertory"):
