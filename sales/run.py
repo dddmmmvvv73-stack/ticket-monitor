@@ -231,6 +231,7 @@ def main() -> None:
     cities = [c.strip() for c in a.cities.split(",") if c.strip()] or None
     cur.execute(WORK_SQL, {"cities": cities})
     rows = cur.fetchall()
+    conn.commit()  # не держать транзакцию весь прогон: иначе ALTER / TRUNCATE ждут, а за ними встаёт и сбор
     work = {"yandex": [r for r in rows if r[5] == "yandex"], "kassir": [(r, kassir_priority(r)) for r in rows if r[5] == "kassir"]}
     # Кассир: сначала то, где без него нельзя (только Кассир, Яндекс сам не продаёт, запас поделён), потом недельная проверка
     # «общий ли запас», последними — пропуски без запросов

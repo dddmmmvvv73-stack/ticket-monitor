@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import os
 from pathlib import Path
 
@@ -43,6 +44,20 @@ def connect():
 
 
 def ensure_schema(conn) -> None:
+    """
+    Применяет schema.sql, только если она изменилась с прошлого раза (версия — хэш файла в schema_version).
+    ALTER TABLE ждёт свободную таблицу не дольше 15 с: идущий сбор не должен вставать в очередь за ним
+    (05.10 сбор продаж простоял так 6 минут).
+    """
+    text = SCHEMA.read_text(encoding="utf-8")
+    version = hashlib.sha1(text.encode()).hexdigest()
     with conn.cursor() as cur:
-        cur.execute(SCHEMA.read_text(encoding="utf-8"))
+        cur.execute("CREATE TABLE IF NOT EXISTS schema_version (hash text PRIMARY KEY, applied timestamptz NOT NULL DEFAULT now())")
+        cur.execute("SELECT 1 FROM schema_version WHERE hash = %s", (version,))
+        if cur.fetchone():
+            conn.commit()
+            return
+        cur.execute("SET LOCAL lock_timeout = '15s'")
+        cur.execute(text)
+        cur.execute("INSERT INTO schema_version (hash) VALUES (%s) ON CONFLICT DO NOTHING", (version,))
     conn.commit()
