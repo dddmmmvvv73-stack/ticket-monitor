@@ -173,9 +173,13 @@ button.status:hover { color: var(--ink); }
 .cols-pop input { width: 16px; height: 16px; accent-color: #1c1917; }
 .cols-pop label.locked { color: var(--muted); cursor: default; }
 
-.ev-card-table { width: -webkit-fit-content; width: fit-content; max-width: 100%; overflow-x: auto; }  /* не помещается — прокрутка внутри карточки, не страницы */
+.ev-card-table { width: -webkit-fit-content; width: fit-content; max-width: 100%; }
+/* Не помещается по ширине — прокрутка внутри карточки, не страницы (класс ставит tableFit). Тогда шапка — без «прилипания»:
+   внутри прокручиваемой карточки Safari сдвигал её вниз на высоту верхней панели, поверх первой строки */
+.ev-card-table.ev-wide { overflow-x: auto; }
+.ev-card-table.ev-wide .ev-table thead th { top: 0; }
 .ev-table { border-collapse: collapse; table-layout: fixed; }
-.ev-table thead th { position: sticky; top: 64px; background: var(--card); z-index: 3; font-size: 12px; font-weight: 500; color: var(--muted); text-align: left; padding: 12px 10px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; overflow: visible; }
+.ev-table thead th { position: sticky; top: var(--top-h, 64px); background: var(--card); z-index: 3; font-size: 12px; font-weight: 500; color: var(--muted); text-align: left; padding: 12px 10px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; overflow: visible; }
 .ev-table thead th:first-child { border-top-left-radius: 12px; }
 .ev-table thead th:last-child { border-top-right-radius: 12px; }
 .ev-table th.r, .ev-table td.r { text-align: right; }
@@ -1316,7 +1320,7 @@ var FIT_ORDER = [["title", 200], ["niche", 124], ["venue", 104], ["date", 96], [
 function fittedWidths(cols) {
   var w = {}, total = 0, view = $("view"), pad = parseFloat(getComputedStyle(view).paddingLeft) || 0;
   cols.forEach(function (c) { w[c.id] = colW(c); total += w[c.id]; });
-  var over = total - (view.clientWidth - 2 * pad);
+  var over = total - (view.clientWidth - 2 * pad - 2);  // − рамка карточки (по 1 px): иначе таблица на 2 px шире и уходит в прокрутку
   FIT_ORDER.forEach(function (f) {
     if (over <= 0 || !(f[0] in w) || S.widths[f[0]]) return;
     var cut = Math.min(over, w[f[0]] - f[1]);
@@ -3220,7 +3224,7 @@ function mFitted(cols, widths, fit) {
   widths = widths || S.m.widths;
   var w = {}, total = 0, view = $("view"), pad = parseFloat(getComputedStyle(view).paddingLeft) || 0;
   cols.forEach(function (c) { w[c.id] = widths[c.id] || c.w; total += w[c.id]; });
-  var over = total - (view.clientWidth - 2 * pad);
+  var over = total - (view.clientWidth - 2 * pad - 2);  // − рамка карточки (по 1 px): иначе таблица на 2 px шире и уходит в прокрутку
   (fit || M_FIT).forEach(function (f) {
     if (over <= 0 || !(f[0] in w) || widths[f[0]]) return;
     var cut = Math.min(over, w[f[0]] - f[1]); if (cut > 0) { w[f[0]] -= cut; over -= cut; }
@@ -5511,7 +5515,20 @@ function render() {
   var mt = document.querySelector('.mtabs [aria-selected="true"]');  // на телефоне полоса вкладок «Рынка» прокручивается к выбранной
   if (mt) { var mp = mt.parentNode; mp.scrollLeft += mt.getBoundingClientRect().left - mp.getBoundingClientRect().left - 16; }
   renderCal();
+  tableFit();
 }
+// Шапка таблицы прилипает ровно под верхней панелью (её высота меняется: строка поиска, перенос на узком экране);
+// таблица шире карточки — прокрутка внутри карточки (.ev-wide)
+function tableFit() {
+  var top = document.querySelector(".top");
+  if (top) document.documentElement.style.setProperty("--top-h", Math.round(top.getBoundingClientRect().height) + "px");
+  document.querySelectorAll(".ev-card-table").forEach(function (c) {
+    c.classList.remove("ev-wide");
+    var t = c.querySelector("table");
+    if (t && t.scrollWidth > c.clientWidth + 1) c.classList.add("ev-wide");
+  });
+}
+window.addEventListener("resize", tableFit);
 
 buildCitySelect();
 // Клик по значку или стрелке «пилюли» города — как по самому списку
