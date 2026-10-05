@@ -423,8 +423,8 @@ def verify(conn) -> dict:
             bad.append((uid, (n, int(s)), want))
     out["продажи по местам: расхождений с JSON"] = len(bad)
     out["примеры расхождений"] = bad[:5]
-    cur.execute("SELECT count(*) FROM observations")
-    out["наблюдений (база / история JSON)"] = (cur.fetchone()[0], sum(len(load_json(collector.history_path(u), [])) for u in events))
+    cur.execute("SELECT count(*) FROM observations o JOIN pools p ON p.id = o.pool_id WHERE p.source = 'json'")
+    out["наблюдений площадок прямого сбора (база / история JSON)"] = (cur.fetchone()[0], sum(len(load_json(collector.history_path(u), [])) for u in events))
     cur.execute("SELECT count(*) FROM projects WHERE mark IS NOT NULL")
     out["проектов с вашей пометкой"] = cur.fetchone()[0]
     cur.execute("SELECT count(*) FROM project_suggestions WHERE status = 'open'")

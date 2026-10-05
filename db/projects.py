@@ -107,9 +107,11 @@ class Registry:
         self.artists: dict[str, dict] = {}        # ключ артиста → {name, mark, mark_at, projects: set}
         self._next = 1
 
-    def add_project(self, title: str, key: str, scope: str = "", source: str = "auto", **extra) -> int:
-        pid = self._next
-        self._next += 1
+    def add_project(self, title: str, key: str, scope: str = "", source: str = "auto", pid: int | None = None, **extra) -> int:
+        """pid — номер проекта в базе (пополнение базы: db.sync); без него — следующий свободный (перенос с нуля)."""
+        if pid is None:
+            pid = self._next
+        self._next = max(self._next, pid + 1)
         self.projects[pid] = {"title": title, "artist": None, "mark": None, "mark_at": None, "scope": scope,
                               "names": {}, **extra}
         self.add_name(pid, key, scope, title, source)

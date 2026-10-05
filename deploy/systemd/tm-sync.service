@@ -1,5 +1,5 @@
 [Unit]
-Description=ticket-monitor: свежий код с GitHub → пересборка справочной части базы из собранных на сервере файлов
+Description=ticket-monitor: свежий код с GitHub → пополнение базы из собранных на сервере файлов (база главная, ничего не стирается)
 After=network-online.target postgresql.service
 Wants=network-online.target
 
@@ -9,5 +9,5 @@ User=tm
 WorkingDirectory=/opt/ticket-monitor
 EnvironmentFile=/etc/ticket-monitor.env
 ExecStart=/usr/bin/git -C /opt/ticket-monitor pull -q --ff-only
-ExecStart=/opt/ticket-monitor/.venv/bin/python -m db.migrate
+ExecStart=/opt/ticket-monitor/.venv/bin/python -m db.sync
 TimeoutStartSec=1800
