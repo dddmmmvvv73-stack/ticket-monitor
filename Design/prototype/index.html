@@ -2017,32 +2017,62 @@ function archBuild() {
       yt: false, key: "d:" + (e.uid || "c" + e.i), tk: tourKey(e.title), org: "", sales: null, duid: e.uid || "", dref: e, st: archStatus(e), o: {} });
   });
   var liveTour = {}; MR.forEach(function (e) { if (e.pk && e.tour === "tour") liveTour[e.pk] = true; });
+  rows.forEach(function (e) {
+    if (e.src !== "d" || liveTour[projKey(e.title)]) { e.tour = "tour"; e.twhy = e.src !== "d" ? "гастроль из архива рынка" : "сейчас гастролирует"; }
+    else { e.tour = "local"; e.twhy = "площадка прямого сбора, в гастролях не замечено"; }
+  });
+  return archFinish(rows);
+}
+// Номера строк, проект, ваши пометки «гастроль / местное» (проект, артист) — поверх признака сбора
+function archFinish(rows) {
   rows.forEach(function (e, i) {
     e.i = i; e.pk0 = projKey(e.title); e.pk = canonPk(e.pk0);
     var pm = CUR.projects[e.pk], am = artistMark(e.title);
     if (pm) { e.tour = pm.type; e.tsrc = "project"; e.twhy = "отмечено вручную"; }
     else if (am) { e.tour = am.type; e.tsrc = "artist"; e.twhy = "артист «" + am.name + "» — отмечено вручную"; }
-    else if (e.src !== "d" || liveTour[e.pk]) { e.tour = "tour"; e.tsrc = "auto"; e.twhy = e.src !== "d" ? "гастроль из архива рынка" : "сейчас гастролирует"; }
-    else { e.tour = "local"; e.tsrc = "auto"; e.twhy = "площадка прямого сбора, в гастролях не замечено"; }
+    else e.tsrc = "auto";
   });
   return rows;
 }
-function archMonths() {  // месяцы архива: от первого до текущего
-  var first = ARCH_MR.reduce(function (m, e) { return e.date < m ? e.date : m; }, TODAY).slice(0, 7), out = [];
-  for (var d = first + "-01"; d.slice(0, 7) <= TODAY.slice(0, 7); ) { out.push(d.slice(0, 7)); var t = new Date(d + "T12:00:00Z"); t.setUTCMonth(t.getUTCMonth() + 1); d = t.toISOString().slice(0, 10); }
-  return out;
+// Через сайт или приложение архив берётся из базы на сервере (/api/archive, sales.history): все прошедшие сеансы
+// периода — и местные, — с итогом сеанса (sales.results). Файлом — то, что есть в файлах: гастроли рынка и площадки прямого сбора.
+var ARCH_API = /^https?:$/.test(location.protocol), ARCH_KEY = null, ARCH_LOAD = null, ARCH_ERR = "";
+function archFromApi(list) {
+  return archFinish(list.map(function (r) {
+    return { city: r.c, venue: r.v, title: r.t, date: r.d, time: r.tm || "", sphere: r.sp || fmtSphere(r.f), format: r.f || "", genre: r.g || "",
+      pmin: r.pn || null, pmax: r.px || null, pushkin: !!r.pu, src: r.src || "k", urlK: r.uk || "", urlY: r.uy || "", more: 0, until: "",
+      seen: r.seen || r.d, age: r.age || "", yt: false, key: (r.keys && r.keys[0]) || "h:" + r.c + "|" + r.d + "|" + r.tm + "|" + r.t, tk: tourKey(r.t),
+      org: r.org || "", sales: r.s || null, duid: "", keys: r.keys || [], st: r.st, tour: r.tour || "local", twhy: r.why || "", o: {} };
+  }));
 }
-function monthEnd(ym) { var t = new Date(ym + "-01T12:00:00Z"); t.setUTCMonth(t.getUTCMonth() + 1); t.setUTCDate(0); return t.toISOString().slice(0, 10); }
-var MONTHS_FULL = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
-function monthName(ym) { return MONTHS_FULL[+ym.slice(5, 7) - 1] + " " + ym.slice(0, 4); }
+function archNeed() {  // какой кусок архива нужен странице: период + один город (или все)
+  return S.m.afrom + "|" + S.m.ato + "|" + (mSingleCity() ? S.m.city : "");
+}
+function archLoad() {
+  var key = archNeed(); if (ARCH_LOAD === key) return;
+  ARCH_LOAD = key; ARCH_ERR = "";
+  var p = key.split("|");
+  fetch("/api/archive?from=" + p[0] + "&to=" + p[1] + (p[2] ? "&city=" + encodeURIComponent(p[2]) : ""))
+    .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || "ошибка " + r.status); return d; }); })
+    .then(function (list) {
+      if (ARCH_LOAD !== key) return;  // пока грузили, выбрали другой период
+      ARCH_MR = archFromApi(list); ARCH_KEY = key; ARCH_LOAD = null;
+      if (ARCH_ON) { MR = ARCH_MR; MR_CITY = {}; MR.forEach(function (e) { (MR_CITY[e.city] = MR_CITY[e.city] || []).push(e); }); MRV_KEY = null; PROJ_CACHE.key = null; render(); }
+    })
+    .catch(function (e) { if (ARCH_LOAD !== key) return; ARCH_LOAD = null; ARCH_ERR = e.message || String(e); ARCH_KEY = key; if (ARCH_ON) render(); });
+}
+// Период архива — как в шапке «Мероприятий»: кнопка «Даты» (календарь, быстрый выбор месяца); целый месяц — его название
+function archRangeLabel() {
+  var a = S.m.afrom, b = S.m.ato, m = MONTHS_FULL[+a.slice(5, 7) - 1];
+  return a.slice(8) === "01" && b === monthEnd(a) ? m[0].toUpperCase() + m.slice(1) + " " + a.slice(0, 4) : rangeLabel(a, b);
+}
 function archMode(on) {
   if (on === ARCH_ON) return;
   if (on) {
-    if (!ARCH_MR) ARCH_MR = archBuild();
+    if (!ARCH_MR) ARCH_MR = ARCH_API ? [] : archBuild();
     if (!ARCH_M) {  // своё состояние архива: копия фильтров «Мероприятий», текущий месяц
       ARCH_M = JSON.parse(JSON.stringify(S.m));
-      var ym = TODAY.slice(0, 7);
-      Object.assign(ARCH_M, { tab: "table", atab: "history", aby: "dates", amFrom: ym, amTo: ym, afrom: ym + "-01", ato: monthEnd(ym), ast: "", aopen: null,
+      Object.assign(ARCH_M, { tab: "table", atab: "history", aby: "dates", afrom: TODAY.slice(0, 8) + "01", ato: monthEnd(TODAY), ast: "", aopen: null,
         sort: "date", desc: true, limit: 200, sel: null, day: null, venue: "", project: null, vproj: null,
         sphere: "", format: "", genre: "", src: "", filter: "all", myFormat: "", myGenre: "", openSph: null, wkSel: null });  // ниши и источник — свои, с чистого листа
     }
@@ -2060,20 +2090,15 @@ function archMode(on) {
 function archResult(list) {
   var T = 0, SL = 0, R = 0, G = 0, n = 0;
   list.forEach(function (e) {
-    var d = mDirect(e);
+    var d = mDirect(e), x = !d && e.sales && mSalesFill(e.sales);
     if (d && d.gross) { n++; T += d.taken || 0; SL += d.sellable || 0; R += d.revenue || 0; G += d.gross || 0; }
+    else if (x) { n++; T += x.taken; SL += x.total; R += e.sales.rev || 0; G += e.sales.g || 0; }
   });
   return { n: n, fill: SL ? Math.round(T / SL * 100) : null, taken: T, sellable: SL, revenue: R, gross: G };
 }
 function archTools() {
-  var ms = archMonths();
-  var sel = function (key, label) {
-    return '<select class="flat-select" data-flat-label="' + label + '" data-flat-always data-asel="' + key + '" aria-label="' + label + '">' +
-      ms.map(function (m) { return '<option value="' + m + '"' + (S.m[key] === m ? " selected" : "") + '>' + monthName(m) + '</option>'; }).join("") + '</select>';
-  };
   var n = { past: 0, gone: 0 }; MRV.forEach(function (e) { if (mInScope(e) && inPeriod(e)) n[e.st]++; });
-  return sel("amFrom", "С") + sel("amTo", "По") +
-    '<select class="flat-select" data-flat-label="Итог" data-asel="ast" aria-label="Итог"><option value="">Все</option>' +
+  return '<select class="flat-select" data-flat-label="Итог" data-asel="ast" aria-label="Итог"><option value="">Все</option>' +
       ["past", "gone"].map(function (k) { return '<option value="' + k + '"' + (S.m.ast === k ? " selected" : "") + '>' + ARCH_STATUS[k] + ' · ' + num(n[k]) + '</option>'; }).join("") + '</select>';
 }
 function archTabs() {
@@ -2119,9 +2144,9 @@ function archProjects(list) {
     (keys.length > shown.length ? '<div style="display:flex;justify-content:center;gap:12px;align-items:center"><span class="sub" style="margin:0">Показано ' + num(shown.length) + ' из ' + num(keys.length) + '</span><button class="btn-ghost" data-amore>Показать ещё</button></div>' : '');
 }
 function evLineM(e) {
-  var d = dparts(e.date), x = mDirect(e);
+  var d = dparts(e.date), x = mDirect(e), sf = !(x && x.gross) && e.sales && mSalesFill(e.sales);
   return '<button class="hall-link" data-mopen="' + e.i + '"><span class="hl-name" style="min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"><span class="' + (d.weekend ? "wknd" : "") + '">' + d.wd + ', ' + d.day + ' ' + d.mon + '</span> · ' + esc(e.city) + ' · ' + esc(e.venue) + '</span>' +
-    '<span class="sub num nowrap" style="margin:0">' + (x && x.gross ? "заполн. " + fill(x) + "%" : ARCH_STATUS[e.st]) + '</span></button>';
+    '<span class="sub num nowrap" style="margin:0">' + (x && x.gross ? "заполн. " + fill(x) + "%" : sf ? "заполн. " + sf.f + "%" : ARCH_STATUS[e.st]) + '</span></button>';
 }
 function archAnalysis(list) {
   var r = mRange(), from = r[0], to = r[1];
@@ -2130,6 +2155,11 @@ function archAnalysis(list) {
     mPriceSegments(list, from, to) + mWeeks(list, from, to) + (mSingleCity() ? mVenueDays(list, from, to) : '<div class="note">Площадки по дням — у одного города: выберите город в шапке.</div>');
 }
 function renderArchive() {
+  if (ARCH_API && ARCH_KEY !== archNeed()) {  // нужен другой кусок архива — грузим, пока показываем заголовок
+    archLoad();
+    return head("Архив · " + mScopeLabel() + " · " + archRangeLabel(), "Прошедшие и снятые с продажи мероприятия") + archTabs() +
+      '<div class="empty"><h2>Загружаю архив…</h2><p style="margin:0">Прошедшие мероприятия за ' + esc(archRangeLabel()) + ' — из базы на сервере.</p></div>';
+  }
   mVisible(); M_COUNT = null;
   var list = mBase(), body;
   if (S.m.atab === "analysis") { S.m.tab = "city"; body = '<div class="toolbar mtools">' + mNicheSelects(mBase({ noVenue: true })) + '</div>' + archKpis(list) + archAnalysis(list); M_COUNT = [list.length, "мероприятие", "мероприятия", "мероприятий"]; }
@@ -2139,10 +2169,11 @@ function renderArchive() {
       : mTable().replace('<section class="card ev-card-table">', archKpis(list) + '<section class="card ev-card-table">');
   }
   var split = mSplitTools(body);
-  var range = S.m.amFrom === S.m.amTo ? monthName(S.m.amFrom) : monthName(S.m.amFrom) + " – " + monthName(S.m.amTo);
-  return head("Архив · " + mScopeLabel() + " · " + range, "Прошедшие и снятые с продажи мероприятия · итог — по последнему сбору перед началом") + archTabs() +
+  return head("Архив · " + mScopeLabel() + " · " + archRangeLabel(), "Прошедшие и снятые с продажи мероприятия · итог — по последнему сбору перед началом") + archTabs() +
     mPanel(archTools() + split.tools, false) + split.body +
-    '<div class="note">Макет: в архиве сейчас гастроли, ушедшие из афиши рынка (копятся с ' + (MK.first ? human(MK.first) : "первого сбора") + '), и мероприятия площадок прямого сбора с итогами продаж. Местные мероприятия рынка и итоги продаж гастролей появятся, когда архив подключим к базе на сервере.</div>';
+    (ARCH_ERR ? '<div class="note">Архив из базы не загрузился (' + esc(ARCH_ERR) + ') — обновите страницу.</div>'
+      : ARCH_API ? '<div class="note">Архив — из базы на сервере: все прошедшие сеансы с 30 сентября 2026 (начало сбора). Итог — по последнему снимку перед началом; продажи — у гастролей, которые отслеживаются, и у площадок прямого сбора.</div>'
+      : '<div class="note">Страница открыта файлом: в архиве только гастроли рынка и площадки прямого сбора. Полный архив — на сайте или через приложение.</div>');
 }
 $("view").addEventListener("click", function (ev) {
   if (S.view !== "archive") return;
@@ -2155,10 +2186,7 @@ $("view").addEventListener("click", function (ev) {
 $("view").addEventListener("change", function (ev) {
   if (S.view !== "archive") return;
   var t = ev.target.closest("[data-asel]"); if (!t) return;
-  var k = t.getAttribute("data-asel"); S.m[k] = t.value;
-  if (k === "amFrom" && S.m.amTo < S.m.amFrom) S.m.amTo = S.m.amFrom;
-  if (k === "amTo" && S.m.amFrom > S.m.amTo) S.m.amFrom = S.m.amTo;
-  S.m.afrom = S.m.amFrom + "-01"; S.m.ato = monthEnd(S.m.amTo); S.m.limit = 200; S.m.day = null; S.m.aopen = null;
+  S.m[t.getAttribute("data-asel")] = t.value; S.m.limit = 200; S.m.day = null; S.m.aopen = null;
   render();
 });
 function repeatSection(groups) {
@@ -3073,6 +3101,7 @@ function renderCal() {
 }
 function openCal() {
   S.calOpen = true; S.pickFrom = S.period === "custom" ? S.from : null; S.pickTo = S.period === "custom" ? S.to : null;
+  if (ARCH_ON) { S.pickFrom = S.m.afrom; S.pickTo = S.m.ato; }  // в «Архиве» календарь выбирает период архива
   if (S.pickFrom) S.calMonth = S.pickFrom.slice(0, 8) + "01";
   renderCal();
 }
@@ -3086,6 +3115,8 @@ $("cal").addEventListener("click", function (ev) {
     else S.pickTo = d;
   } else if (t.hasAttribute("data-month")) { var m = t.getAttribute("data-month"); S.pickFrom = m; S.pickTo = monthEnd(m); S.calMonth = m; }
   else if (t.hasAttribute("data-calnav")) S.calMonth = shiftMonth(S.calMonth, +t.getAttribute("data-calnav"));
+  else if (ARCH_ON && t.getAttribute("data-calact") === "reset") { S.m.afrom = TODAY.slice(0, 8) + "01"; S.m.ato = monthEnd(TODAY); S.m.limit = 200; S.m.aopen = null; S.calOpen = false; render(); }
+  else if (ARCH_ON && t.getAttribute("data-calact") === "apply" && S.pickFrom) { S.m.afrom = S.pickFrom; S.m.ato = S.pickTo || S.pickFrom; S.m.limit = 200; S.m.aopen = null; S.m.day = null; S.calOpen = false; render(); }
   else if (t.getAttribute("data-calact") === "reset") { S.pickFrom = S.pickTo = null; S.period = "all"; S.from = S.to = null; S.calOpen = false; render(); }
   else if (t.getAttribute("data-calact") === "apply" && S.pickFrom) { S.period = "custom"; S.from = S.pickFrom; S.to = S.pickTo || S.pickFrom; S.calOpen = false; render(); }
   renderCal();
@@ -5681,9 +5712,9 @@ function render() {
   $("moreSheet").hidden = true; $("moreBtn").setAttribute("aria-expanded", "false");
   buildCitySelect();
   document.querySelectorAll("#period button").forEach(function (b) { b.setAttribute("aria-pressed", String(b.getAttribute("data-p") === S.period)); });
-  $("dateLabel").textContent = S.period === "custom" ? rangeLabel(S.from, S.to) : "Даты";
-  $("dateBtn").style.borderColor = S.period === "custom" ? "var(--soot)" : "";
-  $("period").style.display = $("dateBtn").parentNode.style.display = ARCH_ON ? "none" : "";  // в архиве период — месяцы в строке фильтров
+  $("dateLabel").textContent = ARCH_ON ? archRangeLabel() : S.period === "custom" ? rangeLabel(S.from, S.to) : "Даты";
+  $("dateBtn").style.borderColor = ARCH_ON || S.period === "custom" ? "var(--soot)" : "";
+  $("period").style.display = ARCH_ON ? "none" : "";  // «30 дней / 90 дней / Сезон» — про будущее; в архиве период — кнопкой «Даты»
   HEAD_SUB = !isM() && SUBS[S.view] ? subSwitch(S.view) : "";
   $("view").innerHTML = S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? renderVenues() : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : renderEvents();
   $("view").classList.toggle("enter", !!S.enter); S.enter = false; S.colsAnim = false;

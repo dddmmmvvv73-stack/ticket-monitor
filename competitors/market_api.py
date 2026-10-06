@@ -23,6 +23,7 @@ import re
 import shlex
 import subprocess
 import sys
+from datetime import datetime
 
 from flask import Blueprint, Response, jsonify, redirect, request, send_from_directory
 
@@ -101,6 +102,48 @@ def sales_detail():
         return jsonify(json.loads(r.stdout))
     except ValueError:
         return jsonify(error="сервер вернул непонятный ответ"), 502
+
+
+_arch_cache: dict = {}
+
+
+@bp.get("/api/archive")
+def archive_rows():
+    """Архив для прототипа (sales.history): прошедшие и снятые сеансы за период — из базы на сервере. Данные в git не попадают."""
+    frm, to, city = request.args.get("from", ""), request.args.get("to", ""), (request.args.get("city") or "").strip()
+    if not (re.match(r"^\d{4}-\d{2}-\d{2}$", frm) and re.match(r"^\d{4}-\d{2}-\d{2}$", to)) or len(city) > 60 or re.search(r"[\x00-\x1f]", city):
+        return jsonify(error="период — from/to ГГГГ-ММ-ДД, город — название"), 400
+    key = (frm, to, city, datetime.now().strftime("%Y-%m-%d %H"))  # итоги фиксируются раз в час — кэш на час
+    if key in _arch_cache:
+        return Response(_arch_cache[key], mimetype="application/json")
+    if ON_SERVER:
+        from db import connect as dbc
+        from sales import history
+        conn = dbc.connect()
+        try:
+            body = json.dumps(history.rows(conn, frm, to, city), ensure_ascii=False, separators=(",", ":"))
+        except ValueError as e:
+            return jsonify(error=str(e)), 400
+        finally:
+            conn.close()
+    else:
+        cfg = load_json(SERVER_FILE, {})
+        if not cfg.get("ssh"):
+            return jsonify(error="сервер не настроен на этом компьютере (config/server.json)"), 503
+        remote = ("set -a; . /etc/ticket-monitor.env; set +a; cd /opt/ticket-monitor && .venv/bin/python -m sales.history "
+                  + " ".join(shlex.quote(x) for x in [frm, to] + ([city] if city else [])))
+        cmd = ["ssh", "-i", os.path.expanduser(cfg.get("key", "")), "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", cfg["ssh"], remote]
+        try:
+            r = subprocess.run(cmd, capture_output=True, timeout=90)
+        except subprocess.TimeoutExpired:
+            return jsonify(error="сервер не ответил за 90 с"), 504
+        if r.returncode != 0:
+            return jsonify(error="сервер недоступен или период неверный"), 502
+        body = r.stdout.decode("utf-8")
+    if len(_arch_cache) > 40:
+        _arch_cache.clear()
+    _arch_cache[key] = body
+    return Response(body, mimetype="application/json")
 
 
 @bp.get("/proto/<path:name>")

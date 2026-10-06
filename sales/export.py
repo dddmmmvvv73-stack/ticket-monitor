@@ -94,31 +94,36 @@ def operators(conn) -> list:
     return out
 
 
+def sales_row(op, ext, free, total, g, since, at, sold, rev, hall) -> dict:
+    """Строка сводки по одной кассе — та же и в итоге сеанса (sales.results): прототип показывает их одинаково."""
+    ext = ext or {}
+    r = {"op": "k" if op == "kassir" else "y"}
+    if ext.get("no_tickets"):
+        r["nt"] = 1
+    if free is not None:
+        r["free"] = free
+    exposed = (g or {}).get("exposed") if op == "kassir" else None
+    if exposed or (op == "kassir" and (total or ext.get("total"))):
+        r["exp"] = exposed or total or ext.get("total")
+    if hall:
+        r["hall"] = hall
+    if g:
+        r.update(g=g["gross"], glo=g["gross_lo"], ghi=g["gross_hi"], gx=g["exact_share"])
+    if since:
+        r.update(since=since.isoformat(timespec="minutes"), sold=int(sold or 0), rev=int(rev or 0))
+    if at:
+        r["at"] = at.isoformat(timespec="minutes")
+    if ext.get("shared"):
+        r["shared"] = 1
+    return r
+
+
 def build(conn) -> dict:
     cur = conn.cursor()
     cur.execute(SQL)
     rows = {}
     for op, key, ext, free, total, g, gtotal, since, at, sold, rev, hall in cur.fetchall():
-        ext = ext or {}
-        r = {"op": "k" if op == "kassir" else "y"}
-        if ext.get("no_tickets"):
-            r["nt"] = 1
-        if free is not None:
-            r["free"] = free
-        exposed = (g or {}).get("exposed") if op == "kassir" else None
-        if exposed or (op == "kassir" and (total or ext.get("total"))):
-            r["exp"] = exposed or total or ext.get("total")
-        if hall:
-            r["hall"] = hall
-        if g:
-            r.update(g=g["gross"], glo=g["gross_lo"], ghi=g["gross_hi"], gx=g["exact_share"])
-        if since:
-            r.update(since=since.isoformat(timespec="minutes"), sold=int(sold or 0), rev=int(rev or 0))
-        if at:
-            r["at"] = at.isoformat(timespec="minutes")
-        if ext.get("shared"):
-            r["shared"] = 1
-        rows[key] = r
+        rows[key] = sales_row(op, ext, free, total, g, since, at, sold, rev, hall)
     return {"at": datetime.now().astimezone().isoformat(timespec="minutes"), "rows": rows, "operators": operators(conn),
             "suggest": suggestions(conn)}
 

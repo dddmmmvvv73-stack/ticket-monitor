@@ -11,4 +11,6 @@ EnvironmentFile=/etc/ticket-monitor.env
 # «-»: не удалось подтянуть код (сеть, расхождение) — база всё равно пополняется
 ExecStart=-/usr/bin/git -C /opt/ticket-monitor pull -q --ff-only
 ExecStart=/opt/ticket-monitor/.venv/bin/python -m db.sync
+# Итоги начавшихся и снятых сеансов (архив) — по последнему снимку до начала, дальше не меняются
+ExecStart=/opt/ticket-monitor/.venv/bin/python -m sales.results
 TimeoutStartSec=1800
