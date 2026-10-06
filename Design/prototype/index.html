@@ -2116,7 +2116,7 @@ function archKpis(list) {
   return '<section class="card kpis k4" aria-label="Итоги периода">' +
     '<div><div class="kpi-label">Мероприятий</div><div class="kpi-value num">' + num(list.length) + '</div><div class="sub">прошло ' + num(past) + ' · снято до даты ' + num(list.length - past) + '</div></div>' +
     '<div><div class="kpi-label">Проектов · площадок</div><div class="kpi-value num">' + num(mUniq(list, "pk").length) + ' · ' + num(mUniq(list, "venue").length) + '</div><div class="sub">гастролей ' + num(tour) + ' · местных ' + num(list.length - tour) + '</div></div>' +
-    '<div><div class="kpi-label">Заполняемость · итог</div><div class="kpi-value num">' + (r.fill != null ? r.fill + "%" : "—") + '</div><div class="sub">' + (r.n ? num(r.taken) + ' из ' + num(r.sellable) + ' мест · ' + r.n + ' с итогом продаж' : 'итоги продаж — когда подключим базу') + '</div></div>' +
+    '<div><div class="kpi-label">Заполняемость · итог</div><div class="kpi-value num">' + (r.fill != null ? r.fill + "%" : "—") + '</div><div class="sub">' + (r.n ? num(r.taken) + ' из ' + num(r.sellable) + ' мест · ' + r.n + ' с итогом продаж' : ARCH_API ? 'продажи этих сеансов не отслеживались' : 'итоги продаж — на сайте (архив из базы)') + '</div></div>' +
     '<div><div class="kpi-label">Выручка · оценка</div><div class="kpi-value">' + (r.n ? money(r.revenue) : "—") + '</div><div class="sub">' + (r.gross ? 'из вала ' + money(r.gross) : '&nbsp;') + '</div></div>' +
   '</section>';
 }
