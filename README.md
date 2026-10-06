@@ -60,6 +60,8 @@ MARKET_ONLY="Владимир,Иваново" python3 -m competitors.market   # 
 python3 -m pip install --user -r requirements-db.txt   # один раз
 python3 -m db.sync             # пополнить базу из data/competitors и config/ (с 05.10 база главная — ничего не стирается)
 python3 -m db.sync verify      # только сверка с файлами
+python3 -m sales.results       # итоги начавшихся и снятых сеансов (на сервере — каждый час, tm-sync)
+python3 -m sales.history 2026-10-01 2026-10-31 Рязань   # архив за период (JSON) — то, что показывает «Архив»
 python3 -m db.migrate stop     # остановить локальный Postgres
 ```
 
