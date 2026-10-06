@@ -2000,13 +2000,16 @@ function archBuild() {
   var rows = [], byKey = {};
   var k = function (city, date, title) { return city + "|" + date + "|" + tourKey(title); };
   MA.forEach(function (a) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(a.date || "")) return;
     var u = a.url || "", r = { city: a.city, venue: a.venue, title: a.title, date: a.date, time: "", sphere: fmtSphere(a.format), format: a.format || "", genre: a.genre || "",
       pmin: a.pmin, pmax: a.pmax, pushkin: false, src: /yandex/.test(u) ? "y" : "k", urlK: /kassir/.test(u) ? u : "", urlY: /yandex/.test(u) ? u : "", more: 0, until: "",
       seen: a.first || a.date, age: "", yt: false, key: "a:" + a.city + "|" + a.date + "|" + a.title, tk: tourKey(a.title), org: "", sales: null, duid: "", keys: [],
       st: a.status === "gone" ? "gone" : "past", o: {} };
     rows.push(r); byKey[k(r.city, r.date, r.title)] = r;
   });
+  var ISO = /^\d{4}-\d{2}-\d{2}$/;
   ARCH.forEach(function (e) {
+    if (!ISO.test(e.date || "")) return;  // снято, а даты сайт не показал — в месяц не положить
     var hit = byKey[k(e.city, e.date, e.title)];
     if (hit) { hit.dref = e; hit.duid = e.uid || ""; hit.time = e.time || hit.time; return; }  // тот же сеанс у агрегатора — цифры площадки
     rows.push({ city: e.city, venue: e.venue, title: e.title, date: e.date, time: e.time || "", sphere: e.sphere || fmtSphere(e.format), format: e.format || "", genre: e.genre || "",
