@@ -49,7 +49,7 @@ seat AS (SELECT ss.pool_id, sum(CASE kind WHEN 'sale' THEN 1 WHEN 'return' THEN 
            FROM seat_sales ss JOIN np ON np.id = ss.pool_id WHERE ss.ts <= np.cut GROUP BY ss.pool_id),
 price AS (SELECT ps.pool_id, sum(qty) AS n, sum(qty * price) AS rub
             FROM price_sales ps JOIN np ON np.id = ps.pool_id
-           WHERE NOT ps.anomaly AND NOT ps.released AND ps.ts <= np.cut GROUP BY ps.pool_id)
+           WHERE NOT ps.anomaly AND NOT ps.released AND ps.ts_to <= np.cut GROUP BY ps.pool_id)
 SELECT np.session_id, np.operator_id, np.listing_key, np.source, np.ext, l.free, l.total, l.taken, l.gnum, w.g, f.since, l.at,
        coalesce(s.n, pr.n, 0), coalesce(s.rub, pr.rub, 0), lh.capacity, np.id
   FROM np
