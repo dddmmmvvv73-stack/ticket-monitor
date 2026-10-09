@@ -5,6 +5,10 @@
 денег. Сбор раз в сутки (21:00 МСК, запускает cron-job.org → market.yml).
 «Новое» — мероприятие, которого не было ни в одном прошлом сборе.
 
+Сайт закрыл доступ серверу (403, капча — TICKET_PLATFORMS.md, 8.8; competitors/blocks.py) — сбор идёт по
+второму сайту, а мероприятия закрытого переносятся из прошлого сбора с пометкой «stale» (не «исчезли» и не
+«сняты»); в status.json — src_at: когда каждый сайт собирался в последний раз.
+
 Запуск:
     python3 -m competitors.market            сбор
     python3 -m competitors.market export     снимок для прототипа (Design/prototype/market-data.js)
@@ -41,7 +45,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 
-from competitors import curation
+from competitors import blocks, curation
 from competitors.classifier import GENRES, classify_by_rules, classify_with_ai, title_key
 from competitors.storage import BASE_DIR, CONFIG_DIR, DATA_DIR, load_json, save_json
 
@@ -110,13 +114,30 @@ def _trim_log(keep: int = 3000) -> None:
 
 # ---------------------------------------------------------------- HTTP
 
+class Denied(Exception):
+    """Сайт отказал адресу (403 или капча) — повторять бесполезно, канал закрывается (competitors/blocks.py)."""
+
+
+def _denied(e: Exception) -> bool:
+    return isinstance(e, urllib.error.HTTPError) and (e.code == 403 or bool(e.headers and e.headers.get("x-yandex-captcha")))
+
+
 def _get_json(url: str, opener=None, data: bytes | None = None, headers: dict | None = None, tries: int = 3):
     for attempt in range(tries):
         try:
             req = urllib.request.Request(url, data=data, method="POST" if data else "GET",
                                          headers={"User-Agent": UA, "Accept": "application/json", **(headers or {})})
             with (opener or urllib.request.build_opener()).open(req, timeout=40) as r:
+                if blocks.is_denied(r.status, r.geturl()):
+                    raise Denied(url)
                 return json.loads(r.read().decode("utf-8"))
+        except urllib.error.HTTPError as e:
+            if _denied(e):
+                raise Denied(url) from e
+            if attempt == tries - 1:
+                log(f"✖ {url[:110]} — {e}")
+                return None
+            time.sleep(5 * (attempt + 1))
         except (OSError, ValueError, http.client.HTTPException) as e:  # сеть, обрыв ответа, не JSON
             if attempt == tries - 1:
                 log(f"✖ {url[:110]} — {e}")
@@ -165,14 +186,20 @@ def kassir_plan(cities: list[str]) -> tuple[list[tuple[str, str, int | None, str
 
 # ---------------------------------------------------------------- сбор
 
-def fetch_kassir(plan) -> list[dict]:
-    """Ответы поиска Кассира как есть: [{domain, region, suburb, items}]."""
+def fetch_kassir(plan) -> list[dict] | None:
+    """Ответы поиска Кассира как есть: [{domain, region, suburb, items}]. None — сайт закрыл доступ (не собирали)."""
+    if not _channel_open("kassir/afisha", "Кассир"):
+        return None
     out = []
     for domain, region, sub_id, label in plan:
         items, page = [], 1
         while True:
             extra = f"&suburbId={sub_id}" if sub_id else ""
-            d = _get_json(f"https://api.kassir.ru/api/search?domain={domain}&pageSize=100&currentPage={page}{extra}")
+            try:
+                d = _get_json(f"https://api.kassir.ru/api/search?domain={domain}&pageSize=100&currentPage={page}{extra}")
+            except Denied:
+                _close("kassir/afisha", "Кассир")
+                return None
             time.sleep(KASSIR_PAUSE)
             if not d:
                 break
@@ -181,7 +208,22 @@ def fetch_kassir(plan) -> list[dict]:
                 break
             page += 1
         out.append({"domain": domain, "region": region, "suburb": label if sub_id else None, "items": items})
+    if out and blocks.clear("kassir/afisha"):
+        log("Кассир: доступ снова открыт")
     return out
+
+
+def _channel_open(channel: str, name: str) -> bool:
+    """Закрытый сайт не трогаем до срока; после срока — пробуем (отказ — закроется снова, вдвое дольше)."""
+    if blocks.state(channel) == "blocked":
+        log(f"✖ {name}: сайт закрыл доступ серверу — не опрашиваем до {blocks.until(channel)[:16].replace('T', ' ')}")
+        return False
+    return True
+
+
+def _close(channel: str, name: str) -> None:
+    rec = blocks.trip(channel, 403, f"{channel}: отказ сайта при сборе афиши")
+    log(f"✖ {name}: сайт отказал (403 / капча) — не опрашиваем до {rec['until'][:16].replace('T', ' ')}")
 
 
 YANDEX_QUERY = """query RubricEventsQuery($paging: PagingInput){ rubricEvents(paging:$paging){
@@ -198,13 +240,33 @@ def _yandex_headers(city_id: str) -> dict:
             "x-force-cors-preflight": "1"}
 
 
-def fetch_yandex(cities: list[str]) -> list[dict]:
+def fetch_yandex(cities: list[str]) -> list[dict] | None:
+    """Ответы Яндекс Афиши по городам. None — сайт закрыл доступ (не собирали); [] — не открылся по другой причине."""
+    if not _channel_open("yandex/afisha", "Яндекс Афиша"):
+        return None
+    try:
+        return _fetch_yandex(cities)
+    except Denied:
+        _close("yandex/afisha", "Яндекс Афиша")
+        return None
+
+
+def _fetch_yandex(cities: list[str]) -> list[dict]:
     opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
     try:  # cookie сессии — со страницы любого города
-        opener.open(urllib.request.Request("https://afisha.yandex.ru/vladimir", headers={"User-Agent": UA}), timeout=40).read()
+        with opener.open(urllib.request.Request("https://afisha.yandex.ru/vladimir", headers={"User-Agent": UA}), timeout=40) as r:
+            r.read()
+            if blocks.is_denied(r.status, r.geturl()):
+                raise Denied("afisha.yandex.ru")
+    except Denied:
+        raise
     except Exception as e:
+        if _denied(e):
+            raise Denied("afisha.yandex.ru") from e
         log(f"✖ Яндекс Афиша не открылась: {e}")
         return []
+    if blocks.clear("yandex/afisha"):
+        log("Яндекс Афиша: доступ снова открыт")
     listed = _get_json("https://afisha.yandex.ru/api/cities?city=vladimir", opener=opener, headers=_yandex_headers("vladimir"))
     if listed and listed.get("data"):
         save_json(YANDEX_CITIES_CACHE, listed["data"])
@@ -613,7 +675,7 @@ def fetch_organizers(rows: list[dict], today: str) -> None:
 
     def work(keys: list[str]) -> None:
         for k in keys:
-            if time.time() > deadline:
+            if time.time() > deadline or done["denied"] >= blocks.DENY_IN_WINDOW:
                 return
             try:
                 req = urllib.request.Request(need[k], headers={"User-Agent": UA, "Accept": "text/html", "Accept-Encoding": "gzip"})
@@ -622,8 +684,12 @@ def fetch_organizers(rows: list[dict], today: str) -> None:
                     if resp.headers.get("Content-Encoding") == "gzip":
                         body = gzip.decompress(body)
                     page = body.decode("utf-8", errors="ignore")
-            except (OSError, http.client.HTTPException):
+            except (OSError, http.client.HTTPException) as e:
                 done["error"] += 1
+                if _denied(e):
+                    done["denied"] += 1
+                    if done["denied"] >= blocks.DENY_IN_WINDOW:   # страницы Кассира закрыты — на сегодня хватит
+                        return
                 time.sleep(ORG_PAUSE)
                 continue
             org = _org_from_page(page)
@@ -636,7 +702,7 @@ def fetch_organizers(rows: list[dict], today: str) -> None:
     _save_lines(ORGANIZERS_FILE, cache)
     left = len(need) - sum(done.values())
     log(f"Организаторы Кассира: страниц {sum(done.values())} — найдено {done['found']}, без организатора {done['empty']}, "
-        f"ошибок {done['error']}; осталось {max(0, left)} на следующие сборы, всего известно {sum(1 for v in cache.values() if v[0])}")
+        f"ошибок {done['error']}{' (отказ сайта — проход остановлен)' if done['denied'] >= blocks.DENY_IN_WINDOW else ''}; осталось {max(0, left)} на следующие сборы, всего известно {sum(1 for v in cache.values() if v[0])}")
 
 
 def apply_organizers(rows: list[dict]) -> None:
@@ -847,24 +913,44 @@ def run() -> bool:
         with ThreadPoolExecutor(max_workers=2) as pool:  # сайты разные — опрашиваем одновременно, паузы у каждого свои
             kassir_job, yandex_job = pool.submit(fetch_kassir, plan), pool.submit(fetch_yandex, cities)
             kassir, yandex = kassir_job.result(), yandex_job.result()
-        log(f"Кассир: {len(plan)} запросов по {len({p[0] for p in plan})} регионам, записей {sum(len(p['items']) for p in kassir)}")
-        log(f"Яндекс Афиша: {len(yandex)} городов, записей {sum(len(p['items']) for p in yandex)}")
+        if kassir is not None:
+            log(f"Кассир: {len(plan)} запросов по {len({p[0] for p in plan})} регионам, записей {sum(len(p['items']) for p in kassir)}")
+        if yandex is not None:
+            log(f"Яндекс Афиша: {len(yandex)} городов, записей {sum(len(p['items']) for p in yandex)}")
 
         aliases = Aliases(load_json(VENUE_ALIASES_FILE, {}))
-        rows, dropped, conflicts = parse(kassir, yandex, cities, today, load_json(OVERRIDES_FILE, {}), aliases)
-        rows = resolve_kassir_titles(rows, conflicts, today)
-        try:
-            fetch_organizers(rows, today)
-        except Exception as e:  # организатор — дополнение: сбор афиши из-за него не прерываем
-            log(f"✖ Организаторы Кассира: {e}")
-        apply_organizers(rows)
+        overrides = load_json(OVERRIDES_FILE, {})
+        rows, dropped, conflicts = parse(kassir or [], yandex or [], cities, today, overrides, aliases)
         previous = load_json(EVENTS_FILE, [])
         by_src_now = Counter(s for r in rows for s in r["src"])
         by_src_before = Counter(s for r in previous for s in r["src"])
-        broken = [n for s, n in (("k", "Кассир"), ("y", "Яндекс Афиша"))
-                  if by_src_before[s] and by_src_now[s] < by_src_before[s] * MIN_SHARE_OF_PREVIOUS]
-        if broken:  # иначе всё его мероприятия попали бы в «исчезли», а завтра — обратно
-            raise RuntimeError(f"меньше половины прошлого сбора вернули: {', '.join(broken)} — афиша не обновлена")
+        names = {"k": "Кассир", "y": "Яндекс Афиша"}
+        # Сайт не собран: закрыл доступ (None) или вернул меньше половины прошлого (сбой) — его мероприятия переносим
+        missing = [s for s, got in (("k", kassir), ("y", yandex))
+                   if got is None or (by_src_before[s] and by_src_now[s] < by_src_before[s] * MIN_SHARE_OF_PREVIOUS)]
+        if len(missing) == 2:  # иначе все мероприятия попали бы в «исчезли», а завтра — обратно
+            raise RuntimeError("ни один сайт не собран полностью — афиша не обновлена")
+        if missing:
+            log(f"✖ {names[missing[0]]}: не собран — работаем по второму сайту, его мероприятия — из прошлого сбора")
+            if missing == ["y"] and yandex:   # частичный ответ Яндекса не смешиваем с перенесённым
+                rows, dropped, conflicts = parse(kassir or [], [], cities, today, overrides, aliases)
+            elif missing == ["k"] and kassir:
+                rows, dropped, conflicts = parse([], yandex or [], cities, today, overrides, aliases)
+            carried = carry_source(rows, previous, today, missing[0])
+            log(f"{names[missing[0]]}: перенесено из прошлого сбора {carried} мероприятий")
+        if "k" not in missing:
+            rows = resolve_kassir_titles(rows, conflicts, today)
+            try:
+                fetch_organizers(rows, today)
+            except Exception as e:  # организатор — дополнение: сбор афиши из-за него не прерываем
+                log(f"✖ Организаторы Кассира: {e}")
+        apply_organizers(rows)
+        # Когда каждый сайт собирался в последний раз; до 09.10 этого поля не было — время последней удачной записи афиши
+        was = datetime.fromtimestamp(EVENTS_FILE.stat().st_mtime).isoformat(timespec="seconds") if EVENTS_FILE.exists() else None
+        src_at = {"k": was, "y": was, **status.get("src_at", {})}
+        for s_ in ("k", "y"):
+            if s_ not in missing:
+                src_at[s_] = now_iso
 
         asked = classify_missing(rows, _ai_settings())
         cur = curation.load()
@@ -905,11 +991,11 @@ def run() -> bool:
         took = time.time() - started
         no_data = [c for c in cities if c not in {r["city"] for r in rows}]
         tours = sum(r["tour"] == "tour" for r in rows)
-        summary = (f"мероприятий {len(rows)} в {len(cities) - len(no_data)} городах (гастрольных {tours}), новых {len(new_rows)}, "
+        summary = (("без " + names[missing[0]] + " (из прошлого сбора) — " if missing else "") + f"мероприятий {len(rows)} в {len(cities) - len(no_data)} городах (гастрольных {tours}), новых {len(new_rows)}, "
                    f"исчезло {len(gone)}, в архиве гастролей {archived}, нейросеть {asked}, за {took / 60:.0f} мин")
         status.update(first_run=first_run, last_run_at=now_iso, last_ok=True, last_error=None, summary=summary,
                       rows=len(rows), tours=tours, new=len(new_rows), gone=len(gone), by_src=dict(Counter(r["src"] for r in rows)),
-                      dropped=dict(dropped), no_data=no_data)
+                      dropped=dict(dropped), no_data=no_data, src_at=src_at, stale=missing)
         log(f"=== Сбор рынка завершён: {summary} ===")
         return True
     except Exception as e:
@@ -919,6 +1005,38 @@ def run() -> bool:
     finally:
         save_json(STATUS_FILE, status)
         _trim_log()
+
+
+def carry_source(rows: list[dict], previous: list[dict], today: str, src: str) -> int:
+    """
+    Сайт src («k» / «y») сегодня не собран: его карточки из прошлого сбора остаются в афише (ещё не прошедшие).
+    Строка, склеенная с карточкой второго сайта, которая есть и сейчас, — получает обратно номер и ссылку src;
+    остальные — отдельной строкой только src. Пометка stale = src — в интерфейсе «по прошлому сбору».
+    Сколько строк добавлено отдельно.
+    """
+    pref, other_url = src + ":", "url_" + ("y" if src == "k" else "k")
+    by_key = {k: r for r in rows for k in r["keys"]}
+    added = 0
+    for p in previous:
+        if src not in p["src"] or max(p["date"], p.get("until") or "") < today:
+            continue
+        mine = [k for k in p["keys"] if k.startswith(pref)]
+        if not mine or any(k in by_key for k in mine):
+            continue
+        hit = next((by_key[k] for k in p["keys"] if not k.startswith(pref) and k in by_key), None)
+        if hit is not None:
+            hit["keys"] = hit["keys"] + mine
+            hit["src"] = "".join(c for c in "ky" if c in hit["src"] + src)
+            hit["url_" + src] = hit.get("url_" + src) or p.get("url_" + src)
+            hit["stale"] = src
+        else:
+            q = {**p, **(p.get("orig") or {}), "keys": mine, "src": src, other_url: None, "stale": src}
+            q.pop("orig", None)   # ручные правки применятся заново (curation.apply_edits)
+            rows.append(q)
+            added += 1
+            for k in mine:
+                by_key[k] = q
+    return added
 
 
 def _next_day(iso: str) -> str:
@@ -1019,7 +1137,9 @@ def export_js() -> str:
     at = datetime.fromisoformat(status["last_run_at"])
     months = ["янв.", "февр.", "мар.", "апр.", "мая", "июн.", "июл.", "авг.", "сент.", "окт.", "нояб.", "дек."]
     label = f"{at.day} {months[at.month - 1]}, {at:%H:%M}"
-    data = {"at": label, "first": status.get("first_run"), "cities": cities, "fo": fo, **lists, "rows": packed, "arch": arch,
+    lab = lambda iso: (lambda t: f"{t.day} {months[t.month - 1]}, {t:%H:%M}")(datetime.fromisoformat(iso[:19]))
+    stale = {x: lab(status["src_at"][x]) for x in status.get("stale", []) if (status.get("src_at") or {}).get(x)}
+    data = {"at": label, "stale": stale, "first": status.get("first_run"), "cities": cities, "fo": fo, **lists, "rows": packed, "arch": arch,
             "salesAt": snap.get("at"), "directOnly": direct_only, "salesOps": snap.get("operators", []), "suggest": snap.get("suggest", []),
             "stats": {"merged": Counter(r["src"] for r in rows)["ky"], "dropped": status.get("dropped", {}), "bySrc": status.get("by_src", {})}}
     return (f"// Снимок «Афиши рынка»: Кассир + Яндекс Афиша по {len(all_cities)} городам, сбор {label}.\n"

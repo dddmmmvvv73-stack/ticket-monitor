@@ -18,6 +18,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from competitors import blocks
 from db import connect
 
 OUT = Path(__file__).resolve().parent.parent / "data" / "sales_snapshot.json.gz"
@@ -79,12 +80,16 @@ def operators(conn) -> list:
     trk = {r[0]: r[1:] for r in res["tracked"]}
     runs = {r[0]: r[1:] for r in res["runs"]}
     obs = {r[0]: r[1] for r in res["obs"]}
+    blk = blocks.load()
     out = []
     for oid, name, kind, engine, sites, caps in res["registry"]:
         c, t, r = cov.get(oid, (0, 0, 0)), trk.get(oid, (0, 0, 0)), runs.get(oid)
         o = {"id": oid, "name": name, "kind": kind, "engine": engine, "sites": sites, "caps": caps,
              "sessions": c[0], "only": c[1], "tours": c[2], "tracked": t[0], "shared": t[1], "no_tickets": t[2],
-             "snaps24": obs.get(oid, 0)}
+             "snaps24": obs.get(oid, 0),
+             # закрытые сайтом каналы (competitors/blocks.py): {"sales" | "afisha": {since, until, strikes}}
+             "blocks": {ch.split("/", 1)[1]: {k: b.get(k) for k in ("since", "until", "strikes")}
+                        for ch, b in blk.items() if ch.startswith(oid + "/") and not b.get("lifted")}}
         if r:
             rep = (r[5] or {}).get("сбор", {})
             o["runs24"] = {"runs": r[0], "last": r[1].isoformat(timespec="minutes") if r[1] else None, "queue": r[2], "errors": r[3],

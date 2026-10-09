@@ -3302,8 +3302,8 @@ function repSwitch() {
 // ---------------------------------------------------------------- Билетные операторы (TICKET_PLATFORMS.md, раздел 7)
 var OP_KIND = { regional: "Региональная касса", federal: "Федеральный оператор", aggregator: "Витрина-агрегатор", venue_site: "Сайт площадки" };
 var OP_WHERE = {
-  kassir: "Сервер в Яндекс Облаке · продажи гастролей каждый час · не чаще запроса в 6 с, «предохранитель» при ошибках",
-  yandex: "Сервер в Яндекс Облаке · продажи гастролей каждый час · свободные места — по схеме, сводка только чтобы заметить изменение",
+  kassir: "Сервер в Яндекс Облаке · продажи гастролей каждый час, сеансы ближайших 30 дней · не больше 2 000 запросов в сутки, не чаще запроса в 6 с · отказ сайта (403) — пауза от суток",
+  yandex: "Сервер в Яндекс Облаке · продажи гастролей каждый час, сеансы ближайших 30 дней · не больше 4 000 запросов в сутки, не чаще запроса в 3 с · отказ сайта (403, капча) — пауза от суток",
   vladimirkoncert: "Сервер в Яндекс Облаке · все мероприятия подключённых площадок каждый час в :25 · схема зала по местам",
   odk33: "Сервер в Яндекс Облаке · афиша площадки каждый час в :25, продажи — через vladimirkoncert"
 };
@@ -3370,7 +3370,9 @@ function renderOperators() {
   var card = function (o) {
     var r = o.runs24, live = o.id === "kassir" || o.id === "yandex";
     var stale = live && (!r || !r.last || Date.now() - Date.parse(r.last) > 3 * 3600e3);
-    var state = live ? (stale ? ["warn", "сбор давно не шёл"] : r && r.stopped ? ["warn", "срабатывал «предохранитель»"] : ["ok", "работает"]) : ["ok", "работает"];
+    var bl = o.blocks || {}, blk = bl.sales || bl.afisha;
+    var state = live ? (blk ? ["warn", "доступ закрыт"] : stale ? ["warn", "сбор давно не шёл"] : r && r.stopped ? ["warn", "срабатывал «предохранитель»"] : ["ok", "работает"]) : ["ok", "работает"];
+    var blkText = Object.keys(bl).map(function (ch) { var b = bl[ch]; return (ch === "sales" ? "продажи" : "афиша") + " — с " + atText(b.since) + ", следующая проверка " + atText(b.until) + (b.strikes > 1 ? " (отказ " + b.strikes + "-й раз подряд)" : ""); }).join("; ");
     var only = o.sessions ? Math.round(o.only / o.sessions * 100) : 0;
     var kpi = function (label, value, sub) { return '<div><div class="kpi-label">' + label + '</div><div class="kpi-value num">' + value + '</div><div class="sub" style="margin:0">' + sub + '</div></div>'; };
     return '<section class="card card-pad"><div class="card-head" style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap"><div><h2>' + esc(o.name) + '</h2>' +
@@ -3384,6 +3386,7 @@ function renderOperators() {
       '</div>' +
       '<dl style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:12px 0 0;font-size:13px"><dt class="sub" style="margin:0">Где идёт сбор</dt><dd style="margin:0">' + esc(OP_WHERE[o.id] || "—") + '</dd>' +
       '<dt class="sub" style="margin:0">Что отдаёт</dt><dd style="margin:0">' + esc(OP_GIVES[o.id] || "—") + '</dd>' +
+      (blkText ? '<dt class="sub" style="margin:0">Закрыто</dt><dd style="margin:0">' + esc(blkText) + ' · не обходим, ждём (TICKET_PLATFORMS.md, 7.3)</dd>' : '') +
       (r && r.last ? '<dt class="sub" style="margin:0">Последний прогон</dt><dd style="margin:0">' + atText(r.last) + (r.summary ? ' · ' + esc(r.summary) : '') + '</dd>' : '') + '</dl></section>';
   };
   return head("Билетные операторы", "Кто продаёт билеты, что мы у них собираем и сколько мероприятий видно только у них · сводка " + (MK.salesAt ? atText(MK.salesAt) : "—")) +
@@ -3402,8 +3405,15 @@ function renderMarket() {
   var split = mSplitTools({ table: mTable, city: mCity, projects: mProjects, heat: mHeat, "new": mNew, cal: mCal, venues: mVenues }[S.m.tab]());
   // «Гастролирует» и «Избранное» — без города шапки, типа и цены раздела
   var bare = mBare(), title = S.view === "touring" ? "Проекты, которые идут туром" : (VIEW_TITLE[S.view] || "Рынок") + (bare ? "" : " · " + mScopeLabel());
-  return head(title, "", S.view === "events" ? ADD_BTN : "") +
+  return head(title, "", S.view === "events" ? ADD_BTN : "") + mStaleNote() +
     (SUBS[S.view] ? subSwitch(S.view) : REP_SUB[S.view] ? repSwitch() : '') + mPanel(split.tools, bare) + split.body;
+}
+// Сайт закрыл доступ серверу (competitors/market.py → MK.stale): его мероприятия — по прошлому сбору
+function mStaleNote() {
+  var st = typeof MK !== "undefined" && MK.stale || {}, name = { y: "Яндекс Афиша", k: "Кассир" };
+  return Object.keys(st).map(function (s) {
+    return '<div class="note" style="margin-bottom:12px">' + name[s] + ' не собирается с ' + esc(st[s]) + ' — сайт закрыл доступ серверу. Её мероприятия показаны по тому сбору: новых оттуда нет, снятые не отмечаются, цены могли измениться.</div>';
+  }).join("");
 }
 
 // ---------- 1. Таблица

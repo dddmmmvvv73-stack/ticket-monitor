@@ -6,11 +6,17 @@
 
 Кассир — только где без него нельзя: сеанс только на Кассире, или запас Кассира не совпал с Яндексом
 (поделён). Совпал (общий запас) — Кассир не опрашивается неделю, хватает Яндекса.
+
+Нагрузка (после блокировки 06.10, TICKET_PLATFORMS.md, 8.8): суточный лимит запросов на оператора (BUDGET),
+делится поровну на оставшиеся прогоны дня; сеансы — не дальше HORIZON_DAYS дней, ближние первыми. Сайт закрыл
+доступ (403, капча) — оператор пропускается до срока блокировки (competitors/blocks.py).
 """
 
 from __future__ import annotations
 
 import argparse
+import math
+import os
 import threading
 import time
 from collections import Counter
@@ -19,6 +25,7 @@ from pathlib import Path
 
 from psycopg2.extras import Json
 
+from competitors import blocks
 from db import connect
 from sales import archive, kassir, metrics, store, yandex
 from sales.net import Net, Stopped
@@ -40,11 +47,18 @@ SELECT s.id, s.local_date, to_char(s.local_time, 'HH24:MI'), c.name, v.name, l.o
      WHERE yl.session_id = s.id AND yl.operator_id = 'yandex') y ON l.operator_id = 'kassir'
  WHERE s.track_sales AND s.status = 'on_sale'
    AND (s.starts_at > now() OR (s.starts_at IS NULL AND s.local_date >= current_date))   -- уже начавшиеся — не снимаем
+   AND s.local_date <= current_date + %(horizon)s
    AND (p.next_check IS NULL OR p.next_check <= now())
    AND (%(cities)s::text[] IS NULL OR c.name = ANY(%(cities)s::text[]))
  ORDER BY s.local_date, p.next_check NULLS FIRST
 """
 MARKET_RUNNING = Path(__file__).resolve().parent.parent / "data" / ".market_running"   # ставит tm-market.service
+# Запросов в сутки на оператора (06.10 было: Яндекс ~47 тыс., Кассир ~13 тыс. — оба закрыли доступ серверу)
+BUDGET = {"yandex": int(os.environ.get("SALES_BUDGET_YANDEX", 4000)), "kassir": int(os.environ.get("SALES_BUDGET_KASSIR", 2000))}
+HORIZON_DAYS = int(os.environ.get("SALES_HORIZON_DAYS", 30))   # дальние сеансы — когда подойдёт их дата
+USED_SQL = """SELECT operator_id, sum(value::int) FROM collection_runs, jsonb_each_text(report->'запросы')
+               WHERE kind = 'sales' AND started >= date_trunc('day', now()) AND key !~ '^(предохранитель|блокировка) '
+               GROUP BY 1"""
 TOLERANCE = 3   # мест: запас Кассира и Яндекса «общий», если отличается не больше чем на max(3, 2%) — продажи за минуты между запросами
 
 
@@ -188,10 +202,11 @@ def _kassir_job(conn, net: Net, items: list, stats: Counter) -> None:
             stats["кассир: ошибка " + type(e).__name__] += 1
 
 
-def kassir_priority(r) -> str:
-    """need — опросить; check — недельная проверка «общий ли запас с Яндексом»; shared — хватает Яндекса; wait — ждём Яндекс."""
+def kassir_priority(r, yandex_closed: bool = False) -> str:
+    """need — опросить; check — недельная проверка «общий ли запас с Яндексом»; shared — хватает Яндекса; wait — ждём Яндекс.
+    Яндекс закрыл доступ — его снимков нет, Кассир опрашивает и общие запасы (в пределах своего лимита)."""
     has_yandex, ext, y_nt, y_measured = r[8], r[9] or {}, r[10], r[11]
-    if not has_yandex or y_nt:
+    if not has_yandex or y_nt or yandex_closed:
         return "need"
     if not y_measured:
         return "wait"
@@ -234,10 +249,12 @@ def main() -> None:
     connect.ensure_schema(conn)
     cur = conn.cursor()
     cities = [c.strip() for c in a.cities.split(",") if c.strip()] or None
-    cur.execute(WORK_SQL, {"cities": cities})
+    cur.execute(WORK_SQL, {"cities": cities, "horizon": HORIZON_DAYS})
     rows = cur.fetchall()
+    cur.execute(USED_SQL)
+    used = dict(cur.fetchall())
     conn.commit()  # не держать транзакцию весь прогон: иначе ALTER / TRUNCATE ждут, а за ними встаёт и сбор
-    work = {"yandex": [r for r in rows if r[5] == "yandex"], "kassir": [(r, kassir_priority(r)) for r in rows if r[5] == "kassir"]}
+    work = {"yandex": [r for r in rows if r[5] == "yandex"], "kassir": [(r, kassir_priority(r, blocks.state("yandex/sales") != "ok")) for r in rows if r[5] == "kassir"]}
     # Кассир: сначала то, где без него нельзя (только Кассир, Яндекс сам не продаёт, запас поделён), потом недельная проверка
     # «общий ли запас», последними — пропуски без запросов
     order = {"need": 0, "check": 1, "shared": 2, "wait": 3}
@@ -245,7 +262,15 @@ def main() -> None:
     if a.limit:
         work = {k: v[:a.limit] for k, v in work.items()}
     stats: Counter = Counter()
-    nets = {op: Net(op, deadline) for op in work}
+    runs_left = 24 - datetime.now().hour   # прогон раз в час: остаток суточного лимита — поровну на оставшиеся
+    caps = {op: max(0, math.ceil((BUDGET[op] - int(used.get(op) or 0)) / runs_left)) for op in work}
+    closed = {}
+    for op in work:
+        if blocks.state("%s/sales" % op) == "blocked":   # сайт закрыл доступ — ни одного запроса до срока
+            closed[op] = blocks.until("%s/sales" % op)
+            stats["%s: сайт закрыл доступ — пропуск до %s" % ("яндекс" if op == "yandex" else "кассир", closed[op][:16])] += 1
+            work[op] = []
+    nets = {op: Net(op, deadline, cap=caps[op]) for op in work}
     threads = [threading.Thread(target=job, args=(connect.connect(), nets[op], work[op], stats))
                for op, job in (("yandex", _yandex_job), ("kassir", _kassir_job))]
     for th in threads:
@@ -260,13 +285,25 @@ def main() -> None:
         cur.execute("INSERT INTO collection_runs (operator_id, kind, started, finished, sessions, errors, blocked, summary, report) "
                     "VALUES (%s,'sales',to_timestamp(%s),now(),%s,%s,%s,%s,%s)",
                     (op, started, len(work[op]), sum(v for k, v in nets[op].stats.items() if k[1] is None or (isinstance(k[1], int) and k[1] >= 500)),
-                     int(nets[op].stopped), "в очереди %d, за %d с" % (len(work[op]), took), Json({"сбор": mine, "запросы": net_stats})))
+                     int(op in closed or nets[op].why in ("отказ", "предохранитель")), _summary(op, work, nets, caps, closed, took),
+                     Json({"сбор": mine, "запросы": net_stats, "лимит": caps[op], "закрыт до": closed.get(op) or blocks.until("%s/sales" % op)})))
     conn.commit()
     print("Сбор продаж: %d с, в очереди: Яндекс %d, Кассир %d; общий запас найден у %d" % (took, len(work["yandex"]), len(work["kassir"]), shared))
     for k, v in sorted(stats.items()):
         print("  %s: %s" % (k, v))
     for op in nets:
-        print("  запросы %s: %s%s" % (op, dict(nets[op].stats), " — ОСТАНОВЛЕН предохранителем" if nets[op].stopped else ""))
+        print("  запросы %s (лимит прогона %d): %s%s" % (op, caps[op], dict(nets[op].stats), " — " + _summary(op, work, nets, caps, closed, took)))
+
+
+def _summary(op: str, work: dict, nets: dict, caps: dict, closed: dict, took: int) -> str:
+    """Строка прогона для журнала и экрана «Билетные операторы»."""
+    if op in closed:
+        return "сайт закрыл доступ серверу — не опрашивается до %s" % closed[op][:16].replace("T", " ")
+    n = nets[op]
+    tail = {"отказ": "сайт отказал (403 / капча) — закрыт до %s" % (blocks.until(n.channel) or "")[:16].replace("T", " "),
+            "предохранитель": "остановлен «предохранителем» (ошибки сайта)",
+            "лимит": "достигнут лимит прогона (%d запросов)" % caps[op]}.get(n.why, "")
+    return "в очереди %d, запросов %d, за %d с%s" % (len(work[op]), n.sent, took, " · " + tail if tail else "")
 
 
 if __name__ == "__main__":
