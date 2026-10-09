@@ -9,6 +9,7 @@
                           "snap": {"at", "dates": [[дата, город, площадка, цена от, цена до], …]},
                           "profile": {"sub", "about", "crew", "contact", "phone", "site", "vk", "instagram", "tg", "fee", "riders": [{"label", "url"}]},
                           "media": {"avatar" | "cover": имя файла в config/project_media/ с ?v=метка},
+                          "cover_y": положение фона по вертикали, 0–100 % (как background-position-y),
                           "at", "upd"}}}
 
 Профиль и фото — страница проекта (вид как у Яндекс Афиши, 09.10): подзаголовок, описание, состав на выезде,
@@ -156,7 +157,7 @@ def apply_op(op: dict) -> tuple[dict, str]:
     """Одна правка от прототипа; возвращает всё хранилище и подпись для журнала."""
     data, kind = load(), op.get("op")
     projects = data["projects"]
-    if kind in ("fav", "notes", "profile", "media"):
+    if kind in ("fav", "notes", "profile", "media", "coverpos"):
         key = _key(op.get("key"))
         pid = find(projects, key)
         if not pid:
@@ -178,8 +179,14 @@ def apply_op(op: dict) -> tuple[dict, str]:
                 save_json(FILE, data)
                 return data, f"«{p['title']}» — убрано из избранного"
             note = f"«{p['title']}» — " + ("в избранном" if p["fav"] else "убрано из избранного")
-        elif kind in ("profile", "media"):
-            if kind == "profile":   # профиль страницы проекта + прежние записи (заметка, ссылки, контакты) — одной правкой
+        elif kind in ("profile", "media", "coverpos"):
+            if kind == "coverpos":   # положение фона шапки — отдельно от профиля, чтобы не перезаписывать остальное
+                y = op.get("y")
+                if not isinstance(y, (int, float)) or isinstance(y, bool) or not 0 <= y <= 100:
+                    raise MyProjectsError("положение фона — от 0 до 100")
+                p["cover_y"] = round(float(y), 1)
+                note = f"«{p['title']}» — положение фона"
+            elif kind == "profile":   # профиль страницы проекта + прежние записи (заметка, ссылки, контакты) — одной правкой
                 p["profile"] = _profile(op)
                 p["note"] = _text(op.get("note"), LIMITS["note"], "заметка")
                 p["contacts"] = _text(op.get("contacts"), LIMITS["contacts"], "контакты")
