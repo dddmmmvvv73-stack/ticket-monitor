@@ -422,12 +422,12 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
 .pj-btn, .pj-cover-btn, .pj-back-btn { height: 40px; padding: 0 16px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.24); background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 14px; font-weight: 500;
   display: inline-flex; align-items: center; gap: 8px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
 .pj-btn.primary { background: #fff; border-color: #fff; color: var(--ink); }
-.pj-top-right { position: absolute; top: 16px; right: 48px; z-index: 1; display: flex; gap: 8px; }
+.pj-top-right { position: absolute; top: 16px; right: 48px; z-index: 3; display: flex; gap: 8px; }
 .pj-cover-btn { height: 34px; padding: 0 12px; font-size: 13px; }
 .pj-cover-btn.on { color: #ffd66b; border-color: rgba(255, 214, 107, 0.5); }
 .pj-icon { position: relative; width: 40px; padding: 0; justify-content: center; }
 .pj-badge { position: absolute; top: -4px; right: -4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9999px; background: #fff; color: var(--ink); font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; }
-.pj-back-btn { position: absolute; top: 16px; left: 48px; z-index: 1; width: 34px; height: 34px; padding: 0; justify-content: center; border-radius: 50%; }
+.pj-back-btn { position: absolute; top: 16px; left: 48px; z-index: 3; width: 34px; height: 34px; padding: 0; justify-content: center; border-radius: 50%; }
 @media (hover: hover) {
   .pj-btn:hover, .pj-cover-btn:hover, .pj-back-btn:hover { background: rgba(255, 255, 255, 0.2); }
   .pj-btn.primary:hover { background: #f2f1ef; }
@@ -5024,6 +5024,7 @@ var PJ_ICON = {
   move: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8v12.4M5.2 4.4L8 1.8l2.8 2.6M5.2 11.6L8 14.2l2.8-2.6"/></svg>',
   archive: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><rect x="1.8" y="2.5" width="12.4" height="3.2" rx="0.8"/><path d="M3 5.7v7.3h10V5.7M6.3 8.6h3.4"/></svg>',
   delta: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 6.5A5.6 5.6 0 003.2 4.6M2.5 9.5a5.6 5.6 0 0010.3 1.9"/><path d="M3 1.8v3h3M13 14.2v-3h-3"/></svg>',
+  project: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2.5" width="12" height="11" rx="1.5"/><path d="M2 6h12M5 9h6M5 11.5h4"/></svg>',
   back: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg>',
   close: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>'
 };
@@ -5751,7 +5752,9 @@ function anPage(k, l, past, p, cands, foN) {
     '<span><b class="num">' + (pmax ? prices({ pmin: pmin < 1e9 ? pmin : pmax, pmax: pmax }) : "—") + '</b></span>' +
     '<span title="' + (known.length ? 'В среднем по ' + known.length + ' ' + plural(known.length, "дате", "датам", "датам") + ' с данными; «занято» включает и чужие квоты' : 'Данных о продажах ещё нет') + '"><b class="num">' + (avg == null ? "—" : avg + "%") + '</b> заполняемость в ср.</span></div>';
   var hero = '<section class="pj-hero an-hero' + (cover ? ' has-cover' : '') + '"' + (cover ? ' style="background-image:url(\'' + esc(cover) + '\');background-position:center ' + coverY + '%"' : '') + '>' +
-    '<button class="pj-back-btn" data-vopen="' + esc(k) + '" aria-label="Назад: страница проекта" title="Назад: страница проекта">' + PJ_ICON.back + '</button>' + stats +
+    (S.m.anFrom === k ? '<button class="pj-back-btn" data-vopen="' + esc(k) + '" aria-label="Назад: страница проекта" title="Назад: страница проекта">'
+      : '<button class="pj-back-btn" data-maction="proj-back" aria-label="Назад: ' + esc(REP_TITLE[S.sub.projects] || "Гастролирует") + '" title="Назад: ' + esc(REP_TITLE[S.sub.projects] || "Гастролирует") + '">') + PJ_ICON.back + '</button>' +
+    '<div class="pj-top-right"><button class="pj-cover-btn" data-vopen="' + esc(k) + '" aria-label="Страница проекта" title="Страница проекта: даты, описание, контакты">' + PJ_ICON.project + '<span>Проект</span></button></div>' + stats +
     '<div class="pj-hero-in an-hero-in"><span class="an-ava">' + (ava ? '<img src="' + esc(ava) + '" alt="">' : '<span>' + esc(pjInitials(title)) + '</span>') + '</span>' +
       '<div><div class="an-cap">Аналитика</div><h1 class="an-name">' + esc(title) + '</h1></div></div></section>';
   var nav = '<div class="an-nav" role="tablist" aria-label="Разделы аналитики">' + AN_TABS.map(function (t) {
@@ -5996,6 +5999,7 @@ $("view").addEventListener("click", function (ev) {
   if (t.hasAttribute("data-vproj") || t.hasAttribute("data-vopen") || t.hasAttribute("data-proute")) {  // страница проекта: витрина или маршрут
     var vk = t.getAttribute("data-vproj") || t.getAttribute("data-vopen"), rk = t.getAttribute("data-proute");
     if (t.hasAttribute("data-vopen")) { S.sub.projects = "all"; S.m.project = null; }
+    S.m.anFrom = rk && S.m.vproj === rk ? rk : null;   // «Аналитика» открыта со страницы проекта — «назад» вернёт на неё
     if (rk) { S.sub.projects = "tour"; S.m.vproj = null; S.m.project = S.m.psel = rk; S.m.candAll = false; } else { S.m.vproj = S.m.vsel = vk; }
     S.m.datesAll = false; S.m.myEdit = false; S.enter = true; closeDrawer(); render(); window.scrollTo(0, 0); return;
   }
@@ -6028,7 +6032,7 @@ $("view").addEventListener("click", function (ev) {
   else if (t.hasAttribute("data-mday") && S.m.tab === "city") mDayModal(t.getAttribute("data-mday"), t.getAttribute("data-mday-venue"));
   else if (t.hasAttribute("data-mday")) { var iso = t.getAttribute("data-mday"); if (S.m.tab === "city" || S.m.tab === "cal") { S.m.day = S.m.day === iso ? null : iso; render(); var dp = document.querySelector(".day-panel"); if (dp && S.m.day) dp.scrollIntoView({ block: "nearest", behavior: "smooth" }); } else { S.period = "custom"; S.from = S.to = iso; mGo({ tab: "table" }); } }
   else if (t.getAttribute("data-maction") === "day-close") { S.m.day = null; render(); }
-  else if (t.getAttribute("data-maction") === "proj-back") { S.m.project = null; S.m.candAll = false; render(); window.scrollTo(0, 0); }
+  else if (t.getAttribute("data-maction") === "proj-back") { S.m.project = null; S.m.anFrom = null; S.m.candAll = false; render(); window.scrollTo(0, 0); }
   else if (t.getAttribute("data-maction") === "vproj-back") { S.m.vproj = null; S.m.myEdit = false; render(); window.scrollTo(0, 0); }
   else if (t.getAttribute("data-maction") === "cand-all") { S.m.candAll = true; render(); }
   else if (t.getAttribute("data-maction") === "dates-all") { S.m.datesAll = true; render(); }
