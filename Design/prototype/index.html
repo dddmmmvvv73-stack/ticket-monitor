@@ -437,9 +437,14 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
 .pj-list-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
 .pj-sum { display: flex; gap: 8px 22px; flex-wrap: wrap; margin-top: 10px; font-size: 15px; color: var(--muted); }
 .pj-sum b { font: 500 17px/1.2 var(--display); color: var(--ink); letter-spacing: -0.01em; }
-.pj-analytics { height: 40px; padding: 0 18px; border-radius: 9999px; border: 1px solid var(--soot); background: var(--soot); color: #fff; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; margin-top: 2px; }
-@media (hover: hover) { .pj-analytics:hover { background: #2c2825; } }
-.pj-sum .link-btn { font-size: 14px; }
+.pj-plain { background: none; border: 0; padding: 0; font: inherit; font-size: 14px; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+@media (hover: hover) { .pj-plain:hover { text-decoration-color: var(--ink); } }
+.pj-seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 9999px; overflow: hidden; background: var(--card); margin-top: 2px; }
+.pj-seg-btn { width: 44px; height: 40px; padding: 0; border: 0; background: none; color: var(--ink-2); display: inline-flex; align-items: center; justify-content: center; }
+.pj-seg-btn + .pj-seg-btn { border-left: 1px solid var(--line-strong); }
+.pj-seg-btn.on { background: var(--soot); color: #fff; }
+.pj-seg-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
+@media (hover: hover) { .pj-seg-btn:not(.on):hover { background: #f2f1ef; color: var(--ink); } }
 .pj-hero.repos { cursor: ns-resize; touch-action: none; outline: 2px dashed rgba(255, 255, 255, 0.5); outline-offset: -8px; }
 .pj-hero.repos .pj-hero-in, .pj-hero.repos .pj-top-right, .pj-hero.repos .pj-back-btn { opacity: 0.25; pointer-events: none; }
 .pj-repos-bar { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); z-index: 2; display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 16px; border-radius: 9999px;
@@ -4932,6 +4937,7 @@ var PJ_ICON = {
   tg: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M14.3 2.3L1.8 7.2l4.1 1.4 1.5 4.8 2.3-2.8 3.3 2.5z"/><path d="M5.9 8.6l6.4-4.4"/></svg>',
   chart: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 13.5h11"/><path d="M4.5 11V8M8 11V4.5M11.5 11V6.5"/></svg>',
   move: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8v12.4M5.2 4.4L8 1.8l2.8 2.6M5.2 11.6L8 14.2l2.8-2.6"/></svg>',
+  archive: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><rect x="1.8" y="2.5" width="12.4" height="3.2" rx="0.8"/><path d="M3 5.7v7.3h10V5.7M6.3 8.6h3.4"/></svg>',
   back: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg>',
   close: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>'
 };
@@ -4978,12 +4984,14 @@ function pjPage(k, id, rec, keys, l, title) {
   if (S.m.pjArchFor !== k) { S.m.pjArchFor = k; S.m.pjArch = false; }
   var arch = S.m.pjArch, lp = l.filter(inPeriod), pastP = past.filter(inPeriod), cut = S.period !== "all";
   var src = arch ? pastP : lp, all = S.m.datesAll, rows = all ? src : src.slice(0, PJ_ROWS);
-  var kind = tour ? 'Гастроли' : (PJ_PLURAL[fmt] || 'даты').replace(/^./, function (c) { return c.toUpperCase(); });
+  var kind = 'Мероприятия';
   var periodNote = cut ? '<div class="pj-sum"><span><b>' + esc(periodLabel()) + '</b></span><span><b class="num">' + src.length + '</b> из ' + (arch ? past.length : l.length) + '</span>' +
-    '<button class="link-btn" data-pj="period-all">Все даты</button></div>' : '';
+    '<button class="pj-plain" data-pj="period-all">Все даты</button></div>' : '';
   var list = '<div class="pj-list-head"><div><h2 class="pj-h2">' + (arch ? 'Архив' : kind) + '</h2>' + periodNote + '</div>' +
-      (arch ? '<button class="btn-ghost" data-pj="arch" data-on="0">← ' + kind + '</button>'
-        : l.length ? '<button class="pj-analytics" data-proute="' + esc(l[0].pk) + '">' + PJ_ICON.chart + 'Аналитика <span aria-hidden="true">→</span></button>' : '') + '</div>' +
+      '<div class="pj-seg" role="group" aria-label="Режим списка">' +
+        '<button class="pj-seg-btn' + (arch ? ' on' : '') + '" data-pj="arch" data-on="' + (arch ? 0 : 1) + '" aria-pressed="' + arch + '" aria-label="Архив: прошедшие даты · ' + past.length + '" title="Архив — прошедшие даты">' + PJ_ICON.archive + '</button>' +
+        (l.length ? '<button class="pj-seg-btn" data-proute="' + esc(l[0].pk) + '" aria-label="Аналитика: маршрут, площадки, где его нет" title="Аналитика — маршрут, площадки, где его нет">' + PJ_ICON.chart + '</button>' : '') +
+      '</div></div>' +
     (!arch && !l.length ? '<div class="note">Сейчас проекта нет в афише — ни одной будущей даты. Прошедшие — в «Архиве».</div>' : '') +
     (!arch && l.length && !lp.length ? '<div class="note">В выбранном периоде дат нет. Ближайшая — ' + dayLabel(l[0].date) + ', ' + esc(l[0].city) + '.</div>' : '') +
     (arch && !src.length ? '<div class="note">' + (past.length ? 'В выбранном периоде прошедших нет.' : 'Прошедших пока нет: архив копится с ' + human(MK.first) + '.') + '</div>' : '') +
@@ -5000,7 +5008,7 @@ function pjPage(k, id, rec, keys, l, title) {
       '<dt>Продаётся</dt><dd>' + (l.length ? [nK ? 'Кассир — ' + nK + ' ' + plural(nK, "дата", "даты", "дат") : '', nY ? 'Яндекс Афиша — ' + nY + ' ' + plural(nY, "дата", "даты", "дат") : ''].filter(Boolean).join("<br>") || '—' : '—') + '</dd>' +
       (ours.length ? '<dt>Наши площадки</dt><dd>' + ours.map(function (e) { return '<button class="link-btn" data-open="' + e.i + '">' + human(e.date) + ' · ' + esc(e.venue) + (e.gross ? ' · заполнено ' + fill(e) + '%' : '') + '</button>'; }).join("<br>") + '</dd>' : '') +
       (rec && rec.note ? '<dt>Заметка</dt><dd class="mytext">' + esc(rec.note) + '</dd>' : '') +
-      '<dt>Архив</dt><dd>' + (past.length ? '<button class="link-btn" data-pj="arch" data-on="' + (S.m.pjArch ? 0 : 1) + '" aria-pressed="' + !!S.m.pjArch + '">' +
+      '<dt>Архив</dt><dd>' + (past.length ? '<button class="pj-plain" data-pj="arch" data-on="' + (S.m.pjArch ? 0 : 1) + '" aria-pressed="' + !!S.m.pjArch + '">' +
         (S.m.pjArch ? 'показан — вернуться к датам' : past.length + ' ' + plural(past.length, "прошедшая дата", "прошедшие даты", "прошедших дат") + ' →') + '</button>'
         : '<span class="muted">пока пусто — копится с ' + human(MK.first) + '</span>') + '</dd>' +
     '</dl></section>';
