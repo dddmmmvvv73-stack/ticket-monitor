@@ -10,6 +10,7 @@
                           "profile": {"sub", "about", "crew", "contact", "phone", "site", "vk", "instagram", "tg", "fee", "riders": [{"label", "url"}]},
                           "media": {"avatar" | "cover": имя файла в config/project_media/ с ?v=метка},
                           "cover_y": положение фона по вертикали, 0–100 % (как background-position-y),
+                          "rating": {"s": [6 целых 0–3], "at"}, "rating_hist": [прошлые {"s", "at"}, новые в конце],
                           "at", "upd"}}}
 
 Профиль и фото — страница проекта (вид как у Яндекс Афиши, 09.10): подзаголовок, описание, состав на выезде,
@@ -100,7 +101,17 @@ def find(projects: dict, key: str) -> str | None:
 
 
 def _empty(p: dict) -> bool:
-    return not (p.get("note") or p.get("links") or p.get("contacts") or any((p.get("profile") or {}).values()) or p.get("media"))
+    return not (p.get("note") or p.get("links") or p.get("contacts") or any((p.get("profile") or {}).values()) or p.get("media")
+                or p.get("rating"))
+
+
+RATING_AXES, RATING_MAX, RATING_HIST = 6, 3, 50   # оценка по шестиугольнику: 6 осей 0–3 (Design/prototype/project-rating.js)
+
+
+def _rating(v) -> list[int]:
+    if not isinstance(v, list) or len(v) != RATING_AXES or not all(isinstance(x, int) and not isinstance(x, bool) and 0 <= x <= RATING_MAX for x in v):
+        raise MyProjectsError(f"оценка — {RATING_AXES} целых чисел от 0 до {RATING_MAX}")
+    return v
 
 
 def _url(v) -> str:
@@ -157,7 +168,7 @@ def apply_op(op: dict) -> tuple[dict, str]:
     """Одна правка от прототипа; возвращает всё хранилище и подпись для журнала."""
     data, kind = load(), op.get("op")
     projects = data["projects"]
-    if kind in ("fav", "notes", "profile", "media", "coverpos"):
+    if kind in ("fav", "notes", "profile", "media", "coverpos", "rating"):
         key = _key(op.get("key"))
         pid = find(projects, key)
         if not pid:
@@ -179,8 +190,16 @@ def apply_op(op: dict) -> tuple[dict, str]:
                 save_json(FILE, data)
                 return data, f"«{p['title']}» — убрано из избранного"
             note = f"«{p['title']}» — " + ("в избранном" if p["fav"] else "убрано из избранного")
-        elif kind in ("profile", "media", "coverpos"):
-            if kind == "coverpos":   # положение фона шапки — отдельно от профиля, чтобы не перезаписывать остальное
+        elif kind in ("profile", "media", "coverpos", "rating"):
+            if kind == "rating":   # оценка по шестиугольнику; прошлая уходит в историю — её можно наложить на текущую
+                scores = _rating(op.get("s"))
+                old = p.get("rating")
+                if old and old.get("s") != scores:
+                    p.setdefault("rating_hist", []).append(old)
+                    p["rating_hist"] = p["rating_hist"][-RATING_HIST:]
+                p["rating"] = {"s": scores, "at": _now()}
+                note = f"«{p['title']}» — оценка проекта"
+            elif kind == "coverpos":   # положение фона шапки — отдельно от профиля, чтобы не перезаписывать остальное
                 y = op.get("y")
                 if not isinstance(y, (int, float)) or isinstance(y, bool) or not 0 <= y <= 100:
                     raise MyProjectsError("положение фона — от 0 до 100")
