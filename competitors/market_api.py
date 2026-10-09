@@ -7,7 +7,8 @@
     GET  /api/market/curation     разметка: проекты, площадки, правки мероприятий, фильтры
     POST /api/market/curation     одна правка {"op": "project"|"venue"|"edit"|"revert"|"filters"|"niche", …}
     GET  /api/market/myprojects   избранные проекты и ваши записи о них (competitors/myprojects.py)
-    POST /api/market/myprojects   одна правка {"op": "fav"|"notes"|"seen"|"link"|"skip", …}
+    POST /api/market/myprojects   одна правка {"op": "fav"|"notes"|"profile"|"media"|"seen"|"link"|"skip", …}
+    GET  /api/market/myprojects/media/<файл>   фото проекта (аватар, фон) из config/project_media/
     GET  /api/sales/detail?keys=… продажи сеанса для карточки — с сервера в Яндекс Облаке по SSH (sales/detail.py)
 
 Каждая правка сразу записывается в config/ и в фоне отправляется на GitHub (competitors/sync.py),
@@ -25,7 +26,7 @@ import subprocess
 import sys
 from datetime import datetime
 
-from flask import Blueprint, Response, jsonify, redirect, request, send_from_directory
+from flask import Blueprint, Response, jsonify, redirect, request, send_file, send_from_directory
 
 from competitors import collector, curation, edits, market, myprojects, protodata, sync
 from competitors.classifier import FORMATS, GENRES, SPHERES
@@ -179,6 +180,14 @@ def curation_post():
 @bp.get("/api/market/myprojects")
 def myprojects_get():
     return jsonify(myprojects.load())
+
+
+@bp.get("/api/market/myprojects/media/<name>")
+def myprojects_media(name):
+    path = myprojects.media_file(name)
+    if not path:
+        return jsonify({"error": "нет такого фото"}), 404
+    return send_file(path, max_age=86400)
 
 
 @bp.post("/api/market/myprojects")

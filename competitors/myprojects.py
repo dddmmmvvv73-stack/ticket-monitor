@@ -7,7 +7,13 @@
     {"projects": {номер: {"title", "keys": [ключи проекта], "fav": bool,
                           "note", "links": [{"label", "url"}], "contacts", "skip": [ключи «не то»],
                           "snap": {"at", "dates": [[дата, город, площадка, цена от, цена до], …]},
+                          "profile": {"sub", "about", "crew", "contact", "phone", "site", "fee", "riders": [{"label", "url"}]},
+                          "media": {"avatar" | "cover": имя файла в config/project_media/ с ?v=метка},
                           "at", "upd"}}}
+
+Профиль и фото — страница проекта (вид как у Яндекс Афиши, 09.10): подзаголовок, описание, состав на выезде,
+контакт, телефон, сайт, гонорар, райдеры. Фото — файлами в config/project_media/ (вне git, как и сам файл);
+прототип уменьшает их до отправки. Профиль сам в избранное не добавляет (в отличие от заметки).
 
 Номер постоянный: проект в избранном не теряется, если его название в афише изменилось — к записи
 добавляется ещё один ключ («связать»). Ключ — как curation.project_key (слова названия по алфавиту).
@@ -17,15 +23,22 @@
 
 from __future__ import annotations
 
+import base64
 import re
 from datetime import datetime
 
 from competitors.storage import CONFIG_DIR, load_json, save_json
 
 FILE = CONFIG_DIR / "my_projects.json"
+MEDIA_DIR = CONFIG_DIR / "project_media"
+MEDIA_KINDS = ("avatar", "cover")
+MEDIA_MAX = 3 * 1024 * 1024   # байт после декодирования — прототип присылает уже уменьшенное (~100–400 КБ)
+MEDIA_TYPES = {b"\xff\xd8\xff": "jpg", b"\x89PNG": "png", b"RIFF": "webp"}
+MEDIA_NAME = re.compile(r"^p[0-9a-z]{1,20}-(avatar|cover)\.(jpg|png|webp)$")
 _ID = re.compile(r"^p[0-9a-z]{1,20}$")
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-LIMITS = {"title": 300, "key": 300, "note": 5000, "contacts": 2000, "label": 120, "url": 1000, "links": 30, "dates": 3000}
+LIMITS = {"title": 300, "key": 300, "note": 5000, "contacts": 2000, "label": 120, "url": 1000, "links": 30, "dates": 3000,
+          "sub": 200, "about": 10000, "crew": 200, "contact": 200, "phone": 60, "fee": 300}
 
 
 class MyProjectsError(ValueError):
@@ -86,14 +99,63 @@ def find(projects: dict, key: str) -> str | None:
 
 
 def _empty(p: dict) -> bool:
-    return not (p.get("note") or p.get("links") or p.get("contacts"))
+    return not (p.get("note") or p.get("links") or p.get("contacts") or any((p.get("profile") or {}).values()) or p.get("media"))
+
+
+def _url(v) -> str:
+    u = _text(v, LIMITS["url"], "ссылка")
+    if u and not re.match(r"^https?://", u, re.I):
+        raise MyProjectsError("ссылка должна начинаться с http:// или https://")
+    return u
+
+
+def _profile(op: dict) -> dict:
+    return {"sub": _text(op.get("sub"), LIMITS["sub"], "подзаголовок"), "about": _text(op.get("about"), LIMITS["about"], "описание"),
+            "crew": _text(op.get("crew"), LIMITS["crew"], "состав на выезде"), "contact": _text(op.get("contact"), LIMITS["contact"], "контакт"),
+            "phone": _text(op.get("phone"), LIMITS["phone"], "телефон"), "site": _url(op.get("site")),
+            "fee": _text(op.get("fee"), LIMITS["fee"], "гонорар"), "riders": _links(op.get("riders") or [])}
+
+
+def _media(pid: str, p: dict, kind: str, data: str) -> None:
+    """Фото проекта: data — data:image/…;base64,… (пусто — убрать). Файл — config/project_media/<номер>-<вид>.<тип>."""
+    if kind not in MEDIA_KINDS:
+        raise MyProjectsError("неизвестный вид фото")
+    media = p.setdefault("media", {})
+    raw = ext = None
+    if data:   # сначала проверка: неудачная загрузка не должна стирать прежнее фото
+        m = re.match(r"^data:image/(jpeg|png|webp);base64,([A-Za-z0-9+/=]+)$", data)
+        if not m:
+            raise MyProjectsError("фото: нужен JPEG, PNG или WebP")
+        raw = base64.b64decode(m.group(2))
+        if len(raw) > MEDIA_MAX:
+            raise MyProjectsError("фото: не больше 3 МБ")
+        ext = next((e for sig, e in MEDIA_TYPES.items() if raw.startswith(sig)), None)
+        if not ext:
+            raise MyProjectsError("фото: файл не похож на изображение")
+    for old in MEDIA_DIR.glob(f"{pid}-{kind}.*"):
+        old.unlink()
+    if not data:
+        media.pop(kind, None)
+        return
+    MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+    name = f"{pid}-{kind}.{ext}"
+    (MEDIA_DIR / name).write_bytes(raw)
+    media[kind] = f"{name}?v={int(datetime.now().timestamp())}"
+
+
+def media_file(name: str):
+    """Путь к фото для выдачи по адресу; None — имя не наше или файла нет."""
+    if not MEDIA_NAME.match(name or ""):
+        return None
+    path = MEDIA_DIR / name
+    return path if path.is_file() else None
 
 
 def apply_op(op: dict) -> tuple[dict, str]:
     """Одна правка от прототипа; возвращает всё хранилище и подпись для журнала."""
     data, kind = load(), op.get("op")
     projects = data["projects"]
-    if kind in ("fav", "notes"):
+    if kind in ("fav", "notes", "profile", "media"):
         key = _key(op.get("key"))
         pid = find(projects, key)
         if not pid:
@@ -115,6 +177,20 @@ def apply_op(op: dict) -> tuple[dict, str]:
                 save_json(FILE, data)
                 return data, f"«{p['title']}» — убрано из избранного"
             note = f"«{p['title']}» — " + ("в избранном" if p["fav"] else "убрано из избранного")
+        elif kind in ("profile", "media"):
+            if kind == "profile":   # профиль страницы проекта + прежние записи (заметка, ссылки, контакты) — одной правкой
+                p["profile"] = _profile(op)
+                p["note"] = _text(op.get("note"), LIMITS["note"], "заметка")
+                p["contacts"] = _text(op.get("contacts"), LIMITS["contacts"], "контакты")
+                p["links"] = _links(op.get("links") or [])
+                note = f"«{p['title']}» — страница проекта сохранена"
+            else:
+                _media(pid, p, str(op.get("kind") or ""), str(op.get("data") or ""))
+                note = f"«{p['title']}» — фото " + ("обновлено" if op.get("data") else "убрано")
+            if not p["fav"] and _empty(p):
+                del projects[pid]
+                save_json(FILE, data)
+                return data, note
         else:
             p["note"] = _text(op.get("note"), LIMITS["note"], "заметка")
             p["contacts"] = _text(op.get("contacts"), LIMITS["contacts"], "контакты")

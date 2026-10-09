@@ -397,6 +397,129 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
 .confirm h2 { font-weight: 500; font-size: 18px; }
 .confirm .form-actions { border-top: 0; padding-top: 16px; }
 
+/* ---------- Страница проекта — вид как у Яндекс Афиши (Design/Reference/Project.png) ---------- */
+.pj-back { margin-bottom: 12px; }
+.pj-hero { position: relative; border-radius: 16px; overflow: hidden; color: #fff; min-height: 300px; display: flex; align-items: flex-end;
+  background: radial-gradient(120% 140% at 88% 0%, #4a403a 0%, #2a2421 45%, var(--soot) 100%) center / cover no-repeat; }
+.pj-hero.has-cover { background-color: var(--soot); background-position: center; background-size: cover; }
+.pj-hero.has-cover::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(12, 10, 9, 0.88) 0%, rgba(12, 10, 9, 0.6) 50%, rgba(12, 10, 9, 0.25) 100%); }
+.pj-hero-in { position: relative; display: flex; gap: 32px; align-items: center; padding: 48px 40px 40px; width: 100%; }
+.pj-ava { position: relative; width: 168px; height: 168px; border-radius: 50%; flex-shrink: 0; overflow: hidden; padding: 0; border: 3px solid rgba(255, 255, 255, 0.2); background: #3a332f; color: #fff; }
+.pj-ava img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pj-ini { font: 500 52px/1 var(--display); letter-spacing: -0.02em; }
+.pj-ava-edit { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 13px; font-weight: 500; background: rgba(12, 10, 9, 0.55); opacity: 0; transition: opacity 150ms var(--ease); }
+.pj-ava:hover .pj-ava-edit, .pj-ava:focus-visible .pj-ava-edit { opacity: 1; }
+.pj-ava:focus-visible, .pj-btn:focus-visible, .pj-cover-btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
+.pj-hero-text { min-width: 0; }
+.pj-name { font: 600 48px/1.05 var(--display); letter-spacing: -0.02em; margin: 0; overflow-wrap: anywhere; }
+.pj-sub { font-size: 19px; color: rgba(255, 255, 255, 0.82); margin: 8px 0 0; }
+.pj-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 14px; }
+.pj-tag { font-size: 12px; line-height: 1; padding: 6px 11px; border-radius: 9999px; background: rgba(255, 255, 255, 0.12); border: 1px solid rgba(255, 255, 255, 0.2); }
+.pj-tag-type { background: rgba(122, 185, 232, 0.22); border-color: rgba(122, 185, 232, 0.4); }
+.pj-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 22px; }
+.pj-btn, .pj-cover-btn { height: 40px; padding: 0 16px; border-radius: 9999px; border: 1px solid rgba(255, 255, 255, 0.24); background: rgba(255, 255, 255, 0.1); color: #fff; font-size: 14px; font-weight: 500;
+  display: inline-flex; align-items: center; gap: 8px; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.pj-btn.primary { background: #fff; border-color: #fff; color: var(--ink); }
+.pj-btn.on { color: #ffd66b; border-color: rgba(255, 214, 107, 0.5); }
+.pj-cnt { font-size: 12px; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 9999px; background: rgba(255, 255, 255, 0.18); display: inline-flex; align-items: center; justify-content: center; }
+.pj-cover-btn { position: absolute; top: 16px; right: 16px; height: 34px; padding: 0 12px; font-size: 13px; z-index: 1; }
+@media (hover: hover) {
+  .pj-btn:hover, .pj-cover-btn:hover { background: rgba(255, 255, 255, 0.2); }
+  .pj-btn.primary:hover { background: #f2f1ef; }
+  .pj-row-in:is(button):hover .pj-t { color: var(--data); }
+}
+.pj-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 56px; margin-top: 40px; align-items: start; }
+.pj-list-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+.pj-h2 { font: 600 30px/1.15 var(--display); letter-spacing: -0.015em; margin: 0; }
+.pj-dates { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--line); }
+.pj-row { border-top: 1px solid var(--line); }
+.pj-row-in { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) 230px minmax(0, 1fr) 160px; gap: 20px; align-items: center; padding: 22px 0; text-align: left; background: none; border: 0; color: inherit; font: inherit; }
+button.pj-row-in { cursor: pointer; }
+button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+.pj-cap { display: block; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin-bottom: 4px; }
+.pj-t { display: block; font-size: 18px; font-weight: 500; color: var(--ink); transition: color 150ms var(--ease); }
+.pj-c2 { display: flex; align-items: center; gap: 10px; }
+.pj-day { font: 300 48px/0.9 var(--display); color: var(--ink-3); letter-spacing: -0.03em; }
+.pj-dm { display: flex; flex-direction: column; font-size: 16px; color: var(--ink-2); white-space: nowrap; }
+.pj-dm .pj-cap { margin-bottom: 2px; }
+.pj-v { display: block; font-size: 16px; color: var(--ink); }
+.pj-c4 { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.pj-price { display: inline-block; min-width: 132px; text-align: center; padding: 11px 16px; border-radius: 6px; background: var(--wash); color: var(--ink); font-weight: 500; font-size: 15px; white-space: nowrap; }
+.pj-fill { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-3); white-space: nowrap; }
+.pj-fill.muted { color: var(--muted); }
+.pj-fill .bar { width: 56px; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.pj-fill i { display: block; height: 100%; background: var(--data); }
+.pj-gone { color: var(--muted); font-size: 15px; }
+.pj-row.past .pj-t, .pj-row.past .pj-v, .pj-row.past .pj-day, .pj-row.past .pj-dm { color: var(--ash); }
+.pj-all { display: flex; justify-content: center; padding-top: 20px; }
+.pj-aside > section { padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
+.pj-aside > section:last-child { border-bottom: 0; margin-bottom: 0; }
+.pj-h3 { font: 600 26px/1.2 var(--display); letter-spacing: -0.01em; margin: 0 0 8px; }
+.pj-h4 { font: 500 16px/1.3 var(--ui); margin: 0 0 12px; }
+.pj-about { font-size: 16px; line-height: 1.5; color: var(--ink-2); white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+.pj-about.open { display: block; -webkit-line-clamp: unset; }
+.pj-more { background: none; border: 0; padding: 0; margin-top: 8px; font-weight: 500; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.pj-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 16px; }
+.pj-fact .l { font-size: 12px; color: var(--muted); }
+.pj-fact .v { font: 500 22px/1.2 var(--display); letter-spacing: -0.01em; margin-top: 2px; }
+.pj-fact .s { font-size: 12px; color: var(--ink-3); margin-top: 2px; line-height: 1.35; }
+.pj-venues { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.pj-venues li { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; font-size: 14px; }
+.pj-vn { min-width: 0; } .pj-vn .sub2 { display: block; }
+.pj-vt { flex-shrink: 0; font-size: 12px; padding: 2px 8px; border-radius: 9999px; background: var(--wash-2); color: var(--data-dark); }
+.pj-vt.auto { background: var(--line-soft); color: var(--ink-3); }
+.pj-dl { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px 16px; font-size: 14px; margin: 0; }
+.pj-dl dt { color: var(--muted); } .pj-dl dd { margin: 0; overflow-wrap: anywhere; }
+.pj-dl-lg { font-size: 15px; gap: 12px 20px; }
+
+/* Окна страницы проекта */
+.pj-dlg { border: 1px solid var(--line); border-radius: 16px; padding: 0; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px); box-shadow: rgba(17, 12, 46, 0.2) 0 16px 56px 0; color: var(--ink); }
+.pj-dlg::backdrop { background: rgba(12, 10, 9, 0.42); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
+.pj-dlg[open] { animation: pj-dlg-in 220ms var(--ease) both; }
+@keyframes pj-dlg-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
+.pj-dlg-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 18px 20px 0 24px; }
+.pj-dlg-head h2 { font: 500 19px/1.3 var(--ui); margin: 0; }
+.pj-dlg-body { padding: 16px 24px 22px; }
+.pj-dlg .form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; border-top: 0; padding-top: 18px; }
+.pj-edit { width: min(640px, calc(100vw - 32px)); }
+.pj-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.pj-ph-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.pj-ph { display: flex; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 12px; }
+.pj-ph > img, .pj-ph > span { width: 56px; height: 56px; flex-shrink: 0; object-fit: cover; background: var(--line-soft); color: var(--muted); display: flex; align-items: center; justify-content: center; }
+.pj-ph.avatar > img, .pj-ph.avatar > span { border-radius: 50%; } .pj-ph.cover > img, .pj-ph.cover > span { width: 84px; border-radius: 8px; }
+.pj-ph b { font-weight: 500; font-size: 14px; } .pj-ph-btns { display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap; } .pj-ph-btns .btn-ghost { height: 30px; padding: 0 10px; font-size: 12px; }
+.pj-orgs { width: min(760px, calc(100vw - 32px)); }
+.pj-orbit { position: relative; height: 400px; margin: 4px 0 8px; border-radius: 14px; background: radial-gradient(circle at 50% 50%, var(--wash-2) 0%, rgba(220, 235, 248, 0.35) 30%, transparent 62%); }
+.pj-orbit-empty { height: 220px; }
+.pj-core { position: absolute; left: 50%; top: 50%; width: 132px; height: 132px; margin: -66px 0 0 -66px; border-radius: 50%; overflow: hidden; background: var(--soot); color: #fff;
+  display: flex; align-items: center; justify-content: center; font: 500 40px/1 var(--display); box-shadow: 0 0 0 10px rgba(29, 111, 174, 0.1), 0 0 0 24px rgba(29, 111, 174, 0.05); animation: pj-core-in 520ms var(--ease) both; }
+.pj-core img { width: 100%; height: 100%; object-fit: cover; }
+.pj-opill { position: absolute; left: var(--x); top: var(--y); transform: translate(-50%, -50%); display: inline-flex; align-items: baseline; gap: 6px; padding: 8px 14px; border-radius: 9999px; background: var(--card);
+  border: 1px solid var(--line); box-shadow: 0 6px 20px rgba(17, 12, 46, 0.1); font-size: 13px; white-space: nowrap; max-width: 46%; overflow: hidden; text-overflow: ellipsis;
+  animation: pj-pop 460ms var(--ease) calc(var(--i) * 70ms + 180ms) both, pj-float var(--t) ease-in-out var(--d) infinite; }
+.pj-opill b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; } .pj-opill span { color: var(--muted); font-size: 12px; }
+@keyframes pj-core-in { from { opacity: 0; scale: 0.7; } to { opacity: 1; scale: 1; } }
+@keyframes pj-pop { from { opacity: 0; scale: 0.6; } to { opacity: 1; scale: 1; } }
+@keyframes pj-float { 0%, 100% { translate: 0 0; } 50% { translate: var(--dx) var(--dy); } }
+.pj-org-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; max-height: 180px; overflow: auto; }
+.pj-org-list li { display: flex; flex-direction: column; gap: 1px; font-size: 14px; } .pj-org-list b { font-weight: 500; }
+@media (prefers-reduced-motion: reduce) { .pj-opill, .pj-core, .pj-dlg[open] { animation: none; } }
+@media (max-width: 1100px) { .pj-grid { grid-template-columns: minmax(0, 1fr); gap: 40px; } .pj-aside { max-width: 640px; } }
+@media (max-width: 820px) {
+  .pj-hero { min-height: 0; border-radius: 12px; }
+  .pj-hero-in { flex-direction: column; align-items: flex-start; gap: 18px; padding: 64px 20px 24px; }
+  .pj-ava { width: 104px; height: 104px; } .pj-ini { font-size: 34px; }
+  .pj-name { font-size: 32px; } .pj-sub { font-size: 16px; }
+  .pj-btn { height: 38px; padding: 0 14px; font-size: 13px; }
+  .pj-h2 { font-size: 24px; }
+  .pj-row-in { grid-template-columns: 96px minmax(0, 1fr); grid-template-areas: "d t" "d p" "d s"; gap: 4px 14px; padding: 18px 0; align-items: start; }
+  .pj-c1 { grid-area: t; } .pj-c2 { grid-area: d; flex-direction: column; align-items: flex-start; gap: 4px; } .pj-c3 { grid-area: p; } .pj-c4 { grid-area: s; align-items: flex-start; margin-top: 8px; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .pj-day { font-size: 40px; } .pj-dm { font-size: 13px; white-space: normal; } .pj-dm .pj-cap { font-size: 10px; letter-spacing: 0.04em; } .pj-t { font-size: 16px; } .pj-v { font-size: 14px; }
+  .pj-price { min-width: 0; padding: 8px 12px; font-size: 14px; }
+  .pj-2col, .pj-ph-row { grid-template-columns: minmax(0, 1fr); }
+  .pj-orbit { height: 340px; } .pj-opill { max-width: 62%; padding: 6px 11px; font-size: 12px; } .pj-core { width: 104px; height: 104px; margin: -52px 0 0 -52px; font-size: 32px; }
+}
+
 /* Короткое сообщение внизу экрана */
 .toast { position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 8px); max-width: min(560px, calc(100vw - 32px)); background: var(--soot); color: #fff; font-size: 13px; line-height: 1.45; padding: 10px 16px; border-radius: 12px; box-shadow: rgba(17, 12, 46, 0.18) 0 12px 32px 0; z-index: 70; opacity: 0; pointer-events: none; transition: opacity 180ms var(--ease), transform 180ms var(--ease); }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
@@ -4583,31 +4706,36 @@ function mFavorites() {
   return tools + mySuggestBlock(ids) + pTable(list, { px: "f", cols: F_COLS, cell: F_CELL, fit: F_FIT, row: "data-vproj", sel: "vsel",
     mobile: pMobile("data-vproj", function (p) { var t = pDiffText(p.diff); return t ? ' · <b style="font-weight:500;color:var(--ink)">' + esc(t) + '</b>' : ''; }) });
 }
+// «Что изменилось» у проекта из избранного — общий блок старой и новой страницы проекта
+function myChangesCard(id, rec) {
+  var df = rec && rec.fav ? myDiff(rec) : null;
+  var diffList = function (head, rows, fn) { return rows.length ? '<div class="field-label">' + head + '</div><ul class="list" style="margin-top:4px">' + rows.slice(0, 20).map(fn).join("") + '</ul>' + (rows.length > 20 ? '<p class="sub2">и ещё ' + (rows.length - 20) + '</p>' : '') : ''; };
+  var dLine = function (d) { return '<li style="display:flex;gap:12px"><span class="nowrap" style="width:120px;flex-shrink:0">' + dayLabel(d[0]) + '</span><span style="flex-grow:1;min-width:0">' + esc(d[1]) + '<span class="sub2" style="display:block">' + esc(d[2]) + '</span></span></li>'; };
+  var pr = function (a, b) { return a || b ? prices({ pmin: a || b, pmax: b || a }) : "без цены"; };
+  return df ? '<section class="card card-pad"><div class="card-head"><div><h2>Что изменилось' + (df.since ? ' с ' + human(df.since.slice(0, 10)) : '') + '</h2><p class="sub" style="margin:2px 0 0">' + (df.n ? esc(pDiffText(df)) : 'Без изменений — даты и цены те же') + (df.passed.length ? ' · прошло ' + df.passed.length + ' ' + plural(df.passed.length, "выступление", "выступления", "выступлений") : '') + '</p></div>' +
+      (df.n || df.passed.length ? '<button class="btn-ghost" data-my="seen" data-id="' + esc(id) + '">Просмотрено</button>' : '') + '</div>' +
+      diffList("Новые даты" + (df.newCities.length ? " · новые города: " + df.newCities.join(", ") : ""), df.added, dLine) +
+      diffList("Сняты до даты", df.removed, dLine) +
+      diffList("Изменились цены", df.priced, function (x) { return '<li style="display:flex;gap:12px"><span class="nowrap" style="width:120px;flex-shrink:0">' + dayLabel(x.d[0]) + '</span><span style="flex-grow:1;min-width:0">' + esc(x.d[1]) + '</span><span class="nowrap"><s class="muted">' + pr(x.o[3], x.o[4]) + '</s> → ' + pr(x.d[3], x.d[4]) + '</span></li>'; }) +
+    '</section>' : '';
+}
 // ---------- Страница проекта в витрине: всё о проекте из афиши + ваши записи
 function mShowcaseDetail(k) {
   var id = myFind(k), rec = id ? MYP.projects[id] : null, keys = rec ? rec.keys : [k], l = myEvents(keys);
   if (!l.length && !rec) { S.m.vproj = null; return mProjects(); }
   var title = l.length ? mostOf(l, "title") : rec.title, fmt = mostOf(l, "format"), genre = mostOf(l, "genre"), cities = mUniq(l, "city");
+  if (pjNew(title)) return pjPage(k, id, rec, keys, l, title);   // новый вид страницы (как у Яндекс Афиши) — пока на проверке
   var past = MA.filter(function (a) { return keys.indexOf(a.pk) >= 0; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
   var pastCities = mUniq(past.filter(function (a) { return a.status !== "gone"; }), "city");
   var orgs = mUniq(l, "org"), ours = ALL.filter(function (e) { return keys.indexOf(projKey(e.title)) >= 0; });
   var pmin = Math.min.apply(null, l.map(function (e) { return e.pmin || 1e9; }).concat([1e9])), pmax = Math.max.apply(null, l.map(function (e) { return e.pmax || 0; }).concat([0]));
   var nK = l.filter(function (e) { return e.urlK; }).length, nY = l.filter(function (e) { return e.urlY; }).length;
   var back = REP_TITLE[S.sub.projects];
-  var df = rec && rec.fav ? myDiff(rec) : null;
   var dateRow = function (e) {
     return '<li class="vdate"><button class="row-btn" data-mopen="' + e.i + '"><span class="nowrap" style="width:120px;flex-shrink:0">' + dayLabel(e.date) + '</span><span style="flex-grow:1;min-width:0">' + esc(e.city) + '<span class="sub2" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(e.venue) + '</span></span><span class="sub2 nowrap">' + (e.pmin ? prices(e) : '') + '</span></button>' +
       '<span class="src-links">' + (e.urlK ? '<a href="' + esc(e.urlK) + '" target="_blank" rel="noopener">Кассир ↗</a>' : '') + (e.urlY ? '<a href="' + esc(e.urlY) + '" target="_blank" rel="noopener">Яндекс ↗</a>' : '') + '</span></li>';
   };
-  var diffList = function (head, rows, fn) { return rows.length ? '<div class="field-label">' + head + '</div><ul class="list" style="margin-top:4px">' + rows.slice(0, 20).map(fn).join("") + '</ul>' + (rows.length > 20 ? '<p class="sub2">и ещё ' + (rows.length - 20) + '</p>' : '') : ''; };
-  var dLine = function (d) { return '<li style="display:flex;gap:12px"><span class="nowrap" style="width:120px;flex-shrink:0">' + dayLabel(d[0]) + '</span><span style="flex-grow:1;min-width:0">' + esc(d[1]) + '<span class="sub2" style="display:block">' + esc(d[2]) + '</span></span></li>'; };
-  var pr = function (a, b) { return a || b ? prices({ pmin: a || b, pmax: b || a }) : "без цены"; };
-  var changes = df ? '<section class="card card-pad"><div class="card-head"><div><h2>Что изменилось' + (df.since ? ' с ' + human(df.since.slice(0, 10)) : '') + '</h2><p class="sub" style="margin:2px 0 0">' + (df.n ? esc(pDiffText(df)) : 'Без изменений — даты и цены те же') + (df.passed.length ? ' · прошло ' + df.passed.length + ' ' + plural(df.passed.length, "выступление", "выступления", "выступлений") : '') + '</p></div>' +
-      (df.n || df.passed.length ? '<button class="btn-ghost" data-my="seen" data-id="' + esc(id) + '">Просмотрено</button>' : '') + '</div>' +
-      diffList("Новые даты" + (df.newCities.length ? " · новые города: " + df.newCities.join(", ") : ""), df.added, dLine) +
-      diffList("Сняты до даты", df.removed, dLine) +
-      diffList("Изменились цены", df.priced, function (x) { return '<li style="display:flex;gap:12px"><span class="nowrap" style="width:120px;flex-shrink:0">' + dayLabel(x.d[0]) + '</span><span style="flex-grow:1;min-width:0">' + esc(x.d[1]) + '</span><span class="nowrap"><s class="muted">' + pr(x.o[3], x.o[4]) + '</s> → ' + pr(x.d[3], x.d[4]) + '</span></li>'; }) +
-    '</section>' : '';
+  var changes = myChangesCard(id, rec);
   return '<div><button class="btn-ghost" data-maction="vproj-back">← ' + back + '</button></div>' +
     '<div class="vhead"><div style="min-width:0"><h1 style="font-weight:400;font-size:28px;line-height:1.2;letter-spacing:-0.02em;margin:0">' + esc(title) + '</h1><div class="chips">' + [fmt, genre].filter(function (c, i, a) { return c && a.indexOf(c) === i; }).map(function (c) { return '<span class="chip">' + esc(c) + '</span>'; }).join("") + '</div></div>' +
       '<div class="vactions">' + starBtn(k, title, true) + (l.length ? '<button class="pill" data-proute="' + esc(l[0].pk) + '" style="font-weight:500">Маршрут и где его нет →</button>' : '') + '</div></div>' +
@@ -4682,6 +4810,261 @@ function myAction(t) {
   else if (a === "link") mySave({ op: "link", id: id, key: t.getAttribute("data-key") }, "Связано с «" + MYP.projects[id].title + "»");
   else if (a === "skip") mySave({ op: "skip", id: id, key: t.getAttribute("data-key") }, "Подсказка скрыта");
 }
+
+// ---------- Страница проекта — вид как у Яндекс Афиши (референс Design/Reference/Project.png, решение пользователя 09.10)
+// Шапка: фон и фото (загружаются прямо здесь), название, подзаголовок, теги «формат · сфера · жанр», четыре кнопки:
+// «Редактировать», «В избранное», «Организаторы» (окно с анимацией), «Контакты» (окно). Ниже — «Название — гастроли»:
+// первые 8 дат и «Показать все», справа — описание (своё, редактируется) и прежние блоки страницы по категориям.
+// Пока проверяем на одном проекте (PJ_NEW_RE); после одобрения — PJ_NEW_ALL = true.
+var PJ_NEW_ALL = false, PJ_NEW_RE = /adrenalin\s*house/i, PJ_ROWS = 8;
+var WD_FULL = ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"];
+var MONTHS_GEN = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
+var PJ_PLURAL = { "Концерт": "концерты", "Спектакль": "спектакли", "Стендап": "выступления", "Шоу": "шоу", "Мюзикл": "мюзиклы", "Балет": "балеты", "Опера": "оперы" };
+function pjNew(title) { return PJ_NEW_ALL || PJ_NEW_RE.test(title || ""); }
+function pjMedia(rec, kind) {
+  var v = rec && rec.media && rec.media[kind];
+  return !v ? "" : /^data:/.test(v) ? v : "/api/market/myprojects/media/" + v;
+}
+function pjInitials(t) { return String(t || "?").replace(/[«»"']/g, "").split(/\s+/).filter(Boolean).slice(0, 2).map(function (w) { return w[0]; }).join("").toUpperCase(); }
+function pjFill(e) {  // заполняемость даты: площадка прямого сбора — её схема, иначе сводка продаж с сервера
+  var d = mDirect(e);
+  if (d && d.gross) return { f: fill(d), tip: "Схема зала площадки прямого сбора" };
+  var x = e.sales && mSalesFill(e.sales);
+  return x ? { f: x.f, tip: mSalesTip(e.sales) } : null;
+}
+function pjOrgs(l) {  // организаторы проекта: сколько дат и в каких городах (строка «Организатор мероприятия» у Кассира)
+  var by = {};
+  l.forEach(function (e) { if (!e.org) return; var o = by[e.org] = by[e.org] || { name: e.org, n: 0, cities: [] }; o.n++; if (o.cities.indexOf(e.city) < 0) o.cities.push(e.city); });
+  return Object.keys(by).map(function (k) { return by[k]; }).sort(function (a, b) { return b.n - a.n; });
+}
+function pjVenues(l) {  // площадки проекта: город, тип (ваша пометка или авто), мест в зале (по схеме кассы, если есть)
+  var by = {};
+  l.forEach(function (e) {
+    var key = e.city + "|" + e.venue, v = by[key] = by[key] || { city: e.city, venue: e.venue, n: 0, cap: 0 };
+    v.n++;
+    var s = e.sales, d = mDirect(e), cap = d && d.sellable ? d.sellable : s ? s.hall || s.exp || 0 : 0;
+    if (cap > v.cap) v.cap = cap;
+  });
+  return Object.keys(by).map(function (k) {
+    var v = by[k], m = CUR.venues[venueKey(v.city, v.venue)];
+    v.type = m ? m.type : autoVenueType(v.venue); v.typeAuto = !m;
+    return v;
+  }).sort(function (a, b) { return b.n - a.n || (a.city < b.city ? -1 : 1); });
+}
+function pjRow(e, past, title) {
+  var p = e.date.split("-"), d = new Date(e.date + "T12:00:00Z");
+  var c1 = '<span class="pj-c1"><span class="pj-cap">' + esc(e.genre || e.format || "") + '</span><span class="pj-t">' + esc(e.title || title) + '</span></span>';
+  var c2 = '<span class="pj-c2"><span class="pj-day num">' + p[2] + '</span><span class="pj-dm"><span class="pj-cap">' + WD_FULL[d.getUTCDay()] + '</span><span>' + MONTHS_GEN[+p[1] - 1] + ' ' + p[0] + '</span></span></span>';
+  var c3 = '<span class="pj-c3"><span class="pj-cap">' + esc(e.city) + '</span><span class="pj-v">' + esc(e.venue) + '</span></span>';
+  if (past) return '<li class="pj-row past"><div class="pj-row-in">' + c1 + c2 + c3 + '<span class="pj-c4"><span class="pj-gone">' + (e.status === "gone" ? "Снято до даты" : "Событие прошло") + '</span></span></div></li>';
+  var f = pjFill(e);
+  var fl = f ? '<span class="pj-fill" title="' + esc(f.tip) + '"><span class="bar"><i style="width:' + Math.min(100, f.f) + '%"></i></span>заполнено ' + f.f + '%</span>'
+    : '<span class="pj-fill muted" title="Продаж по этой дате ещё нет: слежение — с 4 октября, только у гастролей">нет данных о продажах</span>';
+  return '<li class="pj-row"><button class="pj-row-in" data-mopen="' + e.i + '" aria-label="' + esc(dayLabel(e.date) + ", " + e.city + ", " + e.venue) + '">' + c1 + c2 + c3 +
+    '<span class="pj-c4">' + (e.pmin ? '<span class="pj-price">от ' + num(e.pmin) + ' ₽</span>' : '<span class="pj-gone">цена не указана</span>') + fl + '</span></button></li>';
+}
+var PJ_ICON = {
+  edit: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M10.5 2.5l3 3L5 14H2v-3z"/></svg>',
+  orgs: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><circle cx="2.8" cy="4" r="1.3"/><circle cx="13.2" cy="4.5" r="1.3"/><circle cx="12.5" cy="12.5" r="1.3"/><circle cx="3.5" cy="12" r="1.3"/></svg>',
+  phone: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 2h3l1.5 3.5-2 1.2a8 8 0 004 4l1.2-2L14 10v3a1 1 0 01-1 1A11 11 0 012 3a1 1 0 011-1z"/></svg>',
+  camera: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 5h2.5l1.2-2h4.6l1.2 2H14v8H2z"/><circle cx="8" cy="8.7" r="2.4"/></svg>',
+  close: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>'
+};
+function pjPage(k, id, rec, keys, l, title) {
+  var pr = rec && rec.profile || {}, back = REP_TITLE[S.sub.projects];
+  var fmt = mostOf(l, "format"), sph = mostOf(l, "sphere"), gen = mostOf(l, "genre"), tour = l.length && l[0].tour === "tour";
+  var past = MA.filter(function (a) { return keys.indexOf(a.pk) >= 0; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+  var cities = mUniq(l, "city"), pastCities = mUniq(past.filter(function (a) { return a.status !== "gone"; }), "city");
+  var orgs = pjOrgs(l), venues = pjVenues(l), fills = l.map(pjFill).filter(Boolean);
+  var avgFill = fills.length ? Math.round(fills.reduce(function (s, x) { return s + x.f; }, 0) / fills.length) : null;
+  var pmin = Math.min.apply(null, l.map(function (e) { return e.pmin || 1e9; }).concat([1e9])), pmax = Math.max.apply(null, l.map(function (e) { return e.pmax || 0; }).concat([0]));
+  var nK = l.filter(function (e) { return e.urlK; }).length, nY = l.filter(function (e) { return e.urlY; }).length;
+  var ours = ALL.filter(function (e) { return keys.indexOf(projKey(e.title)) >= 0; });
+  var ava = pjMedia(rec, "avatar"), cover = pjMedia(rec, "cover"), fav = myIsFav(k);
+  var tags = [fmt, sph, gen].filter(function (c, i, a) { return c && a.indexOf(c) === i; });
+  S.pj = { k: k, id: id, title: title, l: l, orgs: orgs };   // для окон «Организаторы», «Контакты», «Редактировать»
+
+  var hero = '<section class="pj-hero' + (cover ? ' has-cover' : '') + '"' + (cover ? ' style="background-image:url(\'' + esc(cover) + '\')"' : '') + '>' +
+    '<button class="pj-cover-btn" data-pj="photo" data-kind="cover">' + PJ_ICON.camera + '<span>' + (cover ? 'Сменить фон' : 'Загрузить фон') + '</span></button>' +
+    '<div class="pj-hero-in">' +
+      '<button class="pj-ava" data-pj="photo" data-kind="avatar" aria-label="' + (ava ? 'Сменить фото' : 'Загрузить фото') + ': ' + esc(title) + '">' +
+        (ava ? '<img src="' + esc(ava) + '" alt="">' : '<span class="pj-ini" aria-hidden="true">' + esc(pjInitials(title)) + '</span>') +
+        '<span class="pj-ava-edit" aria-hidden="true">' + PJ_ICON.camera + '<span>' + (ava ? 'Сменить' : 'Фото') + '</span></span></button>' +
+      '<div class="pj-hero-text"><h1 class="pj-name">' + esc(title) + '</h1>' +
+        (pr.sub ? '<p class="pj-sub">' + esc(pr.sub) + '</p>' : '') +
+        '<div class="pj-tags">' + tags.map(function (t) { return '<span class="pj-tag">' + esc(t) + '</span>'; }).join("") +
+          (l.length ? '<span class="pj-tag pj-tag-type" title="' + esc(l[0].twhy || "") + '">' + (tour ? "гастроль" : "местное") + '</span>' : '') + '</div>' +
+        '<div class="pj-actions">' +
+          '<button class="pj-btn primary" data-pj="edit">' + PJ_ICON.edit + 'Редактировать</button>' +
+          '<button class="pj-btn' + (fav ? ' on' : '') + '" data-fav="' + esc(k) + '" data-title="' + esc(title) + '" aria-pressed="' + fav + '"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="' + STAR_PATH + '" fill="' + (fav ? "currentColor" : "none") + '" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>' + (fav ? 'В избранном' : 'В избранное') + '</button>' +
+          '<button class="pj-btn" data-pj="orgs">' + PJ_ICON.orgs + 'Организаторы<span class="pj-cnt">' + orgs.length + '</span></button>' +
+          '<button class="pj-btn" data-pj="contacts">' + PJ_ICON.phone + 'Контакты</button>' +
+        '</div></div></div></section>';
+
+  var all = S.m.datesAll, rows = all ? l : l.slice(0, PJ_ROWS);
+  var head = esc(title) + ' — ' + (tour ? 'гастроли' : PJ_PLURAL[fmt] || 'даты');
+  var list = '<div class="pj-list-head"><h2 class="pj-h2">' + head + '</h2>' +
+      (l.length ? '<button class="link-btn" data-proute="' + esc(l[0].pk) + '">Маршрут и где его нет →</button>' : '') + '</div>' +
+    (l.length ? '' : '<div class="note">Сейчас проекта нет в афише — ни одной будущей даты. Когда он снова выйдет в продажу, даты появятся здесь.</div>') +
+    '<ul class="pj-dates">' + rows.map(function (e) { return pjRow(e, false, title); }).join("") + (all ? past.map(function (a) { return pjRow(a, true, title); }).join("") : '') + '</ul>' +
+    (!all && (l.length > PJ_ROWS || past.length) ? '<div class="pj-all"><button class="btn-ghost" data-maction="dates-all">Показать все · ' + l.length + ' ' + plural(l.length, "дата", "даты", "дат") +
+      (past.length ? ' и ' + past.length + ' ' + plural(past.length, "прошедшая", "прошедшие", "прошедших") : '') + '</button></div>' : '');
+
+  var about = pr.about ? '<div class="pj-about" id="pjAbout">' + esc(pr.about) + '</div>' + (pr.about.length > 260 ? '<button class="pj-more" data-pj="more" aria-controls="pjAbout" aria-expanded="false">Развернуть текст</button>' : '')
+    : '<p class="sub" style="margin:0 0 10px">Описания пока нет: о чём проект, состав, история, чем отличается.</p><button class="btn-ghost" data-pj="edit">Добавить описание</button>';
+  var fact = function (label, value, sub) { return '<div class="pj-fact"><div class="l">' + label + '</div><div class="v num">' + value + '</div>' + (sub ? '<div class="s">' + sub + '</div>' : '') + '</div>'; };
+  var aside = '<section><h2 class="pj-h3">' + esc(title) + '</h2>' + about + '</section>' +
+    '<section><h3 class="pj-h4">Тур в цифрах</h3><div class="pj-facts">' +
+      fact("Городов", cities.length, "сейчас в афише") +
+      fact("Дат", l.length, l.length ? human(l[0].date) + " – " + human(l[l.length - 1].date) : "нет") +
+      fact("Цены", pmax ? prices({ pmin: pmin < 1e9 ? pmin : pmax, pmax: pmax }) : "—", "от и до по всем датам") +
+      fact("Заполняемость", avgFill == null ? "—" : avgFill + "%", avgFill == null ? "данных о продажах ещё нет" : "в среднем по " + fills.length + " " + plural(fills.length, "дате", "датам", "датам") + " · «занято» включает чужие квоты") +
+      fact("Где уже был", pastCities.length, plural(pastCities.length, "город", "города", "городов") + " по архиву с " + human(MK.first)) +
+      fact("Организаторов", orgs.length, orgs.length ? "по данным Кассира" : "не указаны — только у Кассира") +
+    '</div></section>' +
+    '<section><h3 class="pj-h4">Площадки · ' + venues.length + '</h3><ul class="pj-venues">' + venues.slice(0, 8).map(function (v) {
+      return '<li><span class="pj-vn">' + esc(v.venue) + '<span class="sub2">' + esc(v.city) + (v.cap ? ' · ' + num(v.cap) + ' мест' : '') + '</span></span><span class="pj-vt' + (v.typeAuto ? ' auto' : '') + '" title="' + (v.typeAuto ? 'Определено автоматически — уточнить можно в «Площадках»' : 'Ваша пометка') + '">' + esc(VTYPE[v.type] || v.type) + '</span></li>';
+    }).join("") + '</ul>' + (venues.length > 8 ? '<p class="sub2" style="margin:6px 0 0">и ещё ' + (venues.length - 8) + '</p>' : '') + '</section>' +
+    '<section><h3 class="pj-h4">О проекте</h3><dl class="pj-dl">' +
+      '<dt>Тип</dt><dd>' + (l.length ? (tour ? "гастроль" : "местное") + '<span class="sub2"> · ' + esc(l[0].tsrc === "auto" ? "авто: " + l[0].twhy : l[0].twhy) + '</span>' : '—') + '</dd>' +
+      '<dt>Состав на выезде</dt><dd>' + (pr.crew ? esc(pr.crew) : '<span class="muted">не указан</span>') + '</dd>' +
+      '<dt>Продаётся</dt><dd>' + (l.length ? [nK ? 'Кассир — ' + nK + ' ' + plural(nK, "дата", "даты", "дат") : '', nY ? 'Яндекс Афиша — ' + nY + ' ' + plural(nY, "дата", "даты", "дат") : ''].filter(Boolean).join("<br>") || '—' : '—') + '</dd>' +
+      (ours.length ? '<dt>Наши площадки</dt><dd>' + ours.map(function (e) { return '<button class="link-btn" data-open="' + e.i + '">' + human(e.date) + ' · ' + esc(e.venue) + (e.gross ? ' · заполнено ' + fill(e) + '%' : '') + '</button>'; }).join("<br>") + '</dd>' : '') +
+      (rec && rec.note ? '<dt>Заметка</dt><dd class="mytext">' + esc(rec.note) + '</dd>' : '') +
+    '</dl></section>';
+
+  return '<div class="pj-back"><button class="btn-ghost" data-maction="vproj-back">← ' + back + '</button></div>' + hero +
+    '<div class="pj-grid"><div class="pj-main">' + myChangesCard(id, rec) + list + '</div><aside class="pj-aside" aria-label="О проекте">' + aside + '</aside></div>';
+}
+
+// Окна страницы проекта — нативный <dialog> поверх страницы (как подтверждения): фокус внутри, Esc закрывает
+function pjDialog(cls, label, html) {
+  var d = $("pjDlg");
+  if (!d) {
+    d = document.createElement("dialog"); d.id = "pjDlg"; document.body.appendChild(d);
+    d.addEventListener("click", function (ev) { if (ev.target === d) { d.close(); return; } var t = ev.target.closest("[data-pj]"); if (t) pjAction(t); });
+  }
+  d.className = "pj-dlg " + cls; d.setAttribute("aria-label", label);
+  d.innerHTML = '<div class="pj-dlg-head"><h2>' + esc(label) + '</h2><button class="icon-btn" data-pj="close" aria-label="Закрыть">' + PJ_ICON.close + '</button></div><div class="pj-dlg-body">' + html + '</div>';
+  if (!d.open) d.showModal();
+  return d;
+}
+function pjOrgsHtml() {
+  var o = S.pj.orgs, rec = myRec(S.pj.k), ava = pjMedia(rec, "avatar"), shown = o.slice(0, 10);
+  if (!o.length) return '<div class="pj-orbit pj-orbit-empty"><div class="pj-core">' + (ava ? '<img src="' + esc(ava) + '" alt="">' : esc(pjInitials(S.pj.title))) + '</div></div>' +
+    '<p class="sub" style="text-align:center;margin:0">Организатор не указан. Его пишет только Кассир («Организатор мероприятия» на странице карточки); у дат только на Яндекс Афише его нет.</p>';
+  var seed = 0; for (var c = 0; c < S.pj.title.length; c++) seed = (seed * 31 + S.pj.title.charCodeAt(c)) % 9973;
+  var rnd = function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };   // «произвольно», но одинаково при каждом открытии
+  var pills = shown.map(function (x, i) {
+    var a = (i / shown.length) * 2 * Math.PI - Math.PI / 2 + (rnd() - 0.5) * 0.5, rf = shown.length > 5 && i % 2 ? 0.7 : 1;
+    var px = Math.max(18, Math.min(82, 50 + 33 * rf * Math.cos(a))), py = Math.max(10, Math.min(90, 50 + 40 * rf * Math.sin(a)));
+    return '<span class="pj-opill" style="--x:' + px.toFixed(1) + '%;--y:' + py.toFixed(1) + '%;--i:' + i + ';--t:' + (5 + rnd() * 4).toFixed(1) + 's;--d:-' + (rnd() * 4).toFixed(1) + 's;--dx:' + ((rnd() - 0.5) * 18).toFixed(0) + 'px;--dy:' + ((rnd() - 0.5) * 14).toFixed(0) + 'px">' +
+      '<b>' + esc(x.name) + '</b><span>' + x.n + ' ' + plural(x.n, "дата", "даты", "дат") + '</span></span>';
+  }).join("");
+  return '<div class="pj-orbit" aria-hidden="true"><div class="pj-core">' + (ava ? '<img src="' + esc(ava) + '" alt="">' : esc(pjInitials(S.pj.title))) + '</div>' + pills + '</div>' +
+    '<ul class="pj-org-list">' + o.map(function (x) { return '<li><b>' + esc(x.name) + '</b><span class="sub2">' + x.n + ' ' + plural(x.n, "дата", "даты", "дат") + ' · ' + esc(x.cities.slice(0, 6).join(", ")) + (x.cities.length > 6 ? ' и ещё ' + (x.cities.length - 6) : '') + '</span></li>'; }).join("") + '</ul>' +
+    '<p class="sub2" style="margin:12px 0 0">По строке «Организатор мероприятия» у Кассира; даты только на Яндекс Афише сюда не попадают.</p>';
+}
+function pjContactsHtml() {
+  var rec = myRec(S.pj.k), pr = rec && rec.profile || {}, links = rec && rec.links || [];
+  var row = function (label, v) { return '<dt>' + label + '</dt><dd>' + (v || '<span class="muted">не указано</span>') + '</dd>'; };
+  var link = function (x) { return '<a href="' + esc(x.url) + '" target="_blank" rel="noopener">' + esc(x.label || x.url.replace(/^https?:\/\/(www\.)?/, "").slice(0, 60)) + ' ↗</a>'; };
+  return '<dl class="pj-dl pj-dl-lg">' +
+    row("Контакт", esc(pr.contact)) +
+    row("Телефон", pr.phone ? '<a href="tel:' + esc(pr.phone.replace(/[^\d+]/g, "")) + '">' + esc(pr.phone) + '</a>' : "") +
+    row("Официальный сайт", pr.site ? link({ url: pr.site }) : "") +
+    row("Гонорар", esc(pr.fee)) +
+    row("Райдеры", (pr.riders || []).map(link).join("<br>")) +
+    (links.length ? row("Ссылки", links.map(link).join("<br>")) : '') +
+    (rec && rec.contacts ? row("Ещё контакты", '<span class="mytext">' + esc(rec.contacts) + '</span>') : '') + '</dl>' +
+    '<div class="form-actions"><button class="btn-dark" data-pj="edit">Изменить</button><span class="sub2">' + (CAN_SAVE ? "Только на этом сервере — на GitHub не уходит." : "Прототип открыт файлом — только в этом браузере.") + '</span></div>';
+}
+function pjLinkRows(list, name) {
+  return (list && list.length ? list : [{}]).map(function (x) {
+    return '<div class="mylink" data-list="' + name + '"><input type="text" name="label" placeholder="Подпись" value="' + esc(x.label || "") + '" aria-label="Подпись ссылки" maxlength="120">' +
+      '<input type="url" name="url" placeholder="https://…" value="' + esc(x.url || "") + '" aria-label="Адрес ссылки" maxlength="1000">' +
+      '<button type="button" class="icon-btn" data-pj="dellink" aria-label="Убрать ссылку">' + PJ_ICON.close + '</button></div>';
+  }).join("");
+}
+var PJ_PH_LABEL = { avatar: "Фото артиста", cover: "Фон шапки" };
+function pjPh(rec, kind) {  // превью фото в окне «Редактировать»; после загрузки обновляется только оно — поля формы не теряются
+  var src = pjMedia(rec, kind);
+  return '<div class="pj-ph ' + kind + '" id="pjPh-' + kind + '">' + (src ? '<img src="' + esc(src) + '" alt="">' : '<span>' + PJ_ICON.camera + '</span>') +
+    '<div><b>' + PJ_PH_LABEL[kind] + '</b><div class="pj-ph-btns"><button type="button" class="btn-ghost" data-pj="photo" data-kind="' + kind + '">' + (src ? "Заменить" : "Загрузить") + '</button>' +
+    (src ? '<button type="button" class="btn-ghost" data-pj="unphoto" data-kind="' + kind + '">Убрать</button>' : '') + '</div></div></div>';
+}
+function pjPhRefresh(kind) { var el = $("pjPh-" + kind); if (el) el.outerHTML = pjPh(myRec(S.pj.k), kind); }
+function pjEditHtml() {
+  var rec = myRec(S.pj.k), pr = rec && rec.profile || {}, f = function (id, label, v, attrs) { return '<div class="field"><label for="pj-' + id + '">' + label + '</label><input id="pj-' + id + '" name="' + id + '" value="' + esc(v || "") + '" ' + (attrs || "") + '></div>'; };
+  return '<form id="pjForm" class="myform" novalidate>' +
+    '<div class="pj-ph-row">' + pjPh(rec, "avatar") + pjPh(rec, "cover") + '</div>' +
+    f("sub", "Подзаголовок", pr.sub, 'maxlength="200" placeholder="Например: шоу-проект, кавер-группа из Москвы"') +
+    '<div class="field"><label for="pj-about">Описание</label><textarea id="pj-about" name="about" rows="6" maxlength="10000" placeholder="О чём проект, состав, история, чем отличается">' + esc(pr.about || "") + '</textarea></div>' +
+    f("crew", "Состав на выезде", pr.crew, 'maxlength="200" placeholder="Например: 8 человек — 5 артистов, звукорежиссёр, директор, техник"') +
+    '<div class="pj-2col">' + f("contact", "Контакт", pr.contact, 'maxlength="200" placeholder="Имя, роль"') + f("phone", "Телефон", pr.phone, 'type="tel" maxlength="60" placeholder="+7 …"') + '</div>' +
+    '<div class="pj-2col">' + f("site", "Официальный сайт", pr.site, 'type="url" maxlength="1000" placeholder="https://…"') + f("fee", "Гонорар", pr.fee, 'maxlength="300" placeholder="Например: 350 000 ₽ + райдер"') + '</div>' +
+    '<div class="field"><span class="field-label" style="margin:0 0 4px">Райдеры</span><div id="pjRiders">' + pjLinkRows(pr.riders, "riders") + '</div><button type="button" class="btn-ghost" data-pj="addlink" data-list="riders" style="margin-top:8px">+ Райдер</button></div>' +
+    '<div class="field"><span class="field-label" style="margin:0 0 4px">Другие ссылки</span><div id="pjLinks">' + pjLinkRows(rec && rec.links, "links") + '</div><button type="button" class="btn-ghost" data-pj="addlink" data-list="links" style="margin-top:8px">+ Ссылка</button></div>' +
+    '<div class="field"><label for="pj-contacts">Ещё контакты</label><textarea id="pj-contacts" name="contacts" rows="2" maxlength="2000">' + esc(rec && rec.contacts || "") + '</textarea></div>' +
+    '<div class="field"><label for="pj-note">Заметка</label><textarea id="pj-note" name="note" rows="3" maxlength="5000">' + esc(rec && rec.note || "") + '</textarea></div>' +
+    '<div class="err" id="pj-err" hidden></div></form>' +
+    '<div class="form-actions"><button class="btn-dark" data-pj="save">Сохранить</button><button class="btn-ghost" data-pj="close">Отмена</button></div>';
+}
+function pjSave() {
+  var f = $("pjForm"), err = $("pj-err"), bad = null, lists = { riders: [], links: [] };
+  f.querySelectorAll(".mylink").forEach(function (row) {
+    var label = row.querySelector('[name="label"]').value.trim(), u = row.querySelector('[name="url"]'), url = u.value.trim();
+    u.removeAttribute("aria-invalid"); if (!url) return;
+    if (!/^https?:\/\//i.test(url)) { bad = bad || u; u.setAttribute("aria-invalid", "true"); return; }
+    lists[row.getAttribute("data-list")].push({ label: label, url: url });
+  });
+  var site = f.elements.site.value.trim();
+  if (site && !/^https?:\/\//i.test(site)) { bad = bad || f.elements.site; f.elements.site.setAttribute("aria-invalid", "true"); }
+  if (bad) { err.hidden = false; err.textContent = "Ссылка должна начинаться с http:// или https://"; bad.setAttribute("aria-describedby", "pj-err"); bad.focus(); return; }
+  var g = function (n) { return f.elements[n].value.trim(); };
+  $("pjDlg").close();
+  mySave({ op: "profile", key: S.pj.k, title: S.pj.title, sub: g("sub"), about: g("about"), crew: g("crew"), contact: g("contact"), phone: g("phone"), site: site,
+    fee: g("fee"), riders: lists.riders, links: lists.links, contacts: g("contacts"), note: g("note") }, "Страница проекта сохранена");
+}
+// Фото: уменьшаем в браузере до отправки — аватар — квадрат 480 px, фон — до 1800 px по ширине; JPEG 85%
+function pjPhoto(file, kind) {
+  if (!file || !PJ_PH_LABEL[kind]) return;
+  if (!/^image\//.test(file.type)) { toast("Нужна картинка: JPEG, PNG или WebP"); return; }
+  var r = new FileReader();
+  r.onload = function () {
+    var img = new Image();
+    img.onload = function () {
+      var w = img.width, h = img.height, sx = 0, sy = 0, sw = w, sh = h;
+      if (kind === "avatar") { var s0 = Math.min(w, h); sx = (w - s0) / 2; sy = (h - s0) / 2; sw = sh = s0; w = h = Math.min(480, s0); }
+      else { var z = Math.min(1, 1800 / w); w = Math.round(w * z); h = Math.round(h * z); }
+      var c = document.createElement("canvas"); c.width = w; c.height = h; c.getContext("2d").drawImage(img, sx, sy, sw, sh, 0, 0, w, h);
+      mySave({ op: "media", key: S.pj.k, title: S.pj.title, kind: kind, data: c.toDataURL("image/jpeg", 0.85) }, kind === "avatar" ? "Фото обновлено" : "Фон обновлён");
+      pjPhRefresh(kind);
+    };
+    img.onerror = function () { toast("Не удалось открыть картинку"); };
+    img.src = r.result;
+  };
+  r.readAsDataURL(file);
+}
+function pjAction(t) {
+  var a = t.getAttribute("data-pj");
+  if (a === "close") $("pjDlg").close();
+  else if (a === "edit") { var d = pjDialog("pj-edit", "Редактировать страницу", pjEditHtml()); var n = d.querySelector("#pj-sub"); if (n) n.focus(); }
+  else if (a === "orgs") pjDialog("pj-orgs", "Организаторы · " + S.pj.orgs.length, pjOrgsHtml());
+  else if (a === "contacts") pjDialog("pj-contacts", "Контакты", pjContactsHtml());
+  else if (a === "save") pjSave();
+  else if (a === "more") { var ab = $("pjAbout"), open = ab.classList.toggle("open"); t.textContent = open ? "Свернуть" : "Развернуть текст"; t.setAttribute("aria-expanded", open); }
+  else if (a === "photo") { var inp = $("pjFile"); inp.setAttribute("data-kind", t.getAttribute("data-kind")); inp.value = ""; inp.click(); }
+  else if (a === "unphoto") { var kd = t.getAttribute("data-kind"); mySave({ op: "media", key: S.pj.k, title: S.pj.title, kind: kd, data: "" }, "Фото убрано"); pjPhRefresh(kd); }
+  else if (a === "addlink") { var box = $(t.getAttribute("data-list") === "riders" ? "pjRiders" : "pjLinks"); box.insertAdjacentHTML("beforeend", pjLinkRows([{}], t.getAttribute("data-list"))); box.lastElementChild.querySelector("input").focus(); }
+  else if (a === "dellink") { var row = t.closest(".mylink"), b2 = row.parentNode, ln = row.getAttribute("data-list"); row.remove(); if (!b2.children.length) b2.insertAdjacentHTML("beforeend", pjLinkRows([{}], ln)); }
+}
+(function () {
+  var inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/jpeg,image/png,image/webp"; inp.id = "pjFile"; inp.hidden = true;
+  inp.addEventListener("change", function () { var f = inp.files[0]; inp.value = ""; pjPhoto(f, inp.getAttribute("data-kind")); });   // сброс — тот же файл можно выбрать снова
+  document.body.appendChild(inp);
+  $("view").addEventListener("click", function (ev) { var t = ev.target.closest("[data-pj]"); if (t) pjAction(t); });
+})();
 
 // Расстояние по прямой между городами, км (координаты — OpenStreetMap, в market-geo.js)
 function geoKm(a, b) {
@@ -5237,6 +5620,10 @@ function myFind(k) { for (var id in MYP.projects) if (MYP.projects[id].keys.inde
 function myRec(k) { var id = myFind(k); return id ? MYP.projects[id] : null; }
 function myIsFav(k) { var r = myRec(k); return !!(r && r.fav); }
 function myHasNotes(r) { return !!(r && (r.note || r.contacts || (r.links && r.links.length))); }
+function myHasData(r) {  // записи, профиль страницы или фото — запись о проекте нужна, даже если он не в избранном
+  var pr = r && r.profile || {};
+  return myHasNotes(r) || !!(r && r.media && Object.keys(r.media).length) || Object.keys(pr).some(function (k) { return Array.isArray(pr[k]) ? pr[k].length : pr[k]; });
+}
 function myEvents(keys) { return MR.filter(function (e) { return e.pk && keys.indexOf(e.pk) >= 0; }).sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; }); }
 function mySnap(l) { return l.map(function (e) { return [e.date, e.city, e.venue, e.pmin || null, e.pmax || null]; }); }
 // Что изменилось с момента добавления в избранное или последнего «Просмотрено»: даты, города, цены
@@ -5252,15 +5639,22 @@ function myDiff(r) {
 }
 function myApply(op) {  // то же, что сервер, — для прототипа, открытого файлом, и чтобы не ждать ответа
   var P = MYP.projects, now = new Date().toISOString().slice(0, 19), id = op.id, p;
-  if (op.op === "fav" || op.op === "notes") {
+  if (op.op === "fav" || op.op === "notes" || op.op === "profile" || op.op === "media") {
     id = myFind(op.key);
     if (!id) { id = op.id; P[id] = { title: op.title || op.key, keys: [op.key], fav: false, note: "", links: [], contacts: "", snap: null, at: now, created: true }; }
     p = P[id];
-    if (op.op === "fav") { p.fav = !!op.fav; if (p.fav) p.snap = { at: now, dates: op.snap || [] }; else if (!myHasNotes(p)) { delete P[id]; return; } }
+    if (op.op === "fav") { p.fav = !!op.fav; if (p.fav) p.snap = { at: now, dates: op.snap || [] }; else if (!myHasData(p)) { delete P[id]; return; } }
+    else if (op.op === "profile" || op.op === "media") {  // профиль страницы и фото в избранное сами не добавляют
+      if (op.op === "profile") {
+        p.profile = { sub: op.sub || "", about: op.about || "", crew: op.crew || "", contact: op.contact || "", phone: op.phone || "", site: op.site || "", fee: op.fee || "", riders: op.riders || [] };
+        p.note = op.note || ""; p.contacts = op.contacts || ""; p.links = op.links || [];
+      } else { p.media = p.media || {}; if (op.data) p.media[op.kind] = op.data; else delete p.media[op.kind]; }   // сразу видно; сервер вернёт имя файла
+      if (!p.fav && !myHasData(p)) { delete P[id]; return; }
+    }
     else {
       p.note = op.note || ""; p.contacts = op.contacts || ""; p.links = op.links || [];
       if (p.created && myHasNotes(p)) { p.fav = true; p.snap = { at: now, dates: op.snap || [] }; }
-      if (!p.fav && !myHasNotes(p)) { delete P[id]; return; }
+      if (!p.fav && !myHasData(p)) { delete P[id]; return; }
     }
     delete p.created;
   } else if (P[id]) {
@@ -5275,7 +5669,10 @@ function mySave(op, okMsg) {
   if (!op.id) op.id = "p" + Date.now().toString(36);
   myApply(op); V_CACHE.key = null; render();
   if (S.m.sel != null && $("drawer").classList.contains("open") && !S.m.editing) showDrawer(mDrawer(MR[S.m.sel]));
-  if (!CAN_SAVE) { try { localStorage.setItem(MY_KEY, JSON.stringify(MYP)); } catch (e) { /* хранилище недоступно */ } if (okMsg) toast(okMsg + " — только в этом браузере"); return; }
+  if (!CAN_SAVE) {
+    try { localStorage.setItem(MY_KEY, JSON.stringify(MYP)); } catch (e) { toast("Не сохранено: в браузере не хватило места" + (op.op === "media" ? " для фото — на сайте фото хранятся на сервере" : "")); return; }
+    if (okMsg) toast(okMsg + " — только в этом браузере"); return;
+  }
   fetch("/api/market/myprojects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(op) })
     .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
     .then(function (x) {
