@@ -434,7 +434,13 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
   .pj-row-in:is(button):hover .pj-t { color: var(--data); }
 }
 .pj-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 56px; margin-top: 40px; align-items: start; }
-.pj-list-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+.pj-list-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.pj-sum { display: flex; gap: 8px 22px; flex-wrap: wrap; margin-top: 10px; font-size: 15px; color: var(--muted); }
+.pj-sum b { font: 500 17px/1.2 var(--display); color: var(--ink); letter-spacing: -0.01em; }
+.pj-analytics { height: 40px; padding: 0 18px; border-radius: 9999px; border: 1px solid var(--soot); background: var(--soot); color: #fff; font-size: 14px; font-weight: 500; display: inline-flex; align-items: center; gap: 8px; margin-top: 2px; }
+@media (hover: hover) { .pj-analytics:hover { background: #2c2825; } }
+.pj-period { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; font-size: 14px; color: var(--ink-3); margin: -4px 0 12px; }
+.pj-period b { font-weight: 500; color: var(--ink); }
 .pj-h2 { font: 600 30px/1.15 var(--display); letter-spacing: -0.015em; margin: 0; }
 .pj-dates { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--line); }
 .pj-row { border-top: 1px solid var(--line); }
@@ -464,10 +470,6 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pj-about { font-size: 16px; line-height: 1.5; color: var(--ink-2); white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
 .pj-about.open { display: block; -webkit-line-clamp: unset; }
 .pj-more { background: none; border: 0; padding: 0; margin-top: 8px; font-weight: 500; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
-.pj-facts { display: flex; flex-direction: column; gap: 14px; }
-.pj-fact { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
-.pj-fact .v { font: 500 30px/1.1 var(--display); letter-spacing: -0.02em; white-space: nowrap; }
-.pj-fact .t { font-size: 17px; color: var(--ink-2); }
 .pj-venues { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .pj-venues li { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; font-size: 14px; }
 .pj-vn { min-width: 0; } .pj-vn .sub2 { display: block; }
@@ -4890,14 +4892,15 @@ function pjOrgs(l) {  // организаторы проекта: сколько
 function pjVenues(l) {  // площадки проекта: город, тип (ваша пометка или авто), мест в зале (по схеме кассы, если есть)
   var by = {};
   l.forEach(function (e) {
-    var key = e.city + "|" + e.venue, v = by[key] = by[key] || { city: e.city, venue: e.venue, n: 0, cap: 0 };
-    v.n++;
+    var key = e.city + "|" + e.venue, v = by[key] = by[key] || { city: e.city, venue: e.venue, n: 0, cap: 0, fills: [], first: e.date };
+    v.n++; var f0 = pjFill(e); if (f0) v.fills.push(f0.f); if (e.date < v.first) v.first = e.date;
     var s = e.sales, d = mDirect(e), cap = d && d.sellable ? d.sellable : s ? s.hall || s.exp || 0 : 0;
     if (cap > v.cap) v.cap = cap;
   });
   return Object.keys(by).map(function (k) {
     var v = by[k], m = CUR.venues[venueKey(v.city, v.venue)];
     v.type = m ? m.type : autoVenueType(v.venue); v.typeAuto = !m;
+    v.fill = v.fills.length ? Math.round(v.fills.reduce(function (a, b) { return a + b; }, 0) / v.fills.length) : null;
     return v;
   }).sort(function (a, b) { return b.n - a.n || (a.city < b.city ? -1 : 1); });
 }
@@ -4922,6 +4925,7 @@ var PJ_ICON = {
   vk: '<svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8.7 12C3.9 12 1.2 8.8 1.1 3.4h2.4c.1 4 1.8 5.6 3.2 6V3.4h2.2v3.4c1.4-.1 2.8-1.7 3.3-3.4h2.2a6.4 6.4 0 01-3 4.2 6.8 6.8 0 013.5 4.4h-2.4a4.2 4.2 0 00-3.6-3v3z"/></svg>',
   instagram: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2.2" y="2.2" width="11.6" height="11.6" rx="3.4"/><circle cx="8" cy="8" r="2.8"/><circle cx="11.6" cy="4.4" r=".7" fill="currentColor" stroke="none"/></svg>',
   tg: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M14.3 2.3L1.8 7.2l4.1 1.4 1.5 4.8 2.3-2.8 3.3 2.5z"/><path d="M5.9 8.6l6.4-4.4"/></svg>',
+  chart: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 13.5h11"/><path d="M4.5 11V8M8 11V4.5M11.5 11V6.5"/></svg>',
   back: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg>',
   close: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>'
 };
@@ -4929,8 +4933,7 @@ function pjPage(k, id, rec, keys, l, title) {
   var pr = rec && rec.profile || {}, back = REP_TITLE[S.sub.projects];
   var fmt = mostOf(l, "format"), sph = mostOf(l, "sphere"), gen = mostOf(l, "genre"), tour = l.length && l[0].tour === "tour";
   var past = MA.filter(function (a) { return keys.indexOf(a.pk) >= 0; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
-  var cities = mUniq(l, "city"), pastCities = mUniq(past.filter(function (a) { return a.status !== "gone"; }), "city");
-  var orgs = pjOrgs(l), venues = pjVenues(l), fills = l.map(pjFill).filter(Boolean);
+  var cities = mUniq(l, "city"), orgs = pjOrgs(l), fills = l.map(pjFill).filter(Boolean);
   var avgFill = fills.length ? Math.round(fills.reduce(function (s, x) { return s + x.f; }, 0) / fills.length) : null;
   var pmin = Math.min.apply(null, l.map(function (e) { return e.pmin || 1e9; }).concat([1e9])), pmax = Math.max.apply(null, l.map(function (e) { return e.pmax || 0; }).concat([0]));
   var nK = l.filter(function (e) { return e.urlK; }).length, nY = l.filter(function (e) { return e.urlY; }).length;
@@ -4963,28 +4966,27 @@ function pjPage(k, id, rec, keys, l, title) {
           }).join("") +
         '</div></div></div></section>';
 
-  var all = S.m.datesAll, rows = all ? l : l.slice(0, PJ_ROWS);
+  // Даты — по периоду из шапки сайта («30 дней», «90 дней», «Сезон», «Даты» — месяц или диапазон)
+  var lp = l.filter(inPeriod), pastP = past.filter(inPeriod), cut = S.period !== "all";
+  var all = S.m.datesAll, rows = all ? lp : lp.slice(0, PJ_ROWS);
   var head = esc(title) + ' — ' + (tour ? 'гастроли' : PJ_PLURAL[fmt] || 'даты');
-  var list = '<div class="pj-list-head"><h2 class="pj-h2">' + head + '</h2>' +
-      (l.length ? '<button class="link-btn" data-proute="' + esc(l[0].pk) + '">Маршрут и где его нет →</button>' : '') + '</div>' +
+  var sum = '<div class="pj-sum">' +
+    '<span title="Сейчас в афише"><b class="num">' + cities.length + '</b> ' + plural(cities.length, "город", "города", "городов") + '</span>' +
+    '<span title="От и до по всем датам, без сервисного сбора касс"><b class="num">' + (pmax ? prices({ pmin: pmin < 1e9 ? pmin : pmax, pmax: pmax }) : "—") + '</b> цены</span>' +
+    '<span title="' + (avgFill == null ? 'Данных о продажах ещё нет — слежение с 4 октября, только у гастролей' : 'В среднем по ' + fills.length + ' ' + plural(fills.length, "дате", "датам", "датам") + ' с данными; «занято» включает и чужие квоты') + '"><b class="num">' + (avgFill == null ? "—" : avgFill + "%") + '</b> заполняемость в ср.</span></div>';
+  var periodNote = cut ? '<div class="pj-period">Показаны даты: <b>' + esc(periodLabel()) + '</b> · ' + lp.length + ' из ' + l.length +
+    '<button class="link-btn" data-pj="period-all">Все даты</button></div>' : '';
+  var list = '<div class="pj-list-head"><div><h2 class="pj-h2">' + head + '</h2>' + (l.length ? sum : '') + '</div>' +
+      (l.length ? '<button class="pj-analytics" data-proute="' + esc(l[0].pk) + '">' + PJ_ICON.chart + 'Аналитика <span aria-hidden="true">→</span></button>' : '') + '</div>' + periodNote +
     (l.length ? '' : '<div class="note">Сейчас проекта нет в афише — ни одной будущей даты. Когда он снова выйдет в продажу, даты появятся здесь.</div>') +
-    '<ul class="pj-dates">' + rows.map(function (e) { return pjRow(e, false, title); }).join("") + (all ? past.map(function (a) { return pjRow(a, true, title); }).join("") : '') + '</ul>' +
-    (!all && (l.length > PJ_ROWS || past.length) ? '<div class="pj-all"><button class="btn-ghost" data-maction="dates-all">Показать все · ' + l.length + ' ' + plural(l.length, "дата", "даты", "дат") +
-      (past.length ? ' и ' + past.length + ' ' + plural(past.length, "прошедшая", "прошедшие", "прошедших") : '') + '</button></div>' : '');
+    (l.length && !lp.length ? '<div class="note">В выбранном периоде дат нет. Ближайшая — ' + dayLabel(l[0].date) + ', ' + esc(l[0].city) + '.</div>' : '') +
+    '<ul class="pj-dates">' + rows.map(function (e) { return pjRow(e, false, title); }).join("") + (all ? pastP.map(function (a) { return pjRow(a, true, title); }).join("") : '') + '</ul>' +
+    (!all && (lp.length > PJ_ROWS || pastP.length) ? '<div class="pj-all"><button class="btn-ghost" data-maction="dates-all">Показать все · ' + lp.length + ' ' + plural(lp.length, "дата", "даты", "дат") +
+      (pastP.length ? ' и ' + pastP.length + ' ' + plural(pastP.length, "прошедшая", "прошедшие", "прошедших") : '') + '</button></div>' : '');
 
   var about = pr.about ? '<div class="pj-about" id="pjAbout">' + esc(pr.about) + '</div>' + (pr.about.length > 260 ? '<button class="pj-more" data-pj="more" aria-controls="pjAbout" aria-expanded="false">Развернуть текст</button>' : '')
     : '<p class="sub" style="margin:0 0 10px">Описания пока нет: о чём проект, состав, история, чем отличается.</p><button class="btn-ghost" data-pj="edit">Добавить описание</button>';
-  var fact = function (value, text, tip) { return '<div class="pj-fact" title="' + esc(tip) + '"><span class="v num">' + value + '</span><span class="t">' + text + '</span></div>'; };
   var aside = '<section><h2 class="pj-h3">' + esc(title) + '</h2>' + about + '</section>' +
-    '<section><h3 class="pj-h4">Тур в цифрах</h3><div class="pj-facts">' +
-      fact(cities.length, plural(cities.length, "город", "города", "городов"), "сейчас в афише") +
-      fact(pmax ? prices({ pmin: pmin < 1e9 ? pmin : pmax, pmax: pmax }) : "—", "диапазон цен", "от и до по всем датам, без сервисного сбора касс") +
-      fact(avgFill == null ? "—" : avgFill + "%", "заполняемость в ср.", avgFill == null ? "данных о продажах ещё нет — слежение с 4 октября, только у гастролей"
-        : "в среднем по " + fills.length + " " + plural(fills.length, "дате", "датам", "датам") + " с данными; «занято» включает и чужие квоты") +
-    '</div></section>' +
-    '<section><h3 class="pj-h4">Площадки · ' + venues.length + '</h3><ul class="pj-venues">' + venues.slice(0, 8).map(function (v) {
-      return '<li><span class="pj-vn">' + esc(v.venue) + '<span class="sub2">' + esc(v.city) + (v.cap ? ' · ' + num(v.cap) + ' мест' : '') + '</span></span><span class="pj-vt' + (v.typeAuto ? ' auto' : '') + '" title="' + (v.typeAuto ? 'Определено автоматически — уточнить можно в «Площадках»' : 'Ваша пометка') + '">' + esc(VTYPE[v.type] || v.type) + '</span></li>';
-    }).join("") + '</ul>' + (venues.length > 8 ? '<p class="sub2" style="margin:6px 0 0">и ещё ' + (venues.length - 8) + '</p>' : '') + '</section>' +
     '<section><h3 class="pj-h4">О проекте</h3><dl class="pj-dl">' +
       '<dt>Тип</dt><dd>' + (l.length ? (tour ? "гастроль" : "местное") + '<span class="sub2"> · ' + esc(l[0].tsrc === "auto" ? "авто: " + l[0].twhy : l[0].twhy) + '</span>' : '—') + '</dd>' +
       '<dt>Состав на выезде</dt><dd>' + (pr.crew ? esc(pr.crew) : '<span class="muted">не указан</span>') + '</dd>' +
@@ -5268,6 +5270,7 @@ function pjAction(t) {
   else if (a === "edit") { var d = pjDialog("pj-edit", "Редактировать страницу", pjEditHtml()); var n = d.querySelector("#pj-" + (t.getAttribute("data-field") || "sub")); if (n) n.focus(); }
   else if (a === "date") pjOpenDate(+t.getAttribute("data-i"));
   else if (a === "evedit") pjEditEvent(+t.getAttribute("data-i"));
+  else if (a === "period-all") { S.period = "all"; S.from = S.to = null; render(); }
   else if (a === "orgedit") pjOrgEditor(+t.getAttribute("data-i"));
   else if (a === "orgcancel") { $("pjdOrg").innerHTML = pjOrgView(MR[+t.getAttribute("data-i")]); }
   else if (a === "orgreset") pjOrgSet([MR[+t.getAttribute("data-i")]], "");
@@ -5378,6 +5381,20 @@ function mRouteTimeline(p) {
     '<polyline points="' + path + '" fill="none" stroke="#7ab9e8" stroke-width="1.5" stroke-linejoin="round"/>' +
     p.l.map(function (e) { return '<circle cx="' + x(e.date).toFixed(1) + '" cy="' + y(e.city) + '" r="5" fill="#1d6fae" stroke="#fff" stroke-width="2" class="hov-dot" data-mopen="' + e.i + '" data-ct="' + esc(dayLabel(e.date) + (e.time ? ", " + e.time : "") + " · " + e.city + " · " + e.venue + (e.pmin ? " · " + prices(e) : "")) + '"/>'; }).join("") + '</svg>';
 }
+// Площадки тура — на странице «Аналитика» (перенесены со страницы проекта 09.10): где выступает, тип площадки, мест, дат, заполняемость
+function mRouteVenues(l) {
+  var v = pjVenues(l);
+  if (!v.length) return '';
+  var byType = {}; v.forEach(function (x) { byType[x.type] = (byType[x.type] || 0) + 1; });
+  return '<section class="card" style="overflow:auto"><div class="card-pad" style="padding-bottom:0"><h2>Площадки тура · ' + v.length + '</h2>' +
+    '<p class="sub">' + Object.keys(byType).map(function (t) { return (VTYPE[t] || t) + ' — ' + byType[t]; }).join(" · ") + '. Тип — ваша пометка или «авто» по названию; уточнить — в «Площадках».</p></div>' +
+    '<table class="vtable"><thead><tr><th scope="col">Площадка</th><th scope="col">Город</th><th scope="col">Тип</th><th scope="col" class="r">Мест</th><th scope="col" class="r">Дат</th><th scope="col" class="r">Заполняемость</th></tr></thead><tbody>' +
+    v.map(function (x) {
+      return '<tr><td><b style="font-weight:500">' + esc(x.venue) + '</b></td><td>' + esc(x.city) + '<span class="sub2" style="display:block">' + human(x.first) + '</span></td>' +
+        '<td><span class="pj-vt' + (x.typeAuto ? ' auto' : '') + '">' + esc(VTYPE[x.type] || x.type) + '</span></td><td class="r num">' + (x.cap ? num(x.cap) : '—') + '</td><td class="r num">' + x.n + '</td>' +
+        '<td class="r num">' + (x.fill == null ? '<span class="muted">—</span>' : x.fill + '%') + '</td></tr>';
+    }).join("") + '</tbody></table></section>';
+}
 // «Города, где его нет»: без поиска и округа — первые 25 (или все), с ними — все подходящие
 function candMatch(city, n, total) {
   var q = (S.m.candQ || "").trim().toLowerCase().replace(/ё/g, "е"), fo = S.m.candFo;
@@ -5419,6 +5436,7 @@ function mProjectDetail(k) {
       '<section class="card card-pad"><h2>Продажи</h2>' + (ours.length ? '<p class="sub">Этот проект есть на площадках, где мы собираем схемы залов:</p><ul class="list">' + ours.map(function (e) {
         return '<li><button class="row-btn" data-open="' + e.i + '"><span style="flex-grow:1"><b style="font-weight:500">' + human(e.date) + ' · ' + esc(e.venue) + '</b><span class="sub2" style="display:block">' + (e.gross ? 'заполнено ' + fill(e) + '% · занято ' + num(e.taken) + ' из ' + num(e.sellable) : 'без онлайн-продажи') + '</span></span><span class="sub2">карточка →</span></button></li>';
       }).join("") + '</ul>' : '<div class="note" style="margin-top:8px">Продажи видны там, где мы собираем схемы залов: сейчас Владимир (ОДКиИ, Арт Холл) и Иваново (ЦКиО, Музыкальный театр). Этот проект туда не заезжает. Позже — слежение за схемами и в других городах на сайтах движка vladimirkoncert (Кострома, Ярославль, Ковров).</div>') + '</section></div>' +
+    mRouteVenues(l) +
     '<section class="card" style="overflow:auto"><div class="card-pad" style="padding-bottom:0"><h2>Города, где его нет · ' + cands.length + '</h2><p class="sub">Сначала — «по пути»: между соседними выступлениями (переезд до 800 км и до 2 недель), крюк до 150 км, есть свободный день. Конкуренция — мероприятия того же формата («' + esc(fmt) + '») в окне дат. «Разобрать» открывает город на вкладке «Город» с этим окном и форматом.</p>' +
         '<div class="cand-tools"><label class="cand-q"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>' +
           '<input type="search" data-cand-q placeholder="Найти город" aria-label="Найти город среди тех, где проекта нет" autocomplete="off" value="' + esc(S.m.candQ) + '"></label>' +
