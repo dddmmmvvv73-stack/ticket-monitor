@@ -5593,6 +5593,14 @@ function anSec(title, right, body, id) { return '<section class="an-sec"' + (id 
 // заполняемости, размер — вместимость, стрелки), По пути, Архив, Организаторы (цвет точек — организатор), Конкуренты
 // (того же формата ±7 дней), Области (сколько дат проекта в области за сезон: афиша + архив). Ползунок — где тур в этот день.
 var AN_LEAFLET = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/";
+// Гастроли идут день за днём: между соседними датами 2 и более свободных дня — перерыв, маршрут режется на отрезки
+// (линии и стрелки между отрезками нет); ползунок шагает по датам тура, перерывы перепрыгивает (исправление 09.10).
+var AN_BREAK_FREE_DAYS = 2;
+function anLegs(l) {  // отрезки тура: [[дата, …], …]
+  var legs = [];
+  l.forEach(function (e, i) { if (!i || dDiff(l[i - 1].date, e.date) - 1 >= AN_BREAK_FREE_DAYS) legs.push([]); legs[legs.length - 1].push(e); });
+  return legs;
+}
 var AN_LAYERS = [["tour", "Тур"], ["path", "По пути"], ["arch", "Архив"], ["orgs", "Организаторы"], ["comp", "Конкуренты"], ["regions", "Области"]];
 var AN_ORG_COLORS = ["#7c3aed", "#0891b2", "#ea580c", "#16a34a", "#db2777", "#2563eb", "#a16207", "#475569"];
 function anLayersOn() { return S.m.anLayers || (S.m.anLayers = { tour: true, path: true, arch: false, orgs: false, comp: false, regions: true }); }
@@ -5609,15 +5617,16 @@ function anLoad(cb) {
 }
 function anLL(city) { var v = typeof MGEO !== "undefined" && MGEO.cities[city]; return v ? [v[2], v[3]] : null; }
 function anMapHtml(k, l, fills, cands, past, orgs, fmt) {
-  var on = anLayersOn(), first = l[0].date, last = l[l.length - 1].date, span = Math.max(1, dDiff(first, last));
-  var day = S.m.anDay && S.m.anDay >= first && S.m.anDay <= last ? S.m.anDay : (TODAY >= first && TODAY <= last ? TODAY : first);
-  S.anCtx = { k: k, l: l, fills: fills, cands: cands, past: past, orgs: orgs, fmt: fmt, first: first, span: span, day: day };
+  var on = anLayersOn(), idx = l.findIndex(function (e) { return e.date >= (S.m.anDay || TODAY); });
+  if (idx < 0) idx = l.length - 1;
+  var day = l[idx].date;
+  S.anCtx = { k: k, l: l, fills: fills, cands: cands, past: past, orgs: orgs, fmt: fmt, idx: idx };
   setTimeout(anMapInit, 0);
   return '<div class="an-layers" role="group" aria-label="Слои карты">' + AN_LAYERS.map(function (x) {
       return '<button class="an-layer" data-pj="an-layer" data-layer="' + x[0] + '" aria-pressed="' + !!on[x[0]] + '">' + x[1] + '</button>'; }).join("") + '</div>' +
     '<div id="anMap" class="an-map"><div class="sub" style="padding:16px">Загружаем карту…</div></div>' +
-    '<div class="an-slider"><label for="anDay" class="sub2">Где тур в день</label><input type="range" id="anDay" min="0" max="' + span + '" step="1" value="' + dDiff(first, day) + '" aria-valuetext="' + esc(dayLabel(day)) + '">' +
-      '<b id="anDayLbl">' + dayLabel(day) + '</b></div><div class="an-legend" id="anLegend"></div>';
+    '<div class="an-slider"><label for="anDay" class="sub2">Где тур в день</label><input type="range" id="anDay" min="0" max="' + (l.length - 1) + '" step="1" value="' + idx + '" aria-valuetext="' + esc(dayLabel(day) + ", " + l[idx].city) + '">' +
+      '<b id="anDayLbl">' + dayLabel(day) + ' · ' + esc(l[idx].city) + '</b></div><div class="an-legend" id="anLegend"></div>';
 }
 function anMapInit() {
   var el = $("anMap"), c = S.anCtx; if (!el || !c) return;
@@ -5660,13 +5669,16 @@ function anMapInit() {
     }
     var stops = [];
     if (on.tour) {
-      var line = c.l.map(function (e) { return anLL(e.city); }).filter(Boolean);
-      L.polyline(line, { color: "#57534e", weight: 2, opacity: 0.55 }).addTo(map);
-      for (var i = 1; i < line.length; i++) {   // стрелки направления — на середине перегона
-        var a = line[i - 1], b = line[i]; if (a[0] === b[0] && a[1] === b[1]) continue;
-        var ang = Math.atan2(b[0] - a[0], (b[1] - a[1]) * Math.cos(a[0] * Math.PI / 180)) * 180 / Math.PI;
-        L.marker([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], { icon: L.divIcon({ className: "an-arrow", html: '<span style="transform:rotate(' + (-ang).toFixed(0) + 'deg)">➤</span>', iconSize: [14, 14], iconAnchor: [7, 7] }), interactive: false, keyboard: false }).addTo(map);
-      }
+      anLegs(c.l).forEach(function (leg) {   // отрезок — даты подряд; между отрезками (перерыв) линии нет
+        var line = leg.map(function (e) { return anLL(e.city); }).filter(Boolean);
+        if (line.length < 2) return;
+        L.polyline(line, { color: "#57534e", weight: 2, opacity: 0.55 }).addTo(map);
+        for (var i = 1; i < line.length; i++) {   // стрелки направления — на середине перегона
+          var a = line[i - 1], b = line[i]; if (a[0] === b[0] && a[1] === b[1]) continue;
+          var ang = Math.atan2(b[0] - a[0], (b[1] - a[1]) * Math.cos(a[0] * Math.PI / 180)) * 180 / Math.PI;
+          L.marker([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], { icon: L.divIcon({ className: "an-arrow", html: '<span style="transform:rotate(' + (-ang).toFixed(0) + 'deg)">➤</span>', iconSize: [14, 14], iconAnchor: [7, 7] }), interactive: false, keyboard: false }).addTo(map);
+        }
+      });
       var byCity = {};
       c.l.forEach(function (e, n) { (byCity[e.city] = byCity[e.city] || []).push({ e: e, n: n + 1, f: c.fills[n] }); });
       Object.keys(byCity).forEach(function (city) {
@@ -5687,20 +5699,16 @@ function anMapInit() {
     // «Сейчас тур здесь» / ползунок: точка между соседними остановками
     var now = L.marker([0, 0], { icon: L.divIcon({ className: "", html: '<span class="an-now"></span>', iconSize: [18, 18], iconAnchor: [9, 9] }), interactive: false, keyboard: false, zIndexOffset: 1000 });
     now.bindTooltip("", { permanent: true, direction: "top", offset: [0, -10], className: "an-now-tip" });
-    function place(day) {
-      var l = c.l, prev = null, next = null;
-      l.forEach(function (e) { if (e.date <= day) prev = e; if (!next && e.date > day) next = e; });
-      var a = prev && anLL(prev.city), b = next && anLL(next.city), pos, txt;
-      if (!prev) { pos = anLL(l[0].city); txt = "до старта · " + dayLabel(day); }
-      else if (!next || !b) { pos = a; txt = (day > l[l.length - 1].date ? "тур окончен" : prev.city) + " · " + dayLabel(day); }
-      else { var t = dDiff(prev.date, day) / Math.max(1, dDiff(prev.date, next.date)); pos = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; txt = (prev.date === day ? prev.city : prev.city + " → " + next.city) + " · " + dayLabel(day); }
-      if (!pos) return;
-      now.setLatLng(pos); now.setTooltipContent(esc(txt)); if (!map.hasLayer(now)) now.addTo(map);
-      stops.forEach(function (st) { var el2 = st.mk.getElement(); if (el2) el2.classList.toggle("an-near", st.g.some(function (x) { return Math.abs(dDiff(x.e.date, day)) <= 3; })); });
+    function place(i) {   // i — номер даты тура: точка на её городе, без «едет между городами» через перерывы
+      var e = c.l[i], pos = anLL(e.city); if (!pos) return;
+      var prev = c.l[i - 1], gap = prev ? dDiff(prev.date, e.date) - 1 : 0;
+      now.setLatLng(pos); now.setTooltipContent(esc(e.city + " · " + dayLabel(e.date) + (gap >= AN_BREAK_FREE_DAYS ? " · после перерыва " + gap + " " + plural(gap, "день", "дня", "дней") : "")));
+      if (!map.hasLayer(now)) now.addTo(map);
+      stops.forEach(function (st) { var el2 = st.mk.getElement(); if (el2) el2.classList.toggle("an-near", st.g.some(function (x) { return x.e === e; })); });
     }
-    if (on.tour) place(c.day);
+    if (on.tour) place(c.idx);
     var sl = $("anDay");
-    if (sl) sl.oninput = function () { var d = addDays(c.first, +sl.value); S.m.anDay = d; $("anDayLbl").textContent = dayLabel(d); sl.setAttribute("aria-valuetext", dayLabel(d)); if (on.tour) place(d); };
+    if (sl) sl.oninput = function () { var e = c.l[+sl.value], t = dayLabel(e.date) + " · " + e.city; S.m.anDay = e.date; $("anDayLbl").textContent = t; sl.setAttribute("aria-valuetext", t); if (on.tour) place(+sl.value); };
     if (bounds.length) map.fitBounds(bounds, { padding: [30, 30] }); else map.setView([56, 45], 4);
     $("anLegend").innerHTML = legend.join("");
     S.anMapObj = map;
