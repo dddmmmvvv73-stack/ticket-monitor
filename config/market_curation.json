@@ -674,6 +674,11 @@
       "type": "local",
       "title": "Приключения Тома Сойера",
       "at": "2026-10-07T17:45:27"
+    },
+    "adrenalinhouse": {
+      "type": "tour",
+      "title": "AdrenalinHouse",
+      "at": "2026-10-09T17:06:46"
     }
   },
   "venues": {
