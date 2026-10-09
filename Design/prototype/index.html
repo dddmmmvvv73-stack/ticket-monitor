@@ -578,6 +578,7 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pjd-org-edit { background: none; border: 0; padding: 0; margin-left: 8px; font-size: 13px; color: var(--data); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--wash); }
 .pjd-org-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
 .pjd-org-form input { flex: 1 1 220px; min-width: 0; height: 36px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 8px; font: inherit; }
+.pj-tour { margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--line); }
 .pjo-quick { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin: 4px 0 10px; } .pjo-quick .fbtn { padding: 0; height: 28px; }
 .pjo-cities { max-height: min(46vh, 420px); overflow: auto; border: 1px solid var(--line); border-radius: 12px; padding: 4px 14px; }
 .pjo-city { border: 0; border-bottom: 1px solid var(--line); margin: 0; padding: 10px 0; } .pjo-city:last-child { border-bottom: 0; }
@@ -5110,7 +5111,7 @@ function pjPage(k, id, rec, keys, l, title) {
       '<dt>Архив</dt><dd>' + (past.length ? '<button class="pj-plain" data-pj="mode" data-mode="' + (S.m.pjMode === "arch" ? 'list' : 'arch') + '" aria-pressed="' + (S.m.pjMode === "arch") + '">' +
         (S.m.pjMode === "arch" ? 'показан — вернуться к датам' : past.length + ' ' + plural(past.length, "прошедшая дата", "прошедшие даты", "прошедших дат") + ' →') + '</button>'
         : '<span class="muted">пока пусто — копится с ' + human(MK.first) + '</span>') + '</dd>' +
-    '</dl></section>' + (l.length ? '<section><h3 class="pj-h4">Разметка</h3>' + tourBox(l[0]) + '</section>' : '');
+    '</dl></section>';
 
   return hero +
     '<div class="pj-grid"><div class="pj-main">' + list + '</div><aside class="pj-aside" aria-label="О проекте">' + aside + '</aside></div>';
@@ -5296,7 +5297,13 @@ function pjDialog(cls, label, html) {
   var d = $("pjDlg");
   if (!d) {
     d = document.createElement("dialog"); d.id = "pjDlg"; document.body.appendChild(d);
-    d.addEventListener("click", function (ev) { if (ev.target === d) { d.close(); return; } var t = ev.target.closest("[data-pj]"); if (t) pjAction(t); });
+    d.addEventListener("click", function (ev) {
+      if (ev.target === d) { d.close(); return; }
+      var m = ev.target.closest("[data-mproject-type],[data-martist-type]");   // разметка в окне «Редактировать»
+      if (m) { if (m.hasAttribute("data-mproject-type")) mMarkProject(m); else mMarkArtist(m); pjTourRefresh(); return; }
+      var t = ev.target.closest("[data-pj]"); if (t) pjAction(t);
+    });
+    d.addEventListener("change", function (ev) { if (ev.target.hasAttribute("data-mvenue-type")) { mMarkVenue(ev.target); pjTourRefresh(); } });
   }
   d.className = "pj-dlg " + cls; d.setAttribute("aria-label", label);   // класс заново — и «широкий» вид с панелью продаж сброшен
   d.innerHTML = '<div class="pj-dlg-head"><h2>' + esc(label) + '</h2><button class="icon-btn" data-pj="close" aria-label="Закрыть">' + PJ_ICON.close + '</button></div><div class="pj-dlg-body">' + html + '</div>';
@@ -5360,6 +5367,12 @@ function pjPh(rec, kind) {  // превью фото в окне «Редакт�
     (src ? '<button type="button" class="btn-ghost" data-pj="unphoto" data-kind="' + kind + '">Убрать</button>' : '') + '</div></div></div>';
 }
 function pjPhRefresh(kind) { var el = $("pjPh-" + kind); if (el) el.outerHTML = pjPh(myRec(S.pj.k), kind); }
+// Разметка «гастроль / местное» (проект, артист, площадка ближайшей даты) — в окне «Редактировать», сохраняется сразу
+function pjTourHtml() {
+  var l = S.pj && S.pj.l || [];
+  return l.length ? '<div class="field pj-tour" id="pjTour"><span class="field-label" style="margin:0 0 6px">Разметка — гастроль или местное · сохраняется сразу</span>' + tourBox(l[0]) + '</div>' : '';
+}
+function pjTourRefresh() { var b = $("pjTour"); if (b) b.outerHTML = pjTourHtml(); }
 function pjEditHtml() {
   var rec = myRec(S.pj.k), pr = rec && rec.profile || {}, f = function (id, label, v, attrs) { return '<div class="field"><label for="pj-' + id + '">' + label + '</label><input id="pj-' + id + '" name="' + id + '" value="' + esc(v || "") + '" ' + (attrs || "") + '></div>'; };
   return '<form id="pjForm" class="myform" novalidate>' +
@@ -5374,7 +5387,7 @@ function pjEditHtml() {
     '<div class="field"><span class="field-label" style="margin:0 0 4px">Другие ссылки</span><div id="pjLinks">' + pjLinkRows(rec && rec.links, "links") + '</div><button type="button" class="btn-ghost" data-pj="addlink" data-list="links" style="margin-top:8px">+ Ссылка</button></div>' +
     '<div class="field"><label for="pj-contacts">Ещё контакты</label><textarea id="pj-contacts" name="contacts" rows="2" maxlength="2000">' + esc(rec && rec.contacts || "") + '</textarea></div>' +
     '<div class="field"><label for="pj-note">Заметка</label><textarea id="pj-note" name="note" rows="3" maxlength="5000">' + esc(rec && rec.note || "") + '</textarea></div>' +
-    '<div class="err" id="pj-err" hidden></div></form>' +
+    '<div class="err" id="pj-err" hidden></div></form>' + pjTourHtml() +
     '<div class="form-actions"><button class="btn-dark" data-pj="save">Сохранить</button><button class="btn-ghost" data-pj="close">Отмена</button></div>';
 }
 function pjSave() {
