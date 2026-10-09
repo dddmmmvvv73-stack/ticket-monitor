@@ -448,13 +448,13 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pj-dm { display: flex; flex-direction: column; font-size: 16px; color: var(--ink-2); white-space: nowrap; }
 .pj-dm .pj-cap { margin-bottom: 2px; }
 .pj-v { display: block; font-size: 16px; color: var(--ink); }
-.pj-c4 { display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
-.pj-price { display: inline-block; min-width: 132px; text-align: center; padding: 11px 16px; border-radius: 6px; background: var(--wash); color: var(--ink); font-weight: 500; font-size: 15px; white-space: nowrap; }
-.pj-fill { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink-3); white-space: nowrap; }
-.pj-fill.muted { color: var(--muted); }
-.pj-fill .bar { width: 56px; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
-.pj-fill i { display: block; height: 100%; background: var(--data); }
-.pj-gone { color: var(--muted); font-size: 15px; }
+.pj-c4 { display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: 148px; justify-self: end; }
+.pj-price { display: block; text-align: center; padding: 11px 16px; border-radius: 6px; background: var(--wash); color: var(--ink); font-weight: 500; font-size: 15px; white-space: nowrap; }
+/* Полоса заполняемости — ровно по ширине кнопки с ценой: от края до края = 100% */
+.pj-fill { display: block; height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
+.pj-fill i { display: block; height: 100%; border-radius: 3px; background: var(--data); }
+.pj-fill.none { background: repeating-linear-gradient(90deg, var(--line) 0 6px, transparent 6px 10px); }
+.pj-gone { color: var(--muted); font-size: 15px; text-align: right; }
 .pj-row.past .pj-t, .pj-row.past .pj-v, .pj-row.past .pj-day, .pj-row.past .pj-dm { color: var(--ash); }
 .pj-all { display: flex; justify-content: center; padding-top: 20px; }
 .pj-aside > section { padding-bottom: 24px; margin-bottom: 24px; border-bottom: 1px solid var(--line); }
@@ -464,10 +464,10 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pj-about { font-size: 16px; line-height: 1.5; color: var(--ink-2); white-space: pre-line; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
 .pj-about.open { display: block; -webkit-line-clamp: unset; }
 .pj-more { background: none; border: 0; padding: 0; margin-top: 8px; font-weight: 500; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
-.pj-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 18px 16px; }
-.pj-fact .l { font-size: 12px; color: var(--muted); }
-.pj-fact .v { font: 500 22px/1.2 var(--display); letter-spacing: -0.01em; margin-top: 2px; }
-.pj-fact .s { font-size: 12px; color: var(--ink-3); margin-top: 2px; line-height: 1.35; }
+.pj-facts { display: flex; flex-direction: column; gap: 14px; }
+.pj-fact { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.pj-fact .v { font: 500 30px/1.1 var(--display); letter-spacing: -0.02em; white-space: nowrap; }
+.pj-fact .t { font-size: 17px; color: var(--ink-2); }
 .pj-venues { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .pj-venues li { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; font-size: 14px; }
 .pj-vn { min-width: 0; } .pj-vn .sub2 { display: block; }
@@ -488,6 +488,9 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pj-dlg .form-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; border-top: 0; padding-top: 18px; }
 .pj-edit { width: min(640px, calc(100vw - 32px)); }
 .pj-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.pj-3col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 0 14px; }
+.pj-btn.pj-empty { opacity: 0.55; border-style: dashed; }
+a.pj-btn { text-decoration: none; }
 .pj-ph-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
 .pj-ph { display: flex; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 12px; }
 .pj-ph > img, .pj-ph > span { width: 56px; height: 56px; flex-shrink: 0; object-fit: cover; background: var(--line-soft); color: var(--muted); display: flex; align-items: center; justify-content: center; }
@@ -521,10 +524,10 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
   .pj-btn { height: 38px; padding: 0 14px; font-size: 13px; }
   .pj-h2 { font-size: 24px; }
   .pj-row-in { grid-template-columns: 96px minmax(0, 1fr); grid-template-areas: "d t" "d p" "d s"; gap: 4px 14px; padding: 18px 0; align-items: start; }
-  .pj-c1 { grid-area: t; } .pj-c2 { grid-area: d; flex-direction: column; align-items: flex-start; gap: 4px; } .pj-c3 { grid-area: p; } .pj-c4 { grid-area: s; align-items: flex-start; margin-top: 8px; flex-direction: row; flex-wrap: wrap; align-items: center; }
+  .pj-c1 { grid-area: t; } .pj-c2 { grid-area: d; flex-direction: column; align-items: flex-start; gap: 4px; } .pj-c3 { grid-area: p; } .pj-c4 { grid-area: s; justify-self: start; width: 140px; margin-top: 8px; }
   .pj-day { font-size: 40px; } .pj-dm { font-size: 13px; white-space: normal; } .pj-dm .pj-cap { font-size: 10px; letter-spacing: 0.04em; } .pj-t { font-size: 16px; } .pj-v { font-size: 14px; }
-  .pj-price { min-width: 0; padding: 8px 12px; font-size: 14px; }
-  .pj-2col, .pj-ph-row { grid-template-columns: minmax(0, 1fr); }
+  .pj-price { padding: 8px 12px; font-size: 14px; } .pj-gone { text-align: left; }
+  .pj-2col, .pj-3col, .pj-ph-row { grid-template-columns: minmax(0, 1fr); }
   .pj-orbit { height: 340px; } .pj-opill { max-width: 62%; padding: 6px 11px; font-size: 12px; } .pj-core { width: 104px; height: 104px; margin: -52px 0 0 -52px; font-size: 32px; }
 }
 
@@ -4866,8 +4869,8 @@ function pjRow(e, past, title) {
   var c3 = '<span class="pj-c3"><span class="pj-cap">' + esc(e.city) + '</span><span class="pj-v">' + esc(e.venue) + '</span></span>';
   if (past) return '<li class="pj-row past"><div class="pj-row-in">' + c1 + c2 + c3 + '<span class="pj-c4"><span class="pj-gone">' + (e.status === "gone" ? "Снято до даты" : "Событие прошло") + '</span></span></div></li>';
   var f = pjFill(e);
-  var fl = f ? '<span class="pj-fill" title="' + esc(f.tip) + '"><span class="bar"><i style="width:' + Math.min(100, f.f) + '%"></i></span>заполнено ' + f.f + '%</span>'
-    : '<span class="pj-fill muted" title="Продаж по этой дате ещё нет: слежение — с 4 октября, только у гастролей">нет данных о продажах</span>';
+  var fl = f ? '<span class="pj-fill" role="img" aria-label="Заполнено ' + f.f + '%" title="Заполнено ' + f.f + '% · ' + esc(f.tip) + '"><i style="width:' + Math.min(100, f.f) + '%"></i></span>'
+    : '<span class="pj-fill none" role="img" aria-label="Нет данных о продажах" title="Нет данных о продажах: слежение — с 4 октября, только у гастролей"></span>';
   return '<li class="pj-row"><button class="pj-row-in" data-mopen="' + e.i + '" aria-label="' + esc(dayLabel(e.date) + ", " + e.city + ", " + e.venue) + '">' + c1 + c2 + c3 +
     '<span class="pj-c4">' + (e.pmin ? '<span class="pj-price">от ' + num(e.pmin) + ' ₽</span>' : '<span class="pj-gone">цена не указана</span>') + fl + '</span></button></li>';
 }
@@ -4876,6 +4879,10 @@ var PJ_ICON = {
   orgs: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><circle cx="2.8" cy="4" r="1.3"/><circle cx="13.2" cy="4.5" r="1.3"/><circle cx="12.5" cy="12.5" r="1.3"/><circle cx="3.5" cy="12" r="1.3"/></svg>',
   phone: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 2h3l1.5 3.5-2 1.2a8 8 0 004 4l1.2-2L14 10v3a1 1 0 01-1 1A11 11 0 012 3a1 1 0 011-1z"/></svg>',
   camera: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M2 5h2.5l1.2-2h4.6l1.2 2H14v8H2z"/><circle cx="8" cy="8.7" r="2.4"/></svg>',
+  site: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M2 8h12M8 2c1.8 1.7 2.6 3.7 2.6 6S9.8 12.3 8 14M8 2C6.2 3.7 5.4 5.7 5.4 8s.8 4.3 2.6 6"/></svg>',
+  vk: '<svg width="17" height="17" viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8.7 12C3.9 12 1.2 8.8 1.1 3.4h2.4c.1 4 1.8 5.6 3.2 6V3.4h2.2v3.4c1.4-.1 2.8-1.7 3.3-3.4h2.2a6.4 6.4 0 01-3 4.2 6.8 6.8 0 013.5 4.4h-2.4a4.2 4.2 0 00-3.6-3v3z"/></svg>',
+  instagram: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2.2" y="2.2" width="11.6" height="11.6" rx="3.4"/><circle cx="8" cy="8" r="2.8"/><circle cx="11.6" cy="4.4" r=".7" fill="currentColor" stroke="none"/></svg>',
+  tg: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round" aria-hidden="true"><path d="M14.3 2.3L1.8 7.2l4.1 1.4 1.5 4.8 2.3-2.8 3.3 2.5z"/><path d="M5.9 8.6l6.4-4.4"/></svg>',
   back: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg>',
   close: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>'
 };
@@ -4911,6 +4918,10 @@ function pjPage(k, id, rec, keys, l, title) {
           '<button class="pj-btn primary" data-pj="edit">' + PJ_ICON.edit + 'Редактировать</button>' +
           '<button class="pj-btn pj-icon" data-pj="orgs" aria-label="Организаторы: ' + orgs.length + '" title="Организаторы">' + PJ_ICON.orgs + (orgs.length ? '<span class="pj-badge" aria-hidden="true">' + orgs.length + '</span>' : '') + '</button>' +
           '<button class="pj-btn pj-icon" data-pj="contacts" aria-label="Контакты" title="Контакты">' + PJ_ICON.phone + '</button>' +
+          PJ_SOCIAL.map(function (x) {   // заполнено — ссылка; пусто — полупрозрачный значок, открывает «Редактировать» на этом поле
+            return pr[x[0]] ? '<a class="pj-btn pj-icon" href="' + esc(pr[x[0]]) + '" target="_blank" rel="noopener" aria-label="' + x[1] + '" title="' + x[1] + '">' + PJ_ICON[x[0]] + '</a>'
+              : '<button class="pj-btn pj-icon pj-empty" data-pj="edit" data-field="' + x[0] + '" aria-label="' + x[1] + ': добавить ссылку" title="' + x[1] + ' — добавить ссылку">' + PJ_ICON[x[0]] + '</button>';
+          }).join("") +
         '</div></div></div></section>';
 
   var all = S.m.datesAll, rows = all ? l : l.slice(0, PJ_ROWS);
@@ -4924,15 +4935,13 @@ function pjPage(k, id, rec, keys, l, title) {
 
   var about = pr.about ? '<div class="pj-about" id="pjAbout">' + esc(pr.about) + '</div>' + (pr.about.length > 260 ? '<button class="pj-more" data-pj="more" aria-controls="pjAbout" aria-expanded="false">Развернуть текст</button>' : '')
     : '<p class="sub" style="margin:0 0 10px">Описания пока нет: о чём проект, состав, история, чем отличается.</p><button class="btn-ghost" data-pj="edit">Добавить описание</button>';
-  var fact = function (label, value, sub) { return '<div class="pj-fact"><div class="l">' + label + '</div><div class="v num">' + value + '</div>' + (sub ? '<div class="s">' + sub + '</div>' : '') + '</div>'; };
+  var fact = function (value, text, tip) { return '<div class="pj-fact" title="' + esc(tip) + '"><span class="v num">' + value + '</span><span class="t">' + text + '</span></div>'; };
   var aside = '<section><h2 class="pj-h3">' + esc(title) + '</h2>' + about + '</section>' +
     '<section><h3 class="pj-h4">Тур в цифрах</h3><div class="pj-facts">' +
-      fact("Городов", cities.length, "сейчас в афише") +
-      fact("Дат", l.length, l.length ? human(l[0].date) + " – " + human(l[l.length - 1].date) : "нет") +
-      fact("Цены", pmax ? prices({ pmin: pmin < 1e9 ? pmin : pmax, pmax: pmax }) : "—", "от и до по всем датам") +
-      fact("Заполняемость", avgFill == null ? "—" : avgFill + "%", avgFill == null ? "данных о продажах ещё нет" : "в среднем по " + fills.length + " " + plural(fills.length, "дате", "датам", "датам") + " · «занято» включает чужие квоты") +
-      fact("Где уже был", pastCities.length, plural(pastCities.length, "город", "города", "городов") + " по архиву с " + human(MK.first)) +
-      fact("Организаторов", orgs.length, orgs.length ? "по данным Кассира" : "не указаны — только у Кассира") +
+      fact(cities.length, plural(cities.length, "город", "города", "городов"), "сейчас в афише") +
+      fact(pmax ? prices({ pmin: pmin < 1e9 ? pmin : pmax, pmax: pmax }) : "—", "диапазон цен", "от и до по всем датам, без сервисного сбора касс") +
+      fact(avgFill == null ? "—" : avgFill + "%", "заполняемость в ср.", avgFill == null ? "данных о продажах ещё нет — слежение с 4 октября, только у гастролей"
+        : "в среднем по " + fills.length + " " + plural(fills.length, "дате", "датам", "датам") + " с данными; «занято» включает и чужие квоты") +
     '</div></section>' +
     '<section><h3 class="pj-h4">Площадки · ' + venues.length + '</h3><ul class="pj-venues">' + venues.slice(0, 8).map(function (v) {
       return '<li><span class="pj-vn">' + esc(v.venue) + '<span class="sub2">' + esc(v.city) + (v.cap ? ' · ' + num(v.cap) + ' мест' : '') + '</span></span><span class="pj-vt' + (v.typeAuto ? ' auto' : '') + '" title="' + (v.typeAuto ? 'Определено автоматически — уточнить можно в «Площадках»' : 'Ваша пометка') + '">' + esc(VTYPE[v.type] || v.type) + '</span></li>';
@@ -4985,6 +4994,7 @@ function pjContactsHtml() {
     row("Контакт", esc(pr.contact)) +
     row("Телефон", pr.phone ? '<a href="tel:' + esc(pr.phone.replace(/[^\d+]/g, "")) + '">' + esc(pr.phone) + '</a>' : "") +
     row("Официальный сайт", pr.site ? link({ url: pr.site }) : "") +
+    row("ВКонтакте", pr.vk ? link({ url: pr.vk }) : "") + row("Instagram", pr.instagram ? link({ url: pr.instagram }) : "") + row("Telegram", pr.tg ? link({ url: pr.tg }) : "") +
     row("Гонорар", esc(pr.fee)) +
     row("Райдеры", (pr.riders || []).map(link).join("<br>")) +
     (links.length ? row("Ссылки", links.map(link).join("<br>")) : '') +
@@ -4997,6 +5007,15 @@ function pjLinkRows(list, name) {
       '<input type="url" name="url" placeholder="https://…" value="' + esc(x.url || "") + '" aria-label="Адрес ссылки" maxlength="1000">' +
       '<button type="button" class="icon-btn" data-pj="dellink" aria-label="Убрать ссылку">' + PJ_ICON.close + '</button></div>';
   }).join("");
+}
+var PJ_SOCIAL = [["site", "Официальный сайт"], ["vk", "ВКонтакте"], ["instagram", "Instagram"], ["tg", "Telegram"]];
+// Ссылка из поля: «vk.com/x» → https://vk.com/x, «@name» у Telegram и Instagram → полный адрес; пусто — пусто
+function pjUrl(v, kind) {
+  v = (v || "").trim();
+  if (!v || /^https?:\/\//i.test(v)) return v;
+  if (v[0] === "@" && kind === "tg") return "https://t.me/" + v.slice(1);
+  if (v[0] === "@" && kind === "instagram") return "https://instagram.com/" + v.slice(1);
+  return /\./.test(v) && !/\s/.test(v) ? "https://" + v : v;
 }
 var PJ_PH_LABEL = { avatar: "Фото артиста", cover: "Фон шапки" };
 function pjPh(rec, kind) {  // превью фото в окне «Редактировать»; после загрузки обновляется только оно — поля формы не теряются
@@ -5014,7 +5033,8 @@ function pjEditHtml() {
     '<div class="field"><label for="pj-about">Описание</label><textarea id="pj-about" name="about" rows="6" maxlength="10000" placeholder="О чём проект, состав, история, чем отличается">' + esc(pr.about || "") + '</textarea></div>' +
     f("crew", "Состав на выезде", pr.crew, 'maxlength="200" placeholder="Например: 8 человек — 5 артистов, звукорежиссёр, директор, техник"') +
     '<div class="pj-2col">' + f("contact", "Контакт", pr.contact, 'maxlength="200" placeholder="Имя, роль"') + f("phone", "Телефон", pr.phone, 'type="tel" maxlength="60" placeholder="+7 …"') + '</div>' +
-    '<div class="pj-2col">' + f("site", "Официальный сайт", pr.site, 'type="url" maxlength="1000" placeholder="https://…"') + f("fee", "Гонорар", pr.fee, 'maxlength="300" placeholder="Например: 350 000 ₽ + райдер"') + '</div>' +
+    '<div class="pj-2col">' + f("site", "Официальный сайт", pr.site, 'maxlength="1000" placeholder="https://…"') + f("fee", "Гонорар", pr.fee, 'maxlength="300" placeholder="Например: 350 000 ₽ + райдер"') + '</div>' +
+    '<div class="pj-3col">' + f("vk", "ВКонтакте", pr.vk, 'maxlength="1000" placeholder="vk.com/…"') + f("instagram", "Instagram", pr.instagram, 'maxlength="1000" placeholder="@имя или ссылка"') + f("tg", "Telegram", pr.tg, 'maxlength="1000" placeholder="@канал или t.me/…"') + '</div>' +
     '<div class="field"><span class="field-label" style="margin:0 0 4px">Райдеры</span><div id="pjRiders">' + pjLinkRows(pr.riders, "riders") + '</div><button type="button" class="btn-ghost" data-pj="addlink" data-list="riders" style="margin-top:8px">+ Райдер</button></div>' +
     '<div class="field"><span class="field-label" style="margin:0 0 4px">Другие ссылки</span><div id="pjLinks">' + pjLinkRows(rec && rec.links, "links") + '</div><button type="button" class="btn-ghost" data-pj="addlink" data-list="links" style="margin-top:8px">+ Ссылка</button></div>' +
     '<div class="field"><label for="pj-contacts">Ещё контакты</label><textarea id="pj-contacts" name="contacts" rows="2" maxlength="2000">' + esc(rec && rec.contacts || "") + '</textarea></div>' +
@@ -5030,12 +5050,15 @@ function pjSave() {
     if (!/^https?:\/\//i.test(url)) { bad = bad || u; u.setAttribute("aria-invalid", "true"); return; }
     lists[row.getAttribute("data-list")].push({ label: label, url: url });
   });
-  var site = f.elements.site.value.trim();
-  if (site && !/^https?:\/\//i.test(site)) { bad = bad || f.elements.site; f.elements.site.setAttribute("aria-invalid", "true"); }
-  if (bad) { err.hidden = false; err.textContent = "Ссылка должна начинаться с http:// или https://"; bad.setAttribute("aria-describedby", "pj-err"); bad.focus(); return; }
+  var soc = {};
+  PJ_SOCIAL.forEach(function (x) {
+    var el = f.elements[x[0]], v = pjUrl(el.value, x[0]); el.removeAttribute("aria-invalid"); soc[x[0]] = v;
+    if (v && !/^https?:\/\/\S+$/i.test(v)) { bad = bad || el; el.setAttribute("aria-invalid", "true"); }
+  });
+  if (bad) { err.hidden = false; err.textContent = "Не похоже на ссылку: нужен адрес вида https://… (у Telegram и Instagram можно @имя)"; bad.setAttribute("aria-describedby", "pj-err"); bad.focus(); return; }
   var g = function (n) { return f.elements[n].value.trim(); };
   $("pjDlg").close();
-  mySave({ op: "profile", key: S.pj.k, title: S.pj.title, sub: g("sub"), about: g("about"), crew: g("crew"), contact: g("contact"), phone: g("phone"), site: site,
+  mySave({ op: "profile", key: S.pj.k, title: S.pj.title, sub: g("sub"), about: g("about"), crew: g("crew"), contact: g("contact"), phone: g("phone"), site: soc.site, vk: soc.vk, instagram: soc.instagram, tg: soc.tg,
     fee: g("fee"), riders: lists.riders, links: lists.links, contacts: g("contacts"), note: g("note") }, "Страница проекта сохранена");
 }
 // Фото: уменьшаем в браузере до отправки — аватар — квадрат 480 px, фон — до 1800 px по ширине; JPEG 85%
@@ -5061,7 +5084,7 @@ function pjPhoto(file, kind) {
 function pjAction(t) {
   var a = t.getAttribute("data-pj");
   if (a === "close") $("pjDlg").close();
-  else if (a === "edit") { var d = pjDialog("pj-edit", "Редактировать страницу", pjEditHtml()); var n = d.querySelector("#pj-sub"); if (n) n.focus(); }
+  else if (a === "edit") { var d = pjDialog("pj-edit", "Редактировать страницу", pjEditHtml()); var n = d.querySelector("#pj-" + (t.getAttribute("data-field") || "sub")); if (n) n.focus(); }
   else if (a === "orgs") pjDialog("pj-orgs", "Организаторы · " + S.pj.orgs.length, pjOrgsHtml());
   else if (a === "contacts") pjDialog("pj-contacts", "Контакты", pjContactsHtml());
   else if (a === "save") pjSave();
@@ -5658,7 +5681,7 @@ function myApply(op) {  // то же, что сервер, — для прото
     if (op.op === "fav") { p.fav = !!op.fav; if (p.fav) p.snap = { at: now, dates: op.snap || [] }; else if (!myHasData(p)) { delete P[id]; return; } }
     else if (op.op === "profile" || op.op === "media") {  // профиль страницы и фото в избранное сами не добавляют
       if (op.op === "profile") {
-        p.profile = { sub: op.sub || "", about: op.about || "", crew: op.crew || "", contact: op.contact || "", phone: op.phone || "", site: op.site || "", fee: op.fee || "", riders: op.riders || [] };
+        p.profile = { sub: op.sub || "", about: op.about || "", crew: op.crew || "", contact: op.contact || "", phone: op.phone || "", site: op.site || "", vk: op.vk || "", instagram: op.instagram || "", tg: op.tg || "", fee: op.fee || "", riders: op.riders || [] };
         p.note = op.note || ""; p.contacts = op.contacts || ""; p.links = op.links || [];
       } else { p.media = p.media || {}; if (op.data) p.media[op.kind] = op.data; else delete p.media[op.kind]; }   // сразу видно; сервер вернёт имя файла
       if (!p.fav && !myHasData(p)) { delete P[id]; return; }

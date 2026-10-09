@@ -7,7 +7,7 @@
     {"projects": {номер: {"title", "keys": [ключи проекта], "fav": bool,
                           "note", "links": [{"label", "url"}], "contacts", "skip": [ключи «не то»],
                           "snap": {"at", "dates": [[дата, город, площадка, цена от, цена до], …]},
-                          "profile": {"sub", "about", "crew", "contact", "phone", "site", "fee", "riders": [{"label", "url"}]},
+                          "profile": {"sub", "about", "crew", "contact", "phone", "site", "vk", "instagram", "tg", "fee", "riders": [{"label", "url"}]},
                           "media": {"avatar" | "cover": имя файла в config/project_media/ с ?v=метка},
                           "at", "upd"}}}
 
@@ -113,6 +113,7 @@ def _profile(op: dict) -> dict:
     return {"sub": _text(op.get("sub"), LIMITS["sub"], "подзаголовок"), "about": _text(op.get("about"), LIMITS["about"], "описание"),
             "crew": _text(op.get("crew"), LIMITS["crew"], "состав на выезде"), "contact": _text(op.get("contact"), LIMITS["contact"], "контакт"),
             "phone": _text(op.get("phone"), LIMITS["phone"], "телефон"), "site": _url(op.get("site")),
+            "vk": _url(op.get("vk")), "instagram": _url(op.get("instagram")), "tg": _url(op.get("tg")),
             "fee": _text(op.get("fee"), LIMITS["fee"], "гонорар"), "riders": _links(op.get("riders") or [])}
 
 
