@@ -499,6 +499,59 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pj-dl dt { color: var(--muted); } .pj-dl dd { margin: 0; overflow-wrap: anywhere; }
 .pj-dl-lg { font-size: 15px; gap: 12px 20px; }
 
+/* ---------- «Аналитика» проекта (новый вид) */
+.view > .an-hero:first-child { margin-top: -28px; }
+.an-hero { min-height: 0; }
+.an-hero-in { padding: 64px 72px 28px; gap: 18px; }
+.an-ava { width: 64px; height: 64px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 2px solid rgba(255, 255, 255, 0.2); background: #3a332f; display: inline-flex; align-items: center; justify-content: center; font: 500 22px/1 var(--display); }
+.an-ava img { width: 100%; height: 100%; object-fit: cover; }
+.an-cap { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.7); }
+.an-name { font: 600 32px/1.1 var(--display); letter-spacing: -0.02em; margin: 2px 0 0; }
+.an-sum { margin: 6px 0 4px; gap: 10px 26px; } .an-sum b { font-size: 22px; }
+/* таблицы площадок и «где его нет» — без рамок карточек, как остальные блоки «Аналитики» */
+.an-legacy > .card { border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; margin-top: 28px; }
+.an-legacy .card-pad { padding-left: 0; padding-right: 0; }
+.an-legacy h2 { font: 600 24px/1.2 var(--display); letter-spacing: -0.01em; }
+.an-legacy .vtable th:first-child, .an-legacy .vtable td:first-child { padding-left: 0; }
+.an-legacy .vtable th:last-child, .an-legacy .vtable td:last-child { padding-right: 0; }
+.an-sec { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--line); }
+.an-sec-head { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+.an-h2 { font: 600 24px/1.2 var(--display); letter-spacing: -0.01em; margin: 0; }
+.an-tabs { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; }
+.an-tabs button { height: 34px; padding: 0 14px; border: 0; background: var(--card); font-size: 13px; color: var(--ink-2); }
+.an-tabs button + button { border-left: 1px solid var(--line-strong); }
+.an-tabs button[aria-selected="true"] { background: var(--soot); color: #fff; }
+.an-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-3); margin-top: 8px; }
+.an-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+.an-best { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin-bottom: 14px; }
+.an-best > div { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.an-lbl { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); width: 100%; }
+.an-chip { height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); font-size: 13px; } .an-chip b { font-weight: 500; }
+.an-rows, .an-prices, .an-orgs { list-style: none; margin: 0; padding: 0; }
+.an-rows li { border-top: 1px solid var(--line); } .an-rows li:last-child { border-bottom: 1px solid var(--line); }
+.an-row { width: 100%; display: grid; grid-template-columns: minmax(0, 1.4fr) 110px 90px minmax(120px, 1.2fr) 48px 96px; gap: 16px; align-items: center; padding: 12px 0; background: none; border: 0; text-align: left; font: inherit; color: inherit; }
+.an-row:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 6px; }
+.an-c1 { min-width: 0; } .an-v { display: block; font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.an-c2, .an-c3, .an-c5 { font-size: 14px; color: var(--ink-3); white-space: nowrap; } .an-c5 { text-align: right; color: var(--ink); }
+.an-bar { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; } .an-bar i { display: block; height: 100%; border-radius: 4px; }
+.an-pct { font-weight: 500; text-align: right; }
+.an-prices li { display: grid; grid-template-columns: 170px minmax(0, 1fr) 130px; gap: 16px; align-items: center; padding: 7px 0; }
+.an-pc { font-size: 14px; } .an-pc .sub2 { margin-left: 6px; }
+.an-ptrack { position: relative; height: 10px; border-radius: 5px; background: var(--line-soft); } .an-ptrack i { position: absolute; top: 0; height: 100%; border-radius: 5px; background: var(--data-light); }
+.an-pv { text-align: right; font-size: 14px; }
+.an-orgs { display: grid; gap: 12px; } .an-orgs li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; } .an-orgs b { font-weight: 500; }
+.an-org-cities { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap; } .an-city { font-size: 12px; padding: 2px 9px; border-radius: 9999px; background: var(--line-soft); color: var(--ink-2); }
+@media (hover: hover) { .an-row:hover .an-v { color: var(--data); } .an-chip:hover { border-color: var(--line-strong); } }
+@media (max-width: 820px) {
+  .view > .an-hero:first-child { margin-top: -20px; }
+  .an-hero-in { padding: 60px 36px 22px; flex-direction: row; align-items: center; } .an-name { font-size: 24px; }
+  .an-sum b { font-size: 18px; }
+  .an-best { grid-template-columns: minmax(0, 1fr); }
+  .an-row { grid-template-columns: minmax(0, 1fr) 48px; grid-template-areas: "c p" "d d" "b b"; gap: 4px 12px; }
+  .an-c1 { grid-area: c; } .an-pct { grid-area: p; } .an-c2 { grid-area: d; } .an-bar { grid-area: b; } .an-c3, .an-c5 { display: none; }
+  .an-prices li { grid-template-columns: 110px minmax(0, 1fr); } .an-pv { grid-column: 1 / -1; text-align: left; } .an-pc .sub2 { display: block; margin: 0; }
+}
+
 /* Окна страницы проекта */
 .pjd-src { font-size: 11px; padding: 1px 7px; border-radius: 9999px; background: var(--wash-2); color: var(--data-dark); }
 .pjd-org-edit { background: none; border: 0; padding: 0; margin-left: 8px; font-size: 13px; color: var(--data); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--wash); }
@@ -5036,7 +5089,7 @@ function pjPage(k, id, rec, keys, l, title) {
       '<dt>Архив</dt><dd>' + (past.length ? '<button class="pj-plain" data-pj="mode" data-mode="' + (S.m.pjMode === "arch" ? 'list' : 'arch') + '" aria-pressed="' + (S.m.pjMode === "arch") + '">' +
         (S.m.pjMode === "arch" ? 'показан — вернуться к датам' : past.length + ' ' + plural(past.length, "прошедшая дата", "прошедшие даты", "прошедших дат") + ' →') + '</button>'
         : '<span class="muted">пока пусто — копится с ' + human(MK.first) + '</span>') + '</dd>' +
-    '</dl></section>';
+    '</dl></section>' + (l.length ? '<section><h3 class="pj-h4">Разметка</h3>' + tourBox(l[0]) + '</section>' : '');
 
   return hero +
     '<div class="pj-grid"><div class="pj-main">' + list + '</div><aside class="pj-aside" aria-label="О проекте">' + aside + '</aside></div>';
@@ -5375,6 +5428,9 @@ function pjAction(t) {
   else if (a === "evedit") pjEditEvent(+t.getAttribute("data-i"));
   else if (a === "repos") { var dl = $("pjDlg"); if (dl && dl.open) dl.close(); window.scrollTo({ top: 0, behavior: "smooth" }); pjRepos(); }
   else if (a === "repos-done" || a === "repos-cancel") pjReposEnd(a === "repos-done");
+  else if (a === "an-map") { S.m.anMap = t.getAttribute("data-on") === "1"; var y1 = window.scrollY; render(); window.scrollTo(0, y1); }
+  else if (a === "an-sort") { S.m.anSort = t.getAttribute("data-sort"); var y2 = window.scrollY; render(); window.scrollTo(0, y2); }
+  else if (a === "an-fill-all" || a === "an-prices-all" || a === "an-ven-all") { S.m[{ "an-fill-all": "anFillAll", "an-prices-all": "anPricesAll", "an-ven-all": "anVenAll" }[a]] = true; var y3 = window.scrollY; render(); window.scrollTo(0, y3); }
   else if (a === "period-all") { S.period = "all"; S.from = S.to = null; render(); }
   else if (a === "mode") { var y = window.scrollY; S.m.pjMode = t.getAttribute("data-mode"); S.m.datesAll = false; render(); window.scrollTo(0, y); }   // экран остаётся на месте
   else if (a === "seen") { S.pjDemoSeen = true; var rid = myFind(S.pj.k); if (rid) mySave({ op: "seen", id: rid, snap: mySnap(myEvents(MYP.projects[rid].keys)) }, "Отмечено: просмотрено"); }
@@ -5488,19 +5544,125 @@ function mRouteTimeline(p) {
     '<polyline points="' + path + '" fill="none" stroke="#7ab9e8" stroke-width="1.5" stroke-linejoin="round"/>' +
     p.l.map(function (e) { return '<circle cx="' + x(e.date).toFixed(1) + '" cy="' + y(e.city) + '" r="5" fill="#1d6fae" stroke="#fff" stroke-width="2" class="hov-dot" data-mopen="' + e.i + '" data-ct="' + esc(dayLabel(e.date) + (e.time ? ", " + e.time : "") + " · " + e.city + " · " + e.venue + (e.pmin ? " · " + prices(e) : "")) + '"/>'; }).join("") + '</svg>';
 }
+// ---------- «Аналитика» проекта — новый вид (как страница проекта; пока у PJ_NEW_RE). Отвечает: как продаётся тур по
+// городам, где дороже, кто и где возит, на каких площадках, куда добавить. Сводка тура переехала сюда со страницы проекта.
+var AN_GOOD = 75, AN_LOW = 40;   // заполняемость: от 75% — хорошо, ниже 40% — плохо (цвет точек и полос)
+function anColor(f) { return f == null ? "#a8a29e" : f >= AN_GOOD ? "#15803d" : f < AN_LOW ? "#d03b3b" : "#1d6fae"; }
+function anFills(l, title) {  // заполняемость дат; у тестового проекта, если настоящих почти нет, — тестовые цифры с пометкой
+  var real = l.map(pjFill), n = real.filter(Boolean).length, demo = n < 3 && PJ_DEMO_CHG.test(title);
+  return { demo: demo, f: l.map(function (e, i) { if (real[i]) return real[i].f; if (!demo) return null; var h = (e.i * 2654435761) % 1000; return 18 + Math.round(h / 1000 * 80); }) };
+}
+function anTimeline(l, fills) {   // лента маршрута: точки — цветом заполняемости
+  var order = []; l.forEach(function (e) { if (order.indexOf(e.city) < 0) order.push(e.city); });
+  var a = addDays(l[0].date, -3), b = addDays(l[l.length - 1].date, 3), n = Math.max(1, dDiff(a, b));
+  var W = 1000, lw = 150, rh = 22, pt = 20, H = pt + order.length * rh + 6;
+  var x = function (d) { return lw + dDiff(a, d) / n * (W - lw - 10); }, y = function (c) { return pt + order.indexOf(c) * rh + rh / 2; };
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Маршрут по датам, точки — заполняемость" style="display:block">' + monthTicks(a, b, x) +
+    order.map(function (c) { return '<text x="' + (lw - 10) + '" y="' + (y(c) + 4) + '" font-size="12" fill="#44403c" text-anchor="end">' + esc(c) + '</text><line x1="' + lw + '" x2="' + (W - 10) + '" y1="' + y(c) + '" y2="' + y(c) + '" stroke="#f5f5f4"/>'; }).join("") +
+    '<polyline points="' + l.map(function (e) { return x(e.date).toFixed(1) + "," + y(e.city); }).join(" ") + '" fill="none" stroke="#d6d3d1" stroke-width="1.5" stroke-linejoin="round"/>' +
+    l.map(function (e, i) { var f = fills[i]; return '<circle cx="' + x(e.date).toFixed(1) + '" cy="' + y(e.city) + '" r="6" fill="' + anColor(f) + '" stroke="#fff" stroke-width="2" class="hov-dot" data-pj="date" data-i="' + e.i + '" data-ct="' + esc(dayLabel(e.date) + " · " + e.city + " · " + e.venue + (f != null ? " · заполнено " + f + "%" : " · нет данных о продажах")) + '"/>'; }).join("") + '</svg>' +
+    '<div class="an-legend"><span><i style="background:#15803d"></i>от ' + AN_GOOD + '%</span><span><i style="background:#1d6fae"></i>' + AN_LOW + '–' + AN_GOOD + '%</span><span><i style="background:#d03b3b"></i>ниже ' + AN_LOW + '%</span><span><i style="background:#a8a29e"></i>нет данных</span></div>';
+}
+function anSec(title, right, body, id) { return '<section class="an-sec"' + (id ? ' id="' + id + '"' : '') + '><div class="an-sec-head"><h2 class="an-h2">' + title + '</h2>' + (right || '') + '</div>' + body + '</section>'; }
+function anPage(k, l, past, p, cands, foN) {
+  var rec = myRec(k), title = p.title, fmt = p.format, genre = p.genre;
+  var ava = pjMedia(rec, "avatar"), cover = pjMedia(rec, "cover"), coverY = rec && rec.cover_y != null ? rec.cover_y : 30;
+  var F = anFills(l, title), fills = F.f, known = fills.filter(function (f) { return f != null; });
+  var avg = known.length ? Math.round(known.reduce(function (a, b) { return a + b; }, 0) / known.length) : null;
+  var cities = mUniq(l, "city"), orgs = pjOrgs(l), pathN = cands.filter(function (c) { return c.kind === "path"; }).length;
+  var pmin = Math.min.apply(null, l.map(function (e) { return e.pmin || 1e9; })), pmax = Math.max.apply(null, l.map(function (e) { return e.pmax || 0; }));
+  S.pj = { k: k, id: myFind(k), title: title, l: l, orgs: orgs };   // окна даты и организаторов работают и отсюда
+
+  var hero = '<section class="pj-hero an-hero' + (cover ? ' has-cover' : '') + '"' + (cover ? ' style="background-image:url(\'' + esc(cover) + '\');background-position:center ' + coverY + '%"' : '') + '>' +
+    '<button class="pj-back-btn" data-vopen="' + esc(k) + '" aria-label="Назад: страница проекта" title="Назад: страница проекта">' + PJ_ICON.back + '</button>' +
+    '<div class="pj-hero-in an-hero-in"><span class="an-ava">' + (ava ? '<img src="' + esc(ava) + '" alt="">' : '<span>' + esc(pjInitials(title)) + '</span>') + '</span>' +
+      '<div><div class="an-cap">Аналитика</div><h1 class="an-name">' + esc(title) + '</h1></div></div></section>';
+  var sum = '<div class="pj-sum an-sum">' + (F.demo ? '<span class="pj-demo">тестовые цифры заполняемости</span>' : '') +
+    '<span><b class="num">' + cities.length + '</b> ' + plural(cities.length, "город", "города", "городов") + '</span>' +
+    '<span><b class="num">' + l.length + '</b> ' + plural(l.length, "дата", "даты", "дат") + '</span>' +
+    '<span><b>' + human(l[0].date) + ' – ' + human(l[l.length - 1].date) + '</b></span>' +
+    '<span><b class="num">' + (pmax ? prices({ pmin: pmin < 1e9 ? pmin : pmax, pmax: pmax }) : "—") + '</b></span>' +
+    '<span title="' + (known.length ? 'В среднем по ' + known.length + ' ' + plural(known.length, "дате", "датам", "датам") + ' с данными; «занято» включает и чужие квоты' : 'Данных о продажах ещё нет') + '"><b class="num">' + (avg == null ? "—" : avg + "%") + '</b> заполняемость в ср.</span>' +
+    '<span><b class="num">' + orgs.length + '</b> ' + plural(orgs.length, "организатор", "организатора", "организаторов") + '</span>' +
+    '<span title="Города списка между соседними выступлениями: крюк до 150 км и есть свободный день"><b class="num">' + pathN + '</b> можно добавить по пути</span></div>';
+
+  // 1. Маршрут: лента (цвет — заполняемость) или карта
+  var map = !!S.m.anMap;
+  var route = anSec("Маршрут", '<div class="an-tabs" role="tablist"><button role="tab" data-pj="an-map" data-on="0" aria-selected="' + !map + '">Лента</button><button role="tab" data-pj="an-map" data-on="1" aria-selected="' + map + '">Карта</button></div>',
+    map ? mapSvg(p, cands) : anTimeline(l, fills));
+
+  // 2. Заполняемость по городам
+  var rows = l.map(function (e, i) { var d = mDirect(e), s = e.sales; return { e: e, f: fills[i], cap: d && d.sellable ? d.sellable : s ? s.hall || s.exp : null, g: d && d.gross ? d.gross : s && s.g ? s.g : null }; });
+  var withF = rows.filter(function (r) { return r.f != null; }).sort(function (a, b) { return b.f - a.f; });
+  var sortBy = S.m.anSort || "route";
+  var shown = sortBy === "best" ? withF.concat(rows.filter(function (r) { return r.f == null; })) : sortBy === "worst" ? withF.slice().reverse().concat(rows.filter(function (r) { return r.f == null; })) : rows;
+  var lim = S.m.anFillAll ? shown : shown.slice(0, 12);
+  var chip = function (r) { return '<button class="an-chip" data-pj="date" data-i="' + r.e.i + '"><b>' + esc(r.e.city) + '</b> ' + r.f + '%</button>'; };
+  var fillBody = (withF.length >= 2 ? '<div class="an-best"><div><span class="an-lbl">Лучше всего</span>' + withF.slice(0, 3).map(chip).join("") + '</div><div><span class="an-lbl">Хуже всего</span>' + withF.slice(-3).reverse().map(chip).join("") + '</div></div>' : '') +
+    '<ul class="an-rows">' + lim.map(function (r) {
+      return '<li><button class="an-row" data-pj="date" data-i="' + r.e.i + '"><span class="an-c1"><span class="pj-cap">' + esc(r.e.city) + '</span><span class="an-v">' + esc(r.e.venue) + '</span></span>' +
+        '<span class="an-c2">' + dayLabel(r.e.date) + '</span><span class="an-c3 num">' + (r.cap ? num(r.cap) + ' мест' : '') + '</span>' +
+        '<span class="an-bar"><i style="width:' + (r.f || 0) + '%;background:' + anColor(r.f) + '"></i></span><span class="an-pct num">' + (r.f == null ? '<span class="muted">—</span>' : r.f + '%') + '</span>' +
+        '<span class="an-c5 num">' + (r.g ? money(r.g) : '') + '</span></button></li>';
+    }).join("") + '</ul>' + (lim.length < shown.length ? '<div class="pj-all"><button class="btn-ghost" data-pj="an-fill-all">Показать все · ' + shown.length + '</button></div>' : '');
+  var fillSec = anSec("Заполняемость по городам", '<div class="an-tabs" role="tablist">' + [["route", "По маршруту"], ["best", "Лучшие"], ["worst", "Худшие"]].map(function (o) {
+    return '<button role="tab" data-pj="an-sort" data-sort="' + o[0] + '" aria-selected="' + (sortBy === o[0]) + '">' + o[1] + '</button>'; }).join("") + '</div>', fillBody);
+
+  // 3. Цены по городам — диапазоны на общей шкале
+  var lo = pmin < 1e9 ? pmin : 0, hi = pmax || 1, pl = S.m.anPricesAll ? l : l.slice(0, 12);
+  var priceSec = anSec("Цены по городам", '<span class="sub2">шкала ' + num(lo) + ' – ' + num(hi) + ' ₽, без сервисного сбора</span>',
+    '<ul class="an-prices">' + pl.map(function (e) {
+      var a = e.pmin || e.pmax, b = e.pmax || e.pmin;
+      return '<li><span class="an-pc">' + esc(e.city) + '<span class="sub2">' + human(e.date) + '</span></span><span class="an-ptrack">' + (a ? '<i style="left:' + ((a - lo) / Math.max(1, hi - lo) * 100).toFixed(1) + '%;width:' + Math.max(1.2, (b - a) / Math.max(1, hi - lo) * 100).toFixed(1) + '%"></i>' : '') + '</span>' +
+        '<span class="an-pv num">' + (a ? prices({ pmin: a, pmax: b }) : '—') + '</span></li>';
+    }).join("") + '</ul>' + (pl.length < l.length ? '<div class="pj-all"><button class="btn-ghost" data-pj="an-prices-all">Показать все · ' + l.length + '</button></div>' : ''));
+
+  // 4. Организаторы по регионам
+  var noOrg = l.filter(function (e) { return !e.org; });
+  var orgSec = anSec("Организаторы по регионам", '<span class="sub2">' + orgs.length + ' · вписать — на странице проекта</span>',
+    (orgs.length ? '<ul class="an-orgs">' + orgs.map(function (o) { return '<li><b>' + esc(o.name) + '</b><span class="sub2">' + o.n + ' ' + plural(o.n, "дата", "даты", "дат") + '</span><div class="an-org-cities">' + o.cities.map(function (c) { return '<span class="an-city">' + esc(c) + '</span>'; }).join("") + '</div></li>'; }).join("") + '</ul>' : '') +
+    (noOrg.length ? '<p class="sub2" style="margin:10px 0 0">Без организатора — ' + noOrg.length + ' ' + plural(noOrg.length, "дата", "даты", "дат") + ': его пишет только Кассир.</p>' : ''));
+
+  return hero + sum + route + fillSec + priceSec + orgSec + '<div class="an-legacy">' + mRouteVenues(l, 8) + mCandTable(cands, foN, l, fmt, genre) + '</div>';
+}
+// «Города, где его нет» — таблица кандидатов (страница маршрута и «Аналитика»)
+function mCandTable(cands, foN, l, fmt, genre) {
+  var kindTxt = { path: "по пути", start: "перед туром", end: "после тура", near: "рядом", far: "" };
+  return '<section class="card" style="overflow:auto"><div class="card-pad" style="padding-bottom:0"><h2>Города, где его нет · ' + cands.length + '</h2><p class="sub">Сначала — «по пути»: между соседними выступлениями (переезд до 800 км и до 2 недель), крюк до 150 км, есть свободный день. Конкуренция — мероприятия того же формата («' + esc(fmt) + '») в окне дат. «Разобрать» открывает город на вкладке «Город» с этим окном и форматом.</p>' +
+        '<div class="cand-tools"><label class="cand-q"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>' +
+          '<input type="search" data-cand-q placeholder="Найти город" aria-label="Найти город среди тех, где проекта нет" autocomplete="off" value="' + esc(S.m.candQ) + '"></label>' +
+          '<select class="flat-select" data-flat-label="Федеральный округ" data-cand-fo aria-label="Федеральный округ"><option value="">Все</option>' +
+            FO_ORDER.filter(function (fo) { return foN[fo]; }).map(function (fo) { return '<option value="' + fo + '"' + (S.m.candFo === fo ? " selected" : "") + '>' + fo + ' · ' + foN[fo] + '</option>'; }).join("") + '</select>' +
+          '<span class="sub2" data-cand-count aria-live="polite"></span></div></div>' +
+      '<table class="vtable"><thead><tr><th scope="col">Город</th><th scope="col">Где в маршруте</th><th scope="col" class="r">До тура, км</th><th scope="col">Окно дат</th><th scope="col" class="r">Конкурентов в окне</th><th scope="col">Лучшая дата</th><th scope="col" class="r">Цены формата</th><th scope="col"><span class="sr-only">Действие</span></th></tr></thead><tbody>' +
+      cands.map(function (c, n) {
+        var hide = !candMatch(c.city, n, cands.length);
+        return '<tr data-cand-city="' + esc(c.city) + '"' + (hide ? ' hidden' : '') + '><th scope="row"><b style="font-weight:500">' + esc(c.city) + '</b><div class="sub2">' + esc(MK.fo[c.city]) + ' ФО · ' + c.events + ' мер.</div></th>' +
+          '<td>' + (c.kind !== "far" ? '<span class="tag"' + (c.kind === "path" ? ' style="background:#fdeee6;border-color:#fdeee6;color:#9a3412"' : '') + '>' + kindTxt[c.kind] + '</span><div class="sub2">' + esc(c.where) + (c.detour != null && c.kind === "path" ? ', крюк ' + c.detour + ' км' : '') + '</div>' : '<span class="sub2">далеко от маршрута</span>') + '</td>' +
+          '<td class="r num">' + (c.near != null ? num(c.near) : '—') + '<div class="sub2">' + esc(c.nearCity) + '</div></td>' +
+          '<td class="nowrap">' + (c.from ? human(c.from) + ' – ' + human(c.to) : '<span class="muted">—</span>') + '</td>' +
+          '<td class="r num">' + (c.from ? c.sameN : '—') + '</td>' +
+          '<td>' + (c.best ? '<b style="font-weight:500">' + dayLabel(c.best.d) + '</b><div class="sub2">' + compLabel(c.best.v) + '</div>' : '<span class="muted">—</span>') + '</td>' +
+          '<td class="r num nowrap">' + (c.price ? 'от ' + num(c.price) + ' ₽' : '<span class="muted">—</span>') + '</td>' +
+          '<td><button class="btn-ghost" data-mcity-go="' + esc(c.city) + '" data-from="' + (c.from || addDays(l[0].date, -7)) + '" data-to="' + (c.to || addDays(l[l.length - 1].date, 7)) + '" data-fmt="' + esc(fmt) + '" data-genre="' + esc(genre) + '">Разобрать</button></td></tr>';
+      }).join("") + '</tbody></table>' +
+      '<p class="sub cand-empty" hidden style="padding:0 24px">Не найдено — среди городов, где проекта нет, такого нет. Возможно, он там уже выступает: см. «Маршрут по датам».</p>' +
+      '<div class="cand-more"' + (S.m.candAll || cands.length <= 25 || S.m.candQ || S.m.candFo ? ' hidden' : '') + '><button class="btn-ghost" data-maction="cand-all">Показать все ' + cands.length + '</button></div></section>';
+}
 // Площадки тура — на странице «Аналитика» (перенесены со страницы проекта 09.10): где выступает, тип площадки, мест, дат, заполняемость
-function mRouteVenues(l) {
-  var v = pjVenues(l);
+function mRouteVenues(l, limit) {
+  var v = pjVenues(l), allV = v;
   if (!v.length) return '';
-  var byType = {}; v.forEach(function (x) { byType[x.type] = (byType[x.type] || 0) + 1; });
-  return '<section class="card" style="overflow:auto"><div class="card-pad" style="padding-bottom:0"><h2>Площадки тура · ' + v.length + '</h2>' +
+  if (limit && !S.m.anVenAll) v = v.slice(0, limit);
+  var byType = {}; allV.forEach(function (x) { byType[x.type] = (byType[x.type] || 0) + 1; });
+  return '<section class="card" style="overflow:auto"><div class="card-pad" style="padding-bottom:0"><h2>Площадки тура · ' + allV.length + '</h2>' +
     '<p class="sub">' + Object.keys(byType).map(function (t) { return (VTYPE[t] || t) + ' — ' + byType[t]; }).join(" · ") + '. Тип — ваша пометка или «авто» по названию; уточнить — в «Площадках».</p></div>' +
     '<table class="vtable"><thead><tr><th scope="col">Площадка</th><th scope="col">Город</th><th scope="col">Тип</th><th scope="col" class="r">Мест</th><th scope="col" class="r">Дат</th><th scope="col" class="r">Заполняемость</th></tr></thead><tbody>' +
     v.map(function (x) {
       return '<tr><td><b style="font-weight:500">' + esc(x.venue) + '</b></td><td>' + esc(x.city) + '<span class="sub2" style="display:block">' + human(x.first) + '</span></td>' +
         '<td><span class="pj-vt' + (x.typeAuto ? ' auto' : '') + '">' + esc(VTYPE[x.type] || x.type) + '</span></td><td class="r num">' + (x.cap ? num(x.cap) : '—') + '</td><td class="r num">' + x.n + '</td>' +
         '<td class="r num">' + (x.fill == null ? '<span class="muted">—</span>' : x.fill + '%') + '</td></tr>';
-    }).join("") + '</tbody></table></section>';
+    }).join("") + '</tbody></table>' + (v.length < allV.length ? '<div class="pj-all" style="padding-bottom:16px"><button class="btn-ghost" data-pj="an-ven-all">Показать все · ' + allV.length + '</button></div>' : '') + '</section>';
 }
 // «Города, где его нет»: без поиска и округа — первые 25 (или все), с ними — все подходящие
 function candMatch(city, n, total) {
@@ -5530,6 +5692,7 @@ function mProjectDetail(k) {
   var pmin = Math.min.apply(null, l.map(function (e) { return e.pmin || 1e9; })), pmax = Math.max.apply(null, l.map(function (e) { return e.pmax || 0; }));
   var ours = ALL.filter(function (e) { return projKey(e.title) === k; });
   var kindTxt = { path: "по пути", start: "перед туром", end: "после тура", near: "рядом", far: "" };
+  if (pjNew(p.title)) return anPage(k, l, past, p, cands, foN);   // новый вид «Аналитики» — пока на проверке
   return '<div><button class="btn-ghost" data-maction="proj-back">← Гастролирует</button></div>' +
     '<div class="vhead"><div style="min-width:0"><h1 style="font-weight:400;font-size:28px;line-height:1.2;letter-spacing:-0.02em;margin:0">' + esc(p.title) + '</h1><div class="chips">' + [fmt, genre].filter(function (c, i, a) { return c && a.indexOf(c) === i; }).map(function (c) { return '<span class="chip">' + esc(c) + '</span>'; }).join("") + '</div></div>' +
       '<div class="vactions">' + starBtn(k, p.title, true) + '<button class="pill" data-vopen="' + esc(k) + '" style="font-weight:500">Карточка проекта: записи, ссылки →</button></div></div>' +
@@ -5544,26 +5707,7 @@ function mProjectDetail(k) {
         return '<li><button class="row-btn" data-open="' + e.i + '"><span style="flex-grow:1"><b style="font-weight:500">' + human(e.date) + ' · ' + esc(e.venue) + '</b><span class="sub2" style="display:block">' + (e.gross ? 'заполнено ' + fill(e) + '% · занято ' + num(e.taken) + ' из ' + num(e.sellable) : 'без онлайн-продажи') + '</span></span><span class="sub2">карточка →</span></button></li>';
       }).join("") + '</ul>' : '<div class="note" style="margin-top:8px">Продажи видны там, где мы собираем схемы залов: сейчас Владимир (ОДКиИ, Арт Холл) и Иваново (ЦКиО, Музыкальный театр). Этот проект туда не заезжает. Позже — слежение за схемами и в других городах на сайтах движка vladimirkoncert (Кострома, Ярославль, Ковров).</div>') + '</section></div>' +
     mRouteVenues(l) +
-    '<section class="card" style="overflow:auto"><div class="card-pad" style="padding-bottom:0"><h2>Города, где его нет · ' + cands.length + '</h2><p class="sub">Сначала — «по пути»: между соседними выступлениями (переезд до 800 км и до 2 недель), крюк до 150 км, есть свободный день. Конкуренция — мероприятия того же формата («' + esc(fmt) + '») в окне дат. «Разобрать» открывает город на вкладке «Город» с этим окном и форматом.</p>' +
-        '<div class="cand-tools"><label class="cand-q"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>' +
-          '<input type="search" data-cand-q placeholder="Найти город" aria-label="Найти город среди тех, где проекта нет" autocomplete="off" value="' + esc(S.m.candQ) + '"></label>' +
-          '<select class="flat-select" data-flat-label="Федеральный округ" data-cand-fo aria-label="Федеральный округ"><option value="">Все</option>' +
-            FO_ORDER.filter(function (fo) { return foN[fo]; }).map(function (fo) { return '<option value="' + fo + '"' + (S.m.candFo === fo ? " selected" : "") + '>' + fo + ' · ' + foN[fo] + '</option>'; }).join("") + '</select>' +
-          '<span class="sub2" data-cand-count aria-live="polite"></span></div></div>' +
-      '<table class="vtable"><thead><tr><th scope="col">Город</th><th scope="col">Где в маршруте</th><th scope="col" class="r">До тура, км</th><th scope="col">Окно дат</th><th scope="col" class="r">Конкурентов в окне</th><th scope="col">Лучшая дата</th><th scope="col" class="r">Цены формата</th><th scope="col"><span class="sr-only">Действие</span></th></tr></thead><tbody>' +
-      cands.map(function (c, n) {
-        var hide = !candMatch(c.city, n, cands.length);
-        return '<tr data-cand-city="' + esc(c.city) + '"' + (hide ? ' hidden' : '') + '><th scope="row"><b style="font-weight:500">' + esc(c.city) + '</b><div class="sub2">' + esc(MK.fo[c.city]) + ' ФО · ' + c.events + ' мер.</div></th>' +
-          '<td>' + (c.kind !== "far" ? '<span class="tag"' + (c.kind === "path" ? ' style="background:#fdeee6;border-color:#fdeee6;color:#9a3412"' : '') + '>' + kindTxt[c.kind] + '</span><div class="sub2">' + esc(c.where) + (c.detour != null && c.kind === "path" ? ', крюк ' + c.detour + ' км' : '') + '</div>' : '<span class="sub2">далеко от маршрута</span>') + '</td>' +
-          '<td class="r num">' + (c.near != null ? num(c.near) : '—') + '<div class="sub2">' + esc(c.nearCity) + '</div></td>' +
-          '<td class="nowrap">' + (c.from ? human(c.from) + ' – ' + human(c.to) : '<span class="muted">—</span>') + '</td>' +
-          '<td class="r num">' + (c.from ? c.sameN : '—') + '</td>' +
-          '<td>' + (c.best ? '<b style="font-weight:500">' + dayLabel(c.best.d) + '</b><div class="sub2">' + compLabel(c.best.v) + '</div>' : '<span class="muted">—</span>') + '</td>' +
-          '<td class="r num nowrap">' + (c.price ? 'от ' + num(c.price) + ' ₽' : '<span class="muted">—</span>') + '</td>' +
-          '<td><button class="btn-ghost" data-mcity-go="' + esc(c.city) + '" data-from="' + (c.from || addDays(l[0].date, -7)) + '" data-to="' + (c.to || addDays(l[l.length - 1].date, 7)) + '" data-fmt="' + esc(fmt) + '" data-genre="' + esc(genre) + '">Разобрать</button></td></tr>';
-      }).join("") + '</tbody></table>' +
-      '<p class="sub cand-empty" hidden style="padding:0 24px">Не найдено — среди городов, где проекта нет, такого нет. Возможно, он там уже выступает: см. «Маршрут по датам».</p>' +
-      '<div class="cand-more"' + (S.m.candAll || cands.length <= 25 || S.m.candQ || S.m.candFo ? ' hidden' : '') + '><button class="btn-ghost" data-maction="cand-all">Показать все ' + cands.length + '</button></div></section>' +
+    mCandTable(cands, foN, l, fmt, genre) +
     '<section class="card card-pad"><h2>Архив: где уже был · ' + past.length + '</h2>' + (past.length ? '<ul class="list">' + past.slice(0, 30).map(function (a) {
       return '<li style="display:flex;gap:12px;align-items:baseline"><span class="nowrap" style="width:120px;flex-shrink:0">' + dayLabel(a.date) + ' ' + a.date.slice(0, 4) + '</span><span style="flex-grow:1;min-width:0">' + esc(a.city) + '<span class="sub2" style="display:block">' + esc(a.venue) + '</span></span><span class="sub2 nowrap">' + (a.status === "gone" ? "снято до даты" : "прошло") + (a.pmin ? " · " + prices(a) : "") + '</span></li>';
     }).join("") + '</ul>' : '<p class="sub">Архив гастролей копится с ' + human(MK.first) + ': каждое гастрольное выступление сохраняется навсегда — прошедшее или снятое с продажи (распродано или отменено). Здесь появятся города и даты, где проект уже был.</p>') + '</section>' +
