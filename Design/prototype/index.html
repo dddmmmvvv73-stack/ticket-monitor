@@ -478,6 +478,15 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pj-dl-lg { font-size: 15px; gap: 12px 20px; }
 
 /* Окна страницы проекта */
+.pjd-src { font-size: 11px; padding: 1px 7px; border-radius: 9999px; background: var(--wash-2); color: var(--data-dark); }
+.pjd-org-edit { background: none; border: 0; padding: 0; margin-left: 8px; font-size: 13px; color: var(--data); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--wash); }
+.pjd-org-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.pjd-org-form input { flex: 1 1 220px; min-width: 0; height: 36px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 8px; font: inherit; }
+.pjo-quick { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; margin: 4px 0 10px; } .pjo-quick .fbtn { padding: 0; height: 28px; }
+.pjo-cities { max-height: min(46vh, 420px); overflow: auto; border: 1px solid var(--line); border-radius: 12px; padding: 4px 14px; }
+.pjo-city { border: 0; border-bottom: 1px solid var(--line); margin: 0; padding: 10px 0; } .pjo-city:last-child { border-bottom: 0; }
+.pjo-city legend { padding: 0; } .pjo-city legend b { font-weight: 500; }
+.pjo-date { display: block; font-size: 14px; padding: 3px 0 3px 24px; }
 .pj-date { width: min(600px, calc(100vw - 32px)); }
 .pjd-head { display: flex; gap: 24px; align-items: center; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
 .pj-date .pj-dlg-head { justify-content: flex-end; gap: 6px; padding-bottom: 4px; }
@@ -5006,7 +5015,7 @@ function pjDateHtml(e) {
         '<span class="pj-fill" title="' + esc(fx.tip) + '"><i style="width:' + Math.min(100, fx.f) + '%"></i></span>'
       : '<div class="pjd-fill-top"><span class="v muted">—</span><span class="sub2">данных о продажах нет</span></div><span class="pj-fill none"></span>') + '</div>' +
     '<div class="pjd-stats">' + stat("Цены", e.pmin ? prices(e) : "—", "без сервисного сбора") + stat("Вал", gross, grossSub) + stat("Выручка", rev, revSub) + '</div>' +
-    '<dl class="pj-dl">' + '<dt>Организатор</dt><dd>' + (e.org ? esc(e.org) : '') + '</dd>' +
+    '<dl class="pj-dl">' + '<dt>Организатор</dt><dd id="pjdOrg">' + pjOrgView(e) + '</dd>' +
       '<dt>В афише</dt><dd>с ' + human(e.seen) + '</dd></dl>' +
     (links.length ? '<div class="pjd-links">' + links.map(function (x) { return '<a class="fbtn" href="' + esc(x[0]) + '" target="_blank" rel="noopener">' + esc(x[1]) + ' ↗</a>'; }).join("") + '</div>' : '') +
     '<div class="form-actions"><button class="btn-dark pjd-sales-btn" data-pj="sales" data-i="' + e.i + '" aria-expanded="false" aria-controls="pjdSide">Продажи <span aria-hidden="true">→</span></button></div>' +
@@ -5024,7 +5033,7 @@ function pjEditEvent(i) {
   var e = MR[i], dd = mDirect(e);
   $("pjDlg").close();
   if (dd && findEvent(dd.i)) { openDrawer(dd.i); openEditor(dd.i); return; }
-  openMDrawer(i); S.m.editing = true; showDrawer(mEditForm(e));
+  openMDrawer(i); S.m.editing = true; pjOrgDatalist(); showDrawer(mEditForm(e));
 }
 // Панель «Продажи» справа от окна даты: динамика продаж и распоясовка (зал по рядам с ценами) — те же данные и функции,
 // что в карточке мероприятия: площадки прямого сбора — из файлов сбора, рынок — с сервера (/api/sales/detail)
@@ -5072,6 +5081,63 @@ function pjdSalesToggle(t) {
   }
   if (window.matchMedia("(max-width: 820px)").matches) side.scrollIntoView({ behavior: "smooth", block: "start" });
 }
+// ---------- Организатор вручную: на одну дату (окно даты, форма карандаша) или сразу на много (окно «Организаторы»)
+// Хранится как правка мероприятия (curation «org»): важнее строки Кассира; пусто — снова как у Кассира.
+function pjOrgDatalist() {  // подсказки — все известные организаторы, чтобы одного не писали по-разному
+  var dl = $("orgList");
+  if (!dl) { dl = document.createElement("datalist"); dl.id = "orgList"; document.body.appendChild(dl); }
+  dl.innerHTML = mUniq(MR, "org").sort(function (a, b) { return a.localeCompare(b, "ru"); }).map(function (o) { return '<option value="' + esc(o) + '">'; }).join("");
+}
+function pjOrgManual(e) { return !!(e.o && "org" in e.o); }
+function pjOrgView(e) {
+  return (e.org ? '<span>' + esc(e.org) + '</span>' + (pjOrgManual(e) ? ' <span class="pjd-src">вручную</span>' : '') : '') +
+    '<button class="pjd-org-edit" data-pj="orgedit" data-i="' + e.i + '">' + (e.org ? 'изменить' : 'вписать') + '</button>';
+}
+function pjOrgEditor(i) {
+  var e = MR[i], box = $("pjdOrg"); pjOrgDatalist();
+  box.innerHTML = '<form class="pjd-org-form" data-i="' + i + '"><input id="pjdOrgIn" list="orgList" maxlength="300" value="' + esc(e.org || "") + '" aria-label="Организатор" placeholder="Название организатора">' +
+    '<button type="submit" class="btn-dark">Сохранить</button><button type="button" class="btn-ghost" data-pj="orgcancel" data-i="' + i + '">Отмена</button>' +
+    (pjOrgManual(e) ? '<button type="button" class="link-btn" data-pj="orgreset" data-i="' + i + '">как у Кассира</button>' : '') + '</form>';
+  var inp = $("pjdOrgIn"); inp.focus(); inp.select();
+  box.querySelector("form").addEventListener("submit", function (ev) { ev.preventDefault(); pjOrgSet([e], inp.value.trim()); });
+  inp.addEventListener("keydown", function (ev) { if (ev.key === "Escape") { ev.preventDefault(); ev.stopPropagation(); box.innerHTML = pjOrgView(e); } });
+}
+function pjOrgSet(list, org) {
+  if (!list.length) return;
+  curSave({ op: "org", keys: list.map(function (e) { return e.key; }), org: org },
+    org ? "Организатор «" + org + "» — " + list.length + " " + plural(list.length, "дата", "даты", "дат") : "Организатор — снова как у Кассира");
+  var d = $("pjDlg");
+  if (d && d.open && d.classList.contains("pj-date") && list.length === 1) { var box = $("pjdOrg"); if (box) box.innerHTML = pjOrgView(MR[list[0].i]); }
+  if (d && d.open && d.classList.contains("pj-orgs")) pjDialog("pj-orgs", "Организаторы · " + S.pj.orgs.length, pjOrgsHtml());
+}
+// Массово: имя + даты галочками по городам; «весь город», «все даты», «только без организатора»
+function pjOrgAssignHtml() {
+  var l = S.pj.l, by = {};
+  l.forEach(function (e) { (by[e.city] = by[e.city] || []).push(e); });
+  var cities = Object.keys(by).sort(function (a, b) { return by[a][0].date < by[b][0].date ? -1 : 1; });
+  return '<form id="pjOrgForm" class="myform" novalidate><div class="field"><label for="pjOrgName">Организатор</label><input id="pjOrgName" list="orgList" maxlength="300" placeholder="Название — подсказки из известных организаторов"></div>' +
+    '<div class="pjo-quick"><button type="button" class="fbtn" data-pj="orgpick" data-mode="all">Все даты</button><button type="button" class="fbtn" data-pj="orgpick" data-mode="empty">Только без организатора</button><button type="button" class="fbtn" data-pj="orgpick" data-mode="none">Снять все</button><span class="sub2" id="pjOrgCnt">выбрано 0</span></div>' +
+    '<div class="pjo-cities">' + cities.map(function (c) {
+      return '<fieldset class="pjo-city"><legend><label><input type="checkbox" data-city="' + esc(c) + '"> <b>' + esc(c) + '</b></label></legend>' + by[c].map(function (e) {
+        return '<label class="pjo-date"><input type="checkbox" value="' + e.i + '" data-c="' + esc(c) + '"' + (e.org ? '' : ' data-empty="1"') + '> ' + dayLabel(e.date) + ' · ' + esc(e.venue) + (e.org ? ' <span class="sub2">— ' + esc(e.org) + '</span>' : '') + '</label>';
+      }).join("") + '</fieldset>';
+    }).join("") + '</div><div class="err" id="pjOrgErr" hidden></div></form>' +
+    '<div class="form-actions"><button class="btn-dark" data-pj="orgassign">Назначить</button><button class="btn-ghost" data-pj="orgs">Назад</button>' +
+    '<span class="sub2">Пусто в поле — у выбранных дат снова организатор Кассира.</span></div>';
+}
+function pjOrgCount() {
+  var f = $("pjOrgForm"), n = f.querySelectorAll(".pjo-date input:checked").length;
+  $("pjOrgCnt").textContent = "выбрано " + n + " " + plural(n, "дата", "даты", "дат");
+  f.querySelectorAll("[data-city]").forEach(function (cb) {
+    var all = f.querySelectorAll('.pjo-date input[data-c="' + CSS.escape(cb.getAttribute("data-city")) + '"]'), on = [].filter.call(all, function (x) { return x.checked; }).length;
+    cb.checked = on === all.length; cb.indeterminate = on > 0 && on < all.length;
+  });
+}
+function pjOrgAssign() {
+  var f = $("pjOrgForm"), name = $("pjOrgName").value.trim(), picked = [].map.call(f.querySelectorAll(".pjo-date input:checked"), function (x) { return MR[+x.value]; });
+  if (!picked.length) { var err = $("pjOrgErr"); err.hidden = false; err.textContent = "Отметьте даты, которым назначить организатора"; return; }
+  pjOrgSet(picked, name);
+}
 // Окна страницы проекта — нативный <dialog> поверх страницы (как подтверждения): фокус внутри, Esc закрывает
 function pjDialog(cls, label, html) {
   var d = $("pjDlg");
@@ -5084,10 +5150,11 @@ function pjDialog(cls, label, html) {
   if (!d.open) d.showModal();
   return d;
 }
+var PJ_ORG_ADD = '<div class="form-actions" style="justify-content:center"><button class="btn-dark" data-pj="orgadd">+ Назначить организатора</button></div>';
 function pjOrgsHtml() {
   var o = S.pj.orgs, rec = myRec(S.pj.k), ava = pjMedia(rec, "avatar"), shown = o.slice(0, 10);
   if (!o.length) return '<div class="pj-orbit pj-orbit-empty"><div class="pj-core">' + (ava ? '<img src="' + esc(ava) + '" alt="">' : esc(pjInitials(S.pj.title))) + '</div></div>' +
-    '<p class="sub" style="text-align:center;margin:0">Организатор не указан. Его пишет только Кассир («Организатор мероприятия» на странице карточки); у дат только на Яндекс Афише его нет.</p>';
+    '<p class="sub" style="text-align:center;margin:0">Организатор не указан: его пишет только Кассир, у дат только на Яндекс Афише его нет. Можно вписать вручную.</p>' + PJ_ORG_ADD;
   var seed = 0; for (var c = 0; c < S.pj.title.length; c++) seed = (seed * 31 + S.pj.title.charCodeAt(c)) % 9973;
   var rnd = function () { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };   // «произвольно», но одинаково при каждом открытии
   var pills = shown.map(function (x, i) {
@@ -5098,7 +5165,7 @@ function pjOrgsHtml() {
   }).join("");
   return '<div class="pj-orbit" aria-hidden="true"><div class="pj-core">' + (ava ? '<img src="' + esc(ava) + '" alt="">' : esc(pjInitials(S.pj.title))) + '</div>' + pills + '</div>' +
     '<ul class="pj-org-list">' + o.map(function (x) { return '<li><b>' + esc(x.name) + '</b><span class="sub2">' + x.n + ' ' + plural(x.n, "дата", "даты", "дат") + ' · ' + esc(x.cities.slice(0, 6).join(", ")) + (x.cities.length > 6 ? ' и ещё ' + (x.cities.length - 6) : '') + '</span></li>'; }).join("") + '</ul>' +
-    '<p class="sub2" style="margin:12px 0 0">По строке «Организатор мероприятия» у Кассира; даты только на Яндекс Афише сюда не попадают.</p>';
+    '<p class="sub2" style="margin:12px 0 0">По строке «Организатор мероприятия» у Кассира и вписанным вручную.</p>' + PJ_ORG_ADD;
 }
 function pjContactsHtml() {
   var rec = myRec(S.pj.k), pr = rec && rec.profile || {}, links = rec && rec.links || [];
@@ -5201,6 +5268,12 @@ function pjAction(t) {
   else if (a === "edit") { var d = pjDialog("pj-edit", "Редактировать страницу", pjEditHtml()); var n = d.querySelector("#pj-" + (t.getAttribute("data-field") || "sub")); if (n) n.focus(); }
   else if (a === "date") pjOpenDate(+t.getAttribute("data-i"));
   else if (a === "evedit") pjEditEvent(+t.getAttribute("data-i"));
+  else if (a === "orgedit") pjOrgEditor(+t.getAttribute("data-i"));
+  else if (a === "orgcancel") { $("pjdOrg").innerHTML = pjOrgView(MR[+t.getAttribute("data-i")]); }
+  else if (a === "orgreset") pjOrgSet([MR[+t.getAttribute("data-i")]], "");
+  else if (a === "orgadd") { pjOrgDatalist(); pjDialog("pj-orgs", "Назначить организатора", pjOrgAssignHtml()); $("pjOrgName").focus(); $("pjOrgForm").addEventListener("change", pjOrgCount); }
+  else if (a === "orgpick") { var mode = t.getAttribute("data-mode"); $("pjOrgForm").querySelectorAll(".pjo-date input").forEach(function (x) { x.checked = mode === "all" || (mode === "empty" && x.hasAttribute("data-empty")); }); pjOrgCount(); }
+  else if (a === "orgassign") pjOrgAssign();
   else if (a === "sales") pjdSalesToggle(t);
   else if (a === "orgs") pjDialog("pj-orgs", "Организаторы · " + S.pj.orgs.length, pjOrgsHtml());
   else if (a === "contacts") pjDialog("pj-contacts", "Контакты", pjContactsHtml());
@@ -5216,6 +5289,11 @@ function pjAction(t) {
   inp.addEventListener("change", function () { var f = inp.files[0]; inp.value = ""; pjPhoto(f, inp.getAttribute("data-kind")); });   // сброс — тот же файл можно выбрать снова
   document.body.appendChild(inp);
   $("view").addEventListener("click", function (ev) { var t = ev.target.closest("[data-pj]"); if (t) pjAction(t); });
+  document.addEventListener("change", function (ev) {   // галочка у города — все его даты
+    var cb = ev.target.closest && ev.target.closest("#pjOrgForm [data-city]"); if (!cb) return;
+    $("pjOrgForm").querySelectorAll('.pjo-date input[data-c="' + CSS.escape(cb.getAttribute("data-city")) + '"]').forEach(function (x) { x.checked = cb.checked; });
+    pjOrgCount();
+  });
 })();
 
 // Расстояние по прямой между городами, км (координаты — OpenStreetMap, в market-geo.js)
@@ -5609,7 +5687,7 @@ $("drawer").addEventListener("click", function (ev) {
     S.enter = true; closeDrawer(); render(); window.scrollTo(0, 0); return;
   }
   var a = t.getAttribute("data-drawer"), e = MR[S.m.sel];
-  if (a === "medit") { S.m.editing = true; showDrawer(mEditForm(e)); }
+  if (a === "medit") { S.m.editing = true; pjOrgDatalist(); showDrawer(mEditForm(e)); }
   else if (a === "mcancel") { S.m.editing = false; showDrawer(mDrawer(e)); }
   else if (a === "msave") mSaveForm();
   else if (a === "mrevert") { S.m.editing = false; curSave({ op: "revert", key: e.key }, "Вернули данные парсера"); showDrawer(mDrawer(MR[S.m.sel])); }
@@ -5733,6 +5811,11 @@ function curLocal(op) {
   if (op.op === "project") { var k = projKey(op.title); if (op.type) CUR.projects[k] = { type: op.type, title: op.title, at: now }; else delete CUR.projects[k]; }
   else if (op.op === "venue") { var vk = venueKey(op.city, op.venue); if (op.type) CUR.venues[vk] = { type: op.type, name: op.venue, city: op.city, at: now }; else delete CUR.venues[vk]; }
   else if (op.op === "edit") { if (Object.keys(op.fields).length) CUR.edits[op.key] = { fields: op.fields, at: now }; else delete CUR.edits[op.key]; }
+  else if (op.op === "org") (op.keys || []).forEach(function (k) {   // как curation.apply_op «org»: только поле организатора
+    var f = Object.assign({}, (CUR.edits[k] || {}).fields || {});
+    if (op.org) f.org = op.org; else delete f.org;
+    if (Object.keys(f).length) CUR.edits[k] = { fields: f, at: now }; else delete CUR.edits[k];
+  });
   else if (op.op === "revert") delete CUR.edits[op.key];
   else if (op.op === "filters") CUR.filters = curNormalize({ filters: op.filters }).filters;
   else if (op.op === "alias") CUR.aliases[projKey(op.title)] = { to: projKey(op.target), title: op.title, target: op.target, at: now };
@@ -5913,6 +5996,7 @@ function mEditForm(e, errors) {
       field("date", "Дата", "date") + field("time", "Время", "time") +
       '<div class="field"><label for="mf-city">Город</label><select id="mf-city" name="city">' + MK.cities.map(function (c) { return '<option' + (c === e.city ? " selected" : "") + '>' + esc(c) + '</option>'; }).join("") + '</select></div>' +
       field("venue", "Площадка") +
+      '<div class="field full"><label for="mf-org">Организатор</label><input id="mf-org" name="org" type="text" maxlength="300" list="orgList" value="' + v("org") + '" placeholder="Пусто — как у Кассира"></div>' +
       '<h3>Ниша</h3>' + select("sphere", "Сфера", TAX.sphere) + select("format", "Формат", TAX.format) + select("genre", "Жанр", TAX.genre) +
       '<h3>Цены</h3>' + field("pmin", "Цена от, ₽", "number") + field("pmax", "Цена до, ₽", "number") + '</form>' +
     '<div class="form-actions"><button class="btn-dark" data-drawer="msave">Сохранить</button><button class="btn-ghost" data-drawer="mcancel">Отмена</button><div style="flex-grow:1"></div>' +
@@ -5920,7 +6004,7 @@ function mEditForm(e, errors) {
 }
 function mSaveForm() {
   var e = MR[S.m.sel], f = $("mevForm"), out = {}, errs = {};
-  ["title", "date", "time", "city", "venue", "sphere", "format", "genre"].forEach(function (k) { out[k] = f.elements[k].value.trim(); });
+  ["title", "date", "time", "city", "venue", "org", "sphere", "format", "genre"].forEach(function (k) { out[k] = f.elements[k].value.trim(); });
   ["pmin", "pmax"].forEach(function (k) { var v = f.elements[k].value.trim(); out[k] = v === "" ? null : Math.round(Number(v)); });
   if (!out.title) errs.title = "Название обязательно";
   if (!/^\d{4}-\d{2}-\d{2}$/.test(out.date)) errs.date = "Укажите дату";
@@ -5928,7 +6012,7 @@ function mSaveForm() {
   if (out.pmin != null && out.pmax != null && out.pmin > out.pmax) errs.pmax = "«До» меньше, чем «от»";
   if (Object.keys(errs).length) { showDrawer(mEditForm(Object.assign({}, e, out), errs)); var bad = document.querySelector("#mevForm [aria-invalid]"); if (bad) bad.focus(); return; }
   var base = function (k) { return k in e.o ? e.o[k] : e[k]; }, fields = {};
-  ["title", "date", "time", "city", "venue", "pmin", "pmax"].forEach(function (k) { if (String(out[k] == null ? "" : out[k]) !== String(base(k) == null ? "" : base(k))) fields[k] = out[k]; });
+  ["title", "date", "time", "city", "venue", "org", "pmin", "pmax"].forEach(function (k) { if (String(out[k] == null ? "" : out[k]) !== String(base(k) == null ? "" : base(k))) fields[k] = out[k]; });
   var niche = ["sphere", "format", "genre"].some(function (k) { return out[k] !== (e[k] || ""); });
   S.m.editing = false;
   if (niche) curSave({ op: "niche", title: out.title, sphere: out.sphere, format: out.format, genre: out.genre });

@@ -31,7 +31,8 @@ DEFAULT = {"projects": {}, "venues": {}, "edits": {}, "aliases": {}, "rejected":
            "filters": {"show": "tour", "pmin": None, "pmax": None, "noprice": False}}
 TYPES = {"tour", "local"}
 VENUE_TYPES = {"rental", "repertory", "mixed"}
-EDIT_FIELDS = {"title", "date", "time", "city", "venue", "sphere", "format", "genre", "pmin", "pmax"}
+EDIT_FIELDS = {"title", "date", "time", "city", "venue", "sphere", "format", "genre", "pmin", "pmax", "org"}
+ORG_MAX, ORG_KEYS_MAX = 300, 3000   # организатор, вписанный вручную: длина названия и сколько дат за одну правку
 THEATRE_FORMATS = {"Спектакль", "Балет", "Опера", "Мюзикл", "Музыкальный спектакль"}
 # Репертуарные сцены: у них свой коллектив и спектакли по многу раз
 REPERTORY = re.compile(r"драм|тюз|юного зрител|кукол|молод[её]жн\w* театр|оперы и балета|опера балет|музыкальн\w* театр|"
@@ -148,6 +149,8 @@ def apply_op(op: dict) -> tuple[dict, str]:
         clean = {}
         for f, v in fields.items():
             clean[f] = _num(v) if f in ("pmin", "pmax") else str(v or "").strip()
+        if len(clean.get("org") or "") > ORG_MAX:
+            raise CurationError(f"организатор — не длиннее {ORG_MAX} знаков")
         if "title" in clean and not clean["title"]:
             raise CurationError("название не может быть пустым")
         if "date" in clean and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", clean["date"]):
@@ -159,6 +162,23 @@ def apply_op(op: dict) -> tuple[dict, str]:
         else:
             cur["edits"].pop(key, None)
         note = f"правка мероприятия {key}"
+    elif kind == "org":   # организатор вручную — на одну дату или сразу на много; другие правки этих дат не трогает
+        keys, org = op.get("keys") or [], str(op.get("org") or "").strip()
+        if not isinstance(keys, list) or not keys or len(keys) > ORG_KEYS_MAX or not all(isinstance(k, str) and k for k in keys):
+            raise CurationError("не выбраны даты")
+        if len(org) > ORG_MAX:
+            raise CurationError(f"организатор — не длиннее {ORG_MAX} знаков")
+        for key in keys:
+            fields = dict((cur["edits"].get(key) or {}).get("fields") or {})
+            if org:
+                fields["org"] = org
+            else:
+                fields.pop("org", None)   # пусто — убрать вписанного, снова как у Кассира
+            if fields:
+                cur["edits"][key] = {"fields": fields, "at": now}
+            else:
+                cur["edits"].pop(key, None)
+        note = f"организатор «{org}» — {len(keys)} дат" if org else f"организатор вручную убран — {len(keys)} дат"
     elif kind == "revert":
         cur["edits"].pop(op.get("key"), None)
         note = f"вернуть данные парсера {op.get('key')}"
