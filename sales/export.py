@@ -130,7 +130,29 @@ def build(conn) -> dict:
     for op, key, ext, free, total, g, gtotal, since, at, sold, rev, hall in cur.fetchall():
         rows[key] = sales_row(op, ext, free, total, g, since, at, sold, rev, hall)
     return {"at": datetime.now().astimezone().isoformat(timespec="minutes"), "rows": rows, "operators": operators(conn),
-            "suggest": suggestions(conn)}
+            "suggest": suggestions(conn), "finals": finals(conn)}
+
+
+def finals(conn) -> dict:
+    """Итоги прошедших выступлений по проектам — для «потолка зала» в «Аналитике» (расчёт — в прототипе,
+    Design/prototype/project-rating.js, ptCeiling): {ключ проекта: [[город, мест в продаже, заполнено %, дата], …]}.
+    Мест — выставлено кассой (иначе мест в зале), заполнено — по последнему снимку до начала (sales.results)."""
+    from competitors.curation import canonical, load, project_key
+    cur0 = load()
+    cur = conn.cursor()
+    cur.execute("""SELECT s.title, c.name, s.local_date, s.result FROM sessions s JOIN venues v ON v.id = s.venue_id JOIN cities c ON c.id = v.city_id
+                    WHERE s.result->>'st' = 'past' AND s.result ? 'best'""")
+    out: dict[str, list] = {}
+    for title, city, d, res in cur.fetchall():
+        row = (res.get("pools") or {}).get(res.get("best")) or {}
+        total = row.get("exp") or row.get("hall")
+        if row.get("free") is None or not total:
+            continue
+        fill = round(max(0, total - row["free"]) / total * 100)
+        key = canonical(cur0, project_key(title or ""))
+        if key:
+            out.setdefault(key, []).append([city, int(total), fill, d.isoformat()])
+    return out
 
 
 def suggestions(conn) -> list:

@@ -66,4 +66,25 @@ function ptRadar(s, opt) {
     '<title>' + title.replace(/</g, "&lt;") + '</title>' + rings + axes + prev + cur + labels + '</svg>';
 }
 
-if (typeof module !== "undefined") module.exports = { PT_CONFIG: PT_CONFIG, ptValid: ptValid, ptTypeOf: ptTypeOf, ptLabel: ptLabel, ptRadar: ptRadar };
+// ---------- Потолок зала: какую наибольшую вместимость проект стабильно заполняет (решение пользователя 09.10).
+// Выступление «заполнено» — продано не меньше fill (85%); «стабильно» — хотя бы в cities (3) разных городах.
+// Потолок = вместимость, которую проект заполнил хотя бы в 3 городах: в каждом городе берём самый большой заполненный
+// зал, сортируем по убыванию — третий и есть потолок. Полоса на плитке — потолок от медианы вместимости крупных залов
+// тура (верхняя четверть залов, не меньше 3). Без ручных данных — только наши итоги выступлений (sales.results).
+var CEIL_CONFIG = { fill: 85, cities: 3, topShare: 0.25 };
+// shows: [{city, cap, fill (%)}] — прошедшие выступления; caps — вместимость всех залов тура (для полосы)
+function ptCeiling(shows, caps, cfg) {
+  cfg = cfg || CEIL_CONFIG;
+  var byCity = {};
+  (shows || []).forEach(function (x) { if (x.cap > 0 && x.fill >= cfg.fill && (!byCity[x.city] || x.cap > byCity[x.city])) byCity[x.city] = x.cap; });
+  var filled = Object.keys(byCity).map(function (c) { return byCity[c]; }).sort(function (a, b) { return b - a; });
+  var ceil = filled.length >= cfg.cities ? filled[cfg.cities - 1] : null;
+  var big = (caps || []).filter(function (c) { return c > 0; }).sort(function (a, b) { return b - a; });
+  big = big.slice(0, Math.max(cfg.cities, Math.ceil(big.length * cfg.topShare)));
+  var bigMed = big.length ? big[Math.floor((big.length - 1) / 2)] : null;
+  return { ceil: ceil, filledCities: filled.length, need: cfg.cities, shows: (shows || []).filter(function (x) { return x.cap > 0; }).length,
+    bigMedian: bigMed, share: ceil && bigMed ? Math.min(1, ceil / bigMed) : null };
+}
+
+if (typeof module !== "undefined") module.exports = { PT_CONFIG: PT_CONFIG, ptValid: ptValid, ptTypeOf: ptTypeOf, ptLabel: ptLabel, ptRadar: ptRadar,
+  CEIL_CONFIG: CEIL_CONFIG, ptCeiling: ptCeiling };

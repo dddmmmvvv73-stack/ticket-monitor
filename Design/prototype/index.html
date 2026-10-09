@@ -632,6 +632,20 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 @media (max-width: 820px) { .pt-wrap { grid-template-columns: minmax(0, 1fr); } .pt-view { position: static; } }
 @media (prefers-color-scheme: dark) { :root { --pt-accent: #4c9be8; } }
 
+/* плитка «заполняемость в ср.» ⇄ «потолок зала» — переворот */
+.an-flip { position: relative; padding: 0; text-align: left; color: inherit; font: inherit; cursor: pointer; perspective: 600px; background: none; border: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.an-hero-m .an-tile.an-flip { padding: 0; background: none; border: 0; -webkit-backdrop-filter: none; backdrop-filter: none; }
+.an-flip-in { display: grid; transition: transform 520ms var(--ease); transform-style: preserve-3d; }
+.an-flip.flipped .an-flip-in { transform: rotateY(180deg); }
+.an-face { grid-area: 1 / 1; display: flex; flex-direction: column; gap: 2px; padding: 9px 12px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18);
+  -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.an-face b { font: 500 18px/1.15 var(--display); letter-spacing: -0.01em; white-space: nowrap; }
+.an-face > span:not(.an-tbar) { font-size: 12px; color: rgba(255, 255, 255, 0.72); }
+.an-back { transform: rotateY(180deg); background: rgba(122, 185, 232, 0.16); border-color: rgba(122, 185, 232, 0.4); }
+.an-flip:focus-visible { outline: 2px solid #fff; outline-offset: 3px; border-radius: 8px; }
+@media (hover: hover) { .an-flip:hover .an-face { border-color: rgba(255, 255, 255, 0.4); } }
+@media (prefers-reduced-motion: reduce) { .an-flip-in { transition: none; } }
+
 /* Окна страницы проекта */
 .pjd-src { font-size: 11px; padding: 1px 7px; border-radius: 9999px; background: var(--wash-2); color: var(--data-dark); }
 .pjd-org-edit { background: none; border: 0; padding: 0; margin-left: 8px; font-size: 13px; color: var(--data); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--wash); }
@@ -5591,6 +5605,7 @@ function pjAction(t) {
   else if (a === "an-sort") { S.m.anSort = t.getAttribute("data-sort"); var y2 = window.scrollY; render(); window.scrollTo(0, y2); }
   else if (a === "an-ven-all") { S.m.anVenAll = true; var y3 = window.scrollY; render(); window.scrollTo(0, y3); }
   else if (a === "an-more") { var key = t.getAttribute("data-key"); S.m[key] = !S.m[key]; var y4 = window.scrollY; render(); window.scrollTo(0, y4); }
+  else if (a === "an-flip") { S.m.anFlip = !S.m.anFlip; t.classList.toggle("flipped", S.m.anFlip); t.setAttribute("aria-pressed", S.m.anFlip); var tp = t.getAttribute(S.m.anFlip ? "data-tip-back" : "data-tip-front"); t.title = tp; t.setAttribute("aria-label", tp); }   // без перерисовки — переворот виден
   else if (a === "an-tab") { S.m.anTab = t.getAttribute("data-tab"); var y5 = window.scrollY; render(); window.scrollTo(0, y5); }
   else if (a === "period-all") { S.period = "all"; S.from = S.to = null; render(); }
   else if (a === "mode") { var y = window.scrollY; S.m.pjMode = t.getAttribute("data-mode"); S.m.datesAll = false; render(); window.scrollTo(0, y); }   // экран остаётся на месте
@@ -5854,6 +5869,31 @@ function anMapInit() {
     S.anMapObj = map;
   });
 }
+// Плитка «заполняемость в ср.» — переворачивается по нажатию: на обороте «потолок зала» (ptCeiling, project-rating.js) —
+// сверху потолок крупно, полоса — потолок от медианы крупных залов тура. Данные — итоги прошедших выступлений (MK.finals);
+// у тестового проекта без итогов — тестовые цифры с пометкой.
+function anCap(e) { var d = mDirect(e), s = e.sales; return d && d.sellable ? d.sellable : s ? s.hall || s.exp || 0 : 0; }
+function anFlipTile(avg, l, fills, title, k) {
+  var fin = (typeof MK !== "undefined" && MK.finals && MK.finals[k]) || [], demo = false;
+  var shows = fin.map(function (x) { return { city: x[0], cap: x[1], fill: x[2] }; });
+  var caps = shows.map(function (x) { return x.cap; }).concat(l.map(anCap));
+  if (!shows.length && PJ_DEMO_CHG.test(title)) {   // ТЕСТ: у AdrenalinHouse итогов ещё нет — выдуманные залы по датам тура
+    demo = true;
+    shows = l.map(function (e, i) { var c = anCap(e) || 500 + ((e.i * 2654435761) % 21) * 100; return { city: e.city, cap: c, fill: fills[i] == null ? 0 : fills[i] + 30 }; });
+    caps = shows.map(function (x) { return x.cap; });
+  }
+  var ce = ptCeiling(shows, caps), flip = !!S.m.anFlip;
+  var front = '<span class="an-face"><b class="num">' + (avg == null ? "—" : avg + "%") + '</b><span>заполняемость в ср.</span>' +
+    '<span class="an-tbar"><i style="width:' + (avg || 0) + '%;background:' + anColor(avg) + '"></i></span></span>';
+  var back = '<span class="an-face an-back"><b class="num">' + (ce.ceil ? '≈ ' + num(ce.ceil) : '—') + '</b><span>потолок зала' + (demo ? ' · тест' : '') + '</span>' +
+    '<span class="an-tbar"><i style="width:' + Math.round((ce.share || 0) * 100) + '%;background:#7ab9e8"></i></span>' +
+    '<span class="an-tsub">' + (ce.ceil ? (ce.bigMedian ? 'крупные залы ~' + num(ce.bigMedian) : 'по ' + ce.filledCities + ' городам') : '≥85% в ' + ce.filledCities + ' из ' + ce.need + ' городов') + '</span></span>';
+  var tip = ce.ceil ? 'Потолок зала ≈ ' + num(ce.ceil) + ' мест: такие залы проект заполнял на 85% и больше хотя бы в ' + ce.need + ' городах (заполнено в ' + ce.filledCities + ', выступлений с итогом ' + ce.shows + ')'
+    : 'Потолка пока нет: нужно заполнить зал на 85% хотя бы в ' + ce.need + ' городах, сейчас — в ' + ce.filledCities + ' (выступлений с итогом ' + ce.shows + ')';
+  var tipFront = 'Заполняемость в среднем ' + (avg == null ? 'нет данных' : avg + '%') + '. Нажмите — потолок зала', tipBack = tip + '. Нажмите — заполняемость в среднем';
+  return '<button class="an-tile an-flip' + (flip ? ' flipped' : '') + '" data-pj="an-flip" data-tip-front="' + esc(tipFront) + '" data-tip-back="' + esc(tipBack) + '" aria-pressed="' + flip + '" aria-label="' + esc(flip ? tipBack : tipFront) + '" title="' + esc(flip ? tipBack : tipFront) + '">' +
+    '<span class="an-flip-in">' + front + back + '</span></button>';
+}
 // Разделы «Аналитики» — по одному, кнопками под шапкой (S.m.anTab); показатели тура — на самой шапке
 var AN_TABS = [["cands", "Где не были"], ["route", "Маршрут"], ["fill", "Заполняемость"], ["prices", "Цены"], ["venues", "Площадки"]];
 var AN_FEW = 3;   // в «Заполняемости» и «Ценах» сначала 3 строки, дальше «Показать все» / «Скрыть»
@@ -5889,7 +5929,7 @@ function anPage(k, l, past, p, cands, foN) {
     tile(cities.length, plural(cities.length, "город", "города", "городов"), '<span class="an-tsub">нет в ' + (MK.cities.length - cities.length) + ' из ' + MK.cities.length + '</span>') +
     tile(l.length, plural(l.length, "дата", "даты", "дат"), strip) +
     tile(priceTxt, "цены") +
-    tile(avg == null ? "—" : avg + "%", "заполняемость в ср.", '<span class="an-tbar"><i style="width:' + (avg || 0) + '%;background:' + anColor(avg) + '"></i></span>') + '</div>';
+    anFlipTile(avg, l, fills, title, k) + '</div>';
   // ряд кнопок — на месте «Редактировать» и значков страницы проекта: «Где не были» (как «Редактировать») + значки разделов
   var tabBtn = function (t) {
     var on = tab === t[0];

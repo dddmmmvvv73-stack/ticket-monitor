@@ -2,7 +2,7 @@
 // Запуск: node --test   (Node находит *.test.js сам)
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { PT_CONFIG, ptTypeOf, ptValid, ptLabel, ptRadar } = require("../Design/prototype/project-rating.js");
+const { PT_CONFIG, ptTypeOf, ptValid, ptLabel, ptRadar, ptCeiling } = require("../Design/prototype/project-rating.js");
 
 test("конфиг: 6 осей, 6 эталонов, значения 0–3, порог задан", () => {
   assert.equal(PT_CONFIG.axes.length, 6);
@@ -49,4 +49,24 @@ test("рисунок: 3 кольца, многоугольник профиля,
   assert.equal((svg.match(/<polygon/g) || []).length, 3 + 1 + 1);
   assert.match(svg, /stroke-dasharray/);
   assert.equal((ptRadar(null).match(/<polygon/g) || []).length, 3);   // без оценки — только кольца
+});
+
+test("потолок зала: третий по величине заполненный (≥85%) зал из разных городов", () => {
+  const shows = [
+    { city: "Самара", cap: 2000, fill: 90 }, { city: "Пенза", cap: 1500, fill: 88 }, { city: "Тула", cap: 1200, fill: 95 },
+    { city: "Курск", cap: 900, fill: 99 }, { city: "Орёл", cap: 3000, fill: 60 },          // 3000 — не заполнил
+    { city: "Самара", cap: 800, fill: 100 }                                                   // в городе берётся самый большой заполненный
+  ];
+  const r = ptCeiling(shows, [3000, 2000, 1500, 1200, 900, 800, 2500, 2400]);
+  assert.equal(r.ceil, 1200);          // 2000, 1500, 1200, 900 → третий — 1200
+  assert.equal(r.filledCities, 4);
+  assert.equal(r.bigMedian, 2500);     // крупные залы тура: 3000, 2500, 2400 → медиана 2500
+  assert.equal(r.share, 1200 / 2500);
+});
+
+test("потолок: меньше 3 заполненных городов — нет потолка", () => {
+  const r = ptCeiling([{ city: "А", cap: 1000, fill: 90 }, { city: "А", cap: 1200, fill: 91 }, { city: "Б", cap: 900, fill: 86 }, { city: "В", cap: 2000, fill: 84 }], []);
+  assert.equal(r.ceil, null);          // А и Б заполнены, В — 84% не считается
+  assert.equal(r.filledCities, 2);
+  assert.equal(r.need, 3);
 });

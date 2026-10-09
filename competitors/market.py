@@ -1140,7 +1140,7 @@ def export_js() -> str:
     lab = lambda iso: (lambda t: f"{t.day} {months[t.month - 1]}, {t:%H:%M}")(datetime.fromisoformat(iso[:19]))
     stale = {x: lab(status["src_at"][x]) for x in status.get("stale", []) if (status.get("src_at") or {}).get(x)}
     data = {"at": label, "stale": stale, "first": status.get("first_run"), "cities": cities, "fo": fo, **lists, "rows": packed, "arch": arch,
-            "salesAt": snap.get("at"), "directOnly": direct_only, "salesOps": snap.get("operators", []), "suggest": snap.get("suggest", []),
+            "salesAt": snap.get("at"), "directOnly": direct_only, "salesOps": snap.get("operators", []), "suggest": snap.get("suggest", []), "finals": snap.get("finals", {}),
             "stats": {"merged": Counter(r["src"] for r in rows)["ky"], "dropped": status.get("dropped", {}), "bySrc": status.get("by_src", {})}}
     return (f"// Снимок «Афиши рынка»: Кассир + Яндекс Афиша по {len(all_cities)} городам, сбор {label}.\n"
             "// Пересобрать: ./pull_data.sh && python3 -m competitors.market export (через app.py — собирается сам)\n"
