@@ -488,7 +488,8 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pjd-fill .pj-fill { height: 8px; border-radius: 4px; }
 .pjd-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; padding: 14px 0; }
 .pjd-stat .l { font-size: 12px; color: var(--muted); } .pjd-stat .v { font: 500 20px/1.25 var(--display); margin-top: 2px; } .pjd-stat .s { font-size: 12px; color: var(--ink-3); line-height: 1.35; margin-top: 2px; }
-.pjd-links { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 10px; } .pjd-links .fbtn { text-decoration: none; padding: 0; }
+.pjd-main > .pj-dl { border-top: 1px solid var(--line); padding-top: 14px; }   /* разделители — как между блоками выше */
+.pjd-links { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 14px; padding-top: 8px; border-top: 1px solid var(--line); } .pjd-links .fbtn { text-decoration: none; padding: 0; }
 .pj-date { transition: width 280ms var(--ease); }
 .pj-date.wide { width: min(1180px, calc(100vw - 32px)); }
 .pjd-wrap { display: flex; gap: 0; align-items: stretch; }
