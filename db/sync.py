@@ -25,7 +25,7 @@ from psycopg2.extras import Json, execute_values
 from competitors import collector, curation, direct_match, market, protodata, seatmap
 from competitors.storage import load_json
 from db import connect
-from db.migrate import MARKET, OPERATORS, Migration, _op, _starts, verify
+from db.migrate import MARKET, OPERATORS, Migration, _op, _starts, listing_url, verify
 from db.projects import Registry, homonym_keys, title_key
 
 FRESH = timedelta(hours=30)   # сбор источника свежее этого — его «пропало» значит «снято», иначе — сбой сбора, не трогаем
@@ -229,7 +229,7 @@ class Sync(Migration):
             for k in r["keys"]:
                 op = _op(k)
                 org = (orgs.get(k) or [None])[0] if op == "kassir" else None
-                listings.append((sid, op, k, r.get("url_k") if op == "kassir" else r.get("url_y"), (r.get("orig") or {}).get("title") or r["title"],
+                listings.append((sid, op, k, listing_url(r, op), (r.get("orig") or {}).get("title") or r["title"],
                                  r.get("title_api"), r.get("pmin"), r.get("pmax"), org or r.get("org") or None, r.get("first_seen") or self.today,
                                  r.get("last_seen") or self.today))
         if updates:

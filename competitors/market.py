@@ -1,5 +1,5 @@
 """
-«Афиша рынка»: что идёт в 98 городах — по Кассиру (kassir.ru) и Яндекс Афише.
+«Афиша рынка»: что идёт в 98 городах — по Кассиру (kassir.ru), Яндекс Афише и Qtickets (competitors/qtickets.py).
 
 Только афиша: название, дата, площадка, город, ниша, цены — без схем залов и
 денег. Сбор раз в сутки (21:00 МСК, запускает cron-job.org → market.yml).
@@ -45,7 +45,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from difflib import SequenceMatcher
 
-from competitors import blocks, curation
+from competitors import blocks, curation, qtickets
 from competitors.classifier import GENRES, classify_by_rules, classify_with_ai, title_key
 from competitors.storage import BASE_DIR, CONFIG_DIR, DATA_DIR, load_json, save_json
 
@@ -80,6 +80,8 @@ BIG_DOMAINS = ("msk.kassir.ru", "spb.kassir.ru")   # Москву и Петер�
 LONG_RUN_DAYS = 12      # идёт больше 12 дней — одна строка с периодом, а не строка на каждый день
 AI_PER_RUN = 600        # нейросети за сбор — не больше стольких новых названий (остальные — в следующие дни)
 MIN_SHARE_OF_PREVIOUS = 0.5  # источник вернул меньше половины прошлого — считаем сбой и афишу не перезаписываем
+SOURCES = "kyq"         # буквы источников строки (src): Кассир, Яндекс Афиша, Qtickets — всегда в этом порядке
+SOURCE_NAMES = {"k": "Кассир", "y": "Яндекс Афиша", "q": "Qtickets"}
 
 
 # ---------------------------------------------------------------- журнал
@@ -323,6 +325,17 @@ YANDEX_FORMAT_TAG = {"мюзикл": ("Театр", "Мюзикл"), "балет
                      "спектакль": ("Театр", "Спектакль"), "концерт": ("Музыка", "Концерт"),
                      "лекция": ("Разговорный жанр", "Лекция"), "танцевальное шоу": ("Танец", "Танцевальное шоу"),
                      "иммерсивный спектакль": ("Театр", "Иммерсивный спектакль")}
+# Тип мероприятия на Qtickets → («тип на сайте» для правил, (сфера, формат) по умолчанию); None — не рынок
+QTICKETS_TYPE = {"Концерт": (["Концерт"], None), "Киноконцерт": (["Концерт"], None), "Спектакль": (["Спектакль"], None),
+                 "Мюзикл": (["Мюзикл"], None), "Балет": (["Балет"], None), "Стендап": (["Стендапы"], None),
+                 "Юмор": (["Юмор"], None), "Для детей": (["Для детей"], None), "Шоу": ([], ("Шоу", "Шоу")),
+                 "Цирк": ([], ("Зрелищные / смешанные", "Шоу")), "Фестиваль": ([], ("", "Фестиваль")),
+                 "Вечеринка": ([], ("Музыка", "DJ-сет")), "Дискотека": ([], ("Музыка", "DJ-сет")), "Рейв": ([], ("Музыка", "DJ-сет")),
+                 "Рэп-баттл": ([], ("Музыка", "Концерт")), "Поэзия": ([], ("Литература / поэзия", "Литературный вечер")),
+                 "Лекция": ([], ("Разговорный жанр", "Лекция")), "Творческая встреча": ([], ("Разговорный жанр", "Творческая встреча")),
+                 "Экскурсия": None, "Мастер-класс": None, "Спорт": None, "Соревнование": None, "Автоспорт": None, "Квиз": None,
+                 "Квест": None, "Форум": None, "Конференция": None, "Конкурс": None, "Выставка": None, "Кино": None,
+                 "Тренинг": None, "Семинар": None, "Вебинар": None, "Бизнес": None, "Обучение": None}
 SPHERE_OF_FORMAT = {"Концерт": "Музыка", "Фестиваль": "Музыка", "Спектакль": "Театр", "Шоу": "Шоу",
                     "Стендап": "Комедия и юмор", "Лекция": "Разговорный жанр"}
 
@@ -487,18 +500,27 @@ def strict_title(a: str, b: str) -> bool:
     return bool(sa) and (sa == sb or SequenceMatcher(None, sa, sb).ratio() >= 0.9)
 
 
+def src_union(a: str, b: str) -> str:
+    """Источники двух склеенных строк: «k» + «y» → «ky», «ky» + «q» → «kyq»; дубль с того же сайта — источник прежний."""
+    return "".join(c for c in SOURCES if c in (a or "") + (b or ""))
+
+
 def _merge(hit: dict, r: dict) -> None:
-    """Строка Кассира r — в строку Яндекса hit: название и ссылка Яндекса, ссылка и Пушкинская — с Кассира."""
-    hit["src"] = "ky" if {hit["src"], r["src"]} != {hit["src"]} else hit["src"]  # дубль с того же сайта — источник прежний
+    """Строка r — в строку hit: название и ссылка hit остаются, недостающее (ссылки, время, цены, жанр, организатор) — из r.
+    Кассир → Яндекс: название и ссылка Яндекса, ссылка и Пушкинская — с Кассира; Qtickets → любой: его ссылка и организатор."""
+    hit["src"] = src_union(hit["src"], r["src"])
     hit["keys"] = hit["keys"] + r["keys"]
-    hit["url_k"] = hit["url_k"] or r["url_k"]
-    hit["url_y"] = hit["url_y"] or r["url_y"]
-    hit["pushkin"] = hit["pushkin"] or r["pushkin"]
+    hit["url_k"] = hit.get("url_k") or r.get("url_k")
+    hit["url_y"] = hit.get("url_y") or r.get("url_y")
+    hit["url_q"] = hit.get("url_q") or r.get("url_q")
+    hit["pushkin"] = hit.get("pushkin") or r.get("pushkin")
     hit["time"] = hit["time"] or r["time"]
     if hit["pmin"] is None:
         hit["pmin"], hit["pmax"] = r["pmin"], r["pmax"]
     hit["genre"] = hit["genre"] or r["genre"]
     hit["org"] = hit.get("org") or r.get("org") or ""
+    if r.get("ytour"):
+        hit["ytour"] = True
 
 
 def dedupe_source(rows: list[dict], aliases: Aliases | None = None) -> list[dict]:
@@ -716,8 +738,92 @@ def _clean_venue(v: str, city: str) -> str:
     return re.sub(r"\s*\((%s)\)\s*$" % re.escape(city), "", v or "").strip() or "—"
 
 
+def _same_key(a: str, b: str) -> bool:
+    return bool(a and b) and (a == b or (min(len(a), len(b)) >= 5 and (a in b or b in a)))
+
+
+def qtickets_rows(parts: list[dict], city_by_norm: dict[str, str], today: str, overrides: dict, dropped: Counter) -> list[dict]:
+    """Карточки Qtickets → строки афиши. Город — по адресу площадки со страницы мероприятия (если она уже открывалась),
+    иначе — город поддомена; название — без города и даты (qtickets.clean_title), иначе не склеится с туром."""
+    pages = qtickets.pages()
+    rows = []
+    for part in parts:
+        for c in part["items"]:
+            kind = QTICKETS_TYPE.get(c["type"], ([], None))   # тип, которого нет в справочнике, — решают правила по названию
+            if kind is None:
+                dropped["Qtickets: кино, экскурсии, мастер-классы, спорт, квизы, форумы"] += 1
+                continue
+            org, addr_city = (pages.get(str(c["id"])) or ["", ""])[:2]
+            city = part["city"]
+            if addr_city and norm_city(addr_city) != norm_city(city):
+                city = city_by_norm.get(norm_city(addr_city))
+                if not city:
+                    dropped["Qtickets: город не из списка"] += 1
+                    continue
+            title = qtickets.clean_title(qtickets.clean_title(c["title"], part["city"]), city) if city != part["city"] \
+                else qtickets.clean_title(c["title"], city)
+            venue = _clean_venue(c["venue"], city)
+            if NOISE_VENUE.search(venue) or NOISE_TITLE.search(title):
+                dropped["Qtickets: сельские филиалы, библиотеки, программы"] += 1
+                continue
+            date, tm = c["dt"][:10], c["dt"][11:16]   # время местное, с поясом города: «2026-10-18T18:00:00+03:00»
+            if date < today:
+                dropped["Qtickets: прошло"] += 1
+                continue
+            site_types, extra = kind
+            nc = niche(title, site_types, overrides, [extra] if extra else [])
+            if not nc.get("format"):
+                dropped["Qtickets: формат не из справочника"] += 1
+                continue
+            rows.append({"src": "q", "keys": [f"q:{c['id']}"], "city": city, "venue": venue, "title": title, "date": date, "time": tm,
+                         "sphere": nc.get("sphere", ""), "format": nc["format"], "genre": nc.get("genre", ""),
+                         "pmin": c.get("pmin"), "pmax": None, "pushkin": False, "age": "", "url_k": None, "url_y": None,
+                         "url_q": c["url"], "more": 0, "until": "", "org": org or ""})
+    return rows
+
+
+def merge_extra(rows: list[dict], extra: list[dict], aliases: Aliases | None = None) -> list[dict]:
+    """
+    Строки ещё одного сайта (Qtickets) — к уже склеенным Кассиру и Яндексу. Тот же город и дата, и по порядку:
+    то же название (как при склейке Кассира с Яндексом) → похожее название на той же площадке в тот же час (или без часа
+    у одной из строк) → строго то же название в тот же час, и такое одно. Не нашлось — отдельная строка.
+    """
+    if not extra:
+        return rows
+    letter = extra[0]["src"]
+    by_day = defaultdict(list)
+    for r in rows:
+        by_day[(r["city"], r["date"])].append(r)
+    keep, how = [], Counter()
+    for q in extra:
+        cands = [r for r in by_day.get((q["city"], q["date"]), []) if letter not in r["src"]]
+        nq = tour_key(q["title"])
+        hit = next((r for r in cands if _same_key(nq, tour_key(r["title"]))), None)
+        if hit:
+            how["name"] += 1
+            if aliases is not None and q["time"] and q["time"] == hit["time"]:
+                aliases.learn(q["city"], q["venue"], hit["venue"])
+        else:
+            hit = next((r for r in cands if (not q["time"] or not r["time"] or q["time"] == r["time"])
+                        and same_venue(q["venue"], r["venue"], q["city"], aliases) and similar_title(q["title"], r["title"])), None)
+            if hit:
+                how["venue"] += 1
+        if not hit and q["time"]:
+            same = [r for r in cands if r["time"] == q["time"] and strict_title(q["title"], r["title"])]
+            hit = same[0] if len(same) == 1 else None
+            if hit:
+                how["hour"] += 1
+        if hit:
+            _merge(hit, q)
+        else:
+            keep.append(q)
+    log(f"{SOURCE_NAMES[letter]}: склеено с Кассиром / Яндексом {sum(how.values())} (по названию {how['name']}, по площадке "
+        f"{how['venue']}, по часу {how['hour']}), только у него — {len(keep)}")
+    return rows + keep
+
+
 def parse(kassir: list[dict], yandex: list[dict], cities: list[str], today: str, overrides: dict,
-          aliases: Aliases | None = None) -> tuple[list[dict], Counter, list]:
+          aliases: Aliases | None = None, qt: list[dict] | None = None) -> tuple[list[dict], Counter, list]:
     city_by_norm = {norm_city(c): c for c in cities}
     dropped: Counter = Counter()
     rows: list[dict] = []
@@ -859,6 +965,10 @@ def parse(kassir: list[dict], yandex: list[dict], cities: list[str], today: str,
     out, strict_merged = merge_unique_strict(out, aliases)
     if strict_merged:  # выученные пары площадок склеивают и остальные мероприятия на них
         out, conflicts = merge_by_slot(out, aliases)
+
+    # --- Qtickets: третий сайт — к уже склеенным строкам Кассира и Яндекса
+    if qt:
+        out = merge_extra(out, dedupe_source(qtickets_rows(qt, city_by_norm, today, overrides, dropped), aliases), aliases)
     out.sort(key=lambda r: (r["date"], r["time"] or "99", r["city"], r["title"]))
     return out, dropped, conflicts
 
@@ -892,6 +1002,15 @@ def classify_missing(rows: list[dict], ai: dict | None) -> int:
 
 # ---------------------------------------------------------------- сбор целиком
 
+def _fetch_qtickets(cities: list[str], today: str) -> list[dict] | None:
+    """Qtickets — дополнение: его сбой (не отказ сайта) не прерывает сбор Кассира и Яндекса, а считается «не собран»."""
+    try:
+        return qtickets.fetch(cities, log, today)
+    except Exception as e:
+        log(f"✖ Qtickets: {e}")
+        return None
+
+
 def _ai_settings() -> dict | None:
     stored = load_json(CONFIG_DIR / "settings.json", {}).get("competitors", {})
     provider = stored.get("ai_provider", "gigachat")
@@ -910,9 +1029,10 @@ def run() -> bool:
     log(f"=== Сбор рынка начат: городов {len(cities)} ===")
     try:
         plan, _ = kassir_plan(cities)
-        with ThreadPoolExecutor(max_workers=2) as pool:  # сайты разные — опрашиваем одновременно, паузы у каждого свои
+        with ThreadPoolExecutor(max_workers=3) as pool:  # сайты разные — опрашиваем одновременно, паузы у каждого свои
             kassir_job, yandex_job = pool.submit(fetch_kassir, plan), pool.submit(fetch_yandex, cities)
-            kassir, yandex = kassir_job.result(), yandex_job.result()
+            qt_job = pool.submit(_fetch_qtickets, cities, today)
+            kassir, yandex, qt = kassir_job.result(), yandex_job.result(), qt_job.result()
         if kassir is not None:
             log(f"Кассир: {len(plan)} запросов по {len({p[0] for p in plan})} регионам, записей {sum(len(p['items']) for p in kassir)}")
         if yandex is not None:
@@ -920,24 +1040,26 @@ def run() -> bool:
 
         aliases = Aliases(load_json(VENUE_ALIASES_FILE, {}))
         overrides = load_json(OVERRIDES_FILE, {})
-        rows, dropped, conflicts = parse(kassir or [], yandex or [], cities, today, overrides, aliases)
+        rows, dropped, conflicts = parse(kassir or [], yandex or [], cities, today, overrides, aliases, qt or [])
         previous = load_json(EVENTS_FILE, [])
         by_src_now = Counter(s for r in rows for s in r["src"])
         by_src_before = Counter(s for r in previous for s in r["src"])
-        names = {"k": "Кассир", "y": "Яндекс Афиша"}
+        got = {"k": kassir, "y": yandex, "q": qt}
         # Сайт не собран: закрыл доступ (None) или вернул меньше половины прошлого (сбой) — его мероприятия переносим
-        missing = [s for s, got in (("k", kassir), ("y", yandex))
-                   if got is None or (by_src_before[s] and by_src_now[s] < by_src_before[s] * MIN_SHARE_OF_PREVIOUS)]
-        if len(missing) == 2:  # иначе все мероприятия попали бы в «исчезли», а завтра — обратно
-            raise RuntimeError("ни один сайт не собран полностью — афиша не обновлена")
+        missing = [s for s in SOURCES
+                   if got[s] is None or (by_src_before[s] and by_src_now[s] < by_src_before[s] * MIN_SHARE_OF_PREVIOUS)]
+        if "k" in missing and "y" in missing:  # иначе почти все мероприятия попали бы в «исчезли», а завтра — обратно
+            raise RuntimeError("ни Кассир, ни Яндекс не собраны полностью — афиша не обновлена")
         if missing:
-            log(f"✖ {names[missing[0]]}: не собран — работаем по второму сайту, его мероприятия — из прошлого сбора")
-            if missing == ["y"] and yandex:   # частичный ответ Яндекса не смешиваем с перенесённым
-                rows, dropped, conflicts = parse(kassir or [], [], cities, today, overrides, aliases)
-            elif missing == ["k"] and kassir:
-                rows, dropped, conflicts = parse([], yandex or [], cities, today, overrides, aliases)
-            carried = carry_source(rows, previous, today, missing[0])
-            log(f"{names[missing[0]]}: перенесено из прошлого сбора {carried} мероприятий")
+            log(f"✖ {', '.join(SOURCE_NAMES[s] for s in missing)}: не собран — его мероприятия — из прошлого сбора")
+            if any(got[s] for s in missing):   # частичный ответ не смешиваем с перенесённым
+                use = {s: [] if s in missing else (got[s] or []) for s in SOURCES}
+                rows, dropped, conflicts = parse(use["k"], use["y"], cities, today, overrides, aliases, use["q"])
+            for s in missing:
+                carried = carry_source(rows, previous, today, s)
+                log(f"{SOURCE_NAMES[s]}: перенесено из прошлого сбора {carried} мероприятий")
+            if "q" not in missing:   # перенесённые строки Кассира / Яндекса — тоже кандидаты для склейки с Qtickets
+                rows = merge_extra([r for r in rows if r["src"] != "q"], [r for r in rows if r["src"] == "q"], aliases)
         if "k" not in missing:
             rows = resolve_kassir_titles(rows, conflicts, today)
             try:
@@ -948,9 +1070,12 @@ def run() -> bool:
         # Когда каждый сайт собирался в последний раз; до 09.10 этого поля не было — время последней удачной записи афиши
         was = datetime.fromtimestamp(EVENTS_FILE.stat().st_mtime).isoformat(timespec="seconds") if EVENTS_FILE.exists() else None
         src_at = {"k": was, "y": was, **status.get("src_at", {})}
-        for s_ in ("k", "y"):
+        # Первый день сбора сайта: его мероприятия в этот день — точка отсчёта, а не «новое» (как весь первый сбор)
+        src_first = {"k": status.get("first_run") or today, "y": status.get("first_run") or today, **status.get("src_first", {})}
+        for s_ in SOURCES:
             if s_ not in missing:
                 src_at[s_] = now_iso
+                src_first.setdefault(s_, today)
 
         asked = classify_missing(rows, _ai_settings())
         cur = curation.load()
@@ -965,7 +1090,7 @@ def run() -> bool:
         for r in rows:
             known = [seen[k] for k in r["keys"] if k in seen] or [seen[legacy(k)] for k in r["keys"] if legacy(k) in seen]
             r["first_seen"] = min(known) if known else today
-            if not known and first_run != today:
+            if not known and first_run != today and not all(src_first.get(c) == today for c in r["src"]):
                 new_rows.append(r)
             for k in r["keys"]:
                 seen.setdefault(k, today)
@@ -979,8 +1104,8 @@ def run() -> bool:
         _save_lines(SEEN_FILE, seen)
         save_json(VENUE_ALIASES_FILE, aliases.dump())
         archived = update_archive(rows, cur, today)
-        brief = lambda r: {k: r[k] for k in ("keys", "city", "venue", "title", "date", "time", "format", "sphere", "genre",
-                                             "pmin", "pmax", "url_k", "url_y")}
+        brief = lambda r: {k: r.get(k) for k in ("keys", "city", "venue", "title", "date", "time", "format", "sphere", "genre",
+                                                 "pmin", "pmax", "url_k", "url_y", "url_q")}
         # Если за день сбор был не один (запуск вручную), списки дня дополняются, а не перезаписываются
         day = load_json(DAYS_DIR / f"{today}.json", {"new": [], "gone": []})
         for part, found in (("new", new_rows), ("gone", gone)):
@@ -991,11 +1116,11 @@ def run() -> bool:
         took = time.time() - started
         no_data = [c for c in cities if c not in {r["city"] for r in rows}]
         tours = sum(r["tour"] == "tour" for r in rows)
-        summary = (("без " + names[missing[0]] + " (из прошлого сбора) — " if missing else "") + f"мероприятий {len(rows)} в {len(cities) - len(no_data)} городах (гастрольных {tours}), новых {len(new_rows)}, "
+        summary = (("без " + ", ".join(SOURCE_NAMES[s] for s in missing) + " (из прошлого сбора) — " if missing else "") + f"мероприятий {len(rows)} в {len(cities) - len(no_data)} городах (гастрольных {tours}), новых {len(new_rows)}, "
                    f"исчезло {len(gone)}, в архиве гастролей {archived}, нейросеть {asked}, за {took / 60:.0f} мин")
         status.update(first_run=first_run, last_run_at=now_iso, last_ok=True, last_error=None, summary=summary,
                       rows=len(rows), tours=tours, new=len(new_rows), gone=len(gone), by_src=dict(Counter(r["src"] for r in rows)),
-                      dropped=dict(dropped), no_data=no_data, src_at=src_at, stale=missing)
+                      dropped=dict(dropped), no_data=no_data, src_at=src_at, src_first=src_first, stale=missing)
         log(f"=== Сбор рынка завершён: {summary} ===")
         return True
     except Exception as e:
@@ -1009,12 +1134,12 @@ def run() -> bool:
 
 def carry_source(rows: list[dict], previous: list[dict], today: str, src: str) -> int:
     """
-    Сайт src («k» / «y») сегодня не собран: его карточки из прошлого сбора остаются в афише (ещё не прошедшие).
-    Строка, склеенная с карточкой второго сайта, которая есть и сейчас, — получает обратно номер и ссылку src;
-    остальные — отдельной строкой только src. Пометка stale = src — в интерфейсе «по прошлому сбору».
+    Сайт src («k» / «y» / «q») сегодня не собран: его карточки из прошлого сбора остаются в афише (ещё не прошедшие).
+    Строка, склеенная с карточкой другого сайта, которая есть и сейчас, — получает обратно номер и ссылку src;
+    остальные — отдельной строкой только src. Пометка stale — буквы непересобранных сайтов строки («по прошлому сбору»).
     Сколько строк добавлено отдельно.
     """
-    pref, other_url = src + ":", "url_" + ("y" if src == "k" else "k")
+    pref = src + ":"
     by_key = {k: r for r in rows for k in r["keys"]}
     added = 0
     for p in previous:
@@ -1024,13 +1149,19 @@ def carry_source(rows: list[dict], previous: list[dict], today: str, src: str) -
         if not mine or any(k in by_key for k in mine):
             continue
         hit = next((by_key[k] for k in p["keys"] if not k.startswith(pref) and k in by_key), None)
-        if hit is not None:
-            hit["keys"] = hit["keys"] + mine
-            hit["src"] = "".join(c for c in "ky" if c in hit["src"] + src)
+        if hit is not None:   # первый ключ строки — её номер (архив гастролей, прототип): каким был, таким и остаётся
+            hit["keys"] = mine + hit["keys"] if p["keys"][0] in mine else hit["keys"] + mine
+            if hit["src"] == "q":   # строка только Qtickets: название, площадка и ниша — как были у Кассира / Яндекса
+                base = {**p, **(p.get("orig") or {})}
+                hit.update({f: base[f] for f in ("title", "venue", "sphere", "format", "genre", "age") if base.get(f)})
+            hit["src"] = src_union(hit["src"], src)
             hit["url_" + src] = hit.get("url_" + src) or p.get("url_" + src)
-            hit["stale"] = src
+            hit["stale"] = src_union(hit.get("stale", ""), src)
+            if p.get("ytour"):   # «Тур артиста» Яндекса — признак гастроли, при переносе не теряем
+                hit["ytour"] = True
         else:
-            q = {**p, **(p.get("orig") or {}), "keys": mine, "src": src, other_url: None, "stale": src}
+            q = {**p, **(p.get("orig") or {}), "keys": mine, "src": src, "stale": src,
+                 **{"url_" + c: None for c in SOURCES if c != src}}
             q.pop("orig", None)   # ручные правки применятся заново (curation.apply_edits)
             rows.append(q)
             added += 1
@@ -1055,7 +1186,7 @@ def update_archive(rows: list[dict], cur: dict, today: str) -> int:
         now.add(k)
         e = arch.get(k) or {"first_seen": r.get("first_seen") or today}
         e.update({f: r.get(f) for f in ("pk", "title", "city", "venue", "date", "time", "format", "sphere", "genre",
-                                         "pmin", "pmax", "url_k", "url_y", "tour_why")})
+                                         "pmin", "pmax", "url_k", "url_y", "url_q", "tour_why")})
         e["last_seen"], e["status"] = today, "on_sale"
         arch[k] = e
     local = {k for k, m in cur["projects"].items() if m["type"] == "local"}
@@ -1130,9 +1261,9 @@ def export_js() -> str:
                        idx(lists["spheres"], r["sphere"] or ""), idx(lists["formats"], r["format"]), idx(lists["genres"], r["genre"] or ""),
                        r["pmin"] or 0, r["pmax"] or 0, 1 if r["pushkin"] else 0, r["src"], r["url_k"] or "", r["url_y"] or "",
                        r["more"] or 0, r["until"] or "", r["first_seen"], r["age"] or "", 1 if r.get("ytour") else 0, _row_key(r),
-                       r.get("org") or "", best_sales(r["keys"]) or 0, direct.get(i, ""), r["keys"]])
+                       r.get("org") or "", best_sales(r["keys"]) or 0, direct.get(i, ""), r["keys"], r.get("url_q") or ""])
     arch = [[e["city"], e["venue"], e["title"], e["date"], e.get("format") or "", e.get("genre") or "", e.get("pmin") or 0,
-             e.get("pmax") or 0, e["status"], e.get("first_seen") or "", e.get("last_seen") or "", e.get("url_y") or e.get("url_k") or ""]
+             e.get("pmax") or 0, e["status"], e.get("first_seen") or "", e.get("last_seen") or "", e.get("url_y") or e.get("url_k") or e.get("url_q") or ""]
             for e in (_arch_now(x) for x in load_json(ARCHIVE_FILE, {}).values()) if e["status"] != "on_sale"]
     at = datetime.fromisoformat(status["last_run_at"])
     months = ["янв.", "февр.", "мар.", "апр.", "мая", "июн.", "июл.", "авг.", "сент.", "окт.", "нояб.", "дек."]
@@ -1140,14 +1271,14 @@ def export_js() -> str:
     lab = lambda iso: (lambda t: f"{t.day} {months[t.month - 1]}, {t:%H:%M}")(datetime.fromisoformat(iso[:19]))
     stale = {x: lab(status["src_at"][x]) for x in status.get("stale", []) if (status.get("src_at") or {}).get(x)}
     data = {"at": label, "stale": stale, "first": status.get("first_run"), "cities": cities, "fo": fo, **lists, "rows": packed, "arch": arch,
-            "salesAt": snap.get("at"), "directOnly": direct_only, "salesOps": snap.get("operators", []), "suggest": snap.get("suggest", []), "finals": snap.get("finals", {}),
-            "stats": {"merged": Counter(r["src"] for r in rows)["ky"], "dropped": status.get("dropped", {}), "bySrc": status.get("by_src", {})}}
-    return (f"// Снимок «Афиши рынка»: Кассир + Яндекс Афиша по {len(all_cities)} городам, сбор {label}.\n"
+            "salesAt": snap.get("at"), "directOnly": direct_only, "salesOps": snap.get("operators", []), "suggest": snap.get("suggest", []), "finals": snap.get("finals", {}), "srcFirst": status.get("src_first", {}),
+            "stats": {"merged": sum(len(r["src"]) > 1 for r in rows), "dropped": status.get("dropped", {}), "bySrc": status.get("by_src", {})}}
+    return (f"// Снимок «Афиши рынка»: Кассир + Яндекс Афиша + Qtickets по {len(all_cities)} городам, сбор {label}.\n"
             "// Пересобрать: ./pull_data.sh && python3 -m competitors.market export (через app.py — собирается сам)\n"
             "// Строка: [город, площадка, название, дата, время, сфера, формат, жанр, цена от, цена до, Пушкинская,\n"
-            "//  источник k/y/ky, ссылка Кассир, ссылка Яндекс, ещё дат, до, впервые замечено, возраст, «Тур артиста», номер, организатор,\n"
+            "//  источник — буквы сайтов k/y/q (Кассир, Яндекс, Qtickets), ссылка Кассир, ссылка Яндекс, ещё дат, до, впервые замечено, возраст, «Тур артиста», номер, организатор,\n"
             "//  продажи (сводка с сервера, sales/export.py) или 0, uid мероприятия площадки прямого сбора (тот же сеанс) или \"\",\n"
-            "//  номера карточек у касс (для подробностей продаж в карточке)]\n"
+            "//  номера карточек у касс (для подробностей продаж в карточке), ссылка Qtickets]\n"
             "// directOnly — мероприятия площадок прямого сбора, которых нет в афише рынка (строки — из competitors-data.js)\n"
             "// Архив (arch): [город, площадка, название, дата, формат, жанр, цена от, цена до, итог past|gone, впервые, в последний раз, ссылка]\n"
             "var MK = " + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n")

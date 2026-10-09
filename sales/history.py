@@ -36,7 +36,8 @@ SELECT c.name, v.name, coalesce(s.title, p.title), s.local_date, s.local_time, s
  GROUP BY s.id, c.name, v.name, p.title
  ORDER BY s.local_date, s.local_time NULLS LAST, c.name
 """
-NOT_DIRECT = {"kassir", "yandex", "custom"}   # остальные операторы — кассы и сайты площадок прямого сбора (ОрелКонцерт и др.)
+NOT_DIRECT = {"kassir", "yandex", "qtickets", "custom"}   # остальные операторы — кассы и сайты площадок прямого сбора (ОрелКонцерт и др.)
+MARKET_SRC = (("kassir", "k"), ("yandex", "y"), ("qtickets", "q"))   # сайты афиши рынка → буквы источника, как в market-data.js
 
 
 def rows(conn, frm: str, to: str, city: str = "") -> list[dict]:
@@ -52,7 +53,7 @@ def rows(conn, frm: str, to: str, city: str = "") -> list[dict]:
         ops = [o for o in ops if o]
         has = set(ops)
         direct = [(o, u) for o, u in zip(ops, urls) if o not in NOT_DIRECT]
-        src = "d" if direct else "ky" if {"kassir", "yandex"} <= has else "k" if "kassir" in has else "y" if "yandex" in has else ""
+        src = "d" if direct else "".join(c for o, c in MARKET_SRC if o in has)
         r = {"c": city_, "v": venue, "t": title or "", "d": d.isoformat(), "tm": t.strftime("%H:%M") if t else "",
              "sp": sphere or "", "f": fmt or "", "g": genre or "", "pn": int(pmin) if pmin else 0, "px": int(pmax) if pmax else 0,
              "pu": 1 if pushkin else 0, "src": src, "seen": first.isoformat() if first else "", "age": age or "",
@@ -67,6 +68,8 @@ def rows(conn, frm: str, to: str, city: str = "") -> list[dict]:
                 r["uk"] = u
             elif u and o == "yandex":
                 r["uy"] = u
+            elif u and o == "qtickets":
+                r["uq"] = u
         if result and result.get("best"):
             r["s"] = result["pools"][result["best"]]
             r["np"] = len(result["pools"])     # сколько касс видели

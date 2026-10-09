@@ -1,5 +1,5 @@
 [Unit]
-Description=ticket-monitor: афиша рынка (98 городов, Кассир + Яндекс Афиша)
+Description=ticket-monitor: афиша рынка (98 городов, Кассир + Яндекс Афиша + Qtickets)
 After=network-online.target
 Wants=network-online.target
 

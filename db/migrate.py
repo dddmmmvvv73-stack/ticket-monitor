@@ -39,13 +39,19 @@ OPERATORS = [
     ("vladimirkoncert", "Движок vladimirkoncert", "regional", "vladimirkoncert", sorted(vladimirkoncert.SITES), {"scheme": "все места"}),
     ("odk33", "ОДКиИ (odk33.ru)", "venue_site", "odk33", ["odk33.ru"], {"scheme": "через vladimirkoncert"}),
     ("orelkoncert", "ОрелКонцерт", "regional", "orelkoncert", ["орелконцерт.рф"], {"scheme": "все места"}),
+    ("qtickets", "Qtickets", "federal", "qtickets", ["qtickets.events", "qtickets.ru"], {"scheme": "закрыта (защита)", "organizer": True}),
     ("custom", "Свои мероприятия", "custom", None, [], {}),
 ]
 
 
 def _op(key: str) -> str:
-    return ("kassir" if key.startswith("k:") else "yandex" if key.startswith("y:") else "odk33" if key.startswith("odk33:")
-            else "orelkoncert" if key.startswith("orel:") else "vladimirkoncert")
+    return ("kassir" if key.startswith("k:") else "yandex" if key.startswith("y:") else "qtickets" if key.startswith("q:")
+            else "odk33" if key.startswith("odk33:") else "orelkoncert" if key.startswith("orel:") else "vladimirkoncert")
+
+
+def listing_url(r: dict, op: str) -> str | None:
+    """Ссылка карточки строки афиши рынка у этой кассы."""
+    return r.get({"kassir": "url_k", "yandex": "url_y", "qtickets": "url_q"}.get(op, "url_y"))
 
 
 def _starts(date: str, time: str | None, tz: str):
@@ -215,7 +221,7 @@ class Migration:
             for k in r["keys"]:
                 op = _op(k)
                 org = (orgs.get(k) or [None])[0] if op == "kassir" else None
-                vals.append((sid, op, k, r.get("url_k") if op == "kassir" else r.get("url_y"), (r.get("orig") or {}).get("title") or r["title"],
+                vals.append((sid, op, k, listing_url(r, op), (r.get("orig") or {}).get("title") or r["title"],
                              r.get("title_api"), r.get("pmin"), r.get("pmax"), org or r.get("org") or None, r.get("first_seen"), r.get("last_seen")))
             execute_values(self.cur, "INSERT INTO listings (session_id, operator_id, ext_key, url, title, title_api, price_min, price_max, organizer, first_seen, last_seen) "
                                      "VALUES %s ON CONFLICT (operator_id, ext_key) DO NOTHING", vals)
