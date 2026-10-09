@@ -1,5 +1,5 @@
 [Unit]
-Description=ticket-monitor: афиша рынка (98 городов, Кассир + Яндекс Афиша + Qtickets)
+Description=ticket-monitor: афиша рынка (344 города, Кассир + Яндекс Афиша + Qtickets)
 After=network-online.target
 Wants=network-online.target
 
@@ -17,4 +17,5 @@ ExecStartPre=/usr/bin/touch /opt/ticket-monitor/data/.market_running
 ExecStart=/opt/ticket-monitor/.venv/bin/python -m competitors.market
 ExecStartPost=/opt/ticket-monitor/deploy/commit_data.sh Рынок
 ExecStopPost=/bin/rm -f /opt/ticket-monitor/data/.market_running
-TimeoutStartSec=7200
+# 344 города: Qtickets — до ~1,5 ч (афиша + страницы мероприятий), идёт параллельно Кассиру и Яндексу
+TimeoutStartSec=10800

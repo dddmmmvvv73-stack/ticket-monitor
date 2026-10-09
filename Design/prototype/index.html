@@ -1490,7 +1490,7 @@ function cityNames() {
 }
 function cityHasData(name) { return ALL.some(function (e) { return e.city === name; }); }
 function buildCitySelect() {
-  if (MR.length) { $("city").innerHTML = mCityOptions(); return; }  // один список для всех разделов: все города, округа, 98 городов
+  if (MR.length) { $("city").innerHTML = mCityOptions(); return; }  // один список для всех разделов: все города, округа, города списка
   var names = cityNames();  // снимка рынка нет — только города площадок прямого сбора
   if (S.city !== "Все города" && names.indexOf(S.city) < 0) S.city = names[0] || "Все города";
   $("city").innerHTML = '<option value="Все города">Все города</option>' + names.map(function (n) {
@@ -2250,7 +2250,7 @@ function renderArchiveOld() {
     return '<button data-arch-src="' + t[0] + '" aria-pressed="' + (S.arch.src === t[0]) + '">' + t[1] + ' <span class="num" style="opacity:0.7">' + num(t[2]) + '</span></button>';
   }).join("") + '</div>';
   var sub = comp ? "Прошедшие и снятые с продажи мероприятия площадок · итог — по последнему сбору перед началом · слежение с " + TRACK_SINCE
-    : "Гастрольные выступления, которые ушли из афиши 98 городов · копится с " + (MK.first ? human(MK.first) : "первого сбора рынка");
+    : "Гастрольные выступления, которые ушли из афиши " + MK.cities.length + " городов · копится с " + (MK.first ? human(MK.first) : "первого сбора рынка");
   return head("Архив", sub) + (comp ? archComp(cAll, q, seg) : archMarket(mAll, q, seg));
 }
 function archComp(all, q, seg) {
@@ -3052,7 +3052,7 @@ function ghRunText(r) {
     : { cls: "warn", text: r.conclusion === "cancelled" ? "отменён" : "с ошибкой", at: at(r.createdAt) };
 }
 function ghCard() {
-  var rows = [["collect", "Сбор конкурентов", "каждый час в :25", "площадки, схемы залов, продажи"], ["market", "Афиша рынка", "каждый день в 21:00", "98 городов, Кассир, Яндекс Афиша и Qtickets"]];
+  var rows = [["collect", "Сбор конкурентов", "каждый час в :25", "площадки, схемы залов, продажи"], ["market", "Афиша рынка", "каждый день в 21:00", (typeof MK === "undefined" ? 344 : MK.cities.length) + " городов, Кассир, Яндекс Афиша и Qtickets"]];
   var g = S.gh;
   return '<section class="card card-pad"><h2>Сбор на сервере</h2>' +
     '<p class="sub">Сборы идут на сервере в Яндекс Облаке — ноутбук для этого не нужен. Расписание — на сервере; продажи гастролей собираются каждый час отдельно. Здесь можно запустить сбор вне расписания и подтянуть результат на этот компьютер.</p>' +
@@ -3512,7 +3512,7 @@ document.addEventListener("mouseout", function (ev) { if (ev.target.closest && e
 document.addEventListener("focusin", function (ev) { if (ev.target.classList && ev.target.classList.contains("info")) showTip(ev.target); });
 document.addEventListener("focusout", function (ev) { if (ev.target.classList && ev.target.classList.contains("info")) $("infoPop").hidden = true; });
 
-// ---------------------------------------------------------------- Рынок: афиша 98 городов (Кассир + Яндекс Афиша, раз в сутки)
+// ---------------------------------------------------------------- Рынок: афиша городов списка (Кассир + Яндекс Афиша + Qtickets, раз в сутки)
 // Только афиша — без схем залов и денег. Данные — market-data.js (снимок), строка упакована в массив, см. его заголовок.
 function tourKey(t) {
   t = String(t || "").toLowerCase().replace(/ё/g, "е").replace(/\([^)]*\)/g, " ");

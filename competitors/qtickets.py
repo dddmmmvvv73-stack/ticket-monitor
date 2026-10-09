@@ -25,6 +25,7 @@ import os
 import re
 import time
 import urllib.error
+from collections import Counter
 import urllib.request
 from datetime import datetime, timedelta
 from typing import Callable
@@ -92,8 +93,12 @@ def parse_cities(page: str) -> dict[str, str]:
     """Ссылки на города с любой страницы афиши: {поддомен: «Пенза»}."""
     out: dict[str, str] = {}
     for sub, name in re.findall(r'href="https://([a-z0-9-]+)\.qtickets\.events/?"[^>]*>\s*([^<]{2,40}?)\s*<', page):
-        if name.strip():   # ссылка на текущий город бывает без подписи
+        if name.strip():   # ссылка на текущий город — без подписи: его берём из заголовка ниже
             out.setdefault(sub, html_lib.unescape(name).strip())
+    here = re.search(r'rel="canonical" href="https://([a-z0-9-]+)\.qtickets\.events', page)
+    title = re.search(r"<title>[^<]*в городе ([^<–]+?)\s+–", page)
+    if here and title:
+        out[here.group(1)] = html_lib.unescape(title.group(1)).strip()
     return out
 
 
@@ -176,6 +181,12 @@ def _fetch(cities: list[str], log: Log, today: str, client: Client) -> list[dict
         known = fresh
         save_json(CITIES_CACHE, known)
     sub_of = {norm(name): sub for sub, name in known.items()}
+    # «Кировск (Мурманская обл.)» — в списке просто «Кировск»; уточнение в скобках отбрасываем, если без него имя одно
+    short = Counter(norm(re.sub(r"\s*\(.*?\)", "", name)) for name in known.values())
+    for sub, name in known.items():
+        bare = norm(re.sub(r"\s*\(.*?\)", "", name))
+        if short[bare] == 1:
+            sub_of.setdefault(bare, sub)
     out, missing, seen = [], [], set()
     for city in cities:
         sub = sub_of.get(norm(city))
@@ -259,6 +270,7 @@ def clean_title(title: str, city: str) -> str:
     t = (title or "").replace("ё", "е").replace("Ё", "Е")
     cre, name = _city_re(city), re.escape(city.replace("ё", "е"))
     t = _AGE.sub(" ", _DATE.sub(" ", t))
+    t = re.sub(r"\s*\(копия\)", "", t, flags=re.I)   # карточка, скопированная организатором: «Бранч (копия) (копия)»
     t = re.sub(r"\(\s*(?:г\.?\s*)?" + cre + r"\s*\)", " ", t, flags=re.I)
     t = re.sub(r"(?<![\w])(?:во?\s+г\.?\s*|во?\s+|г\.\s*|г\s+)" + cre + r"(?![\w])", " ", t, flags=re.I)
     parts = _SEP.split(t)
