@@ -407,7 +407,7 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
 .pj-hero.has-cover::before { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(12, 10, 9, 0.88) 0%, rgba(12, 10, 9, 0.6) 50%, rgba(12, 10, 9, 0.25) 100%); }
 .pj-hero-in { position: relative; display: flex; gap: 32px; align-items: center; padding: 48px 72px 40px; width: 100%; }
 .pj-ava { position: relative; width: 168px; height: 168px; border-radius: 50%; flex-shrink: 0; overflow: hidden; padding: 0; border: 3px solid rgba(255, 255, 255, 0.2); background: #3a332f; color: #fff; }
-.pj-ava img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; display: block; }
+.pj-ava img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .pj-ini { font: 500 52px/1 var(--display); letter-spacing: -0.02em; }
 .pj-ava-edit { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; font-size: 13px; font-weight: 500; background: rgba(12, 10, 9, 0.55); opacity: 0; transition: opacity 150ms var(--ease); }
 .pj-ava:hover .pj-ava-edit, .pj-ava:focus-visible .pj-ava-edit { opacity: 1; }
@@ -4959,7 +4959,6 @@ function pjPage(k, id, rec, keys, l, title) {
     '<button class="pj-back-btn" data-maction="vproj-back" aria-label="Назад: ' + esc(back) + '" title="Назад: ' + esc(back) + '">' + PJ_ICON.back + '</button>' +
     '<div class="pj-top-right">' +
       '<button class="pj-cover-btn' + (fav ? ' on' : '') + '" data-fav="' + esc(k) + '" data-title="' + esc(title) + '" aria-pressed="' + fav + '" aria-label="' + (fav ? 'В избранном — убрать' : 'В избранное') + '"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="' + STAR_PATH + '" fill="' + (fav ? "currentColor" : "none") + '" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg><span>' + (fav ? 'В избранном' : 'В избранное') + '</span></button>' +
-      (cover ? '<button class="pj-cover-btn" data-pj="repos" aria-label="Положение фона" title="Положение фона — потянуть вверх или вниз">' + PJ_ICON.move + '<span>Положение</span></button>' : '') +
       '<button class="pj-cover-btn" data-pj="photo" data-kind="cover" aria-label="' + (cover ? 'Сменить фон' : 'Загрузить фон') + '">' + PJ_ICON.camera + '<span>' + (cover ? 'Сменить фон' : 'Загрузить фон') + '</span></button>' +
     '</div>' +
     '<div class="pj-hero-in">' +
@@ -5223,6 +5222,7 @@ function pjPh(rec, kind) {  // превью фото в окне «Редакт�
   var src = pjMedia(rec, kind);
   return '<div class="pj-ph ' + kind + '" id="pjPh-' + kind + '">' + (src ? '<img src="' + esc(src) + '" alt="">' : '<span>' + PJ_ICON.camera + '</span>') +
     '<div><b>' + PJ_PH_LABEL[kind] + '</b><div class="pj-ph-btns"><button type="button" class="btn-ghost" data-pj="photo" data-kind="' + kind + '">' + (src ? "Заменить" : "Загрузить") + '</button>' +
+    (src && kind === "cover" ? '<button type="button" class="btn-ghost" data-pj="repos" title="Подвинуть фон в шапке вверх или вниз">Положение</button>' : '') +
     (src ? '<button type="button" class="btn-ghost" data-pj="unphoto" data-kind="' + kind + '">Убрать</button>' : '') + '</div></div></div>';
 }
 function pjPhRefresh(kind) { var el = $("pjPh-" + kind); if (el) el.outerHTML = pjPh(myRec(S.pj.k), kind); }
@@ -5287,9 +5287,7 @@ function pjReposEnd(save) {
   if (save && st.y !== st.y0) mySave({ op: "coverpos", key: S.pj.k, title: S.pj.title, y: Math.round(st.y * 10) / 10 }, "Положение фона сохранено");
   else hero.style.backgroundPosition = "center " + st.y0 + "%";
 }
-// Фото: уменьшаем в браузере до отправки — аватар — квадрат 480 px, фон — до 1800 px по ширине; JPEG 85%.
-// Аватар подгоняется сам: портрет — квадрат из верхней части (лица обычно сверху), почти квадрат — по центру,
-// широкое фото (коллектив) — целиком по ширине, а поля — тем же фото, размытым: в кадре все.
+// Фото: уменьшаем в браузере до отправки — аватар — квадрат 480 px по центру, фон — до 1800 px по ширине; JPEG 85%
 function pjPhoto(file, kind) {
   if (!file || !PJ_PH_LABEL[kind]) return;
   if (!/^image\//.test(file.type)) { toast("Нужна картинка: JPEG, PNG или WebP"); return; }
@@ -5299,16 +5297,8 @@ function pjPhoto(file, kind) {
     img.onload = function () {
       var w = img.width, h = img.height, sx = 0, sy = 0, sw = w, sh = h;
       var c = document.createElement("canvas"), g = c.getContext("2d");
-      if (kind === "avatar") {
-        var S0 = Math.min(480, Math.max(w, h)), r = w / h; c.width = c.height = S0;
-        if (r > 1.25) {   // широкое: целиком по ширине поверх размытой копии
-          g.filter = "blur(18px) brightness(0.8)"; var sc = S0 / h; g.drawImage(img, (S0 - w * sc) / 2, 0, w * sc, S0); g.filter = "none";
-          var hh = S0 / r; g.drawImage(img, 0, (S0 - hh) / 2, S0, hh);
-        } else {
-          var s0 = Math.min(w, h); sx = (w - s0) / 2; sy = r < 0.85 ? (h - s0) * 0.12 : (h - s0) / 2;   // портрет — ближе к верху
-          g.drawImage(img, sx, sy, s0, s0, 0, 0, S0, S0);
-        }
-      } else { var z = Math.min(1, 1800 / w); c.width = Math.round(w * z); c.height = Math.round(h * z); g.drawImage(img, 0, 0, c.width, c.height); }
+      if (kind === "avatar") { var s0 = Math.min(w, h), S0 = Math.min(480, s0); c.width = c.height = S0; g.drawImage(img, (w - s0) / 2, (h - s0) / 2, s0, s0, 0, 0, S0, S0); }
+      else { var z = Math.min(1, 1800 / w); c.width = Math.round(w * z); c.height = Math.round(h * z); g.drawImage(img, 0, 0, c.width, c.height); }
       mySave({ op: "media", key: S.pj.k, title: S.pj.title, kind: kind, data: c.toDataURL("image/jpeg", 0.85) }, kind === "avatar" ? "Фото обновлено" : "Фон обновлён");
       pjPhRefresh(kind);
     };
@@ -5323,7 +5313,7 @@ function pjAction(t) {
   else if (a === "edit") { var d = pjDialog("pj-edit", "Редактировать страницу", pjEditHtml()); var n = d.querySelector("#pj-" + (t.getAttribute("data-field") || "sub")); if (n) n.focus(); }
   else if (a === "date") pjOpenDate(+t.getAttribute("data-i"));
   else if (a === "evedit") pjEditEvent(+t.getAttribute("data-i"));
-  else if (a === "repos") pjRepos();
+  else if (a === "repos") { var dl = $("pjDlg"); if (dl && dl.open) dl.close(); window.scrollTo({ top: 0, behavior: "smooth" }); pjRepos(); }
   else if (a === "repos-done" || a === "repos-cancel") pjReposEnd(a === "repos-done");
   else if (a === "period-all") { S.period = "all"; S.from = S.to = null; render(); }
   else if (a === "arch") { S.m.pjArch = t.getAttribute("data-on") === "1"; S.m.datesAll = false; render(); var h = document.querySelector(".pj-list-head"); if (h) h.scrollIntoView({ behavior: "smooth", block: "start" }); }
