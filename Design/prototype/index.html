@@ -439,8 +439,9 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
 .pj-sum b { font: 500 17px/1.2 var(--display); color: var(--ink); letter-spacing: -0.01em; }
 .pj-plain { background: none; border: 0; padding: 0; font: inherit; font-size: 14px; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
 @media (hover: hover) { .pj-plain:hover { text-decoration-color: var(--ink); } }
-.pj-seg { display: inline-flex; border: 1px solid var(--line-strong); border-radius: 9999px; overflow: hidden; background: var(--card); margin-top: 2px; }
-.pj-seg-btn { width: 44px; height: 40px; padding: 0; border: 0; background: none; color: var(--ink-2); display: inline-flex; align-items: center; justify-content: center; }
+/* «Архив | Аналитика» — по ширине и скруглению как кнопка цены под ней: правые края совпадают */
+.pj-seg { display: inline-flex; width: 148px; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; background: var(--card); margin-top: 2px; }
+.pj-seg-btn { flex: 1 1 0; height: 42px; padding: 0; border: 0; background: none; color: var(--ink-2); display: inline-flex; align-items: center; justify-content: center; }
 .pj-seg-btn + .pj-seg-btn { border-left: 1px solid var(--line-strong); }
 .pj-seg-btn.on { background: var(--soot); color: #fff; }
 .pj-seg-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
@@ -5316,7 +5317,7 @@ function pjAction(t) {
   else if (a === "repos") { var dl = $("pjDlg"); if (dl && dl.open) dl.close(); window.scrollTo({ top: 0, behavior: "smooth" }); pjRepos(); }
   else if (a === "repos-done" || a === "repos-cancel") pjReposEnd(a === "repos-done");
   else if (a === "period-all") { S.period = "all"; S.from = S.to = null; render(); }
-  else if (a === "arch") { S.m.pjArch = t.getAttribute("data-on") === "1"; S.m.datesAll = false; render(); var h = document.querySelector(".pj-list-head"); if (h) h.scrollIntoView({ behavior: "smooth", block: "start" }); }
+  else if (a === "arch") { var y = window.scrollY; S.m.pjArch = t.getAttribute("data-on") === "1"; S.m.datesAll = false; render(); window.scrollTo(0, y); }   // экран остаётся на месте
   else if (a === "orgedit") pjOrgEditor(+t.getAttribute("data-i"));
   else if (a === "orgcancel") { $("pjdOrg").innerHTML = pjOrgView(MR[+t.getAttribute("data-i")]); }
   else if (a === "orgreset") pjOrgSet([MR[+t.getAttribute("data-i")]], "");
