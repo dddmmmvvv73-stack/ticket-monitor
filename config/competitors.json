@@ -31,5 +31,59 @@
     "name": "Ивановский Музыкальный Театр",
     "city": "Иваново",
     "enabled": true
+  },
+  {
+    "id": "orel-grinn_tsentr",
+    "type": "orelkoncert",
+    "site": "орелконцерт.рф",
+    "hall": "grinn_tsentr",
+    "name": "Гринн Центр",
+    "city": "Орел",
+    "enabled": true
+  },
+  {
+    "id": "orel-kongress_kholl",
+    "type": "orelkoncert",
+    "site": "орелконцерт.рф",
+    "hall": "kongress_kholl",
+    "name": "Конгресс-Холл",
+    "city": "Орел",
+    "enabled": true
+  },
+  {
+    "id": "orel-kdts",
+    "type": "orelkoncert",
+    "site": "орелконцерт.рф",
+    "hall": "kdts",
+    "name": "КДЦ Металлург",
+    "city": "Орел",
+    "enabled": true
+  },
+  {
+    "id": "orel-ogat-im-turgeneva",
+    "type": "orelkoncert",
+    "site": "орелконцерт.рф",
+    "hall": "ogat-im-turgeneva",
+    "name": "ОГАТ им. Тургенева",
+    "city": "Орел",
+    "enabled": true
+  },
+  {
+    "id": "orel-mbuk_ogtsk",
+    "type": "orelkoncert",
+    "site": "орелконцерт.рф",
+    "hall": "mbuk_ogtsk",
+    "name": "МБУК «ОГЦК»",
+    "city": "Орел",
+    "enabled": true
+  },
+  {
+    "id": "orel-dk_gmcensk",
+    "type": "orelkoncert",
+    "site": "орелконцерт.рф",
+    "hall": "dk_gmcensk",
+    "name": "ДК г. Мценск",
+    "city": "Мценск",
+    "enabled": true
   }
 ]

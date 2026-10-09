@@ -33,6 +33,7 @@ from pathlib import Path
 from competitors import edits
 from competitors import odk33
 from competitors import seatmap
+from competitors import orelkoncert
 from competitors import vladimirkoncert as vk
 from competitors.classifier import FIELDS, classify_rows, title_key
 from competitors.storage import BASE_DIR, CONFIG_DIR, DATA_DIR, load_json, save_json
@@ -160,6 +161,8 @@ def _collect_source(source: dict) -> list[dict]:
     if source["type"] == "vladimirkoncert":
         return vk.collect_venue(source["venue_id"], source["name"], log, source.get("city", vk.CITY_BY_DEFAULT),
                                 source.get("site", vk.DEFAULT_SITE))
+    if source["type"] == "orelkoncert":   # отдельный модуль — свой разбор, пауза и блокировка (TICKET_PLATFORMS.md, 9.1)
+        return orelkoncert.collect_hall(source, log)
     raise ValueError(f"неизвестный тип источника: {source['type']}")
 
 

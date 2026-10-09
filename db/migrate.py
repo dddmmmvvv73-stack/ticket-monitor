@@ -38,12 +38,14 @@ OPERATORS = [
     ("yandex", "Яндекс Афиша", "aggregator", "yandex", ["afisha.yandex.ru"], {"scheme": "только свободные + геометрия", "sale_opening": True}),
     ("vladimirkoncert", "Движок vladimirkoncert", "regional", "vladimirkoncert", sorted(vladimirkoncert.SITES), {"scheme": "все места"}),
     ("odk33", "ОДКиИ (odk33.ru)", "venue_site", "odk33", ["odk33.ru"], {"scheme": "через vladimirkoncert"}),
+    ("orelkoncert", "ОрелКонцерт", "regional", "orelkoncert", ["орелконцерт.рф"], {"scheme": "все места"}),
     ("custom", "Свои мероприятия", "custom", None, [], {}),
 ]
 
 
 def _op(key: str) -> str:
-    return "kassir" if key.startswith("k:") else "yandex" if key.startswith("y:") else "odk33" if key.startswith("odk33:") else "vladimirkoncert"
+    return ("kassir" if key.startswith("k:") else "yandex" if key.startswith("y:") else "odk33" if key.startswith("odk33:")
+            else "orelkoncert" if key.startswith("orel:") else "vladimirkoncert")
 
 
 def _starts(date: str, time: str | None, tz: str):
@@ -84,6 +86,8 @@ class Migration:
                 kassir.setdefault(n, {"domain": reg["domain"], "suburbId": sub["id"]})
         ya = {market.norm_city(c["name"]): c["id"] for c in load_json(MARKET / "yandex_cities.json", [])}
         for name in sorted(set(cfg.get("cities", [])) | names):
+            if name in self.city_id:   # db.sync добавляет только новые города (Мценск у ОрелКонцерта) — известные не трогаем
+                continue
             n = market.norm_city(name)
             t = tz.get(n) or "Europe/Moscow"
             ext = {"kassir": kassir.get(n), "yandex": ya.get(n)}
