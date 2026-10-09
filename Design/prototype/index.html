@@ -556,6 +556,23 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
   .an-prices li { grid-template-columns: 110px minmax(0, 1fr); } .an-pv { grid-column: 1 / -1; text-align: left; } .an-pc .sub2 { display: block; margin: 0; }
 }
 
+/* карта OpenStreetMap в «Аналитике» */
+.an-layers { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.an-layer { height: 34px; padding: 0 14px; border-radius: 6px; border: 1px solid var(--line-strong); background: var(--card); font-size: 13px; color: var(--ink-2); }
+.an-layer[aria-pressed="true"] { background: var(--soot); border-color: var(--soot); color: #fff; }
+.an-map { height: 540px; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #f2efe9; position: relative; z-index: 0; }
+.an-pin { display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; border: 2px solid #fff; color: #fff; font-size: 11px; font-weight: 600; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25); white-space: nowrap; padding: 0 4px; box-sizing: border-box; min-width: 22px; transition: transform 150ms var(--ease); }
+.an-near .an-pin { transform: scale(1.25); box-shadow: 0 0 0 4px rgba(255, 214, 107, 0.85), 0 2px 6px rgba(0, 0, 0, 0.25); }
+.an-arrow span { display: block; font-size: 12px; line-height: 14px; color: #57534e; text-align: center; }
+.an-now { display: block; width: 18px; height: 18px; border-radius: 50%; background: #ffd66b; border: 3px solid var(--soot); box-shadow: 0 0 0 6px rgba(255, 214, 107, 0.35); animation: an-pulse 1.8s ease-in-out infinite; }
+@keyframes an-pulse { 50% { box-shadow: 0 0 0 12px rgba(255, 214, 107, 0.1); } }
+.an-now-tip { font-weight: 500; }
+.an-pop { display: flex; flex-direction: column; gap: 4px; } .an-pop b { font-weight: 500; }
+.an-slider { display: flex; align-items: center; gap: 14px; margin-top: 12px; } .an-slider input { flex: 1 1 auto; accent-color: var(--soot); } .an-slider b { font-weight: 500; min-width: 120px; }
+.an-legend i.sq { width: 24px; height: 10px; border-radius: 2px; }
+@media (prefers-reduced-motion: reduce) { .an-now { animation: none; } .an-pin { transition: none; } }
+@media (max-width: 820px) { .an-map { height: 420px; } .an-slider { flex-wrap: wrap; } }
+
 /* Окна страницы проекта */
 .pjd-src { font-size: 11px; padding: 1px 7px; border-radius: 9999px; background: var(--wash-2); color: var(--data-dark); }
 .pjd-org-edit { background: none; border: 0; padding: 0; margin-left: 8px; font-size: 13px; color: var(--data); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--wash); }
@@ -5432,6 +5449,7 @@ function pjAction(t) {
   else if (a === "evedit") pjEditEvent(+t.getAttribute("data-i"));
   else if (a === "repos") { var dl = $("pjDlg"); if (dl && dl.open) dl.close(); window.scrollTo({ top: 0, behavior: "smooth" }); pjRepos(); }
   else if (a === "repos-done" || a === "repos-cancel") pjReposEnd(a === "repos-done");
+  else if (a === "an-layer") { var ly = anLayersOn(), key = t.getAttribute("data-layer"); ly[key] = !ly[key]; var y6 = window.scrollY; render(); window.scrollTo(0, y6); }
   else if (a === "an-map") { S.m.anMap = t.getAttribute("data-on") === "1"; var y1 = window.scrollY; render(); window.scrollTo(0, y1); }
   else if (a === "an-sort") { S.m.anSort = t.getAttribute("data-sort"); var y2 = window.scrollY; render(); window.scrollTo(0, y2); }
   else if (a === "an-ven-all") { S.m.anVenAll = true; var y3 = window.scrollY; render(); window.scrollTo(0, y3); }
@@ -5570,6 +5588,124 @@ function anTimeline(l, fills) {   // лента маршрута: точки —
     '<div class="an-legend"><span><i style="background:#15803d"></i>от ' + AN_GOOD + '%</span><span><i style="background:#1d6fae"></i>' + AN_LOW + '–' + AN_GOOD + '%</span><span><i style="background:#d03b3b"></i>ниже ' + AN_LOW + '%</span><span><i style="background:#a8a29e"></i>нет данных</span></div>';
 }
 function anSec(title, right, body, id) { return '<section class="an-sec"' + (id ? ' id="' + id + '"' : '') + '><div class="an-sec-head"><h2 class="an-h2">' + title + '</h2>' + (right || '') + '</div>' + body + '</section>'; }
+// ---------- Карта «Аналитики» — OpenStreetMap (Leaflet; решение пользователя 09.10, Яндекс Карты платные для закрытого сайта).
+// Leaflet (cdnjs) и области (market-regions.js) грузятся только при открытии карты. Слои: Тур (номера остановок цветом
+// заполняемости, размер — вместимость, стрелки), По пути, Архив, Организаторы (цвет точек — организатор), Конкуренты
+// (того же формата ±7 дней), Области (сколько дат проекта в области за сезон: афиша + архив). Ползунок — где тур в этот день.
+var AN_LEAFLET = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/";
+var AN_LAYERS = [["tour", "Тур"], ["path", "По пути"], ["arch", "Архив"], ["orgs", "Организаторы"], ["comp", "Конкуренты"], ["regions", "Области"]];
+var AN_ORG_COLORS = ["#7c3aed", "#0891b2", "#ea580c", "#16a34a", "#db2777", "#2563eb", "#a16207", "#475569"];
+function anLayersOn() { return S.m.anLayers || (S.m.anLayers = { tour: true, path: true, arch: false, orgs: false, comp: false, regions: true }); }
+function anLoad(cb) {
+  var jobs = [];
+  if (!window.L) jobs.push(function (done) {
+    var css = document.createElement("link"); css.rel = "stylesheet"; css.href = AN_LEAFLET + "leaflet.css"; document.head.appendChild(css);
+    var sc = document.createElement("script"); sc.src = AN_LEAFLET + "leaflet.js"; sc.onload = function () { done(); }; sc.onerror = function () { done("leaflet"); }; document.head.appendChild(sc);
+  });
+  if (typeof MREG === "undefined") jobs.push(function (done) { var sc = document.createElement("script"); sc.src = "market-regions.js"; sc.onload = function () { done(); }; sc.onerror = function () { done("regions"); }; document.head.appendChild(sc); });
+  if (!jobs.length) return cb();
+  var left = jobs.length, err = null;
+  jobs.forEach(function (j) { j(function (e) { if (e) err = e; if (--left === 0) cb(err); }); });
+}
+function anLL(city) { var v = typeof MGEO !== "undefined" && MGEO.cities[city]; return v ? [v[2], v[3]] : null; }
+function anMapHtml(k, l, fills, cands, past, orgs, fmt) {
+  var on = anLayersOn(), first = l[0].date, last = l[l.length - 1].date, span = Math.max(1, dDiff(first, last));
+  var day = S.m.anDay && S.m.anDay >= first && S.m.anDay <= last ? S.m.anDay : (TODAY >= first && TODAY <= last ? TODAY : first);
+  S.anCtx = { k: k, l: l, fills: fills, cands: cands, past: past, orgs: orgs, fmt: fmt, first: first, span: span, day: day };
+  setTimeout(anMapInit, 0);
+  return '<div class="an-layers" role="group" aria-label="Слои карты">' + AN_LAYERS.map(function (x) {
+      return '<button class="an-layer" data-pj="an-layer" data-layer="' + x[0] + '" aria-pressed="' + !!on[x[0]] + '">' + x[1] + '</button>'; }).join("") + '</div>' +
+    '<div id="anMap" class="an-map"><div class="sub" style="padding:16px">Загружаем карту…</div></div>' +
+    '<div class="an-slider"><label for="anDay" class="sub2">Где тур в день</label><input type="range" id="anDay" min="0" max="' + span + '" step="1" value="' + dDiff(first, day) + '" aria-valuetext="' + esc(dayLabel(day)) + '">' +
+      '<b id="anDayLbl">' + dayLabel(day) + '</b></div><div class="an-legend" id="anLegend"></div>';
+}
+function anMapInit() {
+  var el = $("anMap"), c = S.anCtx; if (!el || !c) return;
+  anLoad(function (err) {
+    if (!$("anMap")) return;
+    if (err || !window.L) { el.innerHTML = '<div class="note" style="margin:16px">Карта не загрузилась: нет связи с OpenStreetMap или cdnjs.</div>'; return; }
+    el.innerHTML = "";
+    if (S.anMapObj) { try { S.anMapObj.remove(); } catch (e) { /* карта уже убрана вместе со страницей */ } S.anMapObj = null; }
+    var on = anLayersOn(), map = L.map(el, { scrollWheelZoom: false, zoomControl: true });
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
+    var bounds = [], legend = [], orgColor = {};
+    c.orgs.forEach(function (o, i) { orgColor[o.name] = AN_ORG_COLORS[i % AN_ORG_COLORS.length]; });
+    // Области: сколько дат проекта в области за сезон (афиша + архив)
+    if (on.regions && typeof MREG !== "undefined") {
+      var cnt = {}; c.l.concat(c.past).forEach(function (e) { var r = MREG.city[e.city]; if (r) cnt[r] = (cnt[r] || 0) + 1; });
+      var mx = Math.max.apply(null, Object.keys(cnt).map(function (r) { return cnt[r]; }).concat([1]));
+      MREG.regions.forEach(function (r) {
+        var n = cnt[r.n]; if (!n) return;
+        L.polygon(r.p, { color: "#1d6fae", weight: 1, opacity: 0.55, fillColor: "#1d6fae", fillOpacity: 0.1 + 0.45 * n / mx }).bindTooltip(esc(r.n) + " — " + n + " " + plural(n, "дата", "даты", "дат"), { sticky: true }).addTo(map);
+      });
+      legend.push('<span><i class="sq" style="background:linear-gradient(90deg,rgba(29,111,174,.15),rgba(29,111,174,.55))"></i>области — чем темнее, тем больше дат за сезон (до ' + mx + ')</span>');
+    }
+    if (on.arch) {
+      c.past.forEach(function (a) { var ll = anLL(a.city); if (!ll) return; bounds.push(ll);
+        L.circleMarker(ll, { radius: 6, color: "#78716c", weight: 1.5, fillColor: "#fff", fillOpacity: 1 }).bindTooltip(esc(a.city) + " — " + dayLabel(a.date) + " (" + (a.status === "gone" ? "снято" : "прошло") + ")").addTo(map); });
+      legend.push('<span><i style="background:#fff;border:1.5px solid #78716c"></i>уже был (архив)</span>');
+    }
+    if (on.path) {
+      c.cands.filter(function (x) { return x.kind === "path"; }).forEach(function (x) { var ll = anLL(x.city); if (!ll) return; bounds.push(ll);
+        L.circleMarker(ll, { radius: 6, color: "#fff", weight: 1.5, fillColor: "#eb6834", fillOpacity: 1 }).bindTooltip(esc(x.city) + " — по пути: " + esc(x.where || "")).addTo(map); });
+      legend.push('<span><i style="background:#eb6834"></i>по пути — можно добавить</span>');
+    }
+    if (on.comp) {
+      c.l.forEach(function (e) {
+        var ll = anLL(e.city); if (!ll) return;
+        var n = (MR_CITY[e.city] || []).filter(function (x) { return x.pk !== e.pk && x.format === c.fmt && Math.abs(dDiff(x.date, e.date)) <= 7; }).length;
+        if (n) L.circleMarker(ll, { radius: 10 + Math.min(18, n * 2), color: "#d03b3b", weight: 1, fillColor: "#d03b3b", fillOpacity: 0.16 }).bindTooltip(esc(e.city) + " — «" + esc(c.fmt) + "» в ±7 дней: " + n).addTo(map);
+      });
+      legend.push('<span><i style="background:rgba(208,59,59,.25);border:1px solid #d03b3b"></i>конкуренты того же формата в ±7 дней (круг больше — их больше)</span>');
+    }
+    var stops = [];
+    if (on.tour) {
+      var line = c.l.map(function (e) { return anLL(e.city); }).filter(Boolean);
+      L.polyline(line, { color: "#57534e", weight: 2, opacity: 0.55 }).addTo(map);
+      for (var i = 1; i < line.length; i++) {   // стрелки направления — на середине перегона
+        var a = line[i - 1], b = line[i]; if (a[0] === b[0] && a[1] === b[1]) continue;
+        var ang = Math.atan2(b[0] - a[0], (b[1] - a[1]) * Math.cos(a[0] * Math.PI / 180)) * 180 / Math.PI;
+        L.marker([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], { icon: L.divIcon({ className: "an-arrow", html: '<span style="transform:rotate(' + (-ang).toFixed(0) + 'deg)">➤</span>', iconSize: [14, 14], iconAnchor: [7, 7] }), interactive: false, keyboard: false }).addTo(map);
+      }
+      var byCity = {};
+      c.l.forEach(function (e, n) { (byCity[e.city] = byCity[e.city] || []).push({ e: e, n: n + 1, f: c.fills[n] }); });
+      Object.keys(byCity).forEach(function (city) {
+        var ll = anLL(city); if (!ll) return; bounds.push(ll);
+        var g = byCity[city], e0 = g[0].e, fs = g.map(function (x) { return x.f; }).filter(function (f) { return f != null; });
+        var f = fs.length ? Math.round(fs.reduce(function (a, b) { return a + b; }, 0) / fs.length) : null;
+        var d0 = mDirect(e0), s0 = e0.sales, cap = d0 && d0.sellable ? d0.sellable : s0 ? s0.hall || s0.exp : 0, size = cap ? Math.round(22 + Math.min(14, cap / 150)) : 24;
+        var col = on.orgs ? (e0.org ? orgColor[e0.org] : "#a8a29e") : anColor(f);
+        var mk = L.marker(ll, { icon: L.divIcon({ className: "", html: '<span class="an-pin" style="background:' + col + ';width:' + size + 'px;height:' + size + 'px">' + g.map(function (x) { return x.n; }).join("·") + '</span>', iconSize: [size, size], iconAnchor: [size / 2, size / 2] }), title: city });
+        mk.bindTooltip(esc(city) + " — " + g.map(function (x) { return dayLabel(x.e.date) + (x.f != null ? " · " + x.f + "%" : ""); }).join(", ") + (on.orgs && e0.org ? " · " + esc(e0.org) : ""));
+        if (g.length === 1) mk.on("click", function () { pjOpenDate(e0.i); });
+        else mk.bindPopup('<div class="an-pop"><b>' + esc(city) + '</b>' + g.map(function (x) { return '<button class="link-btn" data-pj="date" data-i="' + x.e.i + '">' + dayLabel(x.e.date) + ' · ' + esc(x.e.venue) + '</button>'; }).join("") + '</div>');
+        mk.addTo(map); stops.push({ mk: mk, g: g });
+      });
+      legend.unshift(on.orgs ? c.orgs.map(function (o) { return '<span><i style="background:' + orgColor[o.name] + '"></i>' + esc(o.name) + '</span>'; }).join("") + '<span><i style="background:#a8a29e"></i>организатор не указан</span>'
+        : '<span><i style="background:#15803d"></i>от ' + AN_GOOD + '%</span><span><i style="background:#1d6fae"></i>' + AN_LOW + '–' + AN_GOOD + '%</span><span><i style="background:#d03b3b"></i>ниже ' + AN_LOW + '%</span><span><i style="background:#a8a29e"></i>нет данных</span><span class="sub2">цифра — номер остановки, размер — вместимость зала</span>');
+    }
+    // «Сейчас тур здесь» / ползунок: точка между соседними остановками
+    var now = L.marker([0, 0], { icon: L.divIcon({ className: "", html: '<span class="an-now"></span>', iconSize: [18, 18], iconAnchor: [9, 9] }), interactive: false, keyboard: false, zIndexOffset: 1000 });
+    now.bindTooltip("", { permanent: true, direction: "top", offset: [0, -10], className: "an-now-tip" });
+    function place(day) {
+      var l = c.l, prev = null, next = null;
+      l.forEach(function (e) { if (e.date <= day) prev = e; if (!next && e.date > day) next = e; });
+      var a = prev && anLL(prev.city), b = next && anLL(next.city), pos, txt;
+      if (!prev) { pos = anLL(l[0].city); txt = "до старта · " + dayLabel(day); }
+      else if (!next || !b) { pos = a; txt = (day > l[l.length - 1].date ? "тур окончен" : prev.city) + " · " + dayLabel(day); }
+      else { var t = dDiff(prev.date, day) / Math.max(1, dDiff(prev.date, next.date)); pos = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]; txt = (prev.date === day ? prev.city : prev.city + " → " + next.city) + " · " + dayLabel(day); }
+      if (!pos) return;
+      now.setLatLng(pos); now.setTooltipContent(esc(txt)); if (!map.hasLayer(now)) now.addTo(map);
+      stops.forEach(function (st) { var el2 = st.mk.getElement(); if (el2) el2.classList.toggle("an-near", st.g.some(function (x) { return Math.abs(dDiff(x.e.date, day)) <= 3; })); });
+    }
+    if (on.tour) place(c.day);
+    var sl = $("anDay");
+    if (sl) sl.oninput = function () { var d = addDays(c.first, +sl.value); S.m.anDay = d; $("anDayLbl").textContent = dayLabel(d); sl.setAttribute("aria-valuetext", dayLabel(d)); if (on.tour) place(d); };
+    if (bounds.length) map.fitBounds(bounds, { padding: [30, 30] }); else map.setView([56, 45], 4);
+    $("anLegend").innerHTML = legend.join("");
+    S.anMapObj = map;
+  });
+}
 // Разделы «Аналитики» — по одному, кнопками под шапкой (S.m.anTab); показатели тура — на самой шапке
 var AN_TABS = [["route", "Маршрут"], ["fill", "Заполняемость"], ["prices", "Цены"], ["orgs", "Организаторы"], ["venues", "Площадки"], ["cands", "Где его нет"]];
 var AN_FEW = 3;   // в «Заполняемости» и «Ценах» сначала 3 строки, дальше «Показать все» / «Скрыть»
@@ -5604,7 +5740,7 @@ function anPage(k, l, past, p, cands, foN) {
   if (tab === "route") {
     var map = !!S.m.anMap;
     body = anSec("Маршрут", '<div class="an-tabs" role="tablist"><button role="tab" data-pj="an-map" data-on="0" aria-selected="' + !map + '">Лента</button><button role="tab" data-pj="an-map" data-on="1" aria-selected="' + map + '">Карта</button></div>',
-      map ? mapSvg(p, cands) : anTimeline(l, fills));
+      map ? anMapHtml(k, l, fills, cands, past, orgs, fmt) : anTimeline(l, fills));
   } else if (tab === "fill") {
     var rows = l.map(function (e, i) { var d = mDirect(e), s = e.sales; return { e: e, f: fills[i], cap: d && d.sellable ? d.sellable : s ? s.hall || s.exp : null, g: d && d.gross ? d.gross : s && s.g ? s.g : null }; });
     var withF = rows.filter(function (r) { return r.f != null; }).sort(function (a, b) { return b.f - a.f; }), noF = rows.filter(function (r) { return r.f == null; });
