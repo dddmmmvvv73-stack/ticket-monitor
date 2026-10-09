@@ -36,7 +36,7 @@ SELECT c.name, v.name, coalesce(s.title, p.title), s.local_date, s.local_time, s
  GROUP BY s.id, c.name, v.name, p.title
  ORDER BY s.local_date, s.local_time NULLS LAST, c.name
 """
-DIRECT = {"vladimirkoncert", "odk33"}
+NOT_DIRECT = {"kassir", "yandex", "custom"}   # остальные операторы — кассы и сайты площадок прямого сбора (ОрелКонцерт и др.)
 
 
 def rows(conn, frm: str, to: str, city: str = "") -> list[dict]:
@@ -51,12 +51,17 @@ def rows(conn, frm: str, to: str, city: str = "") -> list[dict]:
          ops, keys, urls, pmin, pmax, org) in cur.fetchall():
         ops = [o for o in ops if o]
         has = set(ops)
-        src = "d" if has & DIRECT else "ky" if {"kassir", "yandex"} <= has else "k" if "kassir" in has else "y" if "yandex" in has else ""
+        direct = [(o, u) for o, u in zip(ops, urls) if o not in NOT_DIRECT]
+        src = "d" if direct else "ky" if {"kassir", "yandex"} <= has else "k" if "kassir" in has else "y" if "yandex" in has else ""
         r = {"c": city_, "v": venue, "t": title or "", "d": d.isoformat(), "tm": t.strftime("%H:%M") if t else "",
              "sp": sphere or "", "f": fmt or "", "g": genre or "", "pn": int(pmin) if pmin else 0, "px": int(pmax) if pmax else 0,
              "pu": 1 if pushkin else 0, "src": src, "seen": first.isoformat() if first else "", "age": age or "",
              "tour": tour or "", "why": why or "", "org": org or "",
              "keys": [k for k in keys if k], "st": (result or {}).get("st") or ("gone" if status in ("removed", "cancelled") else "past")}
+        if direct:   # касса прямого сбора — для подписи в «Источнике» и фильтра (прототип, DIRECT_OPS)
+            r["dop"] = direct[0][0]
+            if direct[0][1]:
+                r["ud"] = direct[0][1]
         for o, u in zip(ops, urls):
             if u and o == "kassir":
                 r["uk"] = u

@@ -2042,7 +2042,7 @@ function archFromApi(list) {
     return { city: r.c, venue: r.v, title: r.t, date: r.d, time: r.tm || "", sphere: r.sp || fmtSphere(r.f), format: r.f || "", genre: r.g || "",
       pmin: r.pn || null, pmax: r.px || null, pushkin: !!r.pu, src: r.src || "k", urlK: r.uk || "", urlY: r.uy || "", more: 0, until: "",
       seen: r.seen || r.d, age: r.age || "", yt: false, key: (r.keys && r.keys[0]) || "h:" + r.c + "|" + r.d + "|" + r.tm + "|" + r.t, tk: tourKey(r.t),
-      org: r.org || "", sales: r.s || null, duid: "", keys: r.keys || [], st: r.st, tour: r.tour || "local", twhy: r.why || "", o: {} };
+      org: r.org || "", sales: r.s || null, duid: "", dop: r.dop || "", dlink: r.ud || "", keys: r.keys || [], st: r.st, tour: r.tour || "local", twhy: r.why || "", o: {} };
   }));
 }
 function archNeed() {  // какой кусок архива нужен странице: период + один город (или все)
@@ -3179,6 +3179,19 @@ MR.forEach(function (e, i) { e.i = i; });
 // и по ссылке Яндекса). У строки с данными прямого сбора (тот же сеанс или только прямой сбор) — его цифры и его карточка.
 var MR_BASE_LEN = MR.length, DIRECT_BY_UID = {};
 function mDirect(e) { return e.dref || (e.duid ? DIRECT_BY_UID[e.duid] : null) || null; }
+// Кассы прямого сбора — подпись в столбце «Источник» и пункты фильтра «Источник» во всех разделах (решение пользователя 09.10:
+// каждая касса прямого сбора видна и в источниках, и в фильтрах). Новая касса — одна строка здесь (и оператор в db/migrate.py).
+// Узнаём по номеру мероприятия (uid) или оператору из базы (dop у архива). ОДКиИ — не касса, а сайт площадки:
+// его билеты и схема — на vladimirkoncert.
+var DIRECT_OPS = [
+  { id: "vladimirkoncert", name: "vladimirkoncert", re: /^(vk|ivanovokoncert|kostromakoncert|yarkoncert|kovrovkoncert|odk33|vladimirkoncert)\b/ },
+  { id: "orelkoncert", name: "ОрелКонцерт", re: /^orel(koncert)?\b/ }
+];
+function directOpOf(e) {
+  var d = mDirect(e), key = d ? d.uid || "" : e.dop || "";
+  for (var i = 0; i < DIRECT_OPS.length; i++) if (key && DIRECT_OPS[i].re.test(key)) return DIRECT_OPS[i];
+  return null;
+}
 function mSyncDirect() {
   MR.length = MR_BASE_LEN;
   DIRECT_BY_UID = {}; ALL.forEach(function (e) { if (e.uid) DIRECT_BY_UID[e.uid] = e; });
@@ -3250,7 +3263,8 @@ function mBase(opts) {
     return mInScope(e) && inPeriod(e) && (!q || (e.title + " " + e.venue + " " + e.city + " " + e.org).toLowerCase().indexOf(q) >= 0) &&
       (opts.noSphere || !S.m.sphere || e.sphere === S.m.sphere) && (opts.noFormat || !S.m.format || e.format === S.m.format) && (!S.m.genre || e.genre === S.m.genre) &&
       (opts.noVenue || !S.m.venue || e.venue === S.m.venue) && (!ARCH_ON || !S.m.ast || e.st === S.m.ast) &&
-      (!S.m.src || (S.m.src === "k" ? e.src === "k" : S.m.src === "y" ? e.src === "y" : S.m.src === "d" ? !!mDirect(e) : e.src === "ky"));
+      (!S.m.src || (S.m.src.indexOf("op:") === 0 ? (directOpOf(e) || {}).id === S.m.src.slice(3) : S.m.src === "k" ? e.src === "k" : S.m.src === "y" ? e.src === "y" :
+        S.m.src === "d" ? !!mDirect(e) || e.src === "d" : e.src === "ky"));
   });
 }
 var M_FILTERS = { all: function () { return true; }, new1: function (e) { return mIsNew(e, 1); }, new7: function (e) { return mIsNew(e, 7); }, nogenre: function (e) { return !e.genre; } };
@@ -3480,8 +3494,9 @@ var M_CELL = {
   niche: function (e) { return '<div style="font-size:13px;line-height:1.35">' + esc(e.sphere || "Сфера не определена") + '</div><div class="sub2">' + esc(e.format) + (e.genre ? ' · ' + esc(e.genre) : ' · жанр не определён') + '</div>'; },
   prices: function (e) { return e.pmin ? '<span class="num nowrap">' + prices(e) + '</span>' : '<span class="muted">—</span>'; },
   src: function (e) {
-    var dd = mDirect(e);
-    return '<div class="src-links">' + (dd && dd.link ? '<a href="' + esc(dd.link) + '" target="_blank" rel="noopener">Сайт площадки ↗</a>' : '') + (e.urlK ? '<a href="' + esc(e.urlK) + '" target="_blank" rel="noopener">Кассир ↗</a>' : '') +
+    var dd = mDirect(e), dl = dd && dd.link || e.dlink, op = directOpOf(e);
+    var dname = /odk33\.ru/.test(dl || "") ? "Сайт ОДКиИ" : op ? op.name : /afisha\.yandex/.test(dl || "") ? "Яндекс по ссылке" : "Сайт площадки";   // ОДКиИ без продажи на vladimirkoncert — ссылка на афишу площадки
+    return '<div class="src-links">' + (dl ? '<a href="' + esc(dl) + '" target="_blank" rel="noopener">' + esc(dname) + ' ↗</a>' : '') + (e.urlK ? '<a href="' + esc(e.urlK) + '" target="_blank" rel="noopener">Кассир ↗</a>' : '') +
       (e.urlY ? '<a href="' + esc(e.urlY) + '" target="_blank" rel="noopener">Яндекс ↗</a>' : '') + '</div>';
   },
   seen: function (e) { return '<span class="num nowrap">' + human(e.seen) + '</span>'; },
@@ -3625,7 +3640,8 @@ function mTable() {
   var venueChip = activeChip("venue", "Площадка") + activeChip("genre", "Жанр");
   return '<div class="toolbar mtools">' + mNicheSelects(mBase({ noVenue: true })) +
       '<select class="flat-select" data-flat-label="Источник" data-msel="src" aria-label="Источник"><option value="">Все</option>' +
-        [["k", "Только Кассир"], ["y", "Только Яндекс"], ["ky", "На обоих сайтах"], ["d", "Площадки прямого сбора"]].map(function (o) { return '<option value="' + o[0] + '"' + (S.m.src === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
+        [["k", "Только Кассир"], ["y", "Только Яндекс"], ["ky", "На обоих сайтах"], ["d", "Площадки прямого сбора — все"]].concat(
+          DIRECT_OPS.map(function (o) { return ["op:" + o.id, o.name]; })).map(function (o) { return '<option value="' + o[0] + '"' + (S.m.src === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
       venueChip + mColsControl(M_COLS, S.m.hidden) +
     '</div>' +
     '<section class="card ev-card-table"><table class="ev-table" id="evTable" style="width:' + totalW + 'px"><colgroup>' + cols.map(function (c) { return '<col data-col="' + c.id + '" style="width:' + fitW[c.id] + 'px">'; }).join("") + '</colgroup><thead><tr>' + thead + '</tr></thead><tbody>' + rowsHtml + '</tbody></table>' + empty + '</section>' +
