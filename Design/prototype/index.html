@@ -597,6 +597,10 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .an-hero-m .an-tile { min-width: 0; padding: 9px 12px; border-radius: 8px; }
 .an-hero-m .an-tile b { font-size: 18px; }
 .an-hero-m .an-strip { height: 14px; }
+.an-rate-pill { display: inline-flex; align-items: center; font: inherit; font-size: 12px; color: #fff; cursor: pointer; }
+.an-rate-pill .pt-mini { margin-right: 6px; color: #fff; --pt-accent: #7ab9e8; }
+.an-rate-pill.empty { border-style: dashed; color: rgba(255, 255, 255, 0.75); }
+@media (hover: hover) { .an-rate-pill:hover { background: rgba(255, 255, 255, 0.2); } }
 .pj-btn.an-on:not(.primary) { background: #fff; border-color: #fff; color: var(--ink); }
 @media (max-width: 1100px) { .an-hero-m .an-tiles { position: relative; right: auto; bottom: auto; margin: 0 72px 24px; align-self: flex-start; order: 3; } .an-hero-m { flex-direction: column; align-items: stretch; } }
 @media (max-width: 820px) {
@@ -5869,6 +5873,12 @@ function anMapInit() {
     S.anMapObj = map;
   });
 }
+// Пилюля под названием — тип проекта по «Оценке проекта» (ptTypeOf); нажатие — окно оценки
+function anRatePill(rec) {
+  var r = pjRating(rec), t = r ? ptTypeOf(r.s) : null;
+  return '<button class="pj-tag an-rate-pill' + (r ? '' : ' empty') + '" data-pj="rating" title="' + (r ? 'Тип по оценке проекта — изменить оценку' : 'Проект не оценён — оценить') + '">' +
+    (r ? '<span class="pt-mini">' + ptRadar(r.s, { mini: true, size: 14 }) + '</span>' + esc(ptLabel(t)) : 'не оценён — оценить') + '</button>';
+}
 // Плитка «заполняемость в ср.» — переворачивается по нажатию: на обороте «потолок зала» (ptCeiling, project-rating.js) —
 // сверху потолок крупно, полоса — потолок от медианы крупных залов тура. Данные — итоги прошедших выступлений (MK.finals);
 // у тестового проекта без итогов — тестовые цифры с пометкой.
@@ -5940,7 +5950,7 @@ function anPage(k, l, past, p, cands, foN) {
   var hero = '<section class="pj-hero an-hero-m' + bg + '">' + (cover ? '' : anRouteBg(l)) + back + PJ_ICON.back + '</button>' + topRight + tiles +
     '<div class="pj-hero-in"><span class="pj-ava an-ava-big" aria-hidden="true">' + (ava ? '<img src="' + esc(ava) + '" alt="">' : '<span class="pj-ini">' + esc(pjInitials(title)) + '</span>') + '</span>' +
       '<div class="pj-hero-text"><h1 class="pj-name">' + esc(title) + '</h1><p class="pj-sub">Аналитика</p>' +
-        '<div class="pj-tags"><span class="pj-tag">' + period + '</span>' + (F.demo ? '<span class="pj-demo">тестовые цифры заполняемости</span>' : '') + '</div>' +
+        '<div class="pj-tags">' + anRatePill(rec) + (F.demo ? '<span class="pj-demo">тестовые цифры заполняемости</span>' : '') + '</div>' +
         '<div class="pj-actions" role="tablist" aria-label="Разделы аналитики">' + AN_TABS.map(tabBtn).join("") + '</div></div></div></section>';
   var nav = '';
 
