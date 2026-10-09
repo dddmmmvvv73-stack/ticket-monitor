@@ -95,7 +95,7 @@ class Migration:
             if name in self.city_id:   # db.sync добавляет только новые города (Мценск у ОрелКонцерта) — известные не трогаем
                 continue
             n = market.norm_city(name)
-            t = tz.get(n) or "Europe/Moscow"
+            t = tz.get(n) or cfg.get("tz", {}).get(name) or "Europe/Moscow"   # пояс городов, которых нет у Кассира, — config/market.json
             ext = {"kassir": kassir.get(n), "yandex": ya.get(n)}
             self.cur.execute("INSERT INTO cities (name, fo, tz, ext) VALUES (%s, %s, %s, %s) RETURNING id",
                              (name, fo.get(name), t, Json(ext)))
