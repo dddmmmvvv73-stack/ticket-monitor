@@ -434,7 +434,8 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
   .pj-row-in:is(button):hover .pj-t { color: var(--data); }
 }
 .pj-grid { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 56px; margin-top: 40px; align-items: start; }
-.pj-list-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
+.pj-list-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 16px; }
+.pj-list-head > div:first-child { flex: 1 1 auto; min-width: 0; } .pj-list-head .pj-seg { flex-shrink: 0; }   /* кнопки — всегда справа, строка под заголовком переносится сама */
 .pj-sum { display: flex; gap: 8px 22px; flex-wrap: wrap; margin-top: 10px; font-size: 15px; color: var(--muted); }
 .pj-sum b { font: 500 17px/1.2 var(--display); color: var(--ink); letter-spacing: -0.01em; }
 .pj-plain { background: none; border: 0; padding: 0; font: inherit; font-size: 14px; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
@@ -443,6 +444,14 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
 .pj-seg { display: inline-flex; width: 148px; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; background: var(--card); margin-top: 2px; }
 .pj-seg-btn { flex: 1 1 0; height: 42px; padding: 0; border: 0; background: none; color: var(--ink-2); display: inline-flex; align-items: center; justify-content: center; }
 .pj-seg-btn + .pj-seg-btn { border-left: 1px solid var(--line-strong); }
+.pj-seg-btn { position: relative; }
+.pj-seg-btn.appear { animation: pj-seg-in 420ms var(--ease) both; }
+@keyframes pj-seg-in { from { flex-grow: 0.0001; opacity: 0; } 60% { opacity: 0; } to { flex-grow: 1; opacity: 1; } }
+.pj-seg-dot { position: absolute; top: 5px; right: 6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 9999px; background: var(--data); color: #fff; font-size: 10px; font-weight: 600; line-height: 16px; text-align: center; }
+.pj-demo { font-size: 11px; padding: 2px 8px; border-radius: 9999px; background: #fff3d6; color: #8a5a00; align-self: center; }
+.pj-chg-new { color: var(--good); } .pj-chg-gone { color: var(--risk); } .pj-chg-price { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 14px; white-space: nowrap; }
+.pj-chg-price s { color: var(--muted); } .pj-chg-price b { font-weight: 500; }
+@media (prefers-reduced-motion: reduce) { .pj-seg-btn.appear { animation: none; } }
 .pj-seg-btn.on { background: var(--soot); color: #fff; }
 .pj-seg-btn:focus-visible { outline: 2px solid var(--focus); outline-offset: -3px; }
 @media (hover: hover) { .pj-seg-btn:not(.on):hover { background: #f2f1ef; color: var(--ink); } }
@@ -4939,6 +4948,7 @@ var PJ_ICON = {
   chart: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 13.5h11"/><path d="M4.5 11V8M8 11V4.5M11.5 11V6.5"/></svg>',
   move: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8v12.4M5.2 4.4L8 1.8l2.8 2.6M5.2 11.6L8 14.2l2.8-2.6"/></svg>',
   archive: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><rect x="1.8" y="2.5" width="12.4" height="3.2" rx="0.8"/><path d="M3 5.7v7.3h10V5.7M6.3 8.6h3.4"/></svg>',
+  delta: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 6.5A5.6 5.6 0 003.2 4.6M2.5 9.5a5.6 5.6 0 0010.3 1.9"/><path d="M3 1.8v3h3M13 14.2v-3h-3"/></svg>',
   back: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg>',
   close: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>'
 };
@@ -4980,24 +4990,39 @@ function pjPage(k, id, rec, keys, l, title) {
           }).join("") +
         '</div></div></div></section>';
 
-  // Даты — по периоду из шапки сайта («30 дней», «90 дней», «Сезон», «Даты» — месяц или диапазон); «Архив» — только прошедшие
-  if (S.m.pjArchFor !== k) { S.m.pjArchFor = k; S.m.pjArch = false; }
-  var arch = S.m.pjArch, lp = l.filter(inPeriod), pastP = past.filter(inPeriod), cut = S.period !== "all";
+  // Режим списка: даты (по периоду из шапки) · «Архив» — прошедшие · «Изменения» — лента изменений (только у избранного)
+  if (S.m.pjModeFor !== k) { S.m.pjModeFor = k; S.m.pjMode = "list"; }
+  var fav = myIsFav(k);
+  if (S.m.pjMode === "chg" && !fav) S.m.pjMode = "list";
+  var mode = S.m.pjMode, arch = mode === "arch", lp = l.filter(inPeriod), pastP = past.filter(inPeriod), cut = S.period !== "all" && mode !== "chg";
   var src = arch ? pastP : lp, all = S.m.datesAll, rows = all ? src : src.slice(0, PJ_ROWS);
-  var kind = 'Мероприятия';
+  var demo = fav && PJ_DEMO_CHG.test(title) && !S.pjDemoSeen;   // тестовые изменения — пока проверяем раздел
+  var kind = 'Мероприятия', df = fav ? (demo ? pjDemoDiff(l) : myDiff(rec)) : null, nChg = df ? df.n + df.passed.length : 0;
   var periodNote = cut ? '<div class="pj-sum"><span><b>' + esc(periodLabel()) + '</b></span><span><b class="num">' + src.length + '</b> из ' + (arch ? past.length : l.length) + '</span>' +
     '<button class="pj-plain" data-pj="period-all">Все даты</button></div>' : '';
-  var list = '<div class="pj-list-head"><div><h2 class="pj-h2">' + (arch ? 'Архив' : kind) + '</h2>' + periodNote + '</div>' +
-      '<div class="pj-seg" role="group" aria-label="Режим списка">' +
-        '<button class="pj-seg-btn' + (arch ? ' on' : '') + '" data-pj="arch" data-on="' + (arch ? 0 : 1) + '" aria-pressed="' + arch + '" aria-label="Архив: прошедшие даты · ' + past.length + '" title="Архив — прошедшие даты">' + PJ_ICON.archive + '</button>' +
-        (l.length ? '<button class="pj-seg-btn" data-proute="' + esc(l[0].pk) + '" aria-label="Аналитика: маршрут, площадки, где его нет" title="Аналитика — маршрут, площадки, где его нет">' + PJ_ICON.chart + '</button>' : '') +
-      '</div></div>' +
-    (!arch && !l.length ? '<div class="note">Сейчас проекта нет в афише — ни одной будущей даты. Прошедшие — в «Архиве».</div>' : '') +
+  var chgNote = mode === "chg" ? '<div class="pj-sum">' + (demo ? '<span class="pj-demo">тестовые изменения</span>' : '') + '<span>с <b>' + (df.since ? human(df.since.slice(0, 10)) : '—') + '</b></span>' +
+      (df.added.length ? '<span><b class="num">' + df.added.length + '</b> ' + plural(df.added.length, "новая", "новые", "новых") + '</span>' : '') +
+      (df.removed.length ? '<span><b class="num">' + df.removed.length + '</b> ' + plural(df.removed.length, "снята", "сняты", "снято") + '</span>' : '') +
+      (df.priced.length ? '<span><b class="num">' + df.priced.length + '</b> ' + plural(df.priced.length, "цена", "цены", "цен") + '</span>' : '') +
+      (df.passed.length ? '<span><b class="num">' + df.passed.length + '</b> прошло</span>' : '') +
+      (nChg ? '<button class="pj-plain" data-pj="seen">Просмотрено</button>' : '') + '</div>' : '';
+  var showChg = fav && S.m.pjChgShown !== k;   // кнопка «Изменения» появилась только что — с анимацией
+  S.m.pjChgShown = fav ? k : null;
+  var seg = '<div class="pj-seg' + (fav ? ' three' : '') + '" role="group" aria-label="Режим списка">' +
+      '<button class="pj-seg-btn' + (arch ? ' on' : '') + '" data-pj="mode" data-mode="' + (arch ? 'list' : 'arch') + '" aria-pressed="' + arch + '" aria-label="Архив: прошедшие даты · ' + past.length + '" title="Архив — прошедшие даты">' + PJ_ICON.archive + '</button>' +
+      (fav ? '<button class="pj-seg-btn' + (mode === "chg" ? ' on' : '') + (showChg ? ' appear' : '') + '" data-pj="mode" data-mode="' + (mode === "chg" ? 'list' : 'chg') + '" aria-pressed="' + (mode === "chg") + '" aria-label="Изменения с момента добавления в избранное: ' + nChg + '" title="Изменения — что поменялось в датах и ценах">' + PJ_ICON.delta +
+        (nChg && mode !== "chg" ? '<span class="pj-seg-dot" aria-hidden="true">' + nChg + '</span>' : '') + '</button>' : '') +
+      (l.length ? '<button class="pj-seg-btn" data-proute="' + esc(l[0].pk) + '" aria-label="Аналитика: маршрут, площадки, где его нет" title="Аналитика — маршрут, площадки, где его нет">' + PJ_ICON.chart + '</button>' : '') +
+    '</div>';
+  var body;
+  if (mode === "chg") body = pjChangesFeed(df, l, title);
+  else body = (!arch && !l.length ? '<div class="note">Сейчас проекта нет в афише — ни одной будущей даты. Прошедшие — в «Архиве».</div>' : '') +
     (!arch && l.length && !lp.length ? '<div class="note">В выбранном периоде дат нет. Ближайшая — ' + dayLabel(l[0].date) + ', ' + esc(l[0].city) + '.</div>' : '') +
     (arch && !src.length ? '<div class="note">' + (past.length ? 'В выбранном периоде прошедших нет.' : 'Прошедших пока нет: архив копится с ' + human(MK.first) + '.') + '</div>' : '') +
     '<ul class="pj-dates">' + rows.map(function (e) { return pjRow(e, arch, title); }).join("") + '</ul>' +
     (!all && src.length > PJ_ROWS ? '<div class="pj-all"><button class="btn-ghost" data-maction="dates-all">Показать все · ' + src.length + ' ' +
       (arch ? plural(src.length, "прошедшая", "прошедшие", "прошедших") : plural(src.length, "дата", "даты", "дат")) + '</button></div>' : '');
+  var list = '<div class="pj-list-head"><div><h2 class="pj-h2">' + (arch ? 'Архив' : mode === "chg" ? 'Изменения' : kind) + '</h2>' + periodNote + chgNote + '</div>' + seg + '</div>' + body;
 
   var about = pr.about ? '<div class="pj-about" id="pjAbout">' + esc(pr.about) + '</div>' + (pr.about.length > 260 ? '<button class="pj-more" data-pj="more" aria-controls="pjAbout" aria-expanded="false">Развернуть текст</button>' : '')
     : '<p class="sub" style="margin:0 0 10px">Описания пока нет: о чём проект, состав, история, чем отличается.</p><button class="btn-ghost" data-pj="edit">Добавить описание</button>';
@@ -5008,13 +5033,13 @@ function pjPage(k, id, rec, keys, l, title) {
       '<dt>Продаётся</dt><dd>' + (l.length ? [nK ? 'Кассир — ' + nK + ' ' + plural(nK, "дата", "даты", "дат") : '', nY ? 'Яндекс Афиша — ' + nY + ' ' + plural(nY, "дата", "даты", "дат") : ''].filter(Boolean).join("<br>") || '—' : '—') + '</dd>' +
       (ours.length ? '<dt>Наши площадки</dt><dd>' + ours.map(function (e) { return '<button class="link-btn" data-open="' + e.i + '">' + human(e.date) + ' · ' + esc(e.venue) + (e.gross ? ' · заполнено ' + fill(e) + '%' : '') + '</button>'; }).join("<br>") + '</dd>' : '') +
       (rec && rec.note ? '<dt>Заметка</dt><dd class="mytext">' + esc(rec.note) + '</dd>' : '') +
-      '<dt>Архив</dt><dd>' + (past.length ? '<button class="pj-plain" data-pj="arch" data-on="' + (S.m.pjArch ? 0 : 1) + '" aria-pressed="' + !!S.m.pjArch + '">' +
-        (S.m.pjArch ? 'показан — вернуться к датам' : past.length + ' ' + plural(past.length, "прошедшая дата", "прошедшие даты", "прошедших дат") + ' →') + '</button>'
+      '<dt>Архив</dt><dd>' + (past.length ? '<button class="pj-plain" data-pj="mode" data-mode="' + (S.m.pjMode === "arch" ? 'list' : 'arch') + '" aria-pressed="' + (S.m.pjMode === "arch") + '">' +
+        (S.m.pjMode === "arch" ? 'показан — вернуться к датам' : past.length + ' ' + plural(past.length, "прошедшая дата", "прошедшие даты", "прошедших дат") + ' →') + '</button>'
         : '<span class="muted">пока пусто — копится с ' + human(MK.first) + '</span>') + '</dd>' +
     '</dl></section>';
 
   return hero +
-    '<div class="pj-grid"><div class="pj-main">' + myChangesCard(id, rec) + list + '</div><aside class="pj-aside" aria-label="О проекте">' + aside + '</aside></div>';
+    '<div class="pj-grid"><div class="pj-main">' + list + '</div><aside class="pj-aside" aria-label="О проекте">' + aside + '</aside></div>';
 }
 
 // Окно даты — на странице проекта вместо правой карточки: главное по одному выступлению; подробности (продажи по
@@ -5157,6 +5182,40 @@ function pjOrgAssign() {
   var f = $("pjOrgForm"), name = $("pjOrgName").value.trim(), picked = [].map.call(f.querySelectorAll(".pjo-date input:checked"), function (x) { return MR[+x.value]; });
   if (!picked.length) { var err = $("pjOrgErr"); err.hidden = false; err.textContent = "Отметьте даты, которым назначить организатора"; return; }
   pjOrgSet(picked, name);
+}
+// ТЕСТ (09.10, по просьбе пользователя): ненастоящие изменения у AdrenalinHouse — проверить раздел «Изменения».
+// Не сохраняются; «Просмотрено» скрывает до перезагрузки. Убрать вместе с PJ_DEMO_CHG, когда раздел проверен.
+var PJ_DEMO_CHG = /adrenalin\s*house/i;
+function pjDemoDiff(l) {
+  var snap = mySnap(l), at = addDays(TODAY, -7) + "T12:00:00";
+  var priced = snap.slice(2, 4).map(function (d, n) { var o = d.slice(); o[3] = (d[3] || 1000) + (n ? 300 : -200); o[4] = (d[4] || 3000) + (n ? 500 : 0); return { d: d, o: o }; });
+  var added = snap.slice(0, 2);
+  return { added: added, removed: [[addDays(TODAY, 40), "Тула", "ДК «Тестовый»", 1500, 3500]], passed: [[addDays(TODAY, -3), "Курск", "ДК «Тестовый»", 1200, 3000]],
+    priced: priced, newCities: mUniq(added.map(function (d) { return { city: d[1] }; }), "city"), n: added.length + 1 + priced.length, since: at };
+}
+// Лента «Изменения» (избранное): что поменялось с момента добавления или «Просмотрено» — в стиле списка дат.
+// Новая дата — строка открывает окно даты; снята до даты, цена (было → стало), прошло — по снимку.
+function pjChangesFeed(df, l, title) {
+  if (!df) return '';
+  var cur = {}; l.forEach(function (e) { cur[e.date + "|" + e.city + "|" + e.venue] = e; });
+  var pr = function (a, b) { return a || b ? prices({ pmin: a || b, pmax: b || a }) : "без цены"; };
+  var items = [].concat(
+    df.added.map(function (d) { return { d: d, k: "new", label: "Новая дата" + (df.newCities.indexOf(d[1]) >= 0 ? " · новый город" : "") }; }),
+    df.removed.map(function (d) { return { d: d, k: "gone", label: "Снята до даты" }; }),
+    df.priced.map(function (x) { return { d: x.d, o: x.o, k: "price", label: "Цена изменилась" }; }),
+    df.passed.map(function (d) { return { d: d, k: "past", label: "Прошла" }; })
+  ).sort(function (a, b) { return a.d[0] < b.d[0] ? -1 : a.d[0] > b.d[0] ? 1 : 0; });
+  if (!items.length) return '<div class="note">С ' + (df.since ? human(df.since.slice(0, 10)) : 'момента добавления') + ' ничего не изменилось: даты и цены те же.</div>';
+  return '<ul class="pj-dates">' + items.map(function (x) {
+    var d = x.d, p = d[0].split("-"), dd = new Date(d[0] + "T12:00:00Z"), e = cur[d[0] + "|" + d[1] + "|" + d[2]];
+    var c4 = x.k === "price" ? '<span class="pj-chg-price"><s>' + pr(x.o[3], x.o[4]) + '</s><b>' + pr(d[3], d[4]) + '</b></span>'
+      : x.k === "new" ? (d[3] ? '<span class="pj-price">от ' + num(d[3]) + ' ₽</span>' : '<span class="pj-gone">без цены</span>')
+      : '<span class="pj-gone">' + (x.k === "gone" ? "Снято" : "Прошло") + '</span>';
+    var inner = '<span class="pj-c1"><span class="pj-cap pj-chg-' + x.k + '">' + x.label + '</span><span class="pj-t">' + esc(title) + '</span></span>' +
+      '<span class="pj-c2"><span class="pj-day num">' + p[2] + '</span><span class="pj-dm"><span class="pj-cap">' + WD_FULL[dd.getUTCDay()] + '</span><span>' + MONTHS_GEN[+p[1] - 1] + ' ' + p[0] + '</span></span></span>' +
+      '<span class="pj-c3"><span class="pj-cap">' + esc(d[1]) + '</span><span class="pj-v">' + esc(d[2]) + '</span></span><span class="pj-c4">' + c4 + '</span>';
+    return '<li class="pj-row' + (x.k === "gone" || x.k === "past" ? ' past' : '') + '">' + (e ? '<button class="pj-row-in" data-pj="date" data-i="' + e.i + '" aria-haspopup="dialog">' + inner + '</button>' : '<div class="pj-row-in">' + inner + '</div>') + '</li>';
+  }).join("") + '</ul>';
 }
 // Окна страницы проекта — нативный <dialog> поверх страницы (как подтверждения): фокус внутри, Esc закрывает
 function pjDialog(cls, label, html) {
@@ -5317,7 +5376,8 @@ function pjAction(t) {
   else if (a === "repos") { var dl = $("pjDlg"); if (dl && dl.open) dl.close(); window.scrollTo({ top: 0, behavior: "smooth" }); pjRepos(); }
   else if (a === "repos-done" || a === "repos-cancel") pjReposEnd(a === "repos-done");
   else if (a === "period-all") { S.period = "all"; S.from = S.to = null; render(); }
-  else if (a === "arch") { var y = window.scrollY; S.m.pjArch = t.getAttribute("data-on") === "1"; S.m.datesAll = false; render(); window.scrollTo(0, y); }   // экран остаётся на месте
+  else if (a === "mode") { var y = window.scrollY; S.m.pjMode = t.getAttribute("data-mode"); S.m.datesAll = false; render(); window.scrollTo(0, y); }   // экран остаётся на месте
+  else if (a === "seen") { S.pjDemoSeen = true; var rid = myFind(S.pj.k); if (rid) mySave({ op: "seen", id: rid, snap: mySnap(myEvents(MYP.projects[rid].keys)) }, "Отмечено: просмотрено"); }
   else if (a === "orgedit") pjOrgEditor(+t.getAttribute("data-i"));
   else if (a === "orgcancel") { $("pjdOrg").innerHTML = pjOrgView(MR[+t.getAttribute("data-i")]); }
   else if (a === "orgreset") pjOrgSet([MR[+t.getAttribute("data-i")]], "");
