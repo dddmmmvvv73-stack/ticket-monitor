@@ -501,13 +501,21 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 
 /* ---------- «Аналитика» проекта (новый вид) */
 .view > .an-hero:first-child { margin-top: -28px; }
-.an-hero { min-height: 0; }
-.an-hero-in { padding: 64px 72px 28px; gap: 18px; }
+.an-hero { min-height: 260px; flex-direction: column; align-items: stretch; justify-content: space-between; }
+.an-hero-in { padding: 0 72px 30px; gap: 18px; }
+.an-stats { position: relative; z-index: 1; display: flex; gap: 10px 28px; flex-wrap: wrap; align-items: baseline; padding: 74px 72px 0; font-size: 15px; color: rgba(255, 255, 255, 0.72); }
+.an-stats b { font: 500 24px/1.2 var(--display); color: #fff; letter-spacing: -0.01em; }
+.an-stats .pj-demo { align-self: center; }
+.an-nav { display: flex; gap: 0; flex-wrap: wrap; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; align-self: flex-start; margin-top: 4px; background: var(--card); }
+.an-nav button { height: 40px; padding: 0 18px; border: 0; background: none; font-size: 14px; color: var(--ink-2); }
+.an-nav button + button { border-left: 1px solid var(--line-strong); }
+.an-nav button[aria-selected="true"] { background: var(--soot); color: #fff; font-weight: 500; }
+@media (hover: hover) { .an-nav button:not([aria-selected="true"]):hover { background: #f2f1ef; color: var(--ink); } }
+.an-nav + .an-sec, .an-nav + .an-legacy > .card:first-child { border-top: 0; margin-top: 8px; padding-top: 0; }
 .an-ava { width: 64px; height: 64px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 2px solid rgba(255, 255, 255, 0.2); background: #3a332f; display: inline-flex; align-items: center; justify-content: center; font: 500 22px/1 var(--display); }
 .an-ava img { width: 100%; height: 100%; object-fit: cover; }
 .an-cap { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255, 255, 255, 0.7); }
 .an-name { font: 600 32px/1.1 var(--display); letter-spacing: -0.02em; margin: 2px 0 0; }
-.an-sum { margin: 6px 0 4px; gap: 10px 26px; } .an-sum b { font-size: 22px; }
 /* таблицы площадок и «где его нет» — без рамок карточек, как остальные блоки «Аналитики» */
 .an-legacy > .card { border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; margin-top: 28px; }
 .an-legacy .card-pad { padding-left: 0; padding-right: 0; }
@@ -523,10 +531,6 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .an-tabs button[aria-selected="true"] { background: var(--soot); color: #fff; }
 .an-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-3); margin-top: 8px; }
 .an-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
-.an-best { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin-bottom: 14px; }
-.an-best > div { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.an-lbl { font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); width: 100%; }
-.an-chip { height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--card); font-size: 13px; } .an-chip b { font-weight: 500; }
 .an-rows, .an-prices, .an-orgs { list-style: none; margin: 0; padding: 0; }
 .an-rows li { border-top: 1px solid var(--line); } .an-rows li:last-child { border-bottom: 1px solid var(--line); }
 .an-row { width: 100%; display: grid; grid-template-columns: minmax(0, 1.4fr) 110px 90px minmax(120px, 1.2fr) 48px 96px; gap: 16px; align-items: center; padding: 12px 0; background: none; border: 0; text-align: left; font: inherit; color: inherit; }
@@ -541,12 +545,12 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .an-pv { text-align: right; font-size: 14px; }
 .an-orgs { display: grid; gap: 12px; } .an-orgs li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; } .an-orgs b { font-weight: 500; }
 .an-org-cities { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap; } .an-city { font-size: 12px; padding: 2px 9px; border-radius: 9999px; background: var(--line-soft); color: var(--ink-2); }
-@media (hover: hover) { .an-row:hover .an-v { color: var(--data); } .an-chip:hover { border-color: var(--line-strong); } }
+@media (hover: hover) { .an-row:hover .an-v { color: var(--data); } }
 @media (max-width: 820px) {
   .view > .an-hero:first-child { margin-top: -20px; }
-  .an-hero-in { padding: 60px 36px 22px; flex-direction: row; align-items: center; } .an-name { font-size: 24px; }
-  .an-sum b { font-size: 18px; }
-  .an-best { grid-template-columns: minmax(0, 1fr); }
+  .an-hero-in { padding: 0 36px 22px; flex-direction: row; align-items: center; } .an-name { font-size: 24px; }
+  .an-hero { min-height: 230px; } .an-stats { padding: 64px 36px 16px; gap: 6px 18px; font-size: 13px; } .an-stats b { font-size: 18px; }
+  .an-nav { overflow-x: auto; flex-wrap: nowrap; max-width: 100%; } .an-nav button { flex-shrink: 0; padding: 0 14px; }
   .an-row { grid-template-columns: minmax(0, 1fr) 48px; grid-template-areas: "c p" "d d" "b b"; gap: 4px 12px; }
   .an-c1 { grid-area: c; } .an-pct { grid-area: p; } .an-c2 { grid-area: d; } .an-bar { grid-area: b; } .an-c3, .an-c5 { display: none; }
   .an-prices li { grid-template-columns: 110px minmax(0, 1fr); } .an-pv { grid-column: 1 / -1; text-align: left; } .an-pc .sub2 { display: block; margin: 0; }
@@ -5430,7 +5434,9 @@ function pjAction(t) {
   else if (a === "repos-done" || a === "repos-cancel") pjReposEnd(a === "repos-done");
   else if (a === "an-map") { S.m.anMap = t.getAttribute("data-on") === "1"; var y1 = window.scrollY; render(); window.scrollTo(0, y1); }
   else if (a === "an-sort") { S.m.anSort = t.getAttribute("data-sort"); var y2 = window.scrollY; render(); window.scrollTo(0, y2); }
-  else if (a === "an-fill-all" || a === "an-prices-all" || a === "an-ven-all") { S.m[{ "an-fill-all": "anFillAll", "an-prices-all": "anPricesAll", "an-ven-all": "anVenAll" }[a]] = true; var y3 = window.scrollY; render(); window.scrollTo(0, y3); }
+  else if (a === "an-ven-all") { S.m.anVenAll = true; var y3 = window.scrollY; render(); window.scrollTo(0, y3); }
+  else if (a === "an-more") { var key = t.getAttribute("data-key"); S.m[key] = !S.m[key]; var y4 = window.scrollY; render(); window.scrollTo(0, y4); }
+  else if (a === "an-tab") { S.m.anTab = t.getAttribute("data-tab"); var y5 = window.scrollY; render(); window.scrollTo(0, y5); }
   else if (a === "period-all") { S.period = "all"; S.from = S.to = null; render(); }
   else if (a === "mode") { var y = window.scrollY; S.m.pjMode = t.getAttribute("data-mode"); S.m.datesAll = false; render(); window.scrollTo(0, y); }   // экран остаётся на месте
   else if (a === "seen") { S.pjDemoSeen = true; var rid = myFind(S.pj.k); if (rid) mySave({ op: "seen", id: rid, snap: mySnap(myEvents(MYP.projects[rid].keys)) }, "Отмечено: просмотрено"); }
@@ -5564,66 +5570,71 @@ function anTimeline(l, fills) {   // лента маршрута: точки —
     '<div class="an-legend"><span><i style="background:#15803d"></i>от ' + AN_GOOD + '%</span><span><i style="background:#1d6fae"></i>' + AN_LOW + '–' + AN_GOOD + '%</span><span><i style="background:#d03b3b"></i>ниже ' + AN_LOW + '%</span><span><i style="background:#a8a29e"></i>нет данных</span></div>';
 }
 function anSec(title, right, body, id) { return '<section class="an-sec"' + (id ? ' id="' + id + '"' : '') + '><div class="an-sec-head"><h2 class="an-h2">' + title + '</h2>' + (right || '') + '</div>' + body + '</section>'; }
+// Разделы «Аналитики» — по одному, кнопками под шапкой (S.m.anTab); показатели тура — на самой шапке
+var AN_TABS = [["route", "Маршрут"], ["fill", "Заполняемость"], ["prices", "Цены"], ["orgs", "Организаторы"], ["venues", "Площадки"], ["cands", "Где его нет"]];
+var AN_FEW = 3;   // в «Заполняемости» и «Ценах» сначала 3 строки, дальше «Показать все» / «Скрыть»
+function anMore(key, shown, total) {
+  if (total <= AN_FEW) return '';
+  return '<div class="pj-all"><button class="btn-ghost" data-pj="an-more" data-key="' + key + '">' + (S.m[key] ? 'Скрыть' : 'Показать все · ' + total) + '</button></div>';
+}
 function anPage(k, l, past, p, cands, foN) {
   var rec = myRec(k), title = p.title, fmt = p.format, genre = p.genre;
   var ava = pjMedia(rec, "avatar"), cover = pjMedia(rec, "cover"), coverY = rec && rec.cover_y != null ? rec.cover_y : 30;
   var F = anFills(l, title), fills = F.f, known = fills.filter(function (f) { return f != null; });
   var avg = known.length ? Math.round(known.reduce(function (a, b) { return a + b; }, 0) / known.length) : null;
-  var cities = mUniq(l, "city"), orgs = pjOrgs(l), pathN = cands.filter(function (c) { return c.kind === "path"; }).length;
+  var cities = mUniq(l, "city"), orgs = pjOrgs(l);
   var pmin = Math.min.apply(null, l.map(function (e) { return e.pmin || 1e9; })), pmax = Math.max.apply(null, l.map(function (e) { return e.pmax || 0; }));
   S.pj = { k: k, id: myFind(k), title: title, l: l, orgs: orgs };   // окна даты и организаторов работают и отсюда
+  var tab = S.m.anTab || "route";
 
-  var hero = '<section class="pj-hero an-hero' + (cover ? ' has-cover' : '') + '"' + (cover ? ' style="background-image:url(\'' + esc(cover) + '\');background-position:center ' + coverY + '%"' : '') + '>' +
-    '<button class="pj-back-btn" data-vopen="' + esc(k) + '" aria-label="Назад: страница проекта" title="Назад: страница проекта">' + PJ_ICON.back + '</button>' +
-    '<div class="pj-hero-in an-hero-in"><span class="an-ava">' + (ava ? '<img src="' + esc(ava) + '" alt="">' : '<span>' + esc(pjInitials(title)) + '</span>') + '</span>' +
-      '<div><div class="an-cap">Аналитика</div><h1 class="an-name">' + esc(title) + '</h1></div></div></section>';
-  var sum = '<div class="pj-sum an-sum">' + (F.demo ? '<span class="pj-demo">тестовые цифры заполняемости</span>' : '') +
+  var stats = '<div class="an-stats">' + (F.demo ? '<span class="pj-demo">тестовые цифры заполняемости</span>' : '') +
     '<span><b class="num">' + cities.length + '</b> ' + plural(cities.length, "город", "города", "городов") + '</span>' +
     '<span><b class="num">' + l.length + '</b> ' + plural(l.length, "дата", "даты", "дат") + '</span>' +
     '<span><b>' + human(l[0].date) + ' – ' + human(l[l.length - 1].date) + '</b></span>' +
     '<span><b class="num">' + (pmax ? prices({ pmin: pmin < 1e9 ? pmin : pmax, pmax: pmax }) : "—") + '</b></span>' +
-    '<span title="' + (known.length ? 'В среднем по ' + known.length + ' ' + plural(known.length, "дате", "датам", "датам") + ' с данными; «занято» включает и чужие квоты' : 'Данных о продажах ещё нет') + '"><b class="num">' + (avg == null ? "—" : avg + "%") + '</b> заполняемость в ср.</span>' +
-    '<span><b class="num">' + orgs.length + '</b> ' + plural(orgs.length, "организатор", "организатора", "организаторов") + '</span>' +
-    '<span title="Города списка между соседними выступлениями: крюк до 150 км и есть свободный день"><b class="num">' + pathN + '</b> можно добавить по пути</span></div>';
+    '<span title="' + (known.length ? 'В среднем по ' + known.length + ' ' + plural(known.length, "дате", "датам", "датам") + ' с данными; «занято» включает и чужие квоты' : 'Данных о продажах ещё нет') + '"><b class="num">' + (avg == null ? "—" : avg + "%") + '</b> заполняемость в ср.</span></div>';
+  var hero = '<section class="pj-hero an-hero' + (cover ? ' has-cover' : '') + '"' + (cover ? ' style="background-image:url(\'' + esc(cover) + '\');background-position:center ' + coverY + '%"' : '') + '>' +
+    '<button class="pj-back-btn" data-vopen="' + esc(k) + '" aria-label="Назад: страница проекта" title="Назад: страница проекта">' + PJ_ICON.back + '</button>' + stats +
+    '<div class="pj-hero-in an-hero-in"><span class="an-ava">' + (ava ? '<img src="' + esc(ava) + '" alt="">' : '<span>' + esc(pjInitials(title)) + '</span>') + '</span>' +
+      '<div><div class="an-cap">Аналитика</div><h1 class="an-name">' + esc(title) + '</h1></div></div></section>';
+  var nav = '<div class="an-nav" role="tablist" aria-label="Разделы аналитики">' + AN_TABS.map(function (t) {
+    return '<button role="tab" data-pj="an-tab" data-tab="' + t[0] + '" aria-selected="' + (tab === t[0]) + '">' + t[1] + '</button>'; }).join("") + '</div>';
 
-  // 1. Маршрут: лента (цвет — заполняемость) или карта
-  var map = !!S.m.anMap;
-  var route = anSec("Маршрут", '<div class="an-tabs" role="tablist"><button role="tab" data-pj="an-map" data-on="0" aria-selected="' + !map + '">Лента</button><button role="tab" data-pj="an-map" data-on="1" aria-selected="' + map + '">Карта</button></div>',
-    map ? mapSvg(p, cands) : anTimeline(l, fills));
-
-  // 2. Заполняемость по городам
-  var rows = l.map(function (e, i) { var d = mDirect(e), s = e.sales; return { e: e, f: fills[i], cap: d && d.sellable ? d.sellable : s ? s.hall || s.exp : null, g: d && d.gross ? d.gross : s && s.g ? s.g : null }; });
-  var withF = rows.filter(function (r) { return r.f != null; }).sort(function (a, b) { return b.f - a.f; });
-  var sortBy = S.m.anSort || "route";
-  var shown = sortBy === "best" ? withF.concat(rows.filter(function (r) { return r.f == null; })) : sortBy === "worst" ? withF.slice().reverse().concat(rows.filter(function (r) { return r.f == null; })) : rows;
-  var lim = S.m.anFillAll ? shown : shown.slice(0, 12);
-  var chip = function (r) { return '<button class="an-chip" data-pj="date" data-i="' + r.e.i + '"><b>' + esc(r.e.city) + '</b> ' + r.f + '%</button>'; };
-  var fillBody = (withF.length >= 2 ? '<div class="an-best"><div><span class="an-lbl">Лучше всего</span>' + withF.slice(0, 3).map(chip).join("") + '</div><div><span class="an-lbl">Хуже всего</span>' + withF.slice(-3).reverse().map(chip).join("") + '</div></div>' : '') +
-    '<ul class="an-rows">' + lim.map(function (r) {
-      return '<li><button class="an-row" data-pj="date" data-i="' + r.e.i + '"><span class="an-c1"><span class="pj-cap">' + esc(r.e.city) + '</span><span class="an-v">' + esc(r.e.venue) + '</span></span>' +
-        '<span class="an-c2">' + dayLabel(r.e.date) + '</span><span class="an-c3 num">' + (r.cap ? num(r.cap) + ' мест' : '') + '</span>' +
-        '<span class="an-bar"><i style="width:' + (r.f || 0) + '%;background:' + anColor(r.f) + '"></i></span><span class="an-pct num">' + (r.f == null ? '<span class="muted">—</span>' : r.f + '%') + '</span>' +
-        '<span class="an-c5 num">' + (r.g ? money(r.g) : '') + '</span></button></li>';
-    }).join("") + '</ul>' + (lim.length < shown.length ? '<div class="pj-all"><button class="btn-ghost" data-pj="an-fill-all">Показать все · ' + shown.length + '</button></div>' : '');
-  var fillSec = anSec("Заполняемость по городам", '<div class="an-tabs" role="tablist">' + [["route", "По маршруту"], ["best", "Лучшие"], ["worst", "Худшие"]].map(function (o) {
-    return '<button role="tab" data-pj="an-sort" data-sort="' + o[0] + '" aria-selected="' + (sortBy === o[0]) + '">' + o[1] + '</button>'; }).join("") + '</div>', fillBody);
-
-  // 3. Цены по городам — диапазоны на общей шкале
-  var lo = pmin < 1e9 ? pmin : 0, hi = pmax || 1, pl = S.m.anPricesAll ? l : l.slice(0, 12);
-  var priceSec = anSec("Цены по городам", '<span class="sub2">шкала ' + num(lo) + ' – ' + num(hi) + ' ₽, без сервисного сбора</span>',
-    '<ul class="an-prices">' + pl.map(function (e) {
-      var a = e.pmin || e.pmax, b = e.pmax || e.pmin;
-      return '<li><span class="an-pc">' + esc(e.city) + '<span class="sub2">' + human(e.date) + '</span></span><span class="an-ptrack">' + (a ? '<i style="left:' + ((a - lo) / Math.max(1, hi - lo) * 100).toFixed(1) + '%;width:' + Math.max(1.2, (b - a) / Math.max(1, hi - lo) * 100).toFixed(1) + '%"></i>' : '') + '</span>' +
-        '<span class="an-pv num">' + (a ? prices({ pmin: a, pmax: b }) : '—') + '</span></li>';
-    }).join("") + '</ul>' + (pl.length < l.length ? '<div class="pj-all"><button class="btn-ghost" data-pj="an-prices-all">Показать все · ' + l.length + '</button></div>' : ''));
-
-  // 4. Организаторы по регионам
-  var noOrg = l.filter(function (e) { return !e.org; });
-  var orgSec = anSec("Организаторы по регионам", '<span class="sub2">' + orgs.length + ' · вписать — на странице проекта</span>',
-    (orgs.length ? '<ul class="an-orgs">' + orgs.map(function (o) { return '<li><b>' + esc(o.name) + '</b><span class="sub2">' + o.n + ' ' + plural(o.n, "дата", "даты", "дат") + '</span><div class="an-org-cities">' + o.cities.map(function (c) { return '<span class="an-city">' + esc(c) + '</span>'; }).join("") + '</div></li>'; }).join("") + '</ul>' : '') +
-    (noOrg.length ? '<p class="sub2" style="margin:10px 0 0">Без организатора — ' + noOrg.length + ' ' + plural(noOrg.length, "дата", "даты", "дат") + ': его пишет только Кассир.</p>' : ''));
-
-  return hero + sum + route + fillSec + priceSec + orgSec + '<div class="an-legacy">' + mRouteVenues(l, 8) + mCandTable(cands, foN, l, fmt, genre) + '</div>';
+  var body;
+  if (tab === "route") {
+    var map = !!S.m.anMap;
+    body = anSec("Маршрут", '<div class="an-tabs" role="tablist"><button role="tab" data-pj="an-map" data-on="0" aria-selected="' + !map + '">Лента</button><button role="tab" data-pj="an-map" data-on="1" aria-selected="' + map + '">Карта</button></div>',
+      map ? mapSvg(p, cands) : anTimeline(l, fills));
+  } else if (tab === "fill") {
+    var rows = l.map(function (e, i) { var d = mDirect(e), s = e.sales; return { e: e, f: fills[i], cap: d && d.sellable ? d.sellable : s ? s.hall || s.exp : null, g: d && d.gross ? d.gross : s && s.g ? s.g : null }; });
+    var withF = rows.filter(function (r) { return r.f != null; }).sort(function (a, b) { return b.f - a.f; }), noF = rows.filter(function (r) { return r.f == null; });
+    var sortBy = S.m.anSort || "route";
+    var shown = sortBy === "best" ? withF.concat(noF) : sortBy === "worst" ? withF.slice().reverse().concat(noF) : rows;
+    var lim = S.m.anFillAll ? shown : shown.slice(0, AN_FEW);
+    body = anSec("Заполняемость по городам", '<div class="an-tabs" role="tablist">' + [["route", "По маршруту"], ["best", "Лучшие"], ["worst", "Худшие"]].map(function (o) {
+      return '<button role="tab" data-pj="an-sort" data-sort="' + o[0] + '" aria-selected="' + (sortBy === o[0]) + '">' + o[1] + '</button>'; }).join("") + '</div>',
+      '<ul class="an-rows">' + lim.map(function (r) {
+        return '<li><button class="an-row" data-pj="date" data-i="' + r.e.i + '"><span class="an-c1"><span class="pj-cap">' + esc(r.e.city) + '</span><span class="an-v">' + esc(r.e.venue) + '</span></span>' +
+          '<span class="an-c2">' + dayLabel(r.e.date) + '</span><span class="an-c3 num">' + (r.cap ? num(r.cap) + ' мест' : '') + '</span>' +
+          '<span class="an-bar"><i style="width:' + (r.f || 0) + '%;background:' + anColor(r.f) + '"></i></span><span class="an-pct num">' + (r.f == null ? '<span class="muted">—</span>' : r.f + '%') + '</span>' +
+          '<span class="an-c5 num">' + (r.g ? money(r.g) : '') + '</span></button></li>';
+      }).join("") + '</ul>' + anMore("anFillAll", lim.length, shown.length));
+  } else if (tab === "prices") {
+    var lo = pmin < 1e9 ? pmin : 0, hi = pmax || 1, pl = S.m.anPricesAll ? l : l.slice(0, AN_FEW);
+    body = anSec("Цены по городам", '',
+      '<ul class="an-prices">' + pl.map(function (e) {
+        var a = e.pmin || e.pmax, b = e.pmax || e.pmin;
+        return '<li><span class="an-pc">' + esc(e.city) + '<span class="sub2">' + human(e.date) + '</span></span><span class="an-ptrack">' + (a ? '<i style="left:' + ((a - lo) / Math.max(1, hi - lo) * 100).toFixed(1) + '%;width:' + Math.max(1.2, (b - a) / Math.max(1, hi - lo) * 100).toFixed(1) + '%"></i>' : '') + '</span>' +
+          '<span class="an-pv num">' + (a ? prices({ pmin: a, pmax: b }) : '—') + '</span></li>';
+      }).join("") + '</ul>' + anMore("anPricesAll", pl.length, l.length));
+  } else if (tab === "orgs") {
+    var noOrg = l.filter(function (e) { return !e.org; });
+    body = anSec("Организаторы по регионам", '',
+      (orgs.length ? '<ul class="an-orgs">' + orgs.map(function (o) { return '<li><b>' + esc(o.name) + '</b><span class="sub2">' + o.n + ' ' + plural(o.n, "дата", "даты", "дат") + '</span><div class="an-org-cities">' + o.cities.map(function (c) { return '<span class="an-city">' + esc(c) + '</span>'; }).join("") + '</div></li>'; }).join("") + '</ul>' : '<p class="sub" style="margin:0">Организаторы не указаны.</p>') +
+      (noOrg.length ? '<p class="sub2" style="margin:10px 0 0">Без организатора — ' + noOrg.length + ' ' + plural(noOrg.length, "дата", "даты", "дат") + ': его пишет только Кассир.</p>' : ''));
+  } else if (tab === "venues") body = '<div class="an-legacy">' + mRouteVenues(l, 8) + '</div>';
+  else body = '<div class="an-legacy">' + mCandTable(cands, foN, l, fmt, genre) + '</div>';
+  return hero + nav + body;
 }
 // «Города, где его нет» — таблица кандидатов (страница маршрута и «Аналитика»)
 function mCandTable(cands, foN, l, fmt, genre) {
