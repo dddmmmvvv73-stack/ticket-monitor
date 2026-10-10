@@ -3614,8 +3614,11 @@ function mCityOptions() {
 function mScopeLabel() { return S.m.city.indexOf("fo:") === 0 ? S.m.city.slice(3) + " ФО" : S.m.city; }
 function mInScope(e) { var c = S.m.city; return c === "Все города" || (c.indexOf("fo:") === 0 ? MK.fo[e.city] === c.slice(3) : e.city === c); }
 function mSingleCity() { return S.m.city !== "Все города" && S.m.city.indexOf("fo:") !== 0; }
-// Сайт, подключённый позже (Qtickets): в день его первого сбора всё, что видно только у него, — точка отсчёта, не «новое»
-function mFromNewSite(e) { var f = MK.srcFirst || {}, s = (e.src || "").split(""); return s.length > 0 && s.every(function (c) { return f[c] && e.seen <= f[c]; }); }
+// Сайт или город, подключённые позже (Qtickets, города 10.10): в день их первого сбора — точка отсчёта, не «новое»
+function mFromNewSite(e) {
+  var f = MK.srcFirst || {}, s = (e.src || "").split(""), cf = (MK.cityFirst || {})[e.city];
+  return (s.length > 0 && s.every(function (c) { return f[c] && e.seen <= f[c]; })) || !!(cf && e.seen <= cf);   // и город, добавленный в список позже
+}
 function mIsNew(e, days) { return e.seen > MK.first && e.seen > addDays(MR_LAST, -days) && !mFromNewSite(e); }
 function mBase(opts) {
   var q = S.q.trim().toLowerCase(); opts = opts || {};

@@ -177,8 +177,8 @@ def _fetch(cities: list[str], log: Log, today: str, client: Client) -> list[dict
     known = load_json(CITIES_CACHE, {})
     home = client.get("https://qtickets.events/")
     fresh = parse_cities(home or "")
-    if len(fresh) >= 100:   # главная открылась целиком — словарь обновляем
-        known = fresh
+    if len(fresh) >= 100:   # главная открылась целиком — словарь дополняем (в списке сайта — только города, где что-то идёт)
+        known = {**known, **fresh}
         save_json(CITIES_CACHE, known)
     sub_of = {norm(name): sub for sub, name in known.items()}
     # «Кировск (Мурманская обл.)» — в списке просто «Кировск»; уточнение в скобках отбрасываем, если без него имя одно

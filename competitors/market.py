@@ -1077,6 +1077,10 @@ def run() -> bool:
         src_at = {"k": was, "y": was, **status.get("src_at", {})}
         # Первый день сбора сайта: его мероприятия в этот день — точка отсчёта, а не «новое» (как весь первый сбор)
         src_first = {"k": status.get("first_run") or today, "y": status.get("first_run") or today, **status.get("src_first", {})}
+        # То же для города, добавленного в список позже (10.10 — 246 городов Qtickets): в его первый день — не «новое»
+        city_first = dict(status.get("city_first") or {c: status.get("first_run") or today for c in {p["city"] for p in previous}})
+        for c in cities:
+            city_first.setdefault(c, today)
         for s_ in SOURCES:
             if s_ not in missing:
                 src_at[s_] = now_iso
@@ -1095,7 +1099,8 @@ def run() -> bool:
         for r in rows:
             known = [seen[k] for k in r["keys"] if k in seen] or [seen[legacy(k)] for k in r["keys"] if legacy(k) in seen]
             r["first_seen"] = min(known) if known else today
-            if not known and first_run != today and not all(src_first.get(c) == today for c in r["src"]):
+            if not known and first_run != today and not all(src_first.get(c) == today for c in r["src"]) \
+                    and city_first.get(r["city"]) != today:
                 new_rows.append(r)
             for k in r["keys"]:
                 seen.setdefault(k, today)
@@ -1125,7 +1130,7 @@ def run() -> bool:
                    f"исчезло {len(gone)}, в архиве гастролей {archived}, нейросеть {asked}, за {took / 60:.0f} мин")
         status.update(first_run=first_run, last_run_at=now_iso, last_ok=True, last_error=None, summary=summary,
                       rows=len(rows), tours=tours, new=len(new_rows), gone=len(gone), by_src=dict(Counter(r["src"] for r in rows)),
-                      dropped=dict(dropped), no_data=no_data, src_at=src_at, src_first=src_first, stale=missing)
+                      dropped=dict(dropped), no_data=no_data, src_at=src_at, src_first=src_first, city_first=city_first, stale=missing)
         log(f"=== Сбор рынка завершён: {summary} ===")
         return True
     except Exception as e:
@@ -1276,7 +1281,7 @@ def export_js() -> str:
     lab = lambda iso: (lambda t: f"{t.day} {months[t.month - 1]}, {t:%H:%M}")(datetime.fromisoformat(iso[:19]))
     stale = {x: lab(status["src_at"][x]) for x in status.get("stale", []) if (status.get("src_at") or {}).get(x)}
     data = {"at": label, "stale": stale, "first": status.get("first_run"), "cities": cities, "fo": fo, **lists, "rows": packed, "arch": arch,
-            "salesAt": snap.get("at"), "directOnly": direct_only, "salesOps": snap.get("operators", []), "suggest": snap.get("suggest", []), "finals": snap.get("finals", {}), "srcFirst": status.get("src_first", {}),
+            "salesAt": snap.get("at"), "directOnly": direct_only, "salesOps": snap.get("operators", []), "suggest": snap.get("suggest", []), "finals": snap.get("finals", {}), "srcFirst": status.get("src_first", {}), "cityFirst": status.get("city_first", {}),
             "stats": {"merged": sum(len(r["src"]) > 1 for r in rows), "dropped": status.get("dropped", {}), "bySrc": status.get("by_src", {})}}
     return (f"// Снимок «Афиши рынка»: Кассир + Яндекс Афиша + Qtickets по {len(all_cities)} городам, сбор {label}.\n"
             "// Пересобрать: ./pull_data.sh && python3 -m competitors.market export (через app.py — собирается сам)\n"
