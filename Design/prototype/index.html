@@ -474,6 +474,8 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pj-dm { display: flex; flex-direction: column; font-size: 16px; color: var(--ink-2); white-space: nowrap; }
 .pj-dm .pj-cap { margin-bottom: 2px; }
 .pj-v { display: block; font-size: 16px; color: var(--ink); }
+.pj-c1, .pj-c3 { min-width: 0; }
+.pj-w { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; }
 .pj-c4 { display: flex; flex-direction: column; align-items: stretch; gap: 8px; width: 148px; justify-self: end; }
 .pj-price { display: block; text-align: center; padding: 11px 16px; border-radius: 6px; background: var(--wash); color: var(--ink); font-weight: 500; font-size: 15px; white-space: nowrap; }
 /* Полоса заполняемости — ровно по ширине кнопки с ценой: от края до края = 100% */
@@ -5104,11 +5106,14 @@ function pjVenues(l) {  // площадки проекта: город, тип (
     return v;
   }).sort(function (a, b) { return b.n - a.n || (a.city < b.city ? -1 : 1); });
 }
+// Слово — неразрывный кусочек не шире колонки: строка переносится по словам, а слово, которое в колонку не влезает
+// (узкий экран рядом с «О проекте»), обрезается многоточием, а не наезжает на дату или цену
+function pjWords(t) { return String(t || "").split(/(\s+)/).map(function (w) { return /^\s*$/.test(w) ? w : '<span class="pj-w">' + esc(w) + '</span>'; }).join(""); }
 function pjRow(e, past, title) {
   var p = e.date.split("-"), d = new Date(e.date + "T12:00:00Z");
-  var c1 = '<span class="pj-c1"><span class="pj-cap">' + esc(e.genre || e.format || "") + '</span><span class="pj-t">' + esc(e.title || title) + '</span></span>';
+  var c1 = '<span class="pj-c1"><span class="pj-cap">' + esc(e.genre || e.format || "") + '</span><span class="pj-t">' + pjWords(e.title || title) + '</span></span>';
   var c2 = '<span class="pj-c2"><span class="pj-day num">' + p[2] + '</span><span class="pj-dm"><span class="pj-cap">' + WD_FULL[d.getUTCDay()] + '</span><span>' + MONTHS_GEN[+p[1] - 1] + ' ' + p[0] + '</span></span></span>';
-  var c3 = '<span class="pj-c3"><span class="pj-cap">' + esc(e.city) + '</span><span class="pj-v">' + esc(e.venue) + '</span></span>';
+  var c3 = '<span class="pj-c3"><span class="pj-cap">' + esc(e.city) + '</span><span class="pj-v">' + pjWords(e.venue) + '</span></span>';
   if (past) return '<li class="pj-row past"><div class="pj-row-in">' + c1 + c2 + c3 + '<span class="pj-c4"><span class="pj-gone">' + (e.status === "gone" ? "Снято до даты" : "Событие прошло") + '</span></span></div></li>';
   var f = pjFill(e);
   var fl = f ? '<span class="pj-fill" role="img" aria-label="Заполнено ' + f.f + '%" title="Заполнено ' + f.f + '% · ' + esc(f.tip) + '"><i style="width:' + Math.min(100, f.f) + '%"></i></span>'
@@ -5401,9 +5406,9 @@ function pjChangesFeed(df, l, title) {
     var c4 = x.k === "price" ? '<span class="pj-chg-price"><s>' + pr(x.o[3], x.o[4]) + '</s><b>' + pr(d[3], d[4]) + '</b></span>'
       : x.k === "new" ? (d[3] ? '<span class="pj-price">от ' + num(d[3]) + ' ₽</span>' : '<span class="pj-gone">без цены</span>')
       : '<span class="pj-gone">' + (x.k === "gone" ? "Снято" : "Прошло") + '</span>';
-    var inner = '<span class="pj-c1"><span class="pj-cap pj-chg-' + x.k + '">' + x.label + '</span><span class="pj-t">' + esc(title) + '</span></span>' +
+    var inner = '<span class="pj-c1"><span class="pj-cap pj-chg-' + x.k + '">' + x.label + '</span><span class="pj-t">' + pjWords(title) + '</span></span>' +
       '<span class="pj-c2"><span class="pj-day num">' + p[2] + '</span><span class="pj-dm"><span class="pj-cap">' + WD_FULL[dd.getUTCDay()] + '</span><span>' + MONTHS_GEN[+p[1] - 1] + ' ' + p[0] + '</span></span></span>' +
-      '<span class="pj-c3"><span class="pj-cap">' + esc(d[1]) + '</span><span class="pj-v">' + esc(d[2]) + '</span></span><span class="pj-c4">' + c4 + '</span>';
+      '<span class="pj-c3"><span class="pj-cap">' + esc(d[1]) + '</span><span class="pj-v">' + pjWords(d[2]) + '</span></span><span class="pj-c4">' + c4 + '</span>';
     return '<li class="pj-row' + (x.k === "gone" || x.k === "past" ? ' past' : '') + '">' + (e ? '<button class="pj-row-in" data-pj="date" data-i="' + e.i + '" aria-haspopup="dialog">' + inner + '</button>' : '<div class="pj-row-in">' + inner + '</div>') + '</li>';
   }).join("") + '</ul>';
 }
