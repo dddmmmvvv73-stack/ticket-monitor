@@ -3888,7 +3888,7 @@ var M_CELL = {
   }
 };
 // ---------- Карточка мероприятия рынка: продажи (сводка — сразу, подробности — с сервера, /api/sales/detail)
-var OP_NAME = { k: "Кассир", y: "Яндекс Афиша", kassir: "Кассир", yandex: "Яндекс Афиша" };
+var OP_NAME = { k: "Кассир", y: "Яндекс Афиша", q: "Qtickets", kassir: "Кассир", yandex: "Яндекс Афиша", qtickets: "Qtickets" };
 function mSalesBlock(e) {
   var s = e.sales, x = s && mSalesFill(s);
   var head = '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap"><h3 style="font-weight:500;font-size:15px">Продажи</h3>' +
@@ -3936,7 +3936,7 @@ function mSalesPool(p) {
       (seat ? esc(seat[0]) + ', ряд ' + esc(seat[1]) + ', место ' + esc(seat[2]) : num(r[4] || 1) + ' мест') + '</span><span class="num nowrap">' + (r[2] ? num(r[2]) + ' ₽' : '') + '</span><span class="nowrap" style="color:' + (r[3] === "sale" ? "var(--good)" : "var(--ink-3)") + '">' + (r[3] === "sale" ? "продажа" : r[3] === "release" ? "открыли" : "возврат") + '</span></li>';
   }).join("");
   return '<div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px">' +
-    '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><b style="font-weight:500">' + name + (p.op === "kassir" ? " · схема кассы" : " · по залу") + '</b><span class="sub2">снимок ' + atText(p.at) + '</span></div>' +
+    '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><b style="font-weight:500">' + name + (p.op === "kassir" || p.op === "qtickets" ? " · схема кассы" : " · по залу") + '</b><span class="sub2">снимок ' + atText(p.at) + '</span></div>' +
     (tags ? '<div class="chips" style="margin-top:6px">' + tags + '</div>' : '') +
     '<dl class="facts" style="display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:10px 0;font-size:13px">' + facts.map(function (f) { return '<dt class="sub" style="margin:0">' + f[0] + '</dt><dd style="margin:0">' + f[1] + '</dd>'; }).join("") + '</dl>' +
     mFreeChart(p.history || []) +
@@ -3969,7 +3969,8 @@ function mSalesFill(s) {
   return { f: Math.round(taken / total * 100), taken: taken, total: total, left: s.free, exp: !!s.exp };
 }
 function mSalesTip(s) {
-  return (s.op === "k" ? "Кассир, схема кассы (выставленные места)" : "Яндекс Афиша, по залу: в «занято» входят и места вне продажи") +
+  return (s.op === "k" ? "Кассир, схема кассы (выставленные места)" : s.op === "q" ? "Qtickets, схема кассы (выставленные места, точные цены)"
+    : "Яндекс Афиша, по залу: в «занято» входят и места вне продажи") +
     (s.shared ? " · запас общий с другой кассой" : "") + (s.at ? " · снимок " + atText(s.at) : "");
 }
 function mSortKey(e) {
@@ -5284,7 +5285,7 @@ function pjdSalesPool(p) {
   if (p.nt) return '<div class="note"><b style="font-weight:500">' + name + '</b> сам не продаёт билеты на это мероприятие — ссылка на другую кассу.</div>';
   var hall = p.rows && p.rows.length ? hallRows(p.rows.map(function (z) { return [z[0], z[1].map(function (r) { return [r[0], r[1], r[1] - r[2], r[3]]; })]; }))
     : '<div class="note">' + (p.scheme ? 'Схема мест ещё не снята.' : 'У этой кассы нет схемы мест — только остаток по ценам.') + '</div>';
-  return '<div class="pjd-pool"><div class="pjd-pool-head"><b>' + name + (p.op === "kassir" ? ' · схема кассы' : ' · по залу') + '</b><span class="sub2">снимок ' + atText(p.at) + '</span></div>' +
+  return '<div class="pjd-pool"><div class="pjd-pool-head"><b>' + name + (p.op === "kassir" || p.op === "qtickets" ? ' · схема кассы' : ' · по залу') + '</b><span class="sub2">снимок ' + atText(p.at) + '</span></div>' +
     pjdSec("Динамика продаж", '<p class="sub2" style="margin:0 0 6px">Продано с ' + atText(p.since) + ': ' + num(p.sold) + ' ' + plural(p.sold, "место", "места", "мест") + (p.rev ? ' · ' + money(p.rev) : '') +
       (p.returned ? ' · возвратов ' + num(p.returned) : '') + ' · снимков ' + num(p.snapshots) + '</p>' + mFreeChart(p.history || [])) +
     pjdSec("Распоясовка", hall, p.rows && p.rows.length ? PJD_LEGEND : '') + '</div>';

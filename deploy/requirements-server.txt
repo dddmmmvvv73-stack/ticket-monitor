@@ -5,3 +5,5 @@ boto3>=1.34,<2
 gigachat==0.2.3
 # Интерфейс (tm-web) — как на ноутбуке
 flask==3.1.3
+# Продажи Qtickets — страница покупки в браузере (sales/qtickets.py); Chromium ставит setup.sh
+playwright>=1.47,<2

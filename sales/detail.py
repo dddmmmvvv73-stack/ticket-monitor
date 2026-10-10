@@ -82,7 +82,7 @@ def detail(conn, keys: list[str]) -> dict:
             "op": op, "key": key, "shared": ext.get("shared"), "services": ext.get("services"), "sale_opening": ext.get("sale_opening"),
             "since": obs[0][0].isoformat(timespec="minutes"), "at": (last[7] or last[0]).isoformat(timespec="minutes"),
             "snapshots": len(obs), "anomalies": sum(1 for o in obs if o[3]),
-            "free": last[1], "exp": (g or {}).get("exposed") if op == "kassir" else None, "hall": last[2] if op == "yandex" else None,
+            "free": last[1], "exp": (g or {}).get("exposed") if op in ("kassir", "qtickets") else None, "hall": last[2] if op == "yandex" else None,
             "gross": g, "scheme": free_seats is not None,
             "history": [[o[0].isoformat(timespec="minutes"), o[1], bool(o[3])] for o in obs[-HISTORY:]],
             "rows": rows, "sold": sold - ret, "rev": round(sold_rub - ret_rub), "sold_gross": sold, "returned": ret, "released": released,

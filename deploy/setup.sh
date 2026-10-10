@@ -17,6 +17,9 @@ git -C "$APP" pull -q --ff-only
 [ -d "$APP/.venv" ] || python3 -m venv "$APP/.venv"
 "$APP/.venv/bin/pip" install -q --upgrade pip
 "$APP/.venv/bin/pip" install -q -r "$APP/deploy/requirements-server.txt"
+# Браузер для продаж Qtickets: системные библиотеки (sudo) и сам Chromium (в ~/.cache/ms-playwright пользователя tm)
+sudo "$APP/.venv/bin/playwright" install-deps chromium >/dev/null
+"$APP/.venv/bin/playwright" install chromium >/dev/null
 
 # База: роль tm (вход по сокету без пароля) и база ticket_monitor
 sudo -u postgres psql -tAc "SELECT 1 FROM pg_roles WHERE rolname = 'tm'" | grep -q 1 || sudo -u postgres createuser tm

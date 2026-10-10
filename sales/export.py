@@ -5,7 +5,7 @@
 
     python3 -m sales.export
 
-Поля строки: op (k — Кассир, y — Яндекс), free — свободно сейчас, exp — выставлено (схема кассы), hall — мест в зале
+Поля строки: op (k — Кассир, y — Яндекс, q — Qtickets), free — свободно сейчас, exp — выставлено (схема кассы), hall — мест в зале
 (схема Яндекса), g / glo / ghi / gx — вал, диапазон, доля точных цен, sold / rev — продано и выручка по
 подтверждённым продажам с начала слежения (since), at — последний снимок, shared — общий запас с другой кассой,
 nt — Яндекс сам не продаёт.
@@ -102,13 +102,13 @@ def operators(conn) -> list:
 def sales_row(op, ext, free, total, g, since, at, sold, rev, hall) -> dict:
     """Строка сводки по одной кассе — та же и в итоге сеанса (sales.results): прототип показывает их одинаково."""
     ext = ext or {}
-    r = {"op": "k" if op == "kassir" else "y"}
+    r = {"op": {"kassir": "k", "qtickets": "q"}.get(op, "y")}
     if ext.get("no_tickets"):
         r["nt"] = 1
     if free is not None:
         r["free"] = free
-    exposed = (g or {}).get("exposed") if op == "kassir" else None
-    if exposed or (op == "kassir" and (total or ext.get("total"))):
+    exposed = (g or {}).get("exposed") if op in ("kassir", "qtickets") else None   # схема кассы: выставленные места
+    if exposed or (op in ("kassir", "qtickets") and (total or ext.get("total"))):
         r["exp"] = exposed or total or ext.get("total")
     if hall:
         r["hall"] = hall

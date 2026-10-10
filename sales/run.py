@@ -1,11 +1,12 @@
 """
 Один прогон сбора продаж гастролей: сеансы, которым пора (DATA_MODEL.md, 3.4а), — ближние даты первыми,
-Яндекс и Кассир параллельно, каждый в своём темпе, в пределах бюджета времени.
+Яндекс, Кассир и Qtickets параллельно, каждый в своём темпе, в пределах бюджета времени.
 
     python3 -m sales.run [--cities "Ульяновск,Ярославль"] [--budget 40] [--limit 0]
 
 Кассир — только где без него нельзя: сеанс только на Кассире, или запас Кассира не совпал с Яндексом
 (поделён). Совпал (общий запас) — Кассир не опрашивается неделю, хватает Яндекса.
+Qtickets — страница покупки в браузере (sales/qtickets.py): места с ценами, вал — точный; лимит — в страницах.
 
 Нагрузка (после блокировки 06.10, TICKET_PLATFORMS.md, 8.8): суточный лимит запросов на оператора (BUDGET),
 делится поровну на оставшиеся прогоны дня; сеансы — не дальше HORIZON_DAYS дней, ближние первыми. Сайт закрыл
@@ -15,6 +16,8 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import math
 import os
 import threading
@@ -27,7 +30,7 @@ from psycopg2.extras import Json
 
 from competitors import blocks
 from db import connect
-from sales import archive, kassir, metrics, store, yandex
+from sales import archive, kassir, metrics, qtickets, store, yandex
 from sales.net import Net, Stopped
 
 WORK_SQL = """
@@ -37,7 +40,7 @@ SELECT s.id, s.local_date, to_char(s.local_time, 'HH24:MI'), c.name, v.name, l.o
   FROM sessions s
   JOIN venues v ON v.id = s.venue_id
   JOIN cities c ON c.id = v.city_id
-  JOIN listings l ON l.session_id = s.id AND l.operator_id IN ('kassir', 'yandex')
+  JOIN listings l ON l.session_id = s.id AND l.operator_id IN ('kassir', 'yandex', 'qtickets')
   LEFT JOIN pools p ON p.source = 'live' AND p.operator_id = l.operator_id AND p.listing_key = l.ext_key AND p.service = ''
   -- для Кассира: снят ли уже Яндекс этого сеанса и продаёт ли он сам
   LEFT JOIN LATERAL (
@@ -54,7 +57,9 @@ SELECT s.id, s.local_date, to_char(s.local_time, 'HH24:MI'), c.name, v.name, l.o
 """
 MARKET_RUNNING = Path(__file__).resolve().parent.parent / "data" / ".market_running"   # ставит tm-market.service
 # Запросов в сутки на оператора (06.10 было: Яндекс ~47 тыс., Кассир ~13 тыс. — оба закрыли доступ серверу)
-BUDGET = {"yandex": int(os.environ.get("SALES_BUDGET_YANDEX", 4000)), "kassir": int(os.environ.get("SALES_BUDGET_KASSIR", 2000))}
+BUDGET = {"yandex": int(os.environ.get("SALES_BUDGET_YANDEX", 4000)), "kassir": int(os.environ.get("SALES_BUDGET_KASSIR", 2000)),
+          "qtickets": int(os.environ.get("SALES_BUDGET_QTICKETS", 800))}   # Qtickets — страниц (~10 запросов каждая)
+LABEL = {"yandex": "яндекс", "kassir": "кассир", "qtickets": "qtickets"}   # начало строк статистики прогона
 HORIZON_DAYS = int(os.environ.get("SALES_HORIZON_DAYS", 30))   # дальние сеансы — когда подойдёт их дата
 USED_SQL = """SELECT operator_id, sum(value::int) FROM collection_runs, jsonb_each_text(report->'запросы')
                WHERE kind = 'sales' AND started >= date_trunc('day', now()) AND key !~ '^(предохранитель|блокировка) '
@@ -202,6 +207,81 @@ def _kassir_job(conn, net: Net, items: list, stats: Counter) -> None:
             stats["кассир: ошибка " + type(e).__name__] += 1
 
 
+def _qtickets_job(conn, br: qtickets.Browser, items: list, stats: Counter) -> None:
+    """Страница покупки каждого сеанса — в браузере; снимок пишется, если что-то изменилось (store.record)."""
+    if not items:
+        return
+    cur = conn.cursor()
+    try:
+        br.start()
+    except Exception as e:   # нет Playwright / Chromium — остальные кассы работают
+        stats["qtickets: браузер не запустился — " + type(e).__name__] += 1
+        return
+    try:
+        for (sid, d, t, city, venue, _op, key, url, *_rest) in items:
+            if br.time_left() < 60:
+                break
+            if MARKET_RUNNING.exists():  # идёт афиша рынка — она тоже ходит на Qtickets
+                stats["qtickets: пропуск — идёт афиша рынка"] += 1
+                break
+            now = datetime.now().astimezone()
+            p = store.pool(cur, "qtickets", key, sid)
+            try:
+                snap = br.snapshot(key.split(":", 1)[1])
+            except Stopped:
+                conn.rollback()
+                break
+            try:
+                if snap is None:
+                    stats["qtickets: окно зала не загрузилось"] += 1
+                    store.schedule(cur, p["id"], d, now, retry=True)
+                elif snap.get("gone"):
+                    stats["qtickets: мероприятия нет на сайте"] += 1
+                    p["ext"].update(gone=now.isoformat(timespec="seconds"))
+                    store.save_ext(cur, p)
+                    cur.execute("UPDATE pools SET next_check = %s WHERE id = %s", (now + store.FAR, p["id"]))
+                elif not qtickets.same_date(snap, d, t):
+                    stats["qtickets: окно открыло другой сеанс"] += 1
+                    p["ext"].update(other_date=snap.get("date"))
+                    store.save_ext(cur, p)
+                    cur.execute("UPDATE pools SET next_check = %s WHERE id = %s", (now + store.FAR, p["id"]))
+                else:
+                    h = qtickets.hall(snap)
+                    seated = bool(h["all"])
+                    by_price = Counter(str(v) for v in h["free"].values())
+                    for _name, price, n in h["admission"]:
+                        by_price[str(price)] += n
+                    adm_free = sum(n for _n, _p, n in h["admission"])
+                    g = qtickets.gross(h["all"])
+                    sig = hashlib.md5(json.dumps([sorted(h["free"]), h["admission"], snap.get("all_sold")], ensure_ascii=False).encode()).hexdigest()[:16]
+                    changed = p["ext"].get("sig") != sig
+                    ref = archive.save("qtickets", "seats", key, snap["raw"]) if changed else None
+                    hall_key = "qtickets:%s" % (snap.get("show") or key.split(":", 1)[1])
+                    if seated and store.hall_capacity(cur, hall_key) != len(h["geo"]):
+                        store.save_hall(cur, hall_key, city, venue, h["geo"])
+                    summ = {"admission": h["admission"], "outside": h["outside"], "scheme": seated} if changed else None
+                    if summ is not None and seated and adm_free:
+                        summ["admission_free"] = adm_free
+                    res = store.record(cur, p["id"], now, free=len(h["free"]) if seated else adm_free, by_price=dict(by_price),
+                                       total=len(h["all"]) or None, seats=h["free"] if seated else None,
+                                       sale_status="sold_out" if snap.get("all_sold") else "on_sale", summary=summ, raw_ref=ref, gross=g)
+                    p["ext"].update(show=snap.get("show"), hall=hall_key if seated else None, sig=sig, seen=True, scheme=seated,
+                                    total=len(h["all"]) or None, free=len(h["free"]) if seated else adm_free)
+                    p["ext"].pop("other_date", None)
+                    store.save_ext(cur, p)
+                    store.schedule(cur, p["id"], d, now)
+                    stats["qtickets: снято" if changed else "qtickets: без изменений"] += 1
+                    stats["qtickets: продано мест"] += res.get("sold", 0)
+                    stats["qtickets: вернулось мест"] += res.get("returned", 0)
+                    stats["qtickets: «весь зал занят»"] += int(bool(res.get("anomaly")))
+                conn.commit()
+            except Exception as e:  # одна карточка не должна останавливать прогон
+                conn.rollback()
+                stats["qtickets: ошибка " + type(e).__name__] += 1
+    finally:
+        br.close()
+
+
 def kassir_priority(r, yandex_closed: bool = False) -> str:
     """need — опросить; check — недельная проверка «общий ли запас с Яндексом»; shared — хватает Яндекса; wait — ждём Яндекс.
     Яндекс закрыл доступ — его снимков нет, Кассир опрашивает и общие запасы (в пределах своего лимита)."""
@@ -242,6 +322,7 @@ def main() -> None:
     ap.add_argument("--cities", default="")
     ap.add_argument("--budget", type=float, default=40, help="минут на прогон")
     ap.add_argument("--limit", type=int, default=0, help="не больше N карточек на оператора (проверка)")
+    ap.add_argument("--ops", default="", help="только эти кассы, через запятую: yandex,kassir,qtickets (проверка)")
     a = ap.parse_args()
     started = time.time()
     deadline = started + a.budget * 60
@@ -254,11 +335,15 @@ def main() -> None:
     cur.execute(USED_SQL)
     used = dict(cur.fetchall())
     conn.commit()  # не держать транзакцию весь прогон: иначе ALTER / TRUNCATE ждут, а за ними встаёт и сбор
-    work = {"yandex": [r for r in rows if r[5] == "yandex"], "kassir": [(r, kassir_priority(r, blocks.state("yandex/sales") != "ok")) for r in rows if r[5] == "kassir"]}
+    work = {"yandex": [r for r in rows if r[5] == "yandex"], "kassir": [(r, kassir_priority(r, blocks.state("yandex/sales") != "ok")) for r in rows if r[5] == "kassir"],
+            "qtickets": [r for r in rows if r[5] == "qtickets"]}
     # Кассир: сначала то, где без него нельзя (только Кассир, Яндекс сам не продаёт, запас поделён), потом недельная проверка
     # «общий ли запас», последними — пропуски без запросов
     order = {"need": 0, "check": 1, "shared": 2, "wait": 3}
     work["kassir"].sort(key=lambda x: order[x[1]])
+    if a.ops:
+        only = {o.strip() for o in a.ops.split(",")}
+        work = {k: (v if k in only else []) for k, v in work.items()}
     if a.limit:
         work = {k: v[:a.limit] for k, v in work.items()}
     stats: Counter = Counter()
@@ -268,11 +353,11 @@ def main() -> None:
     for op in work:
         if blocks.state("%s/sales" % op) == "blocked":   # сайт закрыл доступ — ни одного запроса до срока
             closed[op] = blocks.until("%s/sales" % op)
-            stats["%s: сайт закрыл доступ — пропуск до %s" % ("яндекс" if op == "yandex" else "кассир", closed[op][:16])] += 1
+            stats["%s: сайт закрыл доступ — пропуск до %s" % (LABEL[op], closed[op][:16])] += 1
             work[op] = []
-    nets = {op: Net(op, deadline, cap=caps[op]) for op in work}
+    nets = {op: (qtickets.Browser(deadline, cap=caps[op]) if op == "qtickets" else Net(op, deadline, cap=caps[op])) for op in work}
     threads = [threading.Thread(target=job, args=(connect.connect(), nets[op], work[op], stats))
-               for op, job in (("yandex", _yandex_job), ("kassir", _kassir_job))]
+               for op, job in (("yandex", _yandex_job), ("kassir", _kassir_job), ("qtickets", _qtickets_job))]
     for th in threads:
         th.start()
     for th in threads:
@@ -281,14 +366,16 @@ def main() -> None:
     took = int(time.time() - started)
     for op in work:
         net_stats = {"%s %s" % k: v for k, v in nets[op].stats.items()}
-        mine = {k: v for k, v in stats.items() if k.startswith(("яндекс" if op == "yandex" else "кассир"))}
+        mine = {k: v for k, v in stats.items() if k.startswith(LABEL[op])}
         cur.execute("INSERT INTO collection_runs (operator_id, kind, started, finished, sessions, errors, blocked, summary, report) "
                     "VALUES (%s,'sales',to_timestamp(%s),now(),%s,%s,%s,%s,%s)",
-                    (op, started, len(work[op]), sum(v for k, v in nets[op].stats.items() if k[1] is None or (isinstance(k[1], int) and k[1] >= 500)),
+                    (op, started, len(work[op]), sum(v for k, v in nets[op].stats.items() if k[1] is None or (isinstance(k[1], int) and k[1] >= 500)
+                                                       or (isinstance(k[1], str) and k[1].startswith("ошибка"))),
                      int(op in closed or nets[op].why in ("отказ", "предохранитель")), _summary(op, work, nets, caps, closed, took),
                      Json({"сбор": mine, "запросы": net_stats, "лимит": caps[op], "закрыт до": closed.get(op) or blocks.until("%s/sales" % op)})))
     conn.commit()
-    print("Сбор продаж: %d с, в очереди: Яндекс %d, Кассир %d; общий запас найден у %d" % (took, len(work["yandex"]), len(work["kassir"]), shared))
+    print("Сбор продаж: %d с, в очереди: Яндекс %d, Кассир %d, Qtickets %d; общий запас найден у %d" % (
+        took, len(work["yandex"]), len(work["kassir"]), len(work["qtickets"]), shared))
     for k, v in sorted(stats.items()):
         print("  %s: %s" % (k, v))
     for op in nets:
@@ -302,8 +389,8 @@ def _summary(op: str, work: dict, nets: dict, caps: dict, closed: dict, took: in
     n = nets[op]
     tail = {"отказ": "сайт отказал (403 / капча) — закрыт до %s" % (blocks.until(n.channel) or "")[:16].replace("T", " "),
             "предохранитель": "остановлен «предохранителем» (ошибки сайта)",
-            "лимит": "достигнут лимит прогона (%d запросов)" % caps[op]}.get(n.why, "")
-    return "в очереди %d, запросов %d, за %d с%s" % (len(work[op]), n.sent, took, " · " + tail if tail else "")
+            "лимит": "достигнут лимит прогона (%d %s)" % (caps[op], "страниц" if op == "qtickets" else "запросов")}.get(n.why, "")
+    return "в очереди %d, %s %d, за %d с%s" % (len(work[op]), "страниц" if op == "qtickets" else "запросов", n.sent, took, " · " + tail if tail else "")
 
 
 if __name__ == "__main__":

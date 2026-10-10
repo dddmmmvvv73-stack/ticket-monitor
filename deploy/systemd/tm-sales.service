@@ -1,5 +1,5 @@
 [Unit]
-Description=ticket-monitor: сбор продаж гастролей (Кассир, Яндекс Афиша) в базу
+Description=ticket-monitor: сбор продаж гастролей (Кассир, Яндекс Афиша, Qtickets) в базу
 After=network-online.target postgresql.service
 Wants=network-online.target
 
