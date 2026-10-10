@@ -39,7 +39,7 @@ OPERATORS = [
     ("vladimirkoncert", "Движок vladimirkoncert", "regional", "vladimirkoncert", sorted(vladimirkoncert.SITES), {"scheme": "все места"}),
     ("odk33", "ОДКиИ (odk33.ru)", "venue_site", "odk33", ["odk33.ru"], {"scheme": "через vladimirkoncert"}),
     ("orelkoncert", "ОрелКонцерт", "regional", "orelkoncert", ["орелконцерт.рф"], {"scheme": "все места"}),
-    ("qtickets", "Qtickets", "federal", "qtickets", ["qtickets.events", "qtickets.ru"], {"scheme": "закрыта (защита)", "organizer": True}),
+    ("qtickets", "Qtickets", "federal", "qtickets", ["qtickets.events", "qtickets.ru"], {"scheme": "все места с ценами (страница покупки в браузере)", "organizer": True}),
     ("custom", "Свои мероприятия", "custom", None, [], {}),
 ]
 
