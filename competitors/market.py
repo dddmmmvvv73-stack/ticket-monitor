@@ -224,7 +224,7 @@ def _channel_open(channel: str, name: str) -> bool:
 
 
 def _close(channel: str, name: str) -> None:
-    rec = blocks.trip(channel, 403, f"{channel}: отказ сайта при сборе афиши")
+    rec = blocks.trip(channel, 403, f"{channel}: отказ сайта при сборе афиши", {"сбор": "афиша рынка", "пауза, с": KASSIR_PAUSE if channel.startswith("kassir") else YANDEX_PAUSE})
     log(f"✖ {name}: сайт отказал (403 / капча) — не опрашиваем до {rec['until'][:16].replace('T', ' ')}")
 
 

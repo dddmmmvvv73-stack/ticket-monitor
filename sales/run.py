@@ -58,7 +58,7 @@ SELECT s.id, s.local_date, to_char(s.local_time, 'HH24:MI'), c.name, v.name, l.o
 MARKET_RUNNING = Path(__file__).resolve().parent.parent / "data" / ".market_running"   # ставит tm-market.service
 # Запросов в сутки на оператора (06.10 было: Яндекс ~47 тыс., Кассир ~13 тыс. — оба закрыли доступ серверу)
 BUDGET = {"yandex": int(os.environ.get("SALES_BUDGET_YANDEX", 4000)), "kassir": int(os.environ.get("SALES_BUDGET_KASSIR", 2000)),
-          "qtickets": int(os.environ.get("SALES_BUDGET_QTICKETS", 800))}   # Qtickets — страниц (~10 запросов каждая)
+          "qtickets": 0}   # Qtickets — страниц (~10 запросов каждая); ступенями — qtickets.daily_budget() в main
 LABEL = {"yandex": "яндекс", "kassir": "кассир", "qtickets": "qtickets"}   # начало строк статистики прогона
 HORIZON_DAYS = int(os.environ.get("SALES_HORIZON_DAYS", 30))   # дальние сеансы — когда подойдёт их дата
 USED_SQL = """SELECT operator_id, sum(value::int) FROM collection_runs, jsonb_each_text(report->'запросы')
@@ -262,14 +262,16 @@ def _qtickets_job(conn, br: qtickets.Browser, items: list, stats: Counter) -> No
                     summ = {"admission": h["admission"], "outside": h["outside"], "scheme": seated} if changed else None
                     if summ is not None and seated and adm_free:
                         summ["admission_free"] = adm_free
+                    sold_out = bool(snap.get("all_sold")) or (seated and not h["free"] and not adm_free)
                     res = store.record(cur, p["id"], now, free=len(h["free"]) if seated else adm_free, by_price=dict(by_price),
                                        total=len(h["all"]) or None, seats=h["free"] if seated else None,
-                                       sale_status="sold_out" if snap.get("all_sold") else "on_sale", summary=summ, raw_ref=ref, gross=g)
+                                       sale_status="sold_out" if sold_out else "on_sale", summary=summ, raw_ref=ref, gross=g)
+                    same = 0 if changed else int(p["ext"].get("same") or 0) + 1   # снимков подряд без изменений
                     p["ext"].update(show=snap.get("show"), hall=hall_key if seated else None, sig=sig, seen=True, scheme=seated,
-                                    total=len(h["all"]) or None, free=len(h["free"]) if seated else adm_free)
+                                    total=len(h["all"]) or None, free=len(h["free"]) if seated else adm_free, same=same, sold_out=sold_out)
                     p["ext"].pop("other_date", None)
                     store.save_ext(cur, p)
-                    store.schedule(cur, p["id"], d, now)
+                    cur.execute("UPDATE pools SET next_check = %s WHERE id = %s", (qtickets.next_check(d, now, same, sold_out), p["id"]))
                     stats["qtickets: снято" if changed else "qtickets: без изменений"] += 1
                     stats["qtickets: продано мест"] += res.get("sold", 0)
                     stats["qtickets: вернулось мест"] += res.get("returned", 0)
@@ -347,6 +349,9 @@ def main() -> None:
     if a.limit:
         work = {k: v[:a.limit] for k, v in work.items()}
     stats: Counter = Counter()
+    BUDGET["qtickets"], ramp_note = qtickets.daily_budget()
+    if ramp_note:
+        stats["qtickets: %s — %d страниц в сутки" % (ramp_note, BUDGET["qtickets"])] += 1
     runs_left = 24 - datetime.now().hour   # прогон раз в час: остаток суточного лимита — поровну на оставшиеся
     caps = {op: max(0, math.ceil((BUDGET[op] - int(used.get(op) or 0)) / runs_left)) for op in work}
     closed = {}
@@ -356,6 +361,8 @@ def main() -> None:
             stats["%s: сайт закрыл доступ — пропуск до %s" % (LABEL[op], closed[op][:16])] += 1
             work[op] = []
     nets = {op: (qtickets.Browser(deadline, cap=caps[op]) if op == "qtickets" else Net(op, deadline, cap=caps[op])) for op in work}
+    for op in nets:   # в журнал отказов — сколько уже было за сутки и какой лимит
+        nets[op].context = {"за сутки до прогона": int(used.get(op) or 0), "суточный лимит": BUDGET[op]}
     threads = [threading.Thread(target=job, args=(connect.connect(), nets[op], work[op], stats))
                for op, job in (("yandex", _yandex_job), ("kassir", _kassir_job), ("qtickets", _qtickets_job))]
     for th in threads:
@@ -372,7 +379,9 @@ def main() -> None:
                     (op, started, len(work[op]), sum(v for k, v in nets[op].stats.items() if k[1] is None or (isinstance(k[1], int) and k[1] >= 500)
                                                        or (isinstance(k[1], str) and k[1].startswith("ошибка"))),
                      int(op in closed or nets[op].why in ("отказ", "предохранитель")), _summary(op, work, nets, caps, closed, took),
-                     Json({"сбор": mine, "запросы": net_stats, "лимит": caps[op], "закрыт до": closed.get(op) or blocks.until("%s/sales" % op)})))
+                     Json({"сбор": mine, "запросы": net_stats, "лимит": caps[op], "закрыт до": closed.get(op) or blocks.until("%s/sales" % op),
+                           **({"суточный лимит": BUDGET[op], "проверка 428, бит": {str(k): v for k, v in nets[op].pow_seen.items()}}
+                              if op == "qtickets" else {})})))
     conn.commit()
     print("Сбор продаж: %d с, в очереди: Яндекс %d, Кассир %d, Qtickets %d; общий запас найден у %d" % (
         took, len(work["yandex"]), len(work["kassir"]), len(work["qtickets"]), shared))

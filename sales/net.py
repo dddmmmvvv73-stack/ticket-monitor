@@ -48,6 +48,7 @@ class Net:
         self.stopped = False
         self.why = ""   # почему остановлен: предохранитель / отказ сайта / лимит
         self.op = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(http.cookiejar.CookieJar()))
+        self.context: dict = {}   # нагрузка за сутки и лимит (sales/run.py) — в журнал отказов (competitors/blocks.py)
         self._last = 0.0
 
     def time_left(self) -> float:
@@ -100,7 +101,8 @@ class Net:
                     self.stats[("блокировка", "снялась")] += 1
             return False
         if self.probe or sum(self.denied) >= blocks.DENY_IN_WINDOW:
-            rec = blocks.trip(self.channel, status, "%s: отказ сайта (%s)" % (self.channel, status))
+            rec = blocks.trip(self.channel, status, "%s: отказ сайта (%s)" % (self.channel, status),
+                              {"запросов за прогон": self.sent, "пауза, с": round(self.pause, 1), "лимит прогона": self.cap, **self.context})
             self._stop("отказ", "отказ сайта — закрыт до " + rec["until"][:16])
             return True
         return False

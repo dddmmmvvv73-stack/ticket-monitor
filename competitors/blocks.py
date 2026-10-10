@@ -9,16 +9,22 @@
 
 Файл data/operator_blocks.json (только на сервере, не в git): его читают оба сбора и экран «Билетные операторы»
 (через sales/export.py). Запись: {канал: {since, until, strikes, status, note, lifted}}.
+
+Журнал data/operator_blocks_log.jsonl — каждое событие строкой, навсегда: отказ сайта (trip) с нагрузкой в этот момент
+(запросов за прогон и за сутки, пауза, лимит), снятие блокировки (lift), предупреждение (warn — например, усложнилась
+проверка Qtickets). По нему видно, при какой частоте сайт закрывает доступ; сводная таблица — OPERATOR_BLOCKS.md.
 """
 
 from __future__ import annotations
 
+import json
 import threading
 from datetime import datetime, timedelta
 
 from competitors.storage import BASE_DIR, load_json, save_json
 
 FILE = BASE_DIR / "data" / "operator_blocks.json"
+LOG_FILE = BASE_DIR / "data" / "operator_blocks_log.jsonl"
 FIRST = timedelta(hours=24)
 LONGEST = timedelta(days=7)
 DENY_IN_WINDOW = 5     # отказов среди последних 20 ответов — сайт закрыл доступ (до 06.10 не было ни одного 403)
@@ -49,8 +55,36 @@ def until(channel: str) -> str | None:
     return b.get("until") if b and not b.get("lifted") else None
 
 
-def trip(channel: str, status, note: str = "") -> dict:
-    """Сайт отказал: закрыть канал на срок (у повторного отказа — вдвое дольше прошлого)."""
+def log_event(channel: str, kind: str, note: str = "", ctx: dict | None = None, **extra) -> None:
+    """Строка в журнал событий (trip / lift / warn). Сбой записи журнала сбор не останавливает."""
+    rec = {"at": _now().isoformat(timespec="seconds"), "channel": channel, "kind": kind, "note": note, "load": ctx or {}, **extra}
+    try:
+        LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
+        with _lock, open(LOG_FILE, "a", encoding="utf-8") as f:
+            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    except OSError:
+        pass
+
+
+def history(prefix: str = "", since: str = "") -> list[dict]:
+    """События журнала по каналам, начинающимся с prefix («qtickets/»), не раньше since (ISO)."""
+    out = []
+    try:
+        with open(LOG_FILE, encoding="utf-8") as f:
+            for line in f:
+                try:
+                    e = json.loads(line)
+                except ValueError:
+                    continue
+                if e.get("channel", "").startswith(prefix) and e.get("at", "") >= since:
+                    out.append(e)
+    except OSError:
+        pass
+    return out
+
+
+def trip(channel: str, status, note: str = "", ctx: dict | None = None) -> dict:
+    """Сайт отказал: закрыть канал на срок (у повторного отказа — вдвое дольше прошлого). ctx — нагрузка в этот момент."""
     with _lock:
         data = load()
         old = data.get(channel) or {}
@@ -62,7 +96,8 @@ def trip(channel: str, status, note: str = "") -> dict:
                "strikes": strikes, "status": status, "note": note, "checked": now.isoformat(timespec="seconds")}
         data[channel] = rec
         save_json(FILE, data)
-        return rec
+    log_event(channel, "trip", note, ctx, status=status, strikes=strikes, until=rec["until"])
+    return rec
 
 
 def clear(channel: str) -> bool:
@@ -74,7 +109,8 @@ def clear(channel: str) -> bool:
             return False
         data[channel] = {**old, "lifted": _now().isoformat(timespec="seconds")}
         save_json(FILE, data)
-        return True
+    log_event(channel, "lift", "доступ снова открыт", since=old.get("since"), strikes=old.get("strikes"))
+    return True
 
 
 def is_denied(status, url: str = "", body: bytes = b"") -> bool:

@@ -165,7 +165,8 @@ def fetch(cities: list[str], log: Log, today: str, client: Client | None = None)
     try:
         out = _fetch(cities, log, today, client)
     except Denied as e:
-        rec = blocks.trip(CHANNEL, 403, f"{CHANNEL}: отказ сайта при сборе афиши ({str(e)[:80]})")
+        rec = blocks.trip(CHANNEL, 403, f"{CHANNEL}: отказ сайта при сборе афиши ({str(e)[:80]})",
+                          {"сбор": "афиша рынка", "запросов за сбор": client.used, "пауза, с": client.pause})
         log(f"✖ Qtickets: сайт отказал (403 / 428 / капча) — не опрашиваем до {rec['until'][:16].replace('T', ' ')}")
         return None
     if out and blocks.clear(CHANNEL):

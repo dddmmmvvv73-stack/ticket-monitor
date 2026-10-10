@@ -6,9 +6,12 @@ Qtickets для сбора продаж (TICKET_PLATFORMS.md, 9.3 и 9.5): ст�
     - танцпол и входные — остаток по зоне (`appends.zones[зона].free_quantity`): мест у них нет, вместимости тоже.
 Цены известны у всех мест, поэтому вал точный (как у vladimirkoncert), а продажи — по местам.
 
-Нагрузка: одна страница — ~10 запросов к Qtickets; лимит и паузы — в страницах (`Browser`), по одной странице подряд,
-пауза PAUSE с разбросом; картинки, шрифты и чужие счётчики не грузятся. Отказ (403, 429, капча) — канал qtickets/sales
-закрывается (competitors/blocks.py), как у Кассира и Яндекса.
+Нагрузка (TICKET_PLATFORMS 9.5): одна страница — ~10 запросов к Qtickets; лимит и паузы — в страницах (`Browser`), по
+одной странице, пауза 20–40 с; картинки, шрифты и чужие счётчики не грузятся. Суточный лимит поднимается ступенями
+(`daily_budget`: 60 → 150 → 300 → 500 → 800, ступень — после суток без отказов, отказ — шаг назад и двое суток ниже).
+Отказ (403, 429) — канал qtickets/sales закрывается (competitors/blocks.py); проверка 428 стала заметно сложнее — медленнее,
+сильно сложнее — стоп на прогон (в журнал отказов — предупреждение). Частота: до 7 дней — 2 раза в сутки, до 30 — раз
+в сутки; без изменений 2 снимка подряд — вдвое реже; «всё продано» — не чаще раза в 3 дня (итог — по последнему снимку).
 
 Браузер — Playwright (Chromium) с постоянным профилем в data/browser/qtickets: кэш схем и файлов окна.
 """
@@ -16,19 +19,27 @@ Qtickets для сбора продаж (TICKET_PLATFORMS.md, 9.3 и 9.5): ст�
 from __future__ import annotations
 
 import json
+import os
 import random
 import re
 import time
 from collections import Counter, deque
-from datetime import date
+from datetime import date, datetime, timedelta
 
 from competitors import blocks
-from competitors.storage import BASE_DIR
+from competitors.storage import BASE_DIR, load_json, save_json
 from sales.net import Stopped
 
 PROFILE = BASE_DIR / "data" / "browser" / "qtickets"
-PAUSE = 15.0          # секунд между страницами (с разбросом 0,85–1,25)
+RAMP_FILE = BASE_DIR / "data" / "qtickets_ramp.json"   # ступень суточного лимита, с какого момента, исходная сложность 428
+RAMP = [60, 150, 300, 500, 800]   # страниц в сутки; потолок — SALES_BUDGET_QTICKETS (по умолчанию — последняя ступень)
+RAMP_HOLD = timedelta(hours=24)   # на ступени — сутки без отказов, потом выше
+RAMP_BACK = timedelta(hours=48)   # после отказа — шаг назад и двое суток без подъёма
+PAUSE = (20.0, 40.0)  # секунд между страницами — случайно в этих пределах
 PAUSE_MAX = 240.0
+POW_SLOW, POW_STOP = 3, 7          # проверка 428 сложнее исходной на столько бит — медленнее / стоп на прогон
+TIERS = [(7, timedelta(hours=12)), (30, timedelta(hours=24)), (90, timedelta(hours=72))]   # 2 раза в сутки — до 7 дней
+SOLD_OUT_EVERY = timedelta(days=3)
 PAGE_TIMEOUT = 45     # секунд на загрузку страницы и окна зала
 WINDOW, BAD_SHARE, STOP_AFTER = 20, 0.3, 8   # окно ответов; доля сбоев для замедления; подряд сбоев — стоп на прогон
 # Что не нужно для данных: картинки афиши, шрифты, счётчики и чаты (схема зала — svg Qtickets — нужна окну)
@@ -60,7 +71,7 @@ class Browser:
         self.site, self.deadline, self.cap = "qtickets", deadline, cap
         self.channel = "qtickets/sales"
         self.probe = blocks.state(self.channel) == "probe"
-        self.base = self.pause = PAUSE
+        self.base = self.pause = 1.0   # множитель паузы PAUSE: предохранитель и сторож проверки его увеличивают
         self.recent: deque = deque(maxlen=WINDOW)
         self.denied: deque = deque(maxlen=WINDOW)
         self.in_row = 0
@@ -70,6 +81,10 @@ class Browser:
         self.why = ""
         self._last = 0.0
         self._pw = self._ctx = self._page = None
+        self.context: dict = {}            # нагрузка за сутки и лимит (sales/run.py) — в журнал отказов
+        self.pow_seen: Counter = Counter()   # сложность проверки 428 → сколько раз (в отчёт прогона)
+        self.pow_base = load_json(RAMP_FILE, {}).get("pow")   # исходная сложность (10.10 — 13 бит)
+        self._pow_warned = False
 
     # ------------------------------------------------------------ браузер
     def start(self) -> None:
@@ -103,10 +118,10 @@ class Browser:
         if self.cap is not None and self.sent >= self.cap:
             self._stop("лимит", "лимит страниц")
             raise Stopped(self.site)
-        wait = self._last + self.pause * random.uniform(0.85, 1.25) - time.time()
+        wait = self._last + self.pause * random.uniform(*PAUSE) - time.time()
         if wait > 0:
             time.sleep(wait)
-        page, got, bad = self._page, {}, []
+        page, got, bad, pow_ = self._page, {}, [], []
 
         def on_resp(r):
             host = r.url.split("/")[2] if r.url.count("/") >= 2 else ""
@@ -117,6 +132,11 @@ class Browser:
             if "/widget/seats" in r.url and r.status == 200:
                 try:
                     got["seats"] = r.body()
+                except Exception:
+                    pass
+            elif "/widget/seats" in r.url and r.status == 428:
+                try:
+                    pow_.append(int(r.json().get("difficulty") or 0))
                 except Exception:
                     pass
 
@@ -158,8 +178,34 @@ class Browser:
         self.stats[("страница", err or status)] += 1   # одна страница — одна запись: по ним считается суточный лимит
         if self._deny(status):
             raise Stopped(self.site)
+        if pow_ and self._pow(max(pow_)):
+            raise Stopped(self.site)
         self._breaker(status, out)
         return out
+
+    def _pow(self, diff: int) -> bool:
+        """Сторож проверки 428: сложность выросла — медленнее (раз за прогон), сильно выросла — стоп. True — остановлен."""
+        self.pow_seen[diff] += 1
+        if not diff:
+            return False
+        if self.pow_base is None:   # первая проверка — исходная сложность
+            self.pow_base = diff
+            ramp = load_json(RAMP_FILE, {})
+            save_json(RAMP_FILE, {**ramp, "pow": diff})
+            return False
+        if diff >= self.pow_base + POW_STOP:
+            blocks.log_event(self.channel, "warn", "проверка 428 сильно усложнилась: %d бит (было %d) — стоп на прогон" % (diff, self.pow_base), self._load())
+            self._stop("предохранитель", "проверка сложнее на %d бит" % (diff - self.pow_base))
+            return True
+        if diff >= self.pow_base + POW_SLOW and not self._pow_warned:
+            self._pow_warned = True
+            self.pause = min(PAUSE_MAX / PAUSE[1], self.pause * 2)
+            self.stats[("предохранитель", "проверка сложнее — медленнее")] += 1
+            blocks.log_event(self.channel, "warn", "проверка 428 усложнилась: %d бит (было %d) — вдвое медленнее" % (diff, self.pow_base), self._load())
+        return False
+
+    def _load(self) -> dict:
+        return {"страниц за прогон": self.sent, "пауза, с": round(self.pause * sum(PAUSE) / 2), "лимит прогона": self.cap, **self.context}
 
     # ------------------------------------------------------------ сторож и предохранитель (как sales.net.Net)
     def _stop(self, why: str, stat: str) -> None:
@@ -176,7 +222,7 @@ class Browser:
                     self.stats[("блокировка", "снялась")] += 1
             return False
         if self.probe or sum(self.denied) >= blocks.DENY_IN_WINDOW:
-            rec = blocks.trip(self.channel, status, "%s: отказ сайта (%s)" % (self.channel, status))
+            rec = blocks.trip(self.channel, status, "%s: отказ сайта (%s)" % (self.channel, status), self._load())
             self._stop("отказ", "отказ сайта — закрыт до " + rec["until"][:16])
             return True
         return False
@@ -189,7 +235,7 @@ class Browser:
             self._stop("предохранитель", "стоп")
             return
         if len(self.recent) >= 10 and sum(self.recent) / len(self.recent) >= BAD_SHARE:
-            self.pause = min(PAUSE_MAX, self.pause * 2)
+            self.pause = min(PAUSE_MAX / PAUSE[1], self.pause * 2)
             self.recent.clear()
             self.stats[("предохранитель", "медленнее")] += 1
         elif not bad and self.pause > self.base:
@@ -246,3 +292,41 @@ def gross(all_: dict) -> dict | None:
     if not total:
         return None
     return {"gross": round(total), "gross_lo": round(total), "gross_hi": round(total), "exact_share": 1.0, "exposed": len(all_)}
+
+
+# ---------------------------------------------------------------- суточный лимит ступенями и частота опроса
+
+def daily_budget(now: datetime | None = None) -> tuple[int, str]:
+    """Суточный лимит страниц по ступеням RAMP: сутки на ступени без отказов Qtickets (любой канал qtickets/…) — выше;
+    отказ после начала ступени — ниже и двое суток без подъёма. Возвращает (лимит, что изменилось — для журнала)."""
+    now = now or datetime.now().astimezone()
+    cap = int(os.environ.get("SALES_BUDGET_QTICKETS") or RAMP[-1])
+    st = load_json(RAMP_FILE, {})
+    step = min(int(st.get("step", 0)), len(RAMP) - 1)
+    since = st.get("since") or now.isoformat(timespec="seconds")
+    hold = st.get("hold") or since
+    note = ""
+    denied = [e for e in blocks.history("qtickets/", since) if e.get("kind") == "trip"]
+    if denied:
+        step, since, note = max(0, step - 1), now.isoformat(timespec="seconds"), "отказ сайта — ступень ниже"
+        hold = (now + RAMP_BACK).isoformat(timespec="seconds")
+    elif (now - datetime.fromisoformat(since) >= RAMP_HOLD and now >= datetime.fromisoformat(hold)
+          and blocks.state("qtickets/sales") == "ok" and RAMP[step] < cap and step < len(RAMP) - 1):
+        step, since, note = step + 1, now.isoformat(timespec="seconds"), "сутки без отказов — ступень выше"
+    if note or not st:
+        save_json(RAMP_FILE, {**st, "step": step, "since": since, "hold": hold, "budget": min(cap, RAMP[step])})
+        if note:
+            blocks.log_event("qtickets/sales", "warn" if "ниже" in note else "ramp", "%s: %d страниц в сутки" % (note, min(cap, RAMP[step])))
+    return min(cap, RAMP[step]), note
+
+
+def next_check(local_date: date, now: datetime, same: int, sold_out: bool) -> datetime:
+    """Следующий снимок: до 7 дней — через 12 ч, до 30 — через сутки; 2 снимка подряд без изменений — вдвое реже;
+    «всё продано» — через 3 дня (если сеанс раньше — итог по этому снимку)."""
+    days = (local_date - now.date()).days
+    iv = next((v for limit, v in TIERS if days <= limit), timedelta(days=7))
+    if sold_out:
+        iv = max(iv, SOLD_OUT_EVERY)
+    elif same >= 2:
+        iv *= 2
+    return now + iv
