@@ -1,0 +1,63 @@
+# Сторож сервера: каждые 30 минут — страница /health (db/health.py). Не отвечает или есть проблема 2 проверки подряд
+# (с минутой между ними) — открывается issue «Сервер: …» с меткой «сервер», и GitHub присылает письмо владельцу;
+# пока проблема есть — раз в 6 ч комментарий; всё снова в порядке — issue закрывается с итогом.
+# Адрес сайта — в секрете HEALTH_URL (репозиторий публичный). Запуск вручную: gh workflow run health.yml
+# Появился после аварии 11.10 (Yandex Cloud, питание зоны ru-central1-a): сервер лежал часами, а узнали случайно.
+name: Сторож сервера
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+concurrency:
+  group: health
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Проверить сервер
+        id: probe
+        env:
+          URL: ${{ secrets.HEALTH_URL }}
+        run: |
+          probe() { curl -sS --max-time 25 -w '\n%{http_code}' "$URL/health" 2>&1 || true; }
+          out=$(probe); code=$(echo "$out" | tail -n1)
+          if [ "$code" != "200" ]; then sleep 60; out=$(probe); code=$(echo "$out" | tail -n1); fi
+          body=$(echo "$out" | sed '$d' | head -c 1500)
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          { echo "body<<EOF"; echo "$body"; echo "EOF"; } >> "$GITHUB_OUTPUT"
+          echo "Ответ: $code"; echo "$body"
+      - name: Открыть или закрыть issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          CODE: ${{ steps.probe.outputs.code }}
+          BODY: ${{ steps.probe.outputs.body }}
+        run: |
+          gh label create "сервер" --repo "$REPO" --color d93f0b --description "Сторож сервера" 2>/dev/null || true
+          open=$(gh issue list --repo "$REPO" --label "сервер" --state open --json number,updatedAt --jq '.[0] // empty')
+          now=$(date -u +%Y-%m-%dT%H:%MZ)
+          if [ "$CODE" = "200" ]; then
+            if [ -n "$open" ]; then
+              n=$(echo "$open" | jq -r .number)
+              gh issue close "$n" --repo "$REPO" --comment "✅ $now (UTC): сервер снова в порядке."
+            fi
+            exit 0
+          fi
+          if [ "$CODE" = "000" ] || [ -z "$CODE" ]; then what="не отвечает"; else what="ответ $CODE"; fi
+          text=$(printf 'Проверка %s (UTC): сайт %s.\n\n```\n%s\n```\n\nЧто делать — HANDOFF.md, «Авария сервера».' "$now" "$what" "$BODY")
+          if [ -z "$open" ]; then
+            gh issue create --repo "$REPO" --label "сервер" --title "Сервер: $what" --body "$text"
+          else
+            n=$(echo "$open" | jq -r .number); upd=$(echo "$open" | jq -r .updatedAt)
+            if [ $(( $(date -u +%s) - $(date -u -d "$upd" +%s) )) -ge 21600 ]; then
+              gh issue comment "$n" --repo "$REPO" --body "$text"
+            fi
+          fi

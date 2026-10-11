@@ -105,6 +105,14 @@ def get_since_yesterday(event_id: str, current_record: dict) -> dict | None:
     }
 
 
+@app.route("/health")
+def health():
+    """Для внешнего сторожа (.github/workflows/health.yml): без пароля (Caddy), только «да / нет» и минуты — db/health.py."""
+    from db.health import status
+    ok, data = status()
+    return jsonify(data), (200 if ok else 503)
+
+
 @app.route("/")
 def index():
     return (BASE_DIR / "static" / "index.html").read_text(encoding="utf-8")

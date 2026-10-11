@@ -14,3 +14,6 @@ ExecStart=/opt/ticket-monitor/.venv/bin/python -m db.sync
 # Итоги начавшихся и снятых сеансов (архив) — по последнему снимку до начала, дальше не меняются
 ExecStart=/opt/ticket-monitor/.venv/bin/python -m sales.results
 TimeoutStartSec=1800
+# Память (после аварии 11.10): машина 4 ГБ — при нехватке ядро убивает сбор, а не базу, SSH и сайт (OOMScoreAdjust);
+MemoryHigh=2G
+OOMScoreAdjust=200

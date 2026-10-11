@@ -2,11 +2,17 @@
 # На сервере — /etc/caddy/Caddyfile; адрес и хеш пароля подставляются там, в git их нет (репозиторий публичный).
 # Адрес без покупки домена: <IP через дефисы>.sslip.io (например 1-2-3-4.sslip.io) — указывает на этот IP сам.
 # Хеш пароля: caddy hash-password --plaintext '<пароль>'
+# /health — без пароля: для сторожа на GitHub (.github/workflows/health.yml); отдаёт только «да / нет» и минуты.
 <адрес> {
 	encode gzip
-	basic_auth {
-		<логин> <хеш пароля>
+	handle /health {
+		reverse_proxy 127.0.0.1:5050
 	}
-	redir / /proto/ 302
-	reverse_proxy 127.0.0.1:5050
+	handle {
+		basic_auth {
+			<логин> <хеш пароля>
+		}
+		redir / /proto/ 302
+		reverse_proxy 127.0.0.1:5050
+	}
 }

@@ -41,6 +41,10 @@ POW_SLOW, POW_STOP = 3, 7          # проверка 428 сложнее исх�
 TIERS = [(7, timedelta(hours=12)), (30, timedelta(hours=24)), (90, timedelta(hours=72))]   # 2 раза в сутки — до 7 дней
 SOLD_OUT_EVERY = timedelta(days=3)
 PAGE_TIMEOUT = 45     # секунд на загрузку страницы и окна зала
+RECYCLE = 50          # страниц — и браузер перезапускается (память не копится за прогон; после аварии 11.10)
+# Chromium на машине 4 ГБ: без /dev/shm (там мало места), без GPU, кэш — небольшой, память JS — ограничена
+CHROME_ARGS = ["--disable-dev-shm-usage", "--disable-gpu", "--disable-extensions", "--disable-background-networking",
+               "--disk-cache-size=52428800", "--js-flags=--max-old-space-size=256", "--renderer-process-limit=2"]
 WINDOW, BAD_SHARE, STOP_AFTER = 20, 0.3, 8   # окно ответов; доля сбоев для замедления; подряд сбоев — стоп на прогон
 # Что не нужно для данных: картинки афиши, шрифты, счётчики и чаты (схема зала — svg Qtickets — нужна окну)
 BLOCK = re.compile(r"\.(png|jpe?g|webp|gif|ico|woff2?|ttf|otf)(\?|$)|/thumbs/|mc\.yandex|yandex\.ru/(metrika|watch)|vk\.com|"
@@ -92,9 +96,15 @@ class Browser:
         PROFILE.mkdir(parents=True, exist_ok=True)
         self._pw = sync_playwright().start()
         self._ctx = self._pw.chromium.launch_persistent_context(str(PROFILE), headless=True, viewport={"width": 1280, "height": 800},
-                                                                locale="ru-RU", timezone_id="Europe/Moscow")
+                                                                locale="ru-RU", timezone_id="Europe/Moscow", args=CHROME_ARGS)
         self._ctx.route("**/*", lambda r: r.abort() if BLOCK.search(r.request.url) else r.continue_())
         self._page = self._ctx.pages[0] if self._ctx.pages else self._ctx.new_page()
+
+    def recycle(self) -> None:
+        """Закрыть и снова открыть браузер — каждые RECYCLE страниц."""
+        self.close()
+        self._pw = self._ctx = self._page = None
+        self.start()
 
     def close(self) -> None:
         for x in (self._ctx, self._pw):
@@ -118,6 +128,8 @@ class Browser:
         if self.cap is not None and self.sent >= self.cap:
             self._stop("лимит", "лимит страниц")
             raise Stopped(self.site)
+        if self.sent and self.sent % RECYCLE == 0:
+            self.recycle()
         wait = self._last + self.pause * random.uniform(*PAUSE) - time.time()
         if wait > 0:
             time.sleep(wait)

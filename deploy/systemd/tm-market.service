@@ -19,3 +19,6 @@ ExecStartPost=/opt/ticket-monitor/deploy/commit_data.sh Рынок
 ExecStopPost=/bin/rm -f /opt/ticket-monitor/data/.market_running
 # 344 города: Qtickets — до ~1,5 ч (афиша + страницы мероприятий), идёт параллельно Кассиру и Яндексу
 TimeoutStartSec=10800
+# Память (после аварии 11.10): машина 4 ГБ — при нехватке ядро убивает сбор, а не базу, SSH и сайт (OOMScoreAdjust);
+MemoryHigh=1500M
+OOMScoreAdjust=300

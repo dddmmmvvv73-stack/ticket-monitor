@@ -13,6 +13,14 @@ if [ ! -d "$APP/.git" ]; then
 fi
 git -C "$APP" pull -q --ff-only
 
+# Подкачка 2 ГБ (после аварии 11.10): на 4 ГБ без неё всплеск памяти (сбор + Chromium + база) вешает всю машину
+if ! swapon --show | grep -q /swapfile; then
+  [ -f /swapfile ] || { sudo fallocate -l 2G /swapfile && sudo chmod 600 /swapfile && sudo mkswap /swapfile >/dev/null; }
+  sudo swapon /swapfile
+  grep -q '^/swapfile ' /etc/fstab || echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab >/dev/null
+fi
+echo 'vm.swappiness=10' | sudo tee /etc/sysctl.d/90-ticket-monitor.conf >/dev/null && sudo sysctl -q -p /etc/sysctl.d/90-ticket-monitor.conf
+
 # Python
 [ -d "$APP/.venv" ] || python3 -m venv "$APP/.venv"
 "$APP/.venv/bin/pip" install -q --upgrade pip

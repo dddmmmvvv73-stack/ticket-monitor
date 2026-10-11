@@ -15,3 +15,6 @@ ExecStartPre=-/usr/bin/git -C /opt/ticket-monitor pull -q --ff-only
 ExecStart=/opt/ticket-monitor/.venv/bin/python -m competitors.collector auto
 ExecStartPost=/opt/ticket-monitor/deploy/commit_data.sh Сбор
 TimeoutStartSec=2400
+# Память (после аварии 11.10): машина 4 ГБ — при нехватке ядро убивает сбор, а не базу, SSH и сайт (OOMScoreAdjust);
+MemoryHigh=1G
+OOMScoreAdjust=300

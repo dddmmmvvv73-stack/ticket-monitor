@@ -12,3 +12,7 @@ ExecStart=/opt/ticket-monitor/.venv/bin/python -m sales.run --budget 50
 # Сводка продаж для прототипа (ноутбук забирает её по SSH в ./pull_data.sh) — после каждого прогона
 ExecStartPost=/opt/ticket-monitor/.venv/bin/python -m sales.export
 TimeoutStartSec=3600
+# Память (после аварии 11.10): машина 4 ГБ — при нехватке ядро убивает сбор, а не базу, SSH и сайт (OOMScoreAdjust);
+# у продаж — браузер Qtickets (Chromium): жёсткий потолок — сбор упадёт сам, машина останется доступна
+MemoryMax=1500M
+OOMScoreAdjust=500
