@@ -354,6 +354,9 @@ def main() -> None:
         stats["qtickets: %s — %d страниц в сутки" % (ramp_note, BUDGET["qtickets"])] += 1
     runs_left = 24 - datetime.now().hour   # прогон раз в час: остаток суточного лимита — поровну на оставшиеся
     caps = {op: max(0, math.ceil((BUDGET[op] - int(used.get(op) or 0)) / runs_left)) for op in work}
+    if not caps["qtickets"] and work["qtickets"]:   # лимит 0 (SALES_BUDGET_QTICKETS=0 или исчерпан) — браузер не запускаем
+        stats["qtickets: лимит на сегодня — 0, пропуск"] += 1
+        work["qtickets"] = []
     closed = {}
     for op in work:
         if blocks.state("%s/sales" % op) == "blocked":   # сайт закрыл доступ — ни одного запроса до срока
