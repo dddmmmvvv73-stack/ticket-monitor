@@ -6,7 +6,8 @@ Qtickets для сбора продаж (TICKET_PLATFORMS.md, 9.3 и 9.5): ст�
     - танцпол и входные — остаток по зоне (`appends.zones[зона].free_quantity`): мест у них нет, вместимости тоже.
 Цены известны у всех мест, поэтому вал точный (как у vladimirkoncert), а продажи — по местам.
 
-Нагрузка (TICKET_PLATFORMS 9.5): одна страница — ~10 запросов к Qtickets; лимит и паузы — в страницах (`Browser`), по
+Нагрузка (TICKET_PLATFORMS 9.5): одна страница — 5 запросов к серверу Qtickets (страница, загрузчик окна, окно зала,
+проверка 428, места) и ~6 к его CDN (скрипты, стили, схема — из кэша браузера); лимит и паузы — в страницах (`Browser`), по
 одной странице, пауза 20–40 с; картинки, шрифты и чужие счётчики не грузятся. Суточный лимит поднимается ступенями
 (`daily_budget`: 60 → 150 → 300 → 500 → 800, ступень — после суток без отказов, отказ — шаг назад и двое суток ниже).
 Отказ (403, 429) — канал qtickets/sales закрывается (competitors/blocks.py); проверка 428 стала заметно сложнее — медленнее,
@@ -47,7 +48,7 @@ CHROME_ARGS = ["--disable-dev-shm-usage", "--disable-gpu", "--disable-extensions
                "--disk-cache-size=52428800", "--js-flags=--max-old-space-size=256", "--renderer-process-limit=2"]
 WINDOW, BAD_SHARE, STOP_AFTER = 20, 0.3, 8   # окно ответов; доля сбоев для замедления; подряд сбоев — стоп на прогон
 # Что не нужно для данных: картинки афиши, шрифты, счётчики и чаты (схема зала — svg Qtickets — нужна окну)
-BLOCK = re.compile(r"\.(png|jpe?g|webp|gif|ico|woff2?|ttf|otf)(\?|$)|/thumbs/|mc\.yandex|yandex\.ru/(metrika|watch)|vk\.com|"
+BLOCK = re.compile(r"\.(png|jpe?g|webp|gif|ico|woff2?|ttf|otf)(\?|$)|/thumbs/|/payment-icons/|mc\.yandex|yandex\.ru/(metrika|watch)|vk\.com|"
                    r"top-fwz|mail\.ru|google|facebook|me-talk|verbox|tiktok|pixel", re.I)
 ADDON = re.compile(r"meet|встреч\w* с артист|фото с артист|не является входным", re.I)   # дополнительная услуга, не билет в зал
 MONTHS = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"]
