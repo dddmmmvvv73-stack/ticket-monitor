@@ -448,7 +448,6 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
 .pj-seg-btn.appear { animation: pj-seg-in 420ms var(--ease) both; }
 @keyframes pj-seg-in { from { flex-grow: 0.0001; opacity: 0; } 60% { opacity: 0; } to { flex-grow: 1; opacity: 1; } }
 .pj-seg-dot { position: absolute; top: 5px; right: 6px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 9999px; background: var(--data); color: #fff; font-size: 10px; font-weight: 600; line-height: 16px; text-align: center; }
-.pj-demo { font-size: 11px; padding: 2px 8px; border-radius: 9999px; background: #fff3d6; color: #8a5a00; align-self: center; }
 .pj-chg-new { color: var(--good); } .pj-chg-gone { color: var(--risk); } .pj-chg-price { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; font-size: 14px; white-space: nowrap; }
 .pj-chg-price s { color: var(--muted); } .pj-chg-price b { font-weight: 500; }
 @media (prefers-reduced-motion: reduce) { .pj-seg-btn.appear { animation: none; } }
@@ -507,7 +506,6 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .an-hero-in { padding: 0 72px 30px; gap: 18px; }
 .an-stats { position: relative; z-index: 1; display: flex; gap: 10px 28px; flex-wrap: wrap; align-items: baseline; padding: 74px 72px 0; font-size: 15px; color: rgba(255, 255, 255, 0.72); }
 .an-stats b { font: 500 24px/1.2 var(--display); color: #fff; letter-spacing: -0.01em; }
-.an-stats .pj-demo { align-self: center; }
 .an-nav { display: flex; gap: 0; flex-wrap: wrap; border: 1px solid var(--line-strong); border-radius: 6px; overflow: hidden; align-self: flex-start; margin-top: 4px; background: var(--card); }
 .an-nav button { height: 40px; padding: 0 18px; border: 0; background: none; font-size: 14px; color: var(--ink-2); }
 .an-nav button + button { border-left: 1px solid var(--line-strong); }
@@ -5070,8 +5068,8 @@ function myAction(t) {
 // Шапка: фон и фото (загружаются прямо здесь), название, подзаголовок, теги «формат · сфера · жанр», четыре кнопки:
 // «Редактировать», «В избранное», «Организаторы» (окно с анимацией), «Контакты» (окно). Ниже — «Название — гастроли»:
 // первые 8 дат и «Показать все», справа — описание (своё, редактируется) и прежние блоки страницы по категориям.
-// Пока проверяем на одном проекте (PJ_NEW_RE); после одобрения — PJ_NEW_ALL = true.
-var PJ_NEW_ALL = false, PJ_NEW_RE = /adrenalin\s*house/i, PJ_ROWS = 8;
+// Новый вид «Проекта» и «Аналитики» — для всех проектов (решение пользователя 11.10: «теперь он стандартный для всех»)
+var PJ_NEW_ALL = true, PJ_NEW_RE = /adrenalin\s*house/i, PJ_ROWS = 8;
 var WD_FULL = ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"];
 var MONTHS_GEN = ["января", "февраля", "марта", "апреля", "мая", "июня", "июля", "августа", "сентября", "октября", "ноября", "декабря"];
 var PJ_PLURAL = { "Концерт": "концерты", "Спектакль": "спектакли", "Стендап": "выступления", "Шоу": "шоу", "Мюзикл": "мюзиклы", "Балет": "балеты", "Опера": "оперы" };
@@ -5190,11 +5188,10 @@ function pjPage(k, id, rec, keys, l, title) {
   if (S.m.pjMode === "chg" && !fav) S.m.pjMode = "list";
   var mode = S.m.pjMode, arch = mode === "arch", lp = l.filter(inPeriod), pastP = past.filter(inPeriod), cut = S.period !== "all" && mode !== "chg";
   var src = arch ? pastP : lp, all = S.m.datesAll, rows = all ? src : src.slice(0, PJ_ROWS);
-  var demo = fav && PJ_DEMO_CHG.test(title) && !S.pjDemoSeen;   // тестовые изменения — пока проверяем раздел
-  var kind = 'Мероприятия', df = fav ? (demo ? pjDemoDiff(l) : myDiff(rec)) : null, nChg = df ? df.n + df.passed.length : 0;
+  var kind = 'Мероприятия', df = fav ? myDiff(rec) : null, nChg = df ? df.n + df.passed.length : 0;
   var periodNote = cut ? '<div class="pj-sum"><span><b>' + esc(periodLabel()) + '</b></span><span><b class="num">' + src.length + '</b> из ' + (arch ? past.length : l.length) + '</span>' +
     '<button class="pj-plain" data-pj="period-all">Все даты</button></div>' : '';
-  var chgNote = mode === "chg" ? '<div class="pj-sum">' + (demo ? '<span class="pj-demo">тестовые изменения</span>' : '') + '<span>с <b>' + (df.since ? human(df.since.slice(0, 10)) : '—') + '</b></span>' +
+  var chgNote = mode === "chg" ? '<div class="pj-sum"><span>с <b>' + (df.since ? human(df.since.slice(0, 10)) : '—') + '</b></span>' +
       (df.added.length ? '<span><b class="num">' + df.added.length + '</b> ' + plural(df.added.length, "новая", "новые", "новых") + '</span>' : '') +
       (df.removed.length ? '<span><b class="num">' + df.removed.length + '</b> ' + plural(df.removed.length, "снята", "сняты", "снято") + '</span>' : '') +
       (df.priced.length ? '<span><b class="num">' + df.priced.length + '</b> ' + plural(df.priced.length, "цена", "цены", "цен") + '</span>' : '') +
@@ -5378,16 +5375,6 @@ function pjOrgAssign() {
   var f = $("pjOrgForm"), name = $("pjOrgName").value.trim(), picked = [].map.call(f.querySelectorAll(".pjo-date input:checked"), function (x) { return MR[+x.value]; });
   if (!picked.length) { var err = $("pjOrgErr"); err.hidden = false; err.textContent = "Отметьте даты, которым назначить организатора"; return; }
   pjOrgSet(picked, name);
-}
-// ТЕСТ (09.10, по просьбе пользователя): ненастоящие изменения у AdrenalinHouse — проверить раздел «Изменения».
-// Не сохраняются; «Просмотрено» скрывает до перезагрузки. Убрать вместе с PJ_DEMO_CHG, когда раздел проверен.
-var PJ_DEMO_CHG = /adrenalin\s*house/i;
-function pjDemoDiff(l) {
-  var snap = mySnap(l), at = addDays(TODAY, -7) + "T12:00:00";
-  var priced = snap.slice(2, 4).map(function (d, n) { var o = d.slice(); o[3] = (d[3] || 1000) + (n ? 300 : -200); o[4] = (d[4] || 3000) + (n ? 500 : 0); return { d: d, o: o }; });
-  var added = snap.slice(0, 2);
-  return { added: added, removed: [[addDays(TODAY, 40), "Тула", "ДК «Тестовый»", 1500, 3500]], passed: [[addDays(TODAY, -3), "Курск", "ДК «Тестовый»", 1200, 3000]],
-    priced: priced, newCities: mUniq(added.map(function (d) { return { city: d[1] }; }), "city"), n: added.length + 1 + priced.length, since: at };
 }
 // Лента «Изменения» (избранное): что поменялось с момента добавления или «Просмотрено» — в стиле списка дат.
 // Новая дата — строка открывает окно даты; снята до даты, цена (было → стало), прошло — по снимку.
@@ -5633,7 +5620,7 @@ function pjAction(t) {
   else if (a === "an-tab") { S.m.anTab = t.getAttribute("data-tab"); var y5 = window.scrollY; render(); window.scrollTo(0, y5); }
   else if (a === "period-all") { S.period = "all"; S.from = S.to = null; render(); }
   else if (a === "mode") { var y = window.scrollY; S.m.pjMode = t.getAttribute("data-mode"); S.m.datesAll = false; render(); window.scrollTo(0, y); }   // экран остаётся на месте
-  else if (a === "seen") { S.pjDemoSeen = true; var rid = myFind(S.pj.k); if (rid) mySave({ op: "seen", id: rid, snap: mySnap(myEvents(MYP.projects[rid].keys)) }, "Отмечено: просмотрено"); }
+  else if (a === "seen") { var rid = myFind(S.pj.k); if (rid) mySave({ op: "seen", id: rid, snap: mySnap(myEvents(MYP.projects[rid].keys)) }, "Отмечено: просмотрено"); }
   else if (a === "orgedit") pjOrgEditor(+t.getAttribute("data-i"));
   else if (a === "orgcancel") { $("pjdOrg").innerHTML = pjOrgView(MR[+t.getAttribute("data-i")]); }
   else if (a === "orgreset") pjOrgSet([MR[+t.getAttribute("data-i")]], "");
@@ -5751,9 +5738,8 @@ function mRouteTimeline(p) {
 // городам, где дороже, кто и где возит, на каких площадках, куда добавить. Сводка тура переехала сюда со страницы проекта.
 var AN_GOOD = 75, AN_LOW = 40;   // заполняемость: от 75% — хорошо, ниже 40% — плохо (цвет точек и полос)
 function anColor(f) { return f == null ? "#a8a29e" : f >= AN_GOOD ? "#15803d" : f < AN_LOW ? "#d03b3b" : "#1d6fae"; }
-function anFills(l, title) {  // заполняемость дат; у тестового проекта, если настоящих почти нет, — тестовые цифры с пометкой
-  var real = l.map(pjFill), n = real.filter(Boolean).length, demo = n < 3 && PJ_DEMO_CHG.test(title);
-  return { demo: demo, f: l.map(function (e, i) { if (real[i]) return real[i].f; if (!demo) return null; var h = (e.i * 2654435761) % 1000; return 18 + Math.round(h / 1000 * 80); }) };
+function anFills(l) {  // заполняемость дат (нет данных — null)
+  return { f: l.map(function (e) { var x = pjFill(e); return x ? x.f : null; }) };
 }
 function anTimeline(l, fills) {   // лента маршрута: точки — цветом заполняемости
   var order = []; l.forEach(function (e) { if (order.indexOf(e.city) < 0) order.push(e.city); });
@@ -5901,21 +5887,15 @@ function anRatePill(rec) {
 }
 // Плитка «заполняемость в ср.» — переворачивается по нажатию: на обороте «потолок зала» (ptCeiling, project-rating.js) —
 // сверху потолок крупно, полоса — потолок от медианы крупных залов тура. Данные — итоги прошедших выступлений (MK.finals);
-// у тестового проекта без итогов — тестовые цифры с пометкой.
 function anCap(e) { var d = mDirect(e), s = e.sales; return d && d.sellable ? d.sellable : s ? s.hall || s.exp || 0 : 0; }
 function anFlipTile(avg, l, fills, title, k) {
-  var fin = (typeof MK !== "undefined" && MK.finals && MK.finals[k]) || [], demo = false;
+  var fin = (typeof MK !== "undefined" && MK.finals && MK.finals[k]) || [];
   var shows = fin.map(function (x) { return { city: x[0], cap: x[1], fill: x[2] }; });
   var caps = shows.map(function (x) { return x.cap; }).concat(l.map(anCap));
-  if (!shows.length && PJ_DEMO_CHG.test(title)) {   // ТЕСТ: у AdrenalinHouse итогов ещё нет — выдуманные залы по датам тура
-    demo = true;
-    shows = l.map(function (e, i) { var c = anCap(e) || 500 + ((e.i * 2654435761) % 21) * 100; return { city: e.city, cap: c, fill: fills[i] == null ? 0 : fills[i] + 30 }; });
-    caps = shows.map(function (x) { return x.cap; });
-  }
   var ce = ptCeiling(shows, caps), flip = !!S.m.anFlip;
   var front = '<span class="an-face"><b class="num">' + (avg == null ? "—" : avg + "%") + '</b><span>заполняемость в ср.</span>' +
     '<span class="an-tbar"><i style="width:' + (avg || 0) + '%;background:' + anColor(avg) + '"></i></span></span>';
-  var back = '<span class="an-face an-back"><b class="num">' + (ce.ceil ? '≈ ' + num(ce.ceil) : '—') + '</b><span>потолок зала' + (demo ? ' · тест' : '') + '</span>' +
+  var back = '<span class="an-face an-back"><b class="num">' + (ce.ceil ? '≈ ' + num(ce.ceil) : '—') + '</b><span>потолок зала</span>' +
     '<span class="an-tbar"><i style="width:' + Math.round((ce.share || 0) * 100) + '%;background:#7ab9e8"></i></span>' +
     '<span class="an-tsub">' + (ce.ceil ? (ce.bigMedian ? 'крупные залы ~' + num(ce.bigMedian) : 'по ' + ce.filledCities + ' городам') : '≥85% в ' + ce.filledCities + ' из ' + ce.need + ' городов') + '</span></span>';
   var tip = ce.ceil ? 'Потолок зала ≈ ' + num(ce.ceil) + ' мест: такие залы проект заполнял на 85% и больше хотя бы в ' + ce.need + ' городах (заполнено в ' + ce.filledCities + ', выступлений с итогом ' + ce.shows + ')'
@@ -5934,7 +5914,7 @@ function anMore(key, shown, total) {
 function anPage(k, l, past, p, cands, foN) {
   var rec = myRec(k), title = p.title, fmt = p.format, genre = p.genre;
   var ava = pjMedia(rec, "avatar"), cover = pjMedia(rec, "cover"), coverY = rec && rec.cover_y != null ? rec.cover_y : 30;
-  var F = anFills(l, title), fills = F.f, known = fills.filter(function (f) { return f != null; });
+  var F = anFills(l), fills = F.f, known = fills.filter(function (f) { return f != null; });
   var avg = known.length ? Math.round(known.reduce(function (a, b) { return a + b; }, 0) / known.length) : null;
   var cities = mUniq(l, "city"), orgs = pjOrgs(l);
   var pmin = Math.min.apply(null, l.map(function (e) { return e.pmin || 1e9; })), pmax = Math.max.apply(null, l.map(function (e) { return e.pmax || 0; }));
@@ -5970,7 +5950,7 @@ function anPage(k, l, past, p, cands, foN) {
   var hero = '<section class="pj-hero an-hero-m' + bg + '">' + (cover ? '' : anRouteBg(l)) + back + PJ_ICON.back + '</button>' + topRight + tiles +
     '<div class="pj-hero-in"><span class="pj-ava an-ava-big" aria-hidden="true">' + (ava ? '<img src="' + esc(ava) + '" alt="">' : '<span class="pj-ini">' + esc(pjInitials(title)) + '</span>') + '</span>' +
       '<div class="pj-hero-text"><h1 class="pj-name">' + esc(title) + '</h1><p class="pj-sub">Аналитика</p>' +
-        '<div class="pj-tags">' + anRatePill(rec) + (F.demo ? '<span class="pj-demo">тестовые цифры заполняемости</span>' : '') + '</div>' +
+        '<div class="pj-tags">' + anRatePill(rec) + '</div>' +
         '<div class="pj-actions" role="tablist" aria-label="Разделы аналитики">' + AN_TABS.map(tabBtn).join("") + '</div></div></div></section>';
   var nav = '';
 
