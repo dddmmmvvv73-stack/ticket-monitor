@@ -7856,7 +7856,7 @@ function plTour(id) {
       case "days": return plFitIn(sg("days"), r.days, { label: "Дней в городе", ph: 1 });
       case "seats": return k.seats ? num(k.seats) : '—';
       case "avg": return r.zmode && r.zones && r.zones.length ? (k.avg ? num(Math.round(k.avg)) : '—') : plFitIn(sg("avg"), r.avg, { ph: k.avg ? Math.round(k.avg) : "—", label: "Средняя цена билета — вал пересчитается" });
-      case "gross": return plShort(k.gross);
+      case "gross": return r.zmode && r.zones && r.zones.length ? plShort(k.gross) : plFitIn("ovr|" + id + "|" + r.id + "|gross", r.ovr && r.ovr.gross != null ? r.ovr.gross : null, { ph: k.gross ? Math.round(k.gross) : "—", label: "Вал — пересчитается всё" });
       case "sales": return plShort(k.sales);
       case "variable": return plShort(k.variable);
       case "fixed": return plShort(k.fixed);
@@ -8029,7 +8029,12 @@ function plKpiTile(k, c, r, tid) {
         '<span class="pl-kv pl-flat">' + plFitIn("row|" + tid + "|" + r.id + "|avg", r.avg, { ph: c.avg ? Math.round(c.avg) : "цена", label: "Средняя цена билета, ₽ — вал пересчитается" }) + '<small> ₽</small></span></div>';
     case "seats": return tile("Мест в реализацию", c.seats ? num(c.seats) : "—");
     case "beT": return tile("ТБУ, билетов", c.beTickets == null ? "—" : num(Math.ceil(c.beTickets)) + '<small> бил.</small>');
-    case "gross": return tile("Вал", money(c.gross));
+    case "gross":
+      if (r.zmode && r.zones && r.zones.length) return tile("Вал", money(c.gross));   // по распоясовке — сумма поясов
+      var gOwn = (r.ovr && r.ovr.gross != null) || r.avg != null;
+      return '<div class="pl-kpi pl-kpi-in" draggable="true" data-plkpi="gross" title="Впишите вал — пересчитается всё, средняя цена станет вал ÷ мест. Перетащите плитку, чтобы поменять порядок">' +
+        '<span class="pl-kl">Вал' + (gOwn ? ' <button class="pj-plain pl-kreset" data-pl="gross-reset" title="Вернуть вал площадки">↺</button>' : '') + '</span>' +
+        '<span class="pl-kv pl-flat">' + plFitIn("ovr|" + tid + "|" + r.id + "|gross", r.ovr && r.ovr.gross != null ? r.ovr.gross : null, { ph: c.gross ? Math.round(c.gross) : "вал", label: "Вал, ₽ — пересчитается всё" }) + '<small> ₽</small></span></div>';
     case "beRub": return tile("ТБУ продаж", money(c.beRub));
     case "target": return '<div class="pl-kpi" draggable="true" data-plkpi="target" title="Сколько билетов продать, чтобы заработать эту прибыль' + (c.tgRub == null ? '' : ': продажи ' + plMoney(c.tgRub)) + '. Перетащите, чтобы поменять порядок">' +
       '<span class="pl-kl pl-ktg pl-flat"><span class="pl-kl-full">Заработать</span><span class="pl-kl-short">Цель</span> ' + plFitIn("row|" + tid + "|" + r.id + "|target", r.target, { ph: plCfg().target, label: "Продать, чтобы заработать: желаемая прибыль, ₽" }) + '</span>' +
@@ -8309,6 +8314,7 @@ function plAction(b) {
   var a = b.getAttribute("data-pl"), id = b.getAttribute("data-id"), copy = function (o) { return JSON.parse(JSON.stringify(o || {})); };
   if (a === "tab") { S.pl.tab = b.getAttribute("data-tab"); S.pl.tour = null; closeDrawer(); render(); }
   else if (a === "cols") { S.pl.cols = !S.pl.cols; render(); }
+  else if (a === "gross-reset") { var tg = copy(PLAN.tours[S.pl.tour]), rg = (tg.rows || []).filter(function (x) { return x.id === S.pl.row; })[0]; if (!rg) return; delete rg.avg; if (rg.ovr) { delete rg.ovr.gross; if (!Object.keys(rg.ovr).length) delete rg.ovr; } plPut("tours", S.pl.tour, tg, "Вал — снова из площадки"); }
   else if (a === "avg-reset") { var ta = copy(PLAN.tours[S.pl.tour]), ra = (ta.rows || []).filter(function (x) { return x.id === S.pl.row; })[0]; if (!ra) return; delete ra.avg; plPut("tours", S.pl.tour, ta, "Вал — снова из площадки"); }
   else if (a === "map-layer") { var mlp = plMapPrefs(), mk2 = b.getAttribute("data-k"); mlp[mk2] = !mlp[mk2]; PL_PREFS.mapl = mlp; plPrefsSave(); var y1m = window.scrollY; render(); window.scrollTo(0, y1m); }
   else if (a === "map-replace" || a === "map-add") {
