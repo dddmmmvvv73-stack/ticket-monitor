@@ -14,13 +14,15 @@
 //                        % от аншлага); вал, мест и сборы даты — суммы по поясам (решение пользователя 12.10)
 // Рентабельность продаж = прибыль ÷ сборы;  окупаемость затрат = прибыль ÷ итоговые расходы;  эффективность слота = прибыль ÷ вал
 // ТБУ, билетов         = постоянные ÷ (средняя цена × (1 − переменные %))   — как в таблице
+// Продать, чтобы заработать N = (постоянные + N) ÷ (средняя цена × (1 − переменные %)) билетов
 var PLAN_DEFAULTS = {
   tax: 2,                                                    // налог, % от сборов
   classes: [["S", 600000], ["A", 500000], ["B", 400000], ["C", 250000]],   // ниже последнего — D (как в таблице)
   scenarios: [50, 70, 90],                                   // % от аншлага: осторожный / базовый / хороший
   base: 1,                                                   // какой сценарий — по умолчанию (базовый)
   weights: { fin: 0.25, comp: 0.25, ads: 0.15, attract: 0.15, market: 0.15, prep: 0.05 },   // итоговый балл (как в таблице)
-  ban_months: 13                                             // запрет повторного показа (как в таблице)
+  ban_months: 13,                                            // запрет повторного показа (как в таблице)
+  target: 150000                                             // «продать, чтобы заработать»: желаемая прибыль по умолчанию (правится в карточке города)
 };
 var PLAN_ORG = [["transfer", "Трансфер"], ["hotel", "Проживание"], ["tech", "Технический райдер"], ["catering", "Кейтеринг на площадке"],
   ["loaders", "Грузчики"], ["security", "Охрана"], ["services", "Службы"], ["other", "Прочие расходы"]];
@@ -67,12 +69,15 @@ function planCalc(x, cfg) {
   var profit = revenue - fixed;
   var net = avg * (1 - v);                   // сколько остаётся с одного билета после переменных
   var beTickets = net > 0 ? fixed / net : null;
+  var target = x.target != null && x.target !== "" ? n(x.target) : n(cfg.target != null ? cfg.target : PLAN_DEFAULTS.target);
+  var tgTickets = net > 0 ? (fixed + target) / net : null;
   var cl = planClass(profit, cfg);
   return {
     gross: gross, seats: seats, zones: zones, fillEff: gross > 0 ? sales / gross * 100 : n(x.fill),
     avg: avg, sales: sales, varPct: varPct, variable: variable, project: project, org: org, rent: n(x.rent), logistics: n(x.logistics), ads: n(x.ads),
     fixed: fixed, total: fixed + variable, revenue: revenue, profit: profit,
     beTickets: beTickets, beRub: beTickets == null ? null : beTickets * avg, beShare: beTickets == null || !seats ? null : beTickets / seats,
+    target: target, tgTickets: tgTickets, tgRub: tgTickets == null ? null : tgTickets * avg, tgShare: tgTickets == null || !seats ? null : tgTickets / seats,
     eff: gross > 0 ? profit / gross : null, ros: sales > 0 ? profit / sales : null, roi: fixed + variable > 0 ? profit / (fixed + variable) : null,
     cls: cl.cls, finScore: cl.score
   };

@@ -119,7 +119,7 @@ VENUE = {"city": 100, "venue": 200, "seats": "int", "gross": "money", "rent": "m
 OVR = {"seats": "int", "gross": "money", "rent": "money", "logistics": "money", "kassa": "pct", "fee": "money", "cashless": "pct",
        "per_diem": "money", "crew": "int", "author": "money", "rao": "pct", "moscow": "money", **{o: "money" for o in ORG}}
 ROW = {"id": 24, "city": 100, "venue": 300, "date": "date", "days": "int", "fill": "pct", "ads": "money", "agent": "pct",
-       "cannibal": "bool", "region_ban": "bool", "last_show": "date", "decision": DECISIONS, "note": 1000, "zmode": "bool"}
+       "cannibal": "bool", "region_ban": "bool", "last_show": "date", "decision": DECISIONS, "note": 1000, "zmode": "bool", "target": "money"}
 ZONE = {"name": 60, "price": "money", "seats": "int", "fill": "pct"}
 ZONE_T = {"name": 60, "seats": "int"}
 
@@ -133,7 +133,7 @@ TOUR = {"title": 200, "project": 24, "month": "date", "status": STATUSES, "note"
 
 
 def _params(d: dict) -> dict:
-    out = _clean(d, {"tax": "pct", "base": "int", "ban_months": "int"}, "параметры")
+    out = _clean(d, {"tax": "pct", "base": "int", "ban_months": "int", "target": "money"}, "параметры")
     if "classes" in d:
         cls = d["classes"]
         if not isinstance(cls, list) or not 1 <= len(cls) <= 6:

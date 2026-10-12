@@ -112,3 +112,12 @@ test("Рентабельность продаж и окупаемость зат
   near(r.roi, 380000 / 620000, 1e-12);
   assert.equal(planCalc({ fee: 1 }).ros, null);
 });
+
+test("Продать, чтобы заработать N: (постоянные + N) ÷ чистая цена билета", () => {
+  const r = planCalc({ gross: 1000000, seats: 500, fill: 100, fee: 600000 });   // ср. цена 2 000, после 2 % — 1 960
+  near(r.tgTickets, (600000 + 150000) / 1960, 1e-9);        // по умолчанию 150 000
+  near(r.tgRub, r.tgTickets * 2000, 1e-6);
+  near(r.tgShare, r.tgTickets / 500, 1e-12);
+  const r2 = planCalc({ gross: 1000000, seats: 500, fill: 100, fee: 600000, target: 0 });
+  near(r2.tgTickets, r2.beTickets, 1e-9);                   // цель 0 — та же точка безубыточности
+});
