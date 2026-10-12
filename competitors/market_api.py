@@ -12,6 +12,8 @@
     GET  /api/sales/detail?keys=… продажи сеанса для карточки — с сервера в Яндекс Облаке по SSH (sales/detail.py)
     GET  /proto/site-data.js      даты с официальных сайтов проектов (competitors/officialsite.py)
     POST /api/market/site/check   {"key"} — разобрать сайт проекта сейчас (кнопка «Проверить», ~10–40 с)
+    GET  /api/planning            «Планирование»: справочники и туры (competitors/planning.py; config/planning.json вне git)
+    POST /api/planning            {"op": "put" | "del", "kind", "id", "data"}
 
 Каждая правка сразу записывается в config/ и в фоне отправляется на GitHub (competitors/sync.py),
 поэтому сбор на сервере применяет её с ближайшего запуска. Избранное и записи о проектах — только на этом
@@ -30,7 +32,7 @@ from datetime import datetime
 
 from flask import Blueprint, Response, jsonify, redirect, request, send_file, send_from_directory
 
-from competitors import collector, curation, edits, market, myprojects, officialsite, protodata, sync
+from competitors import collector, curation, edits, market, myprojects, officialsite, planning, protodata, sync
 from competitors.classifier import FORMATS, GENRES, SPHERES
 from competitors.storage import BASE_DIR, ON_SERVER, load_json
 
@@ -95,6 +97,20 @@ def site_check():
         return jsonify({"error": "у проекта нет ссылки на сайт"}), 400
     data = officialsite.run(only=key, log=collector.log)
     return jsonify({"sites": officialsite.export(data), "error": (data.get(key) or {}).get("error", "")})
+
+
+@bp.get("/api/planning")
+def planning_get():
+    return jsonify(planning.load())
+
+
+@bp.post("/api/planning")
+def planning_post():
+    try:
+        data = planning.apply_op(request.get_json(silent=True) or {})
+    except planning.PlanningError as e:
+        return jsonify({"error": str(e)}), 400
+    return jsonify(data)   # не отправляется на GitHub — репозиторий публичный, здесь гонорары и аренда
 
 
 @bp.get("/api/sales/detail")
