@@ -663,6 +663,13 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pl-scens b { font: 600 15px/1.2 var(--display); white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .pl-kpi, .pl-kpi:hover { transition: none; transform: none; } }
 @media (max-width: 520px) { .pl-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pl-scens { grid-template-columns: 1fr; } }
+.pl-under { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.pl-map-btn { display: inline-flex; align-items: center; gap: 6px; }
+.pl-map-sec { margin-top: 20px; display: flex; flex-direction: column; gap: 8px; }
+.pl-map-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; } .pl-map-head h3 { font: 600 20px/1.2 var(--display); margin: 0; }
+.an-map.pl-map { height: 480px; }
+.pl-pin { cursor: pointer; font-size: 12px; }
+.pl-pin:hover { transform: scale(1.12); }
 .pl-zleft { font-size: 13px; color: var(--ink-2); } .pl-zleft b { font-weight: 600; } .pl-ok { color: #166534; }
 @media (max-width: 480px) { .pl-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .pl-tools { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; }
@@ -7874,7 +7881,60 @@ function plTour(id) {
   if (!Object.keys(PLAN.venues).length) hints.push('Места в продаже, вал, аренда и пояса зала — в разделе <button class="pj-plain" data-pl="go-venues">«Площадки»</button>.');
   return head1 + sum + (hints.length ? plNote(hints.join(" ")) : '') + tools + cityList +
     '<section class="card pl-card pl-card-fit"><table class="vtable pl-grid pl-tour pl-flat" style="width:' + width + 'px">' + colgroup + th + '<tbody>' + body + '</tbody>' + foot + '</table>' + empty + '</section>' +
-    '<div style="margin-top:12px"><button class="btn-dark" data-pl="row-add">+ Город</button></div>';
+    '<div class="pl-under"><button class="btn-dark" data-pl="row-add">+ Город</button>' +
+      (rows.length ? '<button class="btn-ghost pl-map-btn" data-pl="map" aria-expanded="' + !!PL_PREFS.map + '" aria-controls="plMapSec">' + PJ_ICON.an_route + (PL_PREFS.map ? 'Скрыть карту' : 'Показать на карте') + '</button>' : '') + '</div>' +
+    (rows.length && PL_PREFS.map ? plTourMapHtml(t, rows, calcs) : '');
+}
+// ---------- Карта тура (как «Маршрут» в «Аналитике»: OpenStreetMap, Leaflet): кружки с номером города по порядку тура,
+// цвет — класс прибыли, линии со стрелками — направление, на перегоне — километры; нажатие — карточка города
+var PL_CLS_COLOR = { S: "#15803d", A: "#22a35a", B: "#1d6fae", C: "#d97706", D: "#d03b3b" };
+function plTourMapHtml(t, rows, calcs) {
+  var stops = rows.map(function (r, i) { return { r: r, k: calcs[i], n: i + 1 }; }).filter(function (x) { return x.r.city; });
+  var miss = stops.filter(function (x) { return !anLL(x.r.city); }).map(function (x) { return x.r.city; });
+  var km = 0, prev = null;
+  stops.forEach(function (x) { if (!anLL(x.r.city)) return; if (prev) km += siteKm(prev, x.r.city) || 0; prev = x.r.city; });
+  S.pl.mapCtx = { stops: stops, key: stops.map(function (x) { return x.r.city; }).join("|") };
+  setTimeout(plTourMapInit, 0);
+  return '<section class="pl-map-sec" id="plMapSec"><div class="pl-map-head"><h3>Маршрут тура</h3><span class="sub2">' + stops.length + ' ' + plural(stops.length, "город", "города", "городов") +
+      (km ? ' · ≈ ' + num(Math.round(km)) + ' км по прямой' : '') + '</span></div>' +
+    '<div id="plMap" class="an-map pl-map"><div class="sub" style="padding:16px">Загружаем карту…</div></div>' +
+    '<div class="an-legend">' + ["S", "A", "B", "C", "D"].map(function (c) { return '<span><i style="background:' + PL_CLS_COLOR[c] + '"></i>класс ' + c + '</span>'; }).join("") +
+      '<span><i style="background:#a8a29e"></i>нет вала</span><span class="sub2">цифра — порядок города в туре, стрелка — направление</span></div>' +
+    (miss.length ? '<p class="sub2" style="margin:6px 0 0">Нет на карте (неизвестны координаты): ' + esc(miss.join(", ")) + '</p>' : '') + '</section>';
+}
+function plTourMapInit() {
+  var el = $("plMap"), c = S.pl.mapCtx; if (!el || !c) return;
+  anLoad(function (err) {
+    if (!$("plMap")) return;
+    if (err || !window.L) { el.innerHTML = '<div class="note" style="margin:16px">Карта не загрузилась: нет связи с OpenStreetMap или cdnjs.</div>'; return; }
+    el.innerHTML = "";
+    if (S.pl.mapObj) { try { S.pl.mapObj.remove(); } catch (e) { /* карта ушла вместе со страницей */ } S.pl.mapObj = null; }
+    var map = L.map(el, { scrollWheelZoom: true, zoomControl: false, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 90, touchZoom: true });
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
+    var pts = c.stops.map(function (x) { return { x: x, ll: anLL(x.r.city) }; }).filter(function (p) { return p.ll; });
+    for (var i = 1; i < pts.length; i++) {   // перегоны по порядку тура: линия, стрелка направления на середине, километры
+      var a = pts[i - 1].ll, b = pts[i].ll; if (a[0] === b[0] && a[1] === b[1]) continue;
+      var d = siteKm(pts[i - 1].x.r.city, pts[i].x.r.city);
+      L.polyline([a, b], { color: "#57534e", weight: 2.5, opacity: 0.6 }).bindTooltip(esc(pts[i - 1].x.r.city) + " → " + esc(pts[i].x.r.city) + (d ? " · ≈ " + num(d) + " км" : ""), { sticky: true }).addTo(map);
+      var ang = Math.atan2(b[0] - a[0], (b[1] - a[1]) * Math.cos(a[0] * Math.PI / 180)) * 180 / Math.PI;
+      L.marker([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], { icon: L.divIcon({ className: "an-arrow", html: '<span style="transform:rotate(' + (-ang).toFixed(0) + 'deg)">➤</span>', iconSize: [14, 14], iconAnchor: [7, 7] }), interactive: false, keyboard: false }).addTo(map);
+    }
+    var byCity = {};
+    pts.forEach(function (p) { (byCity[p.x.r.city] = byCity[p.x.r.city] || { ll: p.ll, g: [] }).g.push(p.x); });
+    Object.keys(byCity).forEach(function (city) {
+      var g = byCity[city].g, x0 = g[0], col = x0.k.gross ? PL_CLS_COLOR[x0.k.cls] : "#a8a29e", label = g.map(function (x) { return x.n; }).join("·"), size = label.length > 2 ? 30 : 26;
+      var mk = L.marker(byCity[city].ll, { icon: L.divIcon({ className: "", html: '<span class="an-pin pl-pin" style="background:' + col + ';min-width:' + size + 'px;height:' + size + 'px">' + label + '</span>', iconSize: [size, size], iconAnchor: [size / 2, size / 2] }), title: city, riseOnHover: true });
+      mk.bindTooltip(g.map(function (x) { return x.n + ". " + esc(city) + (x.r.date ? " · " + dayLabel(x.r.date) : "") + " · прибыль " + plShort(x.k.profit) + " · класс " + x.k.cls; }).join("<br>"), { direction: "top", offset: [0, -size / 2] });
+      mk.on("click", function () { S.pl.vz = null; S.pl.vzOpen = false; plOpenRow(x0.r.id); });
+      mk.addTo(map);
+    });
+    var v = S.pl.mapView;   // правка в таблице перерисовывает страницу — тот же маршрут показываем там же, где смотрели
+    if (v && v.key === c.key) map.setView(v.center, v.zoom, { animate: false });
+    else if (pts.length > 1) map.fitBounds(pts.map(function (p) { return p.ll; }), { padding: [40, 40] });
+    else if (pts.length) map.setView(pts[0].ll, 7); else map.setView([58, 60], 3);
+    map.on("moveend zoomend", function () { S.pl.mapView = { key: c.key, center: map.getCenter(), zoom: map.getZoom() }; });
+    S.pl.mapObj = map;
+  });
 }
 function plPct(v) { return v == null || !isFinite(v) ? '—' : Math.round(v * 100) + '%'; }
 // Порядок городов (вариант А, решение пользователя 12.10): даты остаются на своих местах, город получает дату позиции
@@ -8186,6 +8246,7 @@ function plAction(b) {
   var a = b.getAttribute("data-pl"), id = b.getAttribute("data-id"), copy = function (o) { return JSON.parse(JSON.stringify(o || {})); };
   if (a === "tab") { S.pl.tab = b.getAttribute("data-tab"); S.pl.tour = null; closeDrawer(); render(); }
   else if (a === "cols") { S.pl.cols = !S.pl.cols; render(); }
+  else if (a === "map") { PL_PREFS.map = !PL_PREFS.map; plPrefsSave(); var y0 = window.scrollY; render(); window.scrollTo(0, y0); if (PL_PREFS.map) setTimeout(function () { var m = $("plMapSec"); if (m) m.scrollIntoView({ behavior: "smooth", block: "nearest" }); }, 60); }
   else if (a === "cols-reset") { var kpi = PL_PREFS.kpi; PL_PREFS = kpi ? { kpi: kpi } : {}; plPrefsSave(); S.pl.cols = false; render(); }
   else if (a === "zmode" || a === "zone-add" || a === "zone-del" || a === "zone-from-venue") {
     var tz = copy(PLAN.tours[S.pl.tour]), rz = (tz.rows || []).filter(function (x) { return x.id === S.pl.row; })[0]; if (!rz) return;
