@@ -639,20 +639,30 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .vtable.pl-tour th.pl-drop-l { box-shadow: inset 2px 0 0 #1d6fae; } .vtable.pl-tour th.pl-drop-r { box-shadow: inset -2px 0 0 #1d6fae; }
 .vtable.pl-tour th.pl-dragging { opacity: 0.5; }
 /* Карточка города: сетка показателей 3 × 4, плитки переставляются перетаскиванием */
-.pl-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
-.pl-kpi { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; background: var(--card); cursor: grab; }
+/* Карточка города: плитки показателей — две строки (подпись, значение), плотно; при наведении — лёгкий подъём */
+.pl-kblock { display: flex; flex-direction: column; gap: 6px; }
+.pl-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 6px; }
+.pl-kl-short { display: none; }
+@container (max-width: 480px) { .pl-kl-full { display: none; } .pl-kl-short { display: inline; } .pl-kpi { padding: 8px 10px 9px; } .pl-kv { font-size: 17px; } .pl-kv small.pl-kx { display: none; } }
+.pl-kpi { border: 1px solid var(--line-soft); border-radius: 10px; padding: 9px 12px 10px; display: flex; flex-direction: column; justify-content: space-between; gap: 3px; min-width: 0; background: var(--canvas); cursor: grab;
+  transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 160ms cubic-bezier(0.2, 0.8, 0.2, 1), border-color 160ms, background-color 160ms; }
+.pl-kpi:hover { transform: translateY(-2px); background: var(--card); border-color: var(--line); box-shadow: 0 6px 18px -8px rgba(12, 10, 9, 0.18); }
+.pl-kpi:active { cursor: grabbing; transform: translateY(0); box-shadow: none; }
 .pl-kpi.pl-dragging { opacity: 0.4; } .pl-kpi.pl-drop-l { box-shadow: inset 3px 0 0 #1d6fae; } .pl-kpi.pl-drop-r { box-shadow: inset -3px 0 0 #1d6fae; }
-.pl-kl { font-size: 12px; color: var(--muted); line-height: 1.3; }
-.pl-kv { font: 600 20px/1.2 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pl-ks { font-size: 12px; color: var(--muted); white-space: nowrap; }
-.pl-ktg { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 2px; }
-.pl-ktg .pl-in { height: 22px; font-size: 13px; text-align: left; }
-.pl-cls-big { display: inline-block; min-width: 40px; text-align: center; border-radius: 8px; padding: 0 10px; font: 700 20px/1.4 var(--display); background: var(--line-soft); color: var(--ink-2); }
+.pl-kl { font-size: 12px; color: var(--muted); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-kv { font: 600 19px/1.15 var(--display); letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pl-kv small { font: 500 12px/1 var(--sans, inherit); color: var(--muted); letter-spacing: 0; }
+.pl-kv small.pl-kx { margin-left: 6px; padding: 1px 6px; border-radius: 9999px; background: var(--line-soft); color: var(--ink-3); }
+.pl-ktg { display: flex; align-items: center; gap: 4px; overflow: visible; }
+.pl-ktg .pl-in { height: 18px; font-size: 12px; text-align: left; color: var(--ink); padding: 0 1px; }
+.pl-cls-big { display: inline-block; min-width: 32px; text-align: center; border-radius: 6px; padding: 0 8px; font: 700 17px/1.35 var(--display); background: var(--line-soft); color: var(--ink-2); }
 .pl-cls-big.pl-cls-S { background: #dcfce7; color: #14532d; } .pl-cls-big.pl-cls-A { background: #e7f4ec; color: #166534; } .pl-cls-big.pl-cls-B { background: #dcebf8; color: #104a78; }
 .pl-cls-big.pl-cls-C { background: #fef3c7; color: #92400e; } .pl-cls-big.pl-cls-D { background: #fdeee6; color: #9a3412; }
-.pl-scens { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; text-align: center; }
-.pl-scens > div { display: flex; flex-direction: column; gap: 2px; padding: 8px; border-radius: 10px; background: var(--canvas); }
-.pl-scens b { font: 600 17px/1.2 var(--display); }
+.pl-scens { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.pl-scens > div { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 7px 12px; border-radius: 10px; border: 1px dashed var(--line); min-width: 0; }
+.pl-scens b { font: 600 15px/1.2 var(--display); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .pl-kpi, .pl-kpi:hover { transition: none; transform: none; } }
+@media (max-width: 520px) { .pl-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } .pl-scens { grid-template-columns: 1fr; } }
 .pl-zleft { font-size: 13px; color: var(--ink-2); } .pl-zleft b { font-weight: 600; } .pl-ok { color: #166534; }
 @media (max-width: 480px) { .pl-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .pl-tools { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; }
@@ -7880,26 +7890,31 @@ function plMoveRow(from, to) {
 // ---------- Карточка города (панель справа): сетка показателей (порядок плиток — перетаскиванием), сценарии,
 // распоясовка, статьи, оценка кандидата. Лишних пояснений нет (решение пользователя 12.10).
 var PL_KPI = ["profit", "cls", "eff", "ros", "roi", "beShare", "avg", "seats", "beT", "gross", "beRub", "target"];
+var PL_KPI_SHORT = { "Эффективность слота": "Эфф. слота", "Рентабельность": "Рентаб.", "Окупаемость затрат": "Окупаемость", "ТБУ, % от аншлага": "ТБУ, %",
+  "Средняя цена билета": "Ср. цена", "Мест в реализацию": "Мест", "ТБУ, билетов": "ТБУ, бил.", "ТБУ продаж": "ТБУ, ₽" };
 function plKpiOrder() { var o = (PL_PREFS.kpi || []).filter(function (k) { return PL_KPI.indexOf(k) >= 0; }); return o.concat(PL_KPI.filter(function (k) { return o.indexOf(k) < 0; })); }
 function plKpiTile(k, c, r, tid) {
+  var money = function (v) { return v == null || !isFinite(v) ? "—" : Math.abs(v) < 1e5 ? plMoney(v) : '<span class="pl-kl-full">' + plMoney(v) + '</span><span class="pl-kl-short">' + plShort(v) + '\u00a0₽</span>'; };
   var neg = function (v) { return v != null && v < 0 ? ' pl-neg' : ''; }, tile = function (label, val, cls, extra) {
-    return '<div class="pl-kpi" draggable="true" data-plkpi="' + k + '" title="Перетащите, чтобы поменять порядок"><span class="pl-kl">' + label + '</span><b class="pl-kv num' + (cls || '') + '">' + val + '</b>' + (extra || '') + '</div>';
+    var short = PL_KPI_SHORT[label];   // узкая панель — короткая подпись (полная — в подсказке)
+    return '<div class="pl-kpi" draggable="true" data-plkpi="' + k + '" title="' + esc(label) + ' — перетащите, чтобы поменять порядок"><span class="pl-kl">' +
+      (short ? '<span class="pl-kl-full">' + label + '</span><span class="pl-kl-short">' + short + '</span>' : label) + '</span><b class="pl-kv num' + (cls || '') + '">' + val + '</b>' + (extra || '') + '</div>';
   };
   switch (k) {
-    case "profit": return tile("Прибыль", plMoney(c.profit), neg(c.profit));
+    case "profit": return tile("Прибыль", money(c.profit), neg(c.profit));
     case "cls": return tile("Класс", '<span class="pl-cls-big pl-cls-' + c.cls + '">' + c.cls + '</span>');
     case "eff": return tile("Эффективность слота", plPct(c.eff), neg(c.eff));
     case "ros": return tile("Рентабельность", plPct(c.ros), neg(c.ros));
     case "roi": return tile("Окупаемость затрат", plPct(c.roi), neg(c.roi));
     case "beShare": return tile("ТБУ, % от аншлага", plPct(c.beShare), c.beShare != null && c.beShare > 1 ? ' pl-neg' : '');
-    case "avg": return tile("Средняя цена билета", c.avg ? plMoney(c.avg) : "—");
+    case "avg": return tile("Средняя цена билета", c.avg ? money(c.avg) : "—");
     case "seats": return tile("Мест в реализацию", c.seats ? num(c.seats) : "—");
-    case "beT": return tile("ТБУ, билетов", c.beTickets == null ? "—" : num(Math.ceil(c.beTickets)));
-    case "gross": return tile("Вал", plMoney(c.gross));
-    case "beRub": return tile("ТБУ продаж", plMoney(c.beRub));
-    case "target": return '<div class="pl-kpi" draggable="true" data-plkpi="target" title="Перетащите, чтобы поменять порядок"><span class="pl-kl">Продать, чтобы заработать</span>' +
-      '<span class="pl-ktg pl-flat">' + plFitIn("row|" + tid + "|" + r.id + "|target", r.target, { ph: plCfg().target, label: "Желаемая прибыль" }) + ' ₽</span>' +
-      '<b class="pl-kv num">' + (c.tgTickets == null ? "—" : num(Math.ceil(c.tgTickets)) + ' бил.') + '</b><span class="pl-ks num">' + (c.tgRub == null ? "" : plMoney(c.tgRub) + ' · ' + plPct(c.tgShare)) + '</span></div>';
+    case "beT": return tile("ТБУ, билетов", c.beTickets == null ? "—" : num(Math.ceil(c.beTickets)) + '<small> бил.</small>');
+    case "gross": return tile("Вал", money(c.gross));
+    case "beRub": return tile("ТБУ продаж", money(c.beRub));
+    case "target": return '<div class="pl-kpi" draggable="true" data-plkpi="target" title="Сколько билетов продать, чтобы заработать эту прибыль' + (c.tgRub == null ? '' : ': продажи ' + plMoney(c.tgRub)) + '. Перетащите, чтобы поменять порядок">' +
+      '<span class="pl-kl pl-ktg pl-flat"><span class="pl-kl-full">Заработать</span><span class="pl-kl-short">Цель</span> ' + plFitIn("row|" + tid + "|" + r.id + "|target", r.target, { ph: plCfg().target, label: "Продать, чтобы заработать: желаемая прибыль, ₽" }) + '</span>' +
+      '<b class="pl-kv num">' + (c.tgTickets == null ? "—" : num(Math.ceil(c.tgTickets)) + '<small> бил.</small>') + (c.tgShare == null ? '' : '<small class="pl-kx">' + plPct(c.tgShare) + '</small>') + '</b></div>';
   }
   return "";
 }
@@ -7947,8 +7962,8 @@ function plOpenRow(rowId, keep) {
   var html = '<div class="pl-dr-head"><div><div class="sub" style="margin:0">' + esc(t.title) + ' · ' + esc(PLAN.projects[t.project] ? PLAN.projects[t.project].title : "") + '</div>' +
       '<h2 class="pl-dr-title">' + esc(r.city || "Город не выбран") + '</h2><div class="sub2">' + esc(r.venue ? r.venue.split("|")[1] : "площадка не выбрана") + (r.date ? ' · ' + human(r.date) : '') + '</div></div>' +
       '<button class="icon-btn" data-drawer="close" aria-label="Закрыть">' + PJ_ICON.close + '</button></div>' +
-    '<div class="pl-kpis">' + plKpiOrder().map(function (k) { return plKpiTile(k, c, r, tid); }).join("") + '</div>' +
-    '<div class="pl-scens">' + cfg.scenarios.map(function (s) { var z = plRowCalc(t, r, s); return '<div><span class="pl-kl">' + s + '%</span><b class="num' + (z.profit < 0 ? ' pl-neg' : '') + '">' + plShort(z.profit) + '</b></div>'; }).join("") + '</div>' +
+    '<div class="pl-kblock"><div class="pl-kpis">' + plKpiOrder().map(function (k) { return plKpiTile(k, c, r, tid); }).join("") + '</div>' +
+    '<div class="pl-scens" aria-label="Прибыль по сценариям заполняемости">' + cfg.scenarios.map(function (s) { var z = plRowCalc(t, r, s); return '<div title="Прибыль при заполняемости ' + s + '%"><span class="pl-kl">' + s + '%</span><b class="num' + (z.profit < 0 ? ' pl-neg' : '') + '">' + plShort(z.profit) + '</b></div>'; }).join("") + '</div></div>' +
     zoneBlock +
     '<div class="pl-water pl-flat">' +
       '<div class="pl-wl"><span>Вал</span><span class="num">' + plMoney(c.gross) + '</span></div>' +
