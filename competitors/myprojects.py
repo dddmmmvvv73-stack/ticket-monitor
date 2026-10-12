@@ -11,7 +11,11 @@
                           "media": {"avatar" | "cover": имя файла в config/project_media/ с ?v=метка},
                           "cover_y": положение фона по вертикали, 0–100 % (как background-position-y),
                           "rating": {"s": [6 целых 0–3], "at"}, "rating_hist": [прошлые {"s", "at"}, новые в конце],
+                          "site": {"key", "url", "title", "confirmed", "at", "choices": {дата: "site" | "kassa"}},
                           "at", "upd"}}}
+
+«Официальный сайт» (раздел «Аналитики», 12.10.2026): ссылка на страницу афиши, подтверждение первого разбора и выбор
+при расхождениях — здесь; сами даты с сайта собирает competitors/officialsite.py (data/competitors/official_sites.json).
 
 Профиль и фото — страница проекта (вид как у Яндекс Афиши, 09.10): подзаголовок, описание, состав на выезде,
 контакт, телефон, сайт, гонорар, райдеры. Фото — файлами в config/project_media/ (вне git, как и сам файл);
@@ -102,7 +106,7 @@ def find(projects: dict, key: str) -> str | None:
 
 def _empty(p: dict) -> bool:
     return not (p.get("note") or p.get("links") or p.get("contacts") or any((p.get("profile") or {}).values()) or p.get("media")
-                or p.get("rating"))
+                or p.get("rating") or p.get("site"))
 
 
 RATING_AXES, RATING_MAX, RATING_HIST = 6, 3, 50   # оценка по шестиугольнику: 6 осей 0–3 (Design/prototype/project-rating.js)
@@ -164,11 +168,43 @@ def media_file(name: str):
     return path if path.is_file() else None
 
 
+def _site(p: dict, op: dict, key: str) -> str:
+    """Официальный сайт проекта: ссылка (другой сайт — первый разбор снова с подтверждением), подтверждение, выбор, «убрать»."""
+    kind, s = op.get("op"), p.get("site") or {}
+    if kind == "site":
+        url = _url(op.get("url"))
+        if not url or not re.match(r"^https?://[^\s/]+\.[^\s/]+", url):
+            raise MyProjectsError("нужен адрес страницы сайта, например https://rondotour.ru/")
+        host = lambda u: re.sub(r"^https?://(www\.)?", "", u.lower()).split("/")[0]
+        same = s.get("url") and host(s["url"]) == host(url)
+        p["site"] = {"key": s.get("key") or key, "url": url, "title": _text(op.get("title"), LIMITS["title"], "название") or p["title"],
+                     "confirmed": bool(same and s.get("confirmed")), "at": s.get("at") if same else None,
+                     "choices": s.get("choices", {}) if same else {}}
+        return f"«{p['title']}» — официальный сайт {host(url)}"
+    if not s:
+        raise MyProjectsError("у проекта нет ссылки на сайт")
+    if kind == "siteconfirm":
+        s["confirmed"], s["at"] = True, s.get("at") or _now()
+        return f"«{p['title']}» — даты с сайта подтверждены"
+    if kind == "sitepick":
+        d, v = str(op.get("date") or ""), str(op.get("v") or "")
+        if not _DATE.match(d) or v not in ("site", "kassa", ""):
+            raise MyProjectsError("выбор: дата ГГГГ-ММ-ДД и «site» / «kassa»")
+        ch = s.setdefault("choices", {})
+        if v:
+            ch[d] = v
+        else:
+            ch.pop(d, None)
+        return f"«{p['title']}» — расхождение {d}: " + ({"site": "верно на сайте", "kassa": "верно в кассах"}.get(v) or "снова не решено")
+    p.pop("site", None)   # siteoff
+    return f"«{p['title']}» — официальный сайт убран"
+
+
 def apply_op(op: dict) -> tuple[dict, str]:
     """Одна правка от прототипа; возвращает всё хранилище и подпись для журнала."""
     data, kind = load(), op.get("op")
     projects = data["projects"]
-    if kind in ("fav", "notes", "profile", "media", "coverpos", "rating"):
+    if kind in ("fav", "notes", "profile", "media", "coverpos", "rating", "site", "siteconfirm", "sitepick", "siteoff"):
         key = _key(op.get("key"))
         pid = find(projects, key)
         if not pid:
@@ -190,8 +226,10 @@ def apply_op(op: dict) -> tuple[dict, str]:
                 save_json(FILE, data)
                 return data, f"«{p['title']}» — убрано из избранного"
             note = f"«{p['title']}» — " + ("в избранном" if p["fav"] else "убрано из избранного")
-        elif kind in ("profile", "media", "coverpos", "rating"):
-            if kind == "rating":   # оценка по шестиугольнику; прошлая уходит в историю — её можно наложить на текущую
+        elif kind in ("profile", "media", "coverpos", "rating", "site", "siteconfirm", "sitepick", "siteoff"):
+            if kind.startswith("site"):
+                note = _site(p, op, key)
+            elif kind == "rating":   # оценка по шестиугольнику; прошлая уходит в историю — её можно наложить на текущую
                 scores = _rating(op.get("s"))
                 old = p.get("rating")
                 if old and old.get("s") != scores:

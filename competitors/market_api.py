@@ -10,6 +10,8 @@
     POST /api/market/myprojects   одна правка {"op": "fav"|"notes"|"profile"|"media"|"seen"|"link"|"skip", …}
     GET  /api/market/myprojects/media/<файл>   фото проекта (аватар, фон) из config/project_media/
     GET  /api/sales/detail?keys=… продажи сеанса для карточки — с сервера в Яндекс Облаке по SSH (sales/detail.py)
+    GET  /proto/site-data.js      даты с официальных сайтов проектов (competitors/officialsite.py)
+    POST /api/market/site/check   {"key"} — разобрать сайт проекта сейчас (кнопка «Проверить», ~10–40 с)
 
 Каждая правка сразу записывается в config/ и в фоне отправляется на GitHub (competitors/sync.py),
 поэтому сбор на сервере применяет её с ближайшего запуска. Избранное и записи о проектах — только на этом
@@ -28,7 +30,7 @@ from datetime import datetime
 
 from flask import Blueprint, Response, jsonify, redirect, request, send_file, send_from_directory
 
-from competitors import collector, curation, edits, market, myprojects, protodata, sync
+from competitors import collector, curation, edits, market, myprojects, officialsite, protodata, sync
 from competitors.classifier import FORMATS, GENRES, SPHERES
 from competitors.storage import BASE_DIR, ON_SERVER, load_json
 
@@ -77,6 +79,22 @@ def proto_competitors_data():
         # Файлы поменялись, пока собирали (пересчёт брони, правка) — отдаём, но не запоминаем: следующий запрос соберёт заново
         _cd_cache.update(key=key if stamp() == key else None, js=js)
     return Response(_cd_cache["js"], mimetype="application/javascript", headers={"Cache-Control": "no-store"})
+
+
+@bp.get("/proto/site-data.js")
+def proto_site_data():
+    # Даты с официальных сайтов: файл разбора пишет сборщик (tm-sync каждый час, кнопка «Проверить») — отдаём свежим
+    return Response(officialsite.export_js(), mimetype="application/javascript", headers={"Cache-Control": "no-store"})
+
+
+@bp.post("/api/market/site/check")
+def site_check():
+    """«Проверить»: разобрать страницу сайта проекта сейчас (страница → GigaChat → проверка). Ссылка уже сохранена (myprojects «site»)."""
+    key = str((request.get_json(silent=True) or {}).get("key") or "")
+    if key not in officialsite.configs():
+        return jsonify({"error": "у проекта нет ссылки на сайт"}), 400
+    data = officialsite.run(only=key, log=collector.log)
+    return jsonify({"sites": officialsite.export(data), "error": (data.get(key) or {}).get("error", "")})
 
 
 @bp.get("/api/sales/detail")

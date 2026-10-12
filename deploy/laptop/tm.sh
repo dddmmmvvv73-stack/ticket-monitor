@@ -45,7 +45,8 @@ case "$JOB" in
            rm -f data/.market_running ;;
   sales)   "$PY" -m sales.run --budget 50 >> "$LOG" 2>&1
            "$PY" -m sales.export >> "$LOG" 2>&1 ;;
-  sync)    "$PY" -m db.sync >> "$LOG" 2>&1
+  sync)    "$PY" -m competitors.officialsite >> "$LOG" 2>&1 || log "официальные сайты — ошибка, база пополняется дальше"
+           "$PY" -m db.sync >> "$LOG" 2>&1
            "$PY" -m sales.results >> "$LOG" 2>&1 ;;
   backup)  "$PY" -m db.offsite >> "$LOG" 2>&1 ;;
   backupcfg) "$PY" -m db.offsite --config >> "$LOG" 2>&1 ;;

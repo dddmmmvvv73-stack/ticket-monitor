@@ -41,17 +41,19 @@ OPERATORS = [
     ("orelkoncert", "ОрелКонцерт", "regional", "orelkoncert", ["орелконцерт.рф"], {"scheme": "все места"}),
     ("qtickets", "Qtickets", "federal", "qtickets", ["qtickets.events", "qtickets.ru"], {"scheme": "все места с ценами (страница покупки в браузере)", "organizer": True}),
     ("custom", "Свои мероприятия", "custom", None, [], {}),
+    # Даты с официальных сайтов проектов (competitors/officialsite.py, 12.10.2026): только дата, город, площадка, «цена от»
+    ("site", "Официальные сайты проектов", "aggregator", None, [], {"scheme": "нет — только даты афиши сайта"}),
 ]
 
 
 def _op(key: str) -> str:
     return ("kassir" if key.startswith("k:") else "yandex" if key.startswith("y:") else "qtickets" if key.startswith("q:")
-            else "odk33" if key.startswith("odk33:") else "orelkoncert" if key.startswith("orel:") else "vladimirkoncert")
+            else "site" if key.startswith("s:") else "odk33" if key.startswith("odk33:") else "orelkoncert" if key.startswith("orel:") else "vladimirkoncert")
 
 
 def listing_url(r: dict, op: str) -> str | None:
     """Ссылка карточки строки афиши рынка у этой кассы."""
-    return r.get({"kassir": "url_k", "yandex": "url_y", "qtickets": "url_q"}.get(op, "url_y"))
+    return r.get({"kassir": "url_k", "yandex": "url_y", "qtickets": "url_q", "site": "url_s"}.get(op, "url_y"))
 
 
 def _starts(date: str, time: str | None, tz: str):

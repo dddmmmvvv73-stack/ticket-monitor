@@ -2419,7 +2419,7 @@ var ARCH_API = /^https?:$/.test(location.protocol), ARCH_KEY = null, ARCH_LOAD =
 function archFromApi(list) {
   return archFinish(list.map(function (r) {
     return { city: r.c, venue: r.v, title: r.t, date: r.d, time: r.tm || "", sphere: r.sp || fmtSphere(r.f), format: r.f || "", genre: r.g || "",
-      pmin: r.pn || null, pmax: r.px || null, pushkin: !!r.pu, src: r.src || "k", urlK: r.uk || "", urlY: r.uy || "", urlQ: r.uq || "", more: 0, until: "",
+      pmin: r.pn || null, pmax: r.px || null, pushkin: !!r.pu, src: r.src || "k", urlK: r.uk || "", urlY: r.uy || "", urlQ: r.uq || "", siteUrl: r.us || "", urlS: r.us || "", siteKassa: r.us ? siteKassa(r.us, r.us) : "", more: 0, until: "",
       seen: r.seen || r.d, age: r.age || "", yt: false, key: (r.keys && r.keys[0]) || "h:" + r.c + "|" + r.d + "|" + r.tm + "|" + r.t, tk: tourKey(r.t),
       org: r.org || "", sales: r.s || null, duid: "", dop: r.dop || "", dlink: r.ud || "", keys: r.keys || [], st: r.st, tour: r.tour || "local", twhy: r.why || "", o: {} };
   }));
@@ -3560,11 +3560,9 @@ var MR_BASE_LEN = MR.length, DIRECT_BY_UID = {};
 // Официальные сайты проектов (решение пользователя 12.10): даты с афиши сайта, которых нет в кассах, — обычные строки
 // проекта с источником «s», как у Кассира, Яндекса и Qtickets. Поэтому их видят все экраны: страница проекта, маршрут,
 // карта, «Где не были», плитки, разделы рынка, фильтр «Источник». Города вне списка рынка (Москва) — только у проекта.
-// Разбор страниц — site-data.js (MSITE; в рабочей системе — сборщик с GigaChat). Ссылка, подтверждение первого разбора и
-// выбор при расхождениях — SITE_ST (в прототипе — в браузере; в рабочей системе — на сервере, рядом с my_projects.json).
-var SITE_LS = "ticketmonitor.prototype.site", SITE_NEAR_KM = 50, SITE_FROM = 0;
-var SITE_ST = (function () { try { return JSON.parse(localStorage.getItem(SITE_LS)) || {}; } catch (e) { return {}; } })();
-if (typeof MGEO !== "undefined" && typeof MSITE_GEO !== "undefined") Object.keys(MSITE_GEO).forEach(function (c) { if (!MGEO.cities[c]) MGEO.cities[c] = MSITE_GEO[c]; });
+// Даты с сайтов — site-data.js (MSITE: через приложение — от сборщика competitors/officialsite.py, файлом — пример Рондо).
+// Ссылка, подтверждение первого разбора и выбор при расхождениях — в записи проекта (MYP → site, competitors/myprojects.py).
+var SITE_NEAR_KM = 50, SITE_FROM = 0;
 function mDirect(e) { return e.dref || (e.duid ? DIRECT_BY_UID[e.duid] : null) || null; }
 // Кассы прямого сбора — подпись в столбце «Источник» и пункты фильтра «Источник» во всех разделах (решение пользователя 09.10:
 // каждая касса прямого сбора видна и в источниках, и в фильтрах). Новая касса — одна строка здесь (и оператор в db/migrate.py).
@@ -5951,13 +5949,19 @@ function anFlipTile(avg, l, fills, title, k) {
   return '<button class="an-tile an-flip' + (flip ? ' flipped' : '') + '" data-pj="an-flip" data-tip-front="' + esc(tipFront) + '" data-tip-back="' + esc(tipBack) + '" aria-pressed="' + flip + '" aria-label="' + esc(flip ? tipBack : tipFront) + '" title="' + esc(flip ? tipBack : tipFront) + '">' +
     '<span class="an-flip-in">' + front + back + '</span></button>';
 }
-// ---------- Официальный сайт проекта: сверка дат с сайта с нашей базой и встраивание недостающих (раздел «Аналитика → Сайт»)
+// ---------- Официальный сайт проекта: сверка дат сайта с нашей базой и встраивание недостающих (раздел «Аналитика → Сайт»)
 // Совпало — тот же день и тот же город (или до 50 км: Ессентуки ↔ Пятигорск); нет у нас — дата идёт в проект строкой «s»;
 // расхождение — в этот день у нас другой город: в проект не идёт, пока пользователь не выберет «верно на сайте» / «в кассах».
+// То же правило — competitors/officialsite.py: compare (для базы) — менять вместе.
 PJ_ICON.an_site = PJ_ICON.site;
 var SITE_KASSA = [[/intickets\.ru$/, "Intickets"], [/kassy\.ru$/, "Kassy.ru"], [/kassir\.ru$/, "Кассир"], [/afisha\.yandex\.ru$/, "Яндекс Афиша"], [/qtickets\.(ru|events)$/, "Qtickets"],
   [/ticketscloud\.(org|com)$/, "Ticketscloud"], [/quicktickets\.ru$/, "Quicktickets"], [/radario\.ru$/, "Radario"], [/ticketland\.ru$/, "Ticketland"], [/mts-live|live\.mts\.ru$/, "МТС Live"]];
-function siteSave() { try { localStorage.setItem(SITE_LS, JSON.stringify(SITE_ST)); } catch (e) { /* хранилище недоступно */ } }
+function siteStates() {   // ссылка, подтверждение, выборы — в записи проекта (MYP: сайт — config/my_projects.json на сервере, файлом — браузер)
+  var out = {};
+  if (typeof MYP === "undefined" || !MYP || !MYP.projects) return out;
+  Object.keys(MYP.projects).forEach(function (id) { var s = MYP.projects[id].site; if (s && s.url && s.key) out[s.key] = s; });
+  return out;
+}
 function siteHost(u) { return String(u || "").replace(/^https?:\/\/(www\.)?/i, "").split(/[\/?#]/)[0].toLowerCase(); }
 function siteKassa(u, site) {   // подпись кассы по ссылке «купить билет»
   var h = siteHost(u);
@@ -5972,6 +5976,37 @@ function siteKm(a, b) {   // расстояние между городами, �
   var r = Math.PI / 180, x = (q[3] - p[3]) * r * Math.cos((p[2] + q[2]) / 2 * r), y = (q[2] - p[2]) * r;
   return Math.round(Math.sqrt(x * x + y * y) * 6371);
 }
+// Города с сайтов, которых нет на карте (Москва, Ессентуки…): широта и долгота — от сервера (OpenStreetMap), x и y на схеме
+// России — подгонкой по городам карты (квадратичная зависимость + поправка по ближайшему городу)
+var SITE_FIT = null;
+function siteXY(lat, lon) {
+  var pts = Object.keys(MGEO.cities).map(function (c) { return MGEO.cities[c]; }).filter(function (p) { return p[0] != null; });
+  if (!SITE_FIT) {
+    var f = function (p) { return [p[2], p[3], 1, p[2] * p[3], p[2] * p[2], p[3] * p[3]]; }, solve = function (idx) {
+      var n = 6, A = []; for (var i = 0; i < n; i++) { A.push([0, 0, 0, 0, 0, 0, 0]); }
+      pts.forEach(function (p) { var r = f(p); for (var i = 0; i < n; i++) { for (var j = 0; j < n; j++) A[i][j] += r[i] * r[j]; A[i][n] += r[i] * p[idx]; } });
+      for (var i = 0; i < n; i++) {
+        var m = i; for (var k = i + 1; k < n; k++) if (Math.abs(A[k][i]) > Math.abs(A[m][i])) m = k;
+        var t = A[i]; A[i] = A[m]; A[m] = t;
+        for (var k2 = 0; k2 < n; k2++) if (k2 !== i) { var c = A[k2][i] / A[i][i]; for (var j2 = i; j2 <= n; j2++) A[k2][j2] -= c * A[i][j2]; }
+      }
+      return A.map(function (row, i) { return row[n] / row[i]; });
+    };
+    SITE_FIT = { f: f, x: solve(0), y: solve(1) };
+  }
+  var val = function (c, p) { var r = SITE_FIT.f(p); return r.reduce(function (s, v, i) { return s + v * c[i]; }, 0); };
+  var me = [0, 0, lat, lon], nb = pts.reduce(function (b, p) { var d = Math.pow(p[2] - lat, 2) + Math.pow((p[3] - lon) * Math.cos(lat * Math.PI / 180), 2); return d < b[0] ? [d, p] : b; }, [1e9, null])[1];
+  return [val(SITE_FIT.x, me) + nb[0] - val(SITE_FIT.x, nb), val(SITE_FIT.y, me) + nb[1] - val(SITE_FIT.y, nb)];
+}
+function siteGeo() {
+  if (typeof MGEO === "undefined" || typeof MSITE_GEO === "undefined") return;
+  Object.keys(MSITE_GEO).forEach(function (c) {
+    var v = MSITE_GEO[c]; if (MGEO.cities[c] || !v || v[2] == null) return;
+    var xy = v[0] != null ? [v[0], v[1]] : siteXY(v[2], v[3]);
+    MGEO.cities[c] = [+xy[0].toFixed(1), +xy[1].toFixed(1), v[2], v[3]];
+  });
+}
+siteGeo();
 function siteLike(pk, k) {   // строка кассы — того же проекта под другим названием: 2+ общих слова, не меньше 2/3 слов проекта
   if (!pk || !k) return false;
   if (pk === k) return true;
@@ -5986,12 +6021,12 @@ function siteSrcNames(e) {
   var op = directOpOf(e);
   return [op ? op.name : "", e.urlK ? "Кассир" : "", e.urlY ? "Яндекс" : "", e.urlQ ? "Qtickets" : ""].filter(Boolean).join(", ");
 }
-function siteCompare(k) {
-  var data = MSITE[k], st = SITE_ST[k] || {}, keys = siteKeys(k), ch = st.choices || {};
+function siteCompare(k, st) {
+  var data = MSITE[k], keys = siteKeys(k), ch = st.choices || {};
   var pkOf = function (e) { return e.pkSite != null ? e.pkSite : e.pk; };
   var mine = function (e) { var p = pkOf(e); return keys.some(function (x) { return siteLike(p, x); }); };
   var kassa = MR.filter(function (e) { return e.src !== "s" && e.date >= TODAY && mine(e); }), used = {};
-  var rows = data.rows.filter(function (r) { return r.date >= TODAY; }).map(function (r) {
+  var rows = (data.rows || []).filter(function (r) { return r.date >= TODAY; }).map(function (r) {
     var same = kassa.filter(function (e) { return e.date === r.date; });
     var hit = same.filter(function (e) { var km = siteKm(r.city, e.city); return km != null && km <= SITE_NEAR_KM; });
     var o = { r: r, off: MK.cities.indexOf(r.city) < 0, kassa: r.buy ? siteKassa(r.buy, data.url) : "" };
@@ -6002,74 +6037,98 @@ function siteCompare(k) {
     return o;
   });
   var only = kassa.filter(function (e) { return !used[e.i] && keys.indexOf(pkOf(e)) >= 0; });
-  return { data: data, st: st, rows: rows, only: only };
+  var gone = (data.gone || []).filter(function (r) { return r.date >= TODAY; });
+  return { data: data, st: st, rows: rows, only: only, gone: gone };
 }
-// Строки с сайтов — в конец MR (после строк рынка и прямого сбора); пересобираются при каждой разметке (curApply)
+// Строки с сайтов — в конец MR (после строк рынка и прямого сбора); пересобираются при каждой разметке (curApply).
+// Прошедшие даты сайта — в архив проекта (MA), если у касс такой даты в архиве нет.
+var SITE_MA_FROM = -1;
 function siteSync() {
   if (typeof MSITE === "undefined" || !SITE_FROM || (typeof ARCH_ON !== "undefined" && ARCH_ON)) return;
   MR.length = SITE_FROM;
   MR.forEach(function (e) { if (e.pkSite != null) { if (e.pk === "") e.pk = e.pkSite; delete e.pkSite; } });
-  Object.keys(SITE_ST).forEach(function (k) {
-    var st = SITE_ST[k];
+  if (typeof MA !== "undefined") { if (SITE_MA_FROM < 0) SITE_MA_FROM = MA.length; MA.length = SITE_MA_FROM; }
+  var states = siteStates();
+  Object.keys(states).forEach(function (k) {
+    var st = states[k];
     if (!st.confirmed || !MSITE[k]) return;
-    var c = siteCompare(k), own = MR.filter(function (e) { return e.pk === k; }), first = (st.at || TODAY).slice(0, 10);
+    var c = siteCompare(k, st), own = MR.filter(function (e) { return e.pk === k; }), first = (st.at || TODAY).slice(0, 10);
     var base = { title: mostOf(own, "title") || st.title || k, sphere: mostOf(own, "sphere") || "", format: mostOf(own, "format") || "", genre: mostOf(own, "genre") || "" };
     c.rows.forEach(function (o) {
       if (o.st === "match" || (o.st === "conflict" && o.pick !== "site")) return;
       if (o.st === "conflict") o.e.forEach(function (e) { e.pkSite = e.pk; e.pk = ""; });   // «верно на сайте»: строка кассы уходит из проекта, в рынке остаётся
-      var r = o.r;
-      MR.push({ i: MR.length, city: r.city, venue: r.venue, title: base.title, date: r.date, time: "", sphere: base.sphere, format: base.format, genre: base.genre,
+      var r = o.r, seen = r.first_seen && r.first_seen > first ? r.first_seen : first;
+      MR.push({ i: MR.length, city: r.city, venue: r.venue || "", title: base.title, date: r.date, time: "", sphere: base.sphere, format: base.format, genre: base.genre,
         pmin: r.pmin || null, pmax: r.pmin || null, pushkin: false, src: "s", urlK: "", urlY: "", urlQ: "", urlS: r.buy || c.data.url, siteUrl: st.url || c.data.url, siteKassa: o.kassa || "сайт проекта",
-        more: 0, until: "", seen: first, siteFirst: first, age: "", yt: false, key: "s:" + k + ":" + r.date + ":" + r.city, tk: tourKey(base.title), org: "", sales: null, duid: "", keys: [],
+        more: 0, until: "", seen: seen, siteFirst: first, age: "", yt: false, key: "s:" + k + ":" + r.date + ":" + r.city, tk: tourKey(base.title), org: "", sales: null, duid: "", keys: [],
         o: {}, edited: false, pk0: k, pk: k, offList: o.off });
+    });
+    if (typeof MA === "undefined") return;
+    var had = {}; MA.forEach(function (a) { if (a.pk === k || siteKeys(k).indexOf(a.pk) >= 0) had[a.date] = 1; });
+    (c.data.past || []).forEach(function (r) {   // прошла, пока была на сайте, — в архив проекта (если касса её не показала)
+      if (had[r.date]) return;
+      MA.push({ city: r.city, venue: r.venue || "", title: base.title, date: r.date, format: base.format, genre: base.genre, pmin: r.pmin || null, pmax: r.pmin || null,
+        status: "past", first: r.first_seen || r.date, last: r.last_seen || r.date, url: r.buy || c.data.url, pk: k, site: true });
     });
   });
 }
 function siteResync(msg) {
-  siteSave(); MRV_KEY = null; PROJ_CACHE.key = null;
+  MRV_KEY = null; PROJ_CACHE.key = null;
   var y = window.scrollY; curApply(); render(); window.scrollTo(0, y);
   if (msg) toast(msg);
 }
 function siteFind(k, r) { var key = "s:" + k + ":" + r.date + ":" + r.city; for (var i = SITE_FROM; i < MR.length; i++) if (MR[i].key === key) return MR[i]; return null; }
+var SITE_BUSY = null;   // ключ проекта, сайт которого сейчас разбирается («Проверить»)
 function siteSection(k, title) {
-  var st = SITE_ST[k] || {}, data = typeof MSITE !== "undefined" ? MSITE[k] : null, rec = myRec(k), prof = rec && rec.profile && rec.profile.site || "";
+  var st = siteStates()[k] || {}, data = typeof MSITE !== "undefined" ? MSITE[k] : null, rec = myRec(k), prof = rec && rec.profile && rec.profile.site || "";
   var intro = '<p class="sub" style="margin:0 0 14px;max-width:760px">Даты с афиши официального сайта сверяются с нашей базой. Тех, что есть только на сайте, у нас нет ни в одной кассе — они добавляются в проект и учитываются в маршруте, на карте, в «Где не были» и в разделах рынка. Продаж по ним нет.</p>';
-  if (!st.url || st.editing) {
+  var busy = SITE_BUSY === k;
+  if (!st.url || S.m.siteEdit === k) {
     var val = st.url || prof;
     return anSec("Официальный сайт", '', intro + '<div class="site-form"><label class="field-label" for="siteUrl">Страница афиши на сайте проекта</label>' +
-      '<div class="site-form-row"><input id="siteUrl" type="url" inputmode="url" autocomplete="url" placeholder="https://…" value="' + esc(val) + '" aria-describedby="siteUrlHint siteUrlErr">' +
-      '<button class="btn-dark" data-pj="site-check">Проверить</button>' + (st.editing ? '<button class="btn-ghost" data-pj="site-cancel">Отмена</button>' : '') + '</div>' +
+      '<div class="site-form-row"><input id="siteUrl" type="url" inputmode="url" autocomplete="url" placeholder="https://…" value="' + esc(val) + '" aria-describedby="siteUrlHint siteUrlErr"' + (busy ? ' disabled' : '') + '>' +
+      '<button class="btn-dark" data-pj="site-check"' + (busy ? ' disabled aria-busy="true"' : '') + '>' + (busy ? 'Проверяю…' : 'Проверить') + '</button>' + (S.m.siteEdit === k && !busy ? '<button class="btn-ghost" data-pj="site-cancel">Отмена</button>' : '') + '</div>' +
       '<div class="err" id="siteUrlErr" hidden></div>' +
-      '<p class="sub2" id="siteUrlHint" style="margin:0">Главная страница или раздел «Афиша» — где перечислены города и даты. ' + (prof && !st.url ? 'Подставлен «Официальный сайт» из карточки проекта. ' : '') +
-      'Раз в сутки страница скачивается, GigaChat находит в ней даты, города, площадки и цены.</p></div>');
+      '<p class="sub2" id="siteUrlHint" style="margin:0">' + (busy ? 'Скачиваю страницу и разбираю её через GigaChat — обычно 20–40 секунд.' : 'Главная страница или раздел «Афиша» — где перечислены города и даты. ' + (prof && !st.url ? 'Подставлен «Официальный сайт» из карточки проекта. ' : '') +
+      'Раз в сутки страница скачивается, GigaChat находит в ней даты, города, площадки и цены.') + '</p></div>');
   }
-  var host = siteHost(st.url);
+  var host = siteHost(st.url), recheck = CAN_SAVE ? '<button class="btn-ghost" data-pj="site-recheck"' + (busy ? ' disabled aria-busy="true"' : '') + '>' + (busy ? 'Проверяю…' : 'Проверить снова') + '</button>' : '';
   if (!data || siteHost(data.url) !== host) {
-    return anSec("Официальный сайт", '', intro + '<div class="note">Ссылка сохранена: <a class="pj-plain" href="' + esc(st.url) + '" target="_blank" rel="noopener">' + esc(host) + ' ↗</a>. В прототипе страница разобрана только у группы «Рондо» (rondotour.ru) — разбор других сайтов появится вместе со сборщиком.' +
-      '<div class="form-actions" style="margin-top:12px"><button class="btn-ghost" data-pj="site-edit">Другая ссылка</button><button class="btn-ghost" data-pj="site-off">Убрать</button></div></div>');
+    var why = CAN_SAVE ? (busy ? 'Скачиваю страницу и разбираю её через GigaChat — обычно 20–40 секунд.' : 'Страница ещё не разобрана — нажмите «Проверить снова».')
+      : 'Прототип открыт файлом: разбор сайтов — только через приложение (в файле есть пример — группа «Рондо», rondotour.ru).';
+    return anSec("Официальный сайт", '', intro + '<div class="note">Ссылка: <a class="pj-plain" href="' + esc(st.url) + '" target="_blank" rel="noopener">' + esc(host) + ' ↗</a>. ' + why +
+      '<div class="form-actions" style="margin-top:12px">' + recheck + '<button class="btn-ghost" data-pj="site-edit">Другая ссылка</button><button class="btn-ghost" data-pj="site-off">Убрать</button></div></div>');
   }
-  var c = siteCompare(k), rows = c.rows, n = function (s) { return rows.filter(function (o) { return o.st === s; }).length; };
-  var nm = n("match"), nn = n("new"), nc = n("conflict"), no = c.only.length, conf = !!st.confirmed;
-  var checked = data.checked ? human(data.checked.slice(0, 10)) + ' в ' + data.checked.slice(11, 16) : '—';
-  var head = conf ? '<div class="pj-sum" style="margin:0 0 16px"><a class="pj-plain" href="' + esc(st.url) + '" target="_blank" rel="noopener">' + esc(host) + ' ↗</a><span>проверено ' + checked + ' · раз в сутки</span>' +
+  var c = siteCompare(k, st), rows = c.rows, n = function (s) { return rows.filter(function (o) { return o.st === s; }).length; };
+  var nm = n("match"), nn = n("new"), nc = n("conflict"), no = c.only.length, ng = c.gone.length, conf = !!st.confirmed;
+  var at = function (iso) { return iso ? human(iso.slice(0, 10)) + ' в ' + iso.slice(11, 16) : '—'; };
+  var err = data.error ? '<div class="note site-confirm" role="status"><b style="font-weight:500">Последняя проверка ' + at(data.checked) + ':</b> ' + esc(data.error) + '.' +
+      (data.ok_at ? ' Показан разбор ' + at(data.ok_at) + '.' : '') + '</div>' : '';
+  var head = conf ? '<div class="pj-sum" style="margin:0 0 16px"><a class="pj-plain" href="' + esc(st.url) + '" target="_blank" rel="noopener">' + esc(host) + ' ↗</a><span>проверено ' + at(data.ok_at || data.checked) + ' · раз в сутки</span>' +
+      (CAN_SAVE ? '<button class="pj-plain" data-pj="site-recheck"' + (busy ? ' disabled' : '') + '>' + (busy ? 'проверяю…' : 'Проверить сейчас') + '</button>' : '') +
       '<button class="pj-plain" data-pj="site-edit">Изменить ссылку</button><button class="pj-plain" data-pj="site-off">Убрать сайт</button></div>'
     : '<div class="note site-confirm"><b style="font-weight:500">Первая проверка ссылки.</b> На ' + esc(host) + ' найдено ' + rows.length + ' ' + plural(rows.length, "будущая дата", "будущие даты", "будущих дат") + ': ' +
       nm + ' уже есть у нас, ' + nn + ' ' + plural(nn, "будет добавлена", "будут добавлены", "будут добавлены") + ' в проект' + (nc ? ', ' + nc + ' ' + plural(nc, "расхождение", "расхождения", "расхождений") : '') + '. ' +
       'Проверьте по таблице, правильно ли разобрана страница. После подтверждения сайт проверяется сам раз в сутки, новые даты добавляются без вопросов.' +
-      '<div class="form-actions"><button class="btn-dark" data-pj="site-confirm">Подтвердить</button><button class="btn-ghost" data-pj="site-edit">Другая ссылка</button></div></div>';
+      '<div class="form-actions"><button class="btn-dark" data-pj="site-confirm"' + (rows.length ? '' : ' disabled') + '>Подтвердить</button><button class="btn-ghost" data-pj="site-edit">Другая ссылка</button>' + recheck + '</div></div>';
   var f = S.m.siteF || "all";
-  var tabs = [["all", "Все", rows.length + no], ["new", "Нет у нас", nn], ["conflict", "Расхождения", nc], ["match", "Совпало", nm], ["only", "Только в кассах", no]];
+  var tabs = [["all", "Все", rows.length + no + ng], ["new", "Нет у нас", nn], ["conflict", "Расхождения", nc], ["match", "Совпало", nm], ["only", "Только в кассах", no]].concat(ng ? [["gone", "Сняты с сайта", ng]] : []);
   var tools = '<div class="site-tools"><div class="pj-sum" style="margin:0"><span><b class="num">' + rows.length + '</b> на сайте</span><span><b class="num">' + nm + '</b> совпало</span>' +
       '<span><b class="num">' + nn + '</b> ' + (conf ? 'добавлено с сайта' : 'нет у нас') + '</span>' + (nc ? '<span><b class="num">' + nc + '</b> ' + plural(nc, "расхождение", "расхождения", "расхождений") + '</span>' : '') +
-      '<span><b class="num">' + no + '</b> только в кассах</span></div>' +
+      '<span><b class="num">' + no + '</b> только в кассах</span>' + (ng ? '<span><b class="num">' + ng + '</b> ' + plural(ng, "снята", "сняты", "снято") + ' с сайта</span>' : '') + '</div>' +
     '<div class="an-tabs" role="tablist" aria-label="Какие даты показать">' + tabs.map(function (t) {
       return '<button role="tab" data-pj="site-f" data-f="' + t[0] + '" aria-selected="' + (f === t[0]) + '">' + t[1] + ' · ' + t[2] + '</button>'; }).join("") + '</div></div>';
-  var list = rows.map(function (o) { return { d: o.r.date, o: o }; }).concat(c.only.map(function (e) { return { d: e.date, e: e }; }))
-    .filter(function (x) { return f === "all" || (f === "only" ? !!x.e : x.o && x.o.st === f); })
+  var list = rows.map(function (o) { return { d: o.r.date, o: o }; }).concat(c.only.map(function (e) { return { d: e.date, e: e }; }), c.gone.map(function (r) { return { d: r.date, g: r }; }))
+    .filter(function (x) { return f === "all" || (f === "only" ? !!x.e : f === "gone" ? !!x.g : x.o && x.o.st === f); })
     .sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
   var dateCell = function (d, e) {
     var y = d.slice(0, 4) !== TODAY.slice(0, 4) ? ' ' + d.slice(0, 4) : '';
     return e ? '<button class="link-btn" data-pj="date" data-i="' + e.i + '" aria-haspopup="dialog">' + dayLabel(d) + y + '</button>' : '<span class="nowrap">' + dayLabel(d) + y + '</span>';
+  };
+  var siteCells = function (r, kassa) {
+    return '<td><b style="font-weight:500">' + esc(r.city) + '</b><div class="sub2">' + esc(r.venue || "") + '</div></td>' +
+      '<td class="r num nowrap">' + (r.pmin ? 'от ' + num(r.pmin) + ' ₽' : '—') + '</td>' +
+      '<td>' + (r.buy ? '<a class="fbtn" href="' + esc(r.buy) + '" target="_blank" rel="noopener" title="Ссылка «купить билет» на сайте">' + esc(kassa) + ' ↗</a>' : '<span class="muted">—</span>') + '</td>';
   };
   var tr = function (x) {
     if (x.e) {   // есть в кассах, нет на сайте
@@ -6079,49 +6138,77 @@ function siteSection(k, title) {
           .map(function (u) { return '<a class="fbtn" href="' + esc(u[0]) + '" target="_blank" rel="noopener">' + u[1] + ' ↗</a>'; }).join("") + '</span></td>' +
         '<td><span class="site-st">Нет на сайте</span><div class="sub2">есть у нас: ' + esc(siteSrcNames(e)) + '</div></td></tr>';
     }
-    var o = x.o, r = o.r, added = o.st === "new" || (o.st === "conflict" && o.pick === "site") ? siteFind(k, r) : null, link = o.st === "match" ? o.e[0] : added, st;
+    if (x.g) {   // была на сайте и исчезла до своей даты
+      return '<tr><td class="nowrap">' + dateCell(x.g.date) + '</td>' + siteCells(x.g, x.g.buy ? siteKassa(x.g.buy, c.data.url) : "") +
+        '<td><span class="site-st">Снята с сайта</span><div class="sub2">исчезла ' + human(x.g.gone) + ' — в проект больше не входит</div></td></tr>';
+    }
+    var o = x.o, r = o.r, added = o.st === "new" || (o.st === "conflict" && o.pick === "site") ? siteFind(k, r) : null, link = o.st === "match" ? o.e[0] : added, s2;
     if (o.st === "match") {
       var other = o.e.filter(function (e) { return e.city !== r.city; })[0];
-      st = '<span class="site-st ok">Есть у нас</span><div class="sub2">' + esc(siteSrcNames(o.e[0])) + (other ? ' · город у касс — ' + esc(other.city) : '') + '</div>' +
+      s2 = '<span class="site-st ok">Есть у нас</span><div class="sub2">' + esc(siteSrcNames(o.e[0])) + (other ? ' · город у касс — ' + esc(other.city) : '') + '</div>' +
         (o.alias.length ? '<div class="sub2">отдельным проектом «' + esc(o.alias[0].title) + '» · <button class="pj-plain" style="font-size:13px" data-pj="site-alias" data-title="' + esc(o.alias[0].title) + '" data-target="' + esc(title) + '">Это тот же проект</button></div>' : '');
     } else if (o.st === "new") {
-      st = '<span class="site-st new">' + (conf ? 'Добавлено с сайта' : 'Будет добавлено') + '</span>' + (o.off ? '<div class="sub2">город вне списка рынка — только на страницах проекта</div>' : '');
+      s2 = '<span class="site-st new">' + (conf ? 'Добавлено с сайта' : 'Будет добавлено') + '</span>' + (o.off ? '<div class="sub2">город вне списка рынка — только на страницах проекта</div>' : '');
     } else {
       var ke = o.e[0];
-      st = '<span class="site-st warn">Расхождение</span><div class="sub2">у нас в этот день — ' + esc(ke.city) + ', ' + esc(ke.venue) + ' (' + esc(siteSrcNames(ke)) + ')</div>' +
+      s2 = '<span class="site-st warn">Расхождение</span><div class="sub2">у нас в этот день — ' + esc(ke.city) + ', ' + esc(ke.venue) + ' (' + esc(siteSrcNames(ke)) + ')</div>' +
         (o.pick ? '<div class="sub2">Выбрано: ' + (o.pick === "site" ? 'верно на сайте — в проекте ' + esc(r.city) : 'верно в кассах — в проекте ' + esc(ke.city)) + ' · <button class="pj-plain" style="font-size:13px" data-pj="site-pick" data-date="' + r.date + '" data-v="">изменить</button></div>'
           : '<div class="site-picks"><button class="btn-ghost" data-pj="site-pick" data-date="' + r.date + '" data-v="site">Верно на сайте</button><button class="btn-ghost" data-pj="site-pick" data-date="' + r.date + '" data-v="kassa">Верно в кассах</button></div>');
     }
-    return '<tr><td class="nowrap">' + dateCell(r.date, link) + '</td><td><b style="font-weight:500">' + esc(r.city) + '</b><div class="sub2">' + esc(r.venue) + '</div></td>' +
-      '<td class="r num nowrap">' + (r.pmin ? 'от ' + num(r.pmin) + ' ₽' : '—') + '</td>' +
-      '<td>' + (r.buy ? '<a class="fbtn" href="' + esc(r.buy) + '" target="_blank" rel="noopener" title="Ссылка «купить билет» на сайте">' + esc(o.kassa) + ' ↗</a>' : '<span class="muted">—</span>') + '</td><td>' + st + '</td></tr>';
+    return '<tr><td class="nowrap">' + dateCell(r.date, link) + '</td>' + siteCells(r, o.kassa) + '<td>' + s2 + '</td></tr>';
   };
   var table = list.length ? '<div class="an-legacy"><div style="overflow:auto"><table class="vtable site-tbl"><thead><tr><th scope="col">Дата</th><th scope="col">Город и площадка</th><th scope="col" class="r">Цена</th><th scope="col">Билеты</th><th scope="col">В нашей базе</th></tr></thead><tbody>' +
-      list.map(tr).join("") + '</tbody></table></div></div>' : '<p class="sub" style="margin:12px 0 0">В этом фильтре дат нет.</p>';
-  return anSec("Официальный сайт", '', head + tools + table);
+      list.map(tr).join("") + '</tbody></table></div></div>' : '<p class="sub" style="margin:12px 0 0">' + (rows.length + no + ng ? 'В этом фильтре дат нет.' : 'На странице не нашлось будущих дат.') + '</p>';
+  return anSec("Официальный сайт", '', err + head + tools + table);
+}
+// «Проверить»: сохранить ссылку в записи проекта и попросить сервер разобрать страницу сейчас (ответ — свежий MSITE)
+function siteCheckNow(k) {
+  if (!CAN_SAVE) { siteResync(MSITE[k] ? "Страница разобрана — проверьте даты" : "Ссылка сохранена в этом браузере"); return; }
+  SITE_BUSY = k; siteResync();
+  fetch("/api/market/site/check", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ key: k }) })
+    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+    .then(function (x) {
+      SITE_BUSY = null;
+      if (!x.ok) { siteResync("Не проверено: " + (x.d.error || "ошибка")); return; }
+      MSITE = x.d.sites.MSITE; MSITE_GEO = x.d.sites.MSITE_GEO; siteGeo();
+      var n = ((MSITE[k] || {}).rows || []).length;
+      siteResync(x.d.error ? "Проверено с ошибкой: " + x.d.error : "Страница разобрана: " + n + " " + plural(n, "дата", "даты", "дат") + " — проверьте таблицу");
+    })
+    .catch(function () { SITE_BUSY = null; siteResync("Не проверено: приложение не отвечает"); });
 }
 function siteAction(a, t) {
   var k = S.pj && S.pj.k; if (!k) return;
-  var st = SITE_ST[k] = SITE_ST[k] || {};
+  var st = siteStates()[k] || {};
   if (a === "site-check") {
     var inp = $("siteUrl"), err = $("siteUrlErr"), v = pjUrl(inp.value);
     if (!/^https?:\/\/[^\s\/]+\.[^\s\/]+/i.test(v)) { err.hidden = false; err.textContent = "Вставьте адрес страницы, например https://rondotour.ru/"; inp.setAttribute("aria-invalid", "true"); inp.focus(); return; }
-    if (st.url && siteHost(st.url) !== siteHost(v)) { st.confirmed = false; st.choices = {}; }   // другой сайт — снова первая проверка
-    st.url = v; st.title = S.pj.title; st.editing = false; S.m.siteF = "all";
-    siteResync(MSITE[k] && siteHost(MSITE[k].url) === siteHost(v) ? "Страница разобрана — проверьте даты" : "Ссылка сохранена");
-  } else if (a === "site-confirm") {
-    st.confirmed = true; st.at = (MSITE[k] && MSITE[k].checked) || new Date().toISOString();
-    var added = siteCompare(k).rows.filter(function (o) { return o.st === "new"; }).length;
+    S.m.siteEdit = null; S.m.siteF = "all";
+    mySave({ op: "site", key: k, title: S.pj.title, url: v });
+    if (CAN_SAVE) setTimeout(function () { siteCheckNow(k); }, 300); else siteCheckNow(k);   // сначала ссылка дойдёт до сервера
+  } else if (a === "site-recheck") siteCheckNow(k);
+  else if (a === "site-confirm") {
+    var added = siteCompare(k, st).rows.filter(function (o) { return o.st === "new"; }).length;
+    mySave({ op: "siteconfirm", key: k, title: S.pj.title });
     siteResync("Сайт подключён: в проект " + plural(added, "добавлена", "добавлены", "добавлено") + " " + added + " " + plural(added, "дата", "даты", "дат"));
-  } else if (a === "site-edit") { st.editing = true; render(); var i2 = $("siteUrl"); if (i2) i2.focus(); }
-  else if (a === "site-cancel") { st.editing = false; render(); }
-  else if (a === "site-off") { delete SITE_ST[k]; siteResync("Сайт убран: даты с него больше не учитываются"); }
+  } else if (a === "site-edit") { S.m.siteEdit = k; render(); var i2 = $("siteUrl"); if (i2) i2.focus(); }
+  else if (a === "site-cancel") { S.m.siteEdit = null; render(); }
+  else if (a === "site-off") { mySave({ op: "siteoff", key: k, title: S.pj.title }); S.m.siteEdit = null; siteResync("Сайт убран: даты с него больше не учитываются"); }
   else if (a === "site-pick") {
-    st.choices = st.choices || {}; var d = t.getAttribute("data-date"), v2 = t.getAttribute("data-v");
-    if (v2) st.choices[d] = v2; else delete st.choices[d];
+    var v2 = t.getAttribute("data-v");
+    mySave({ op: "sitepick", key: k, title: S.pj.title, date: t.getAttribute("data-date"), v: v2 });
     siteResync(v2 === "site" ? "Принята дата сайта" : v2 === "kassa" ? "Оставлена дата касс" : "");
   } else if (a === "site-f") { S.m.siteF = t.getAttribute("data-f"); var y = window.scrollY; render(); window.scrollTo(0, y); }
   else if (a === "site-alias") curSave({ op: "alias", title: t.getAttribute("data-title"), target: t.getAttribute("data-target") }, "«" + t.getAttribute("data-title") + "» — тот же проект");
+}
+// Те же правила, что myprojects._site на сервере (для прототипа, открытого файлом, и чтобы не ждать ответа)
+function siteApplyOp(p, op, now) {
+  var s = p.site || {}, host = function (u) { return siteHost(u); };
+  if (op.op === "site") {
+    var same = s.url && host(s.url) === host(op.url);
+    p.site = { key: s.key || op.key, url: op.url, title: op.title || p.title, confirmed: !!(same && s.confirmed), at: same ? s.at || null : null, choices: same ? s.choices || {} : {} };
+  } else if (op.op === "siteconfirm" && p.site) { p.site.confirmed = true; p.site.at = p.site.at || now; }
+  else if (op.op === "sitepick" && p.site) { p.site.choices = p.site.choices || {}; if (op.v) p.site.choices[op.date] = op.v; else delete p.site.choices[op.date]; }
+  else if (op.op === "siteoff") delete p.site;
 }
 // Разделы «Аналитики» — по одному, кнопками под шапкой (S.m.anTab); показатели тура — на самой шапке
 var AN_TABS = [["cands", "Где не были"], ["route", "Маршрут"], ["fill", "Заполняемость"], ["prices", "Цены"], ["venues", "Площадки"], ["site", "Официальный сайт"]];
@@ -6729,7 +6816,7 @@ function myIsFav(k) { var r = myRec(k); return !!(r && r.fav); }
 function myHasNotes(r) { return !!(r && (r.note || r.contacts || (r.links && r.links.length))); }
 function myHasData(r) {  // записи, профиль страницы, фото или оценка — запись о проекте нужна, даже если он не в избранном
   var pr = r && r.profile || {};
-  return myHasNotes(r) || !!(r && r.rating) || !!(r && r.media && Object.keys(r.media).length) || Object.keys(pr).some(function (k) { return Array.isArray(pr[k]) ? pr[k].length : pr[k]; });
+  return myHasNotes(r) || !!(r && r.rating) || !!(r && r.site) || !!(r && r.media && Object.keys(r.media).length) || Object.keys(pr).some(function (k) { return Array.isArray(pr[k]) ? pr[k].length : pr[k]; });
 }
 function myEvents(keys) { return MR.filter(function (e) { return e.pk && keys.indexOf(e.pk) >= 0; }).sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; }); }
 function mySnap(l) { return l.map(function (e) { return [e.date, e.city, e.venue, e.pmin || null, e.pmax || null]; }); }
@@ -6746,13 +6833,14 @@ function myDiff(r) {
 }
 function myApply(op) {  // то же, что сервер, — для прототипа, открытого файлом, и чтобы не ждать ответа
   var P = MYP.projects, now = new Date().toISOString().slice(0, 19), id = op.id, p;
-  if (op.op === "fav" || op.op === "notes" || op.op === "profile" || op.op === "media" || op.op === "coverpos" || op.op === "rating") {
+  if (op.op === "fav" || op.op === "notes" || op.op === "profile" || op.op === "media" || op.op === "coverpos" || op.op === "rating" || /^site/.test(op.op)) {
     id = myFind(op.key);
     if (!id) { id = op.id; P[id] = { title: op.title || op.key, keys: [op.key], fav: false, note: "", links: [], contacts: "", snap: null, at: now, created: true }; }
     p = P[id];
     if (op.op === "fav") { p.fav = !!op.fav; if (p.fav) p.snap = { at: now, dates: op.snap || [] }; else if (!myHasData(p)) { delete P[id]; return; } }
-    else if (op.op === "profile" || op.op === "media" || op.op === "coverpos" || op.op === "rating") {  // профиль страницы и фото в избранное сами не добавляют
-      if (op.op === "profile") {
+    else if (op.op === "profile" || op.op === "media" || op.op === "coverpos" || op.op === "rating" || /^site/.test(op.op)) {  // профиль страницы и фото в избранное сами не добавляют
+      if (/^site/.test(op.op)) siteApplyOp(p, op, now);
+      else if (op.op === "profile") {
         p.profile = { sub: op.sub || "", about: op.about || "", crew: op.crew || "", contact: op.contact || "", phone: op.phone || "", site: op.site || "", vk: op.vk || "", instagram: op.instagram || "", tg: op.tg || "", fee: op.fee || "", riders: op.riders || [] };
         p.note = op.note || ""; p.contacts = op.contacts || ""; p.links = op.links || [];
       } else if (op.op === "coverpos") p.cover_y = op.y;
@@ -6795,7 +6883,7 @@ function mySave(op, okMsg) {
 }
 function myLoad() {
   if (!CAN_SAVE) return;
-  fetch("/api/market/myprojects").then(function (r) { return r.json(); }).then(function (d) { MYP = d; render(); })
+  fetch("/api/market/myprojects").then(function (r) { return r.json(); }).then(function (d) { MYP = d; siteResync(); })   // сайты проектов — в записях
     .catch(function () { toast("Избранное не загрузилось — приложение не отвечает"); });
 }
 function myToggleFav(k, title) {

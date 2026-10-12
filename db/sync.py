@@ -22,7 +22,7 @@ from datetime import date, datetime, timedelta
 
 from psycopg2.extras import Json, execute_values
 
-from competitors import collector, curation, direct_match, market, protodata, seatmap
+from competitors import collector, curation, direct_match, market, officialsite, protodata, seatmap
 from competitors.storage import load_json
 from db import connect
 from db.migrate import MARKET, OPERATORS, Migration, _op, _starts, listing_url, verify
@@ -279,6 +279,46 @@ class Sync(Migration):
         self.cur.execute("UPDATE sessions SET status = 'done' WHERE status = 'on_sale' AND local_date < %s", (self.today,))
         self.rep["сеансов прошло"] += self.cur.rowcount
 
+    # ------------------------------------------------------------ официальные сайты проектов
+    def site_cards(self, rows: list[dict], attach: list[dict], fresh: dict[str, bool]) -> None:
+        """Даты с сайтов (competitors/officialsite.py): совпавшие с кассой — карточка «site» у сеанса кассы; только на сайте —
+        свои сеансы (строки в rows, их записал market_sessions). Дата ушла к кассе — прежний сеанс «только сайт» склеен.
+        Исчезла с сайта (свежий удачный разбор) — сеанс без других карточек: «снят» до даты, «прошёл» после."""
+        key_sid = {k: r["_sid"] for r in rows for k in r["keys"] if r.get("_sid")}
+        seen = {r["keys"][0] for r in rows if r.get("site")}
+        cards, moved = [], []
+        for a in attach:
+            sid = next((key_sid[k] for k in a["keys"] if k in key_sid), None)
+            if not sid:
+                continue
+            old = self.listing.get(("site", a["ext"]))
+            if old and old[1] and old[1] != sid:
+                moved.append(old[1])
+            cards.append((sid, "site", a["ext"], a["url"], a["title"], None, a["pmin"], a["pmin"], None,
+                          a.get("first_seen") or self.today, a.get("last_seen") or self.today))
+            seen.add(a["ext"])
+        if cards:
+            execute_values(self.cur, """
+                INSERT INTO listings (session_id, operator_id, ext_key, url, title, title_api, price_min, price_max, organizer, first_seen, last_seen) VALUES %s
+                ON CONFLICT (operator_id, ext_key) DO UPDATE SET session_id = EXCLUDED.session_id, url = EXCLUDED.url, title = EXCLUDED.title,
+                       price_min = EXCLUDED.price_min, price_max = EXCLUDED.price_max, last_seen = EXCLUDED.last_seen""", cards)
+        self.rep["сайты: дат совпало с кассами"] = len(cards)
+        self.rep["сайты: дат только на сайте"] = sum(1 for r in rows if r.get("site"))
+        if moved:   # дата сайта появилась в кассе: сеанс «только сайт» без карточек — склеен с сеансом кассы
+            self.cur.execute("""UPDATE sessions SET status = 'removed', status_log = status_log || %s
+                                 WHERE id = ANY(%s) AND status <> 'removed' AND NOT EXISTS (SELECT 1 FROM listings l WHERE l.session_id = sessions.id)""",
+                             (Json([{"at": self.today, "merged": True}]), moved))
+            self.rep["сайты: дат склеено с кассами"] = self.cur.rowcount
+        gone = [sid for (op, k), (_lid, sid) in self.listing.items()
+                if op == "site" and sid and k not in seen and fresh.get(k.split(":")[1], True)]   # проект убран или разбор свежий
+        if gone:
+            self.cur.execute("""UPDATE sessions SET status = CASE WHEN local_date < %s THEN 'done' ELSE 'removed' END,
+                                                    status_log = status_log || jsonb_build_array(jsonb_build_object('at', %s::text, 'left_site', true))
+                                 WHERE id = ANY(%s) AND status = 'on_sale'
+                                   AND NOT EXISTS (SELECT 1 FROM listings l WHERE l.session_id = sessions.id AND l.operator_id <> 'site')""",
+                             (self.today, self.today, gone))
+            self.rep["сайты: дат ушло с сайта (прошли / сняты)"] = self.cur.rowcount
+
     # ------------------------------------------------------------ площадки прямого сбора
     def direct(self, reg: Registry, pid_db: dict, market_rows: list[dict]) -> None:
         events = collector.load_events()
@@ -425,6 +465,9 @@ class Sync(Migration):
         self.cur_marks = curation.load()
         rows = load_json(MARKET / "events.json", [])
         curation.apply_edits(rows, self.cur_marks)
+        # Даты с официальных сайтов проектов: «только на сайте» — строки-сеансы, совпавшие с кассой — карточки к её сеансу
+        site_rows, site_attach, site_fresh = officialsite.db_rows(rows, self.cur_marks)
+        rows = rows + site_rows
         archive = load_json(MARKET / "archive.json", {})
         live_keys = {k for r in rows for k in r["keys"]}
         arch_rows = [{**a, "keys": [k], "_status": "done" if a["status"] == "past" else "removed", "pushkin": False, "age": None}
@@ -442,6 +485,7 @@ class Sync(Migration):
         pid_db = self.save_projects(reg)
         self.load_listings()
         self.market_sessions(all_rows, pid_db)
+        self.site_cards(rows, site_attach, site_fresh)
         self.close_missing()
         self.direct(reg, pid_db, rows)
         self.user_data()

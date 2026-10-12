@@ -36,8 +36,8 @@ SELECT c.name, v.name, coalesce(s.title, p.title), s.local_date, s.local_time, s
  GROUP BY s.id, c.name, v.name, p.title
  ORDER BY s.local_date, s.local_time NULLS LAST, c.name
 """
-NOT_DIRECT = {"kassir", "yandex", "qtickets", "custom"}   # остальные операторы — кассы и сайты площадок прямого сбора (ОрелКонцерт и др.)
-MARKET_SRC = (("kassir", "k"), ("yandex", "y"), ("qtickets", "q"))   # сайты афиши рынка → буквы источника, как в market-data.js
+NOT_DIRECT = {"kassir", "yandex", "qtickets", "custom", "site"}   # остальные операторы — кассы и сайты площадок прямого сбора (ОрелКонцерт и др.)
+MARKET_SRC = (("kassir", "k"), ("yandex", "y"), ("qtickets", "q"), ("site", "s"))   # сайты афиши рынка → буквы источника, как в market-data.js
 
 
 def rows(conn, frm: str, to: str, city: str = "") -> list[dict]:
@@ -70,6 +70,8 @@ def rows(conn, frm: str, to: str, city: str = "") -> list[dict]:
                 r["uy"] = u
             elif u and o == "qtickets":
                 r["uq"] = u
+            elif u and o == "site":   # дата с официального сайта проекта (ссылка «купить билет» или сам сайт)
+                r["us"] = u
         if result and result.get("best"):
             r["s"] = result["pools"][result["best"]]
             r["np"] = len(result["pools"])     # сколько касс видели
