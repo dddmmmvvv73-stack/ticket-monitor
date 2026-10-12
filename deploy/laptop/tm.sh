@@ -1,7 +1,7 @@
 #!/bin/bash
 # Ноутбук как временный сервер (с 12.10.2026 — авария Yandex Cloud): те же сборы, что systemd на сервере (deploy/systemd),
 # по расписанию launchd (deploy/laptop/install.sh). Запуск одного дела вручную:
-#   deploy/laptop/tm.sh web | collect | market | sales | sync | backup
+#   deploy/laptop/tm.sh web | collect | market | sales | sync | backup | backupcfg
 # Журналы — data/logs/<дело>.log. Одновременно одно и то же дело не запускается (замок в data/locks).
 set -uo pipefail
 APP="$(cd "$(dirname "$0")/../.." && pwd)"
@@ -47,6 +47,7 @@ case "$JOB" in
   sync)    "$PY" -m db.sync >> "$LOG" 2>&1
            "$PY" -m sales.results >> "$LOG" 2>&1 ;;
   backup)  "$PY" -m db.offsite >> "$LOG" 2>&1 ;;
-  *) echo "дело: web | collect | market | sales | sync | backup"; exit 2 ;;
+  backupcfg) "$PY" -m db.offsite --config >> "$LOG" 2>&1 ;;
+  *) echo "дело: web | collect | market | sales | sync | backup | backupcfg"; exit 2 ;;
 esac
 log "=== конец: $JOB (код $?)"

@@ -4,12 +4,13 @@
 #   deploy/laptop/install.sh remove     убрать (когда сервер снова главный)
 # Дела: web — сайт http://127.0.0.1:5050/proto/ (всегда); collect — :25 каждый час; sales — :05 каждый час;
 # sync — :58 каждый час; market — 21:00; backup — 03:30 (зашифрованная копия в закрытый репозиторий GitHub);
+# backupcfg — :40 каждый час (только config/: карточки проектов, фото, разметка — если изменились);
 # awake — не засыпать, пока ноутбук на питании (caffeinate -s; с крышкой закрытой без внешнего экрана Mac всё равно уснёт).
 set -euo pipefail
 APP="$(cd "$(dirname "$0")/../.." && pwd)"
 AG="$HOME/Library/LaunchAgents"
 UIDN=$(id -u)
-JOBS="web collect sales sync market backup awake"
+JOBS="web collect sales sync market backup backupcfg awake"
 mkdir -p "$AG" "$APP/data/logs"
 
 for j in $JOBS; do
@@ -46,5 +47,6 @@ plist sales   "$(run sales)"   "$(cal 5)"
 plist sync    "$(run sync)"    "$(cal 58)"
 plist market  "$(run market)"  "$(cal 0 21)"
 plist backup  "$(run backup)"  "$(cal 30 3)"
+plist backupcfg "$(run backupcfg)" "$(cal 40)"   # настройки (карточки проектов, фото) — каждый час, если изменились
 plist awake   "<string>/usr/bin/caffeinate</string><string>-s</string>" "<key>RunAtLoad</key><true/><key>KeepAlive</key><true/>"
 echo "Расписание ноутбука поставлено: $(launchctl list | grep -c ru.ticketmonitor) дел. Сайт — http://127.0.0.1:5050/proto/"

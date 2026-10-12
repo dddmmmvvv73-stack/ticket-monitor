@@ -5,13 +5,16 @@
 
     python3 -m db.offsite            сделать копию и отправить
     python3 -m db.offsite --local    только сделать (без отправки)
+    python3 -m db.offsite --config   только настройки (config/: карточки проектов, фото, разметка) — если изменились;
+                                     каждый час (12.10: карточка AdrenalinHouse жила только на сервере и пропала с ним;
+                                     спасла копия в кэше браузера — больше на это не полагаемся)
 
 Что внутри архива backup-<дата>.tar (зашифрован openssl aes-256-cbc, pbkdf2, 200 000 итераций):
     db.dump        pg_dump -Fc всей базы (история продаж, сеансы, итоги)
     data.tar.gz    data/competitors (сборы: афиша рынка, площадки, схемы, архив), config/ (разметка, проекты, настройки),
                    data/operator_blocks*.json, data/qtickets_ramp.json, data/sales_snapshot.json.gz
-Пароль — в Связке ключей macOS (служба «ticket-monitor-backup»); без него копия бесполезна — его нужно сохранить
-у себя отдельно (менеджер паролей). Восстановление — README.md в репозитории копий и HANDOFF.md, «Авария сервера».
+Пароль — в Связке ключей macOS (служба «ticket-monitor-backup») или в TM_BACKUP_PASS (сервер: /etc/ticket-monitor.env);
+без него копия бесполезна — его нужно сохранить у себя отдельно (менеджер паролей). Восстановление — README.md в репозитории копий и HANDOFF.md, «Авария сервера».
 """
 
 from __future__ import annotations
@@ -50,6 +53,10 @@ README = """# Копии ticket-monitor (закрытый репозиторий
 3. `tar xf backup.tar` → `db.dump` и `data.tar.gz`.
 4. Данные: `tar xzf data.tar.gz -C <папка проекта>`.
 5. База: `pg_restore --clean --if-exists --no-owner -d <адрес базы> db.dump` (на сервере — `postgresql:///ticket_monitor`).
+
+## Только настройки (карточки проектов, фото, разметка) — config-latest.tar.enc
+Обновляется каждый час, если что-то поменялось:
+`openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass pass:'ПАРОЛЬ' -in config-latest.tar.enc | tar xz` → папка `config/`.
 """
 
 
@@ -58,6 +65,8 @@ def log(msg: str) -> None:
 
 
 def passphrase() -> str:
+    if os.environ.get("TM_BACKUP_PASS"):   # сервер (Linux): пароль — в /etc/ticket-monitor.env
+        return os.environ["TM_BACKUP_PASS"]
     acct, svc = KEYCHAIN
     r = subprocess.run(["security", "find-generic-password", "-a", acct, "-s", svc, "-w"], capture_output=True, text=True)
     if r.returncode == 0 and r.stdout.strip():
@@ -91,6 +100,36 @@ def pack_data(out: Path) -> None:
                 tar.add(p, arcname=rel, filter=skip)
 
 
+CONFIG_FILE = "config-latest.tar.enc"   # настройки — отдельно, последний вариант (лежит рядом с копиями в репозитории)
+
+
+def encrypt(src: Path, dst: Path) -> None:
+    subprocess.run(["openssl", "enc", "-aes-256-cbc", "-pbkdf2", "-iter", "200000", "-salt", "-in", str(src), "-out", str(dst),
+                    "-pass", "env:TM_BACKUP_PASS"], check=True, env={**os.environ, "TM_BACKUP_PASS": passphrase()})
+
+
+def make_config() -> bool:
+    """Настройки (config/) → WORK/config-latest.tar.enc. False — с прошлого раза ничего не изменилось."""
+    import hashlib
+    files = sorted(p for p in (ROOT / "config").rglob("*") if p.is_file())
+    h = hashlib.sha256()
+    for p in files:
+        h.update(str(p.relative_to(ROOT)).encode())
+        h.update(p.read_bytes())
+    sig, mark = h.hexdigest(), WORK / "config.sha256"
+    if mark.exists() and mark.read_text() == sig and (WORK / CONFIG_FILE).exists():
+        return False
+    WORK.mkdir(parents=True, exist_ok=True)
+    tmp = WORK / "config.tar.gz"
+    with tarfile.open(tmp, "w:gz") as tar:
+        tar.add(ROOT / "config", arcname="config")
+    encrypt(tmp, WORK / CONFIG_FILE)
+    tmp.unlink()
+    mark.write_text(sig)
+    log("настройки изменились — копия config/ (%.1f МБ)" % ((WORK / CONFIG_FILE).stat().st_size / 1e6))
+    return True
+
+
 def make(day: str) -> Path:
     """Архив за день → SETS/<день>/backup-<день>.tar.enc.partNN; старше KEEP — удаляются."""
     tmp = WORK / "tmp"
@@ -102,8 +141,7 @@ def make(day: str) -> Path:
         tar.add(tmp / "db.dump", arcname="db.dump")
         tar.add(tmp / "data.tar.gz", arcname="data.tar.gz")
     enc = tmp / ("backup-%s.tar.enc" % day)
-    subprocess.run(["openssl", "enc", "-aes-256-cbc", "-pbkdf2", "-iter", "200000", "-salt", "-in", str(tmp / "backup.tar"),
-                    "-out", str(enc), "-pass", "env:TM_BACKUP_PASS"], check=True, env={**os.environ, "TM_BACKUP_PASS": passphrase()})
+    encrypt(tmp / "backup.tar", enc)
     dest = SETS / day
     shutil.rmtree(dest, ignore_errors=True)
     dest.mkdir(parents=True)
@@ -144,9 +182,11 @@ def push() -> None:
         if p.name != ".git":
             shutil.rmtree(p) if p.is_dir() else p.unlink()
     (REPO_DIR / "README.md").write_text(README, encoding="utf-8")
-    for s in sorted(SETS.iterdir()):
+    for s in (sorted(SETS.iterdir()) if SETS.exists() else []):
         for f in s.iterdir():
             shutil.copy2(f, REPO_DIR / f.name)
+    if (WORK / CONFIG_FILE).exists():
+        shutil.copy2(WORK / CONFIG_FILE, REPO_DIR / CONFIG_FILE)
     git("checkout", "-q", "--orphan", "next")
     git("add", "-A")
     git("commit", "-q", "-m", "Копии на %s" % datetime.now().strftime("%Y-%m-%d %H:%M"))
@@ -157,12 +197,18 @@ def push() -> None:
         raise RuntimeError("не отправилось в GitHub: " + (r.stderr or r.stdout)[-300:])
     git("reflog", "expire", "--expire=now", "--all")
     git("gc", "-q", "--prune=now")
-    log("отправлено в закрытый репозиторий: копий %d" % len(list(SETS.iterdir())))
+    log("отправлено в закрытый репозиторий: копий %d%s" % (len(list(SETS.iterdir())) if SETS.exists() else 0,
+                                                        ", настройки" if (WORK / CONFIG_FILE).exists() else ""))
 
 
 def main() -> None:
+    if "--config" in sys.argv:   # каждый час: только настройки, только если изменились
+        if make_config():
+            push()
+        return
     day = datetime.now().strftime("%Y-%m-%d")
     make(day)
+    make_config()
     if "--local" not in sys.argv:
         push()
 
