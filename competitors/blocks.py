@@ -18,6 +18,7 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 from datetime import datetime, timedelta
 
@@ -27,6 +28,9 @@ FILE = BASE_DIR / "data" / "operator_blocks.json"
 LOG_FILE = BASE_DIR / "data" / "operator_blocks_log.jsonl"
 FIRST = timedelta(hours=24)
 LONGEST = timedelta(days=7)
+# Операторы, которых на этом компьютере не опрашиваем совсем (ноутбук-сервер с 12.10: TM_DISABLED_OPERATORS=yandex —
+# Яндекс закрыл доступ серверу 06.10; с домашнего адреса его не собираем, это был бы обход отказа)
+DISABLED = {x.strip() for x in os.environ.get("TM_DISABLED_OPERATORS", "").split(",") if x.strip()}
 DENY_IN_WINDOW = 5     # отказов среди последних 20 ответов — сайт закрыл доступ (до 06.10 не было ни одного 403)
 _lock = threading.Lock()
 
@@ -44,6 +48,8 @@ def load() -> dict:
 
 def state(channel: str) -> str:
     """ok — опрашивать как обычно; probe — срок вышел, нужен пробный запрос (отказ на первом же); blocked — не опрашивать."""
+    if channel.split("/")[0] in DISABLED:
+        return "blocked"
     b = load().get(channel)
     if not b or b.get("lifted"):
         return "ok"
@@ -51,6 +57,8 @@ def state(channel: str) -> str:
 
 
 def until(channel: str) -> str | None:
+    if channel.split("/")[0] in DISABLED:
+        return "отключён здесь"
     b = load().get(channel)
     return b.get("until") if b and not b.get("lifted") else None
 

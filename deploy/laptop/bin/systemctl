@@ -1,0 +1,10 @@
+#!/bin/bash
+# Заглушка systemctl на ноутбуке-сервере: интерфейс («Собрать сейчас») зовёт systemctl, как на сервере —
+# здесь то же делает launchd. start … tm-collect.service / tm-market.service → launchctl kickstart; остальное — пусто.
+if [ "${1:-}" = "start" ]; then
+  for a in "$@"; do
+    case "$a" in tm-*.service) job="${a#tm-}"; job="${job%.service}"; launchctl kickstart "gui/$(id -u)/ru.ticketmonitor.$job" ;; esac
+  done
+  exit 0
+fi
+exit 0
