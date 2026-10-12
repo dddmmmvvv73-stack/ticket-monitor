@@ -531,6 +531,25 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .an-tabs button { height: 34px; padding: 0 14px; border: 0; background: var(--card); font-size: 13px; color: var(--ink-2); }
 .an-tabs button + button { border-left: 1px solid var(--line-strong); }
 .an-tabs button[aria-selected="true"] { background: var(--soot); color: #fff; }
+/* «Аналитика → Сайт»: даты с официального сайта проекта против нашей базы */
+.site-form { max-width: 640px; }
+.site-form-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 6px 0 8px; }
+.site-form-row input { flex: 1 1 280px; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 6px; font: inherit; font-size: 15px; background: var(--card); color: var(--ink); }
+.site-form-row input[aria-invalid="true"] { border-color: #d03b3b; }
+.site-confirm { margin: 0 0 18px; border-style: solid; background: var(--canvas); }
+.site-confirm .form-actions { margin-top: 12px; }
+.site-tools { display: flex; justify-content: space-between; align-items: center; gap: 12px 16px; flex-wrap: wrap; margin: 0 0 6px; }
+.site-tools .an-tabs { flex-wrap: wrap; }
+.site-tbl td { vertical-align: top; }
+.site-tbl .link-btn { font-weight: 500; text-align: left; color: var(--ink); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+.site-tbl .fbtn { height: auto; text-decoration: none; padding: 0; white-space: nowrap; }
+.site-tbl .site-links { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.site-st { display: inline-block; font-size: 12px; font-weight: 500; border-radius: 9999px; padding: 2px 10px; white-space: nowrap; background: var(--line-soft); color: var(--ink-2); }
+.site-st.ok { background: #e7f4ec; color: #166534; }
+.site-st.new { background: #dcebf8; color: #104a78; }
+.site-st.warn { background: #fdeee6; color: #9a3412; }
+.site-picks { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.site-picks .btn-ghost { height: 32px; padding: 0 12px; font-size: 13px; }
 .an-legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--ink-3); margin-top: 8px; }
 .an-legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
 .an-rows, .an-prices, .an-orgs { list-style: none; margin: 0; padding: 0; }
@@ -919,6 +938,15 @@ button.mday:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px
   .vtable thead { display: none; }
   .vtable tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
   .vtable td:nth-child(n+3) { display: none; }
+  /* «Сайт»: строка — карточка: дата и цена, город и площадка, статус, касса */
+  .vtable.site-tbl tr { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; padding: 12px 0; }
+  .vtable.site-tbl td { display: block; padding: 0; }
+  .vtable.site-tbl td:nth-child(1) { grid-column: 1; grid-row: 1; }
+  .vtable.site-tbl td:nth-child(3) { grid-column: 2; grid-row: 1; }
+  .vtable.site-tbl td:nth-child(2) { grid-column: 1 / -1; grid-row: 2; }
+  .vtable.site-tbl td:nth-child(5) { grid-column: 1 / -1; grid-row: 3; }
+  .vtable.site-tbl td:nth-child(4) { grid-column: 1 / -1; grid-row: 4; }
+  .site-tbl .site-links { flex-direction: row; gap: 16px; }
 }
 /* ---------- Рынок: графики, «Город», «Проекты» ---------- */
 .mfilter { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; padding: 12px 16px; background: var(--card); border: 1px solid var(--line); border-radius: 12px; }
@@ -1307,6 +1335,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <script src="competitors-data.js"></script>
 <script src="market-data.js"></script>
 <script src="market-geo.js"></script>
+<script src="site-data.js"></script>
 <script src="project-rating.js"></script>
 <script>
 // ---------------------------------------------------------------- данные конкурентов
@@ -3528,6 +3557,14 @@ MR.forEach(function (e, i) { e.i = i; });
 // Одна таблица «Мероприятий»: строки рынка + мероприятия площадок прямого сбора, которых нет в афише рынка (в т. ч. свои
 // и по ссылке Яндекса). У строки с данными прямого сбора (тот же сеанс или только прямой сбор) — его цифры и его карточка.
 var MR_BASE_LEN = MR.length, DIRECT_BY_UID = {};
+// Официальные сайты проектов (решение пользователя 12.10): даты с афиши сайта, которых нет в кассах, — обычные строки
+// проекта с источником «s», как у Кассира, Яндекса и Qtickets. Поэтому их видят все экраны: страница проекта, маршрут,
+// карта, «Где не были», плитки, разделы рынка, фильтр «Источник». Города вне списка рынка (Москва) — только у проекта.
+// Разбор страниц — site-data.js (MSITE; в рабочей системе — сборщик с GigaChat). Ссылка, подтверждение первого разбора и
+// выбор при расхождениях — SITE_ST (в прототипе — в браузере; в рабочей системе — на сервере, рядом с my_projects.json).
+var SITE_LS = "ticketmonitor.prototype.site", SITE_NEAR_KM = 50, SITE_FROM = 0;
+var SITE_ST = (function () { try { return JSON.parse(localStorage.getItem(SITE_LS)) || {}; } catch (e) { return {}; } })();
+if (typeof MGEO !== "undefined" && typeof MSITE_GEO !== "undefined") Object.keys(MSITE_GEO).forEach(function (c) { if (!MGEO.cities[c]) MGEO.cities[c] = MSITE_GEO[c]; });
 function mDirect(e) { return e.dref || (e.duid ? DIRECT_BY_UID[e.duid] : null) || null; }
 // Кассы прямого сбора — подпись в столбце «Источник» и пункты фильтра «Источник» во всех разделах (решение пользователя 09.10:
 // каждая касса прямого сбора видна и в источниках, и в фильтрах). Новая касса — одна строка здесь (и оператор в db/migrate.py).
@@ -3553,6 +3590,7 @@ function mSyncDirect() {
       seen: (e.first || TODAY).slice(0, 10), age: e.age || "", yt: false, key: "d:" + (e.uid || "c" + e.i), tk: tourKey(e.title), org: "",
       sales: null, duid: e.uid || "", dref: e });
   });
+  SITE_FROM = MR.length;   // дальше — строки с официальных сайтов (siteSync)
   if (typeof curApply === "function" && CUR && CUR.projects) curApply();
   MRV_KEY = null;
 }
@@ -3562,7 +3600,7 @@ if (typeof MK !== "undefined") mSyncDirect();
   MR.forEach(function (e) { var k = key(e), n = names[k] = names[k] || {}; n[e.venue] = (n[e.venue] || 0) + 1; });
   MR.forEach(function (e) { var n = names[key(e)]; e.venue = Object.keys(n).sort(function (a, b) { return n[b] - n[a]; })[0]; });
 })();
-var MR_LAST = MR.reduce(function (m, e) { return e.seen > m ? e.seen : m; }, typeof MK === "undefined" ? TODAY : MK.first);
+var MR_LAST = MR.reduce(function (m, e) { return e.src !== "s" && e.seen > m ? e.seen : m; }, typeof MK === "undefined" ? TODAY : MK.first);
 var MPREFS_KEY = "ticketmonitor.prototype.market";
 var mprefs = (function () { try { return JSON.parse(localStorage.getItem(MPREFS_KEY)) || {}; } catch (e) { return {}; } })();
 S.m = { tab: "table", city: "Все города", filter: "all", format: "", sphere: "", genre: "", src: "", venue: "", sort: "date", desc: false, limit: 200,
@@ -3608,6 +3646,7 @@ function mInScope(e) { var c = S.m.city; return c === "Все города" || (
 function mSingleCity() { return S.m.city !== "Все города" && S.m.city.indexOf("fo:") !== 0; }
 // Сайт или город, подключённые позже (Qtickets, города 10.10): в день их первого сбора — точка отсчёта, не «новое»
 function mFromNewSite(e) {
+  if (e.src === "s") return e.seen <= (e.siteFirst || e.seen);   // сайт проекта: первый разбор — точка отсчёта, «новое» — что появилось потом
   var f = MK.srcFirst || {}, s = (e.src || "").split(""), cf = (MK.cityFirst || {})[e.city];
   return (s.length > 0 && s.every(function (c) { return f[c] && e.seen <= f[c]; })) || !!(cf && e.seen <= cf);   // и город, добавленный в список позже
 }
@@ -3619,7 +3658,7 @@ function mBase(opts) {
       (opts.noSphere || !S.m.sphere || e.sphere === S.m.sphere) && (opts.noFormat || !S.m.format || e.format === S.m.format) && (!S.m.genre || e.genre === S.m.genre) &&
       (opts.noVenue || !S.m.venue || e.venue === S.m.venue) && (!ARCH_ON || !S.m.ast || e.st === S.m.ast) &&
       (!S.m.src || (S.m.src.indexOf("op:") === 0 ? (directOpOf(e) || {}).id === S.m.src.slice(3) : S.m.src === "k" ? e.src === "k" : S.m.src === "y" ? e.src === "y" :
-        S.m.src === "q" ? e.src === "q" : S.m.src === "qa" ? (e.src || "").indexOf("q") >= 0 :
+        S.m.src === "q" ? e.src === "q" : S.m.src === "qa" ? (e.src || "").indexOf("q") >= 0 : S.m.src === "s" ? e.src === "s" :
         S.m.src === "d" ? !!mDirect(e) || e.src === "d" : (e.src || "").length > 1));
   });
 }
@@ -3859,7 +3898,8 @@ var M_CELL = {
     var dname = /odk33\.ru/.test(dl || "") ? "Сайт ОДКиИ" : op ? op.name : /afisha\.yandex/.test(dl || "") ? "Яндекс по ссылке" : "Сайт площадки";   // ОДКиИ без продажи на vladimirkoncert — ссылка на афишу площадки
     return '<div class="src-links">' + (dl ? '<a href="' + esc(dl) + '" target="_blank" rel="noopener">' + esc(dname) + ' ↗</a>' : '') + (e.urlK ? '<a href="' + esc(e.urlK) + '" target="_blank" rel="noopener">Кассир ↗</a>' : '') +
       (e.urlY ? '<a href="' + esc(e.urlY) + '" target="_blank" rel="noopener">Яндекс ↗</a>' : '') +
-      (e.urlQ ? '<a href="' + esc(e.urlQ) + '" target="_blank" rel="noopener">Qtickets ↗</a>' : '') + '</div>';
+      (e.urlQ ? '<a href="' + esc(e.urlQ) + '" target="_blank" rel="noopener">Qtickets ↗</a>' : '') +
+      (e.src === "s" ? '<a href="' + esc(e.siteUrl) + '" target="_blank" rel="noopener" title="Дата с официального сайта проекта; билеты — ' + esc(e.siteKassa || "по ссылке") + '">Оф. сайт ↗</a>' : '') + '</div>';
   },
   seen: function (e) { return '<span class="num nowrap">' + human(e.seen) + '</span>'; },
   fill: function (e) {
@@ -4003,7 +4043,7 @@ function mTable() {
   var venueChip = activeChip("venue", "Площадка") + activeChip("genre", "Жанр");
   return '<div class="toolbar mtools">' + mNicheSelects(mBase({ noVenue: true })) +
       '<select class="flat-select" data-flat-label="Источник" data-msel="src" aria-label="Источник"><option value="">Все</option>' +
-        [["k", "Только Кассир"], ["y", "Только Яндекс"], ["q", "Только Qtickets"], ["qa", "Qtickets — все"], ["ky", "На нескольких сайтах"], ["d", "Площадки прямого сбора — все"]].concat(
+        [["k", "Только Кассир"], ["y", "Только Яндекс"], ["q", "Только Qtickets"], ["qa", "Qtickets — все"], ["ky", "На нескольких сайтах"], ["s", "Официальные сайты проектов"], ["d", "Площадки прямого сбора — все"]].concat(
           DIRECT_OPS.map(function (o) { return ["op:" + o.id, o.name]; })).map(function (o) { return '<option value="' + o[0] + '"' + (S.m.src === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
       venueChip + mColsControl(M_COLS, S.m.hidden) +
     '</div>' +
@@ -5110,12 +5150,13 @@ function pjVenues(l) {  // площадки проекта: город, тип (
 function pjWords(t) { return String(t || "").split(/(\s+)/).map(function (w) { return /^\s*$/.test(w) ? w : '<span class="pj-w">' + esc(w) + '</span>'; }).join(""); }
 function pjRow(e, past, title) {
   var p = e.date.split("-"), d = new Date(e.date + "T12:00:00Z");
-  var c1 = '<span class="pj-c1"><span class="pj-cap">' + esc(e.genre || e.format || "") + '</span><span class="pj-t">' + pjWords(e.title || title) + '</span></span>';
+  var c1 = '<span class="pj-c1"><span class="pj-cap">' + esc(e.genre || e.format || "") + (e.src === "s" ? ' · с сайта' : '') + '</span><span class="pj-t">' + pjWords(e.title || title) + '</span></span>';
   var c2 = '<span class="pj-c2"><span class="pj-day num">' + p[2] + '</span><span class="pj-dm"><span class="pj-cap">' + WD_FULL[d.getUTCDay()] + '</span><span>' + MONTHS_GEN[+p[1] - 1] + ' ' + p[0] + '</span></span></span>';
   var c3 = '<span class="pj-c3"><span class="pj-cap">' + esc(e.city) + '</span><span class="pj-v">' + pjWords(e.venue) + '</span></span>';
   if (past) return '<li class="pj-row past"><div class="pj-row-in">' + c1 + c2 + c3 + '<span class="pj-c4"><span class="pj-gone">' + (e.status === "gone" ? "Снято до даты" : "Событие прошло") + '</span></span></div></li>';
   var f = pjFill(e);
   var fl = f ? '<span class="pj-fill" role="img" aria-label="Заполнено ' + f.f + '%" title="Заполнено ' + f.f + '% · ' + esc(f.tip) + '"><i style="width:' + Math.min(100, f.f) + '%"></i></span>'
+    : e.src === "s" ? '<span class="pj-fill none" role="img" aria-label="Дата с официального сайта: продаж нет" title="Дата с официального сайта проекта — в кассах, которые мы собираем, её нет, продаж нет"></span>'
     : '<span class="pj-fill none" role="img" aria-label="Нет данных о продажах" title="Нет данных о продажах: слежение — с 4 октября, только у гастролей"></span>';
   return '<li class="pj-row"><button class="pj-row-in" data-pj="date" data-i="' + e.i + '" aria-haspopup="dialog" aria-label="' + esc(dayLabel(e.date) + ", " + e.city + ", " + e.venue) + '">' + c1 + c2 + c3 +
     '<span class="pj-c4">' + (e.pmin ? '<span class="pj-price">от ' + num(e.pmin) + ' ₽</span>' : '<span class="pj-gone">цена не указана</span>') + fl + '</span></button></li>';
@@ -5151,6 +5192,7 @@ function pjPage(k, id, rec, keys, l, title) {
   var avgFill = fills.length ? Math.round(fills.reduce(function (s, x) { return s + x.f; }, 0) / fills.length) : null;
   var pmin = Math.min.apply(null, l.map(function (e) { return e.pmin || 1e9; }).concat([1e9])), pmax = Math.max.apply(null, l.map(function (e) { return e.pmax || 0; }).concat([0]));
   var nK = l.filter(function (e) { return e.urlK; }).length, nY = l.filter(function (e) { return e.urlY; }).length, nQ = l.filter(function (e) { return e.urlQ; }).length;
+  var nS = l.filter(function (e) { return e.src === "s"; }).length;
   var ours = ALL.filter(function (e) { return keys.indexOf(projKey(e.title)) >= 0; });
   var ava = pjMedia(rec, "avatar"), cover = pjMedia(rec, "cover"), fav = myIsFav(k);
   var tags = [fmt, sph, gen].filter(function (c, i, a) { return c && a.indexOf(c) === i; });
@@ -5222,7 +5264,8 @@ function pjPage(k, id, rec, keys, l, title) {
       '<dt>Тип</dt><dd>' + (l.length ? (tour ? "гастроль" : "местное") + '<span class="sub2"> · ' + esc(l[0].tsrc === "auto" ? "авто: " + l[0].twhy : l[0].twhy) + '</span>' : '—') + '</dd>' +
       '<dt>Оценка</dt><dd>' + pjRateLine(rec) + '</dd>' +
       '<dt>Состав на выезде</dt><dd>' + (pr.crew ? esc(pr.crew) : '<span class="muted">не указан</span>') + '</dd>' +
-      '<dt>Продаётся</dt><dd>' + (l.length ? [nK ? 'Кассир — ' + nK + ' ' + plural(nK, "дата", "даты", "дат") : '', nY ? 'Яндекс Афиша — ' + nY + ' ' + plural(nY, "дата", "даты", "дат") : '', nQ ? 'Qtickets — ' + nQ + ' ' + plural(nQ, "дата", "даты", "дат") : ''].filter(Boolean).join("<br>") || '—' : '—') + '</dd>' +
+      '<dt>Продаётся</dt><dd>' + (l.length ? [nK ? 'Кассир — ' + nK + ' ' + plural(nK, "дата", "даты", "дат") : '', nY ? 'Яндекс Афиша — ' + nY + ' ' + plural(nY, "дата", "даты", "дат") : '', nQ ? 'Qtickets — ' + nQ + ' ' + plural(nQ, "дата", "даты", "дат") : '',
+        nS ? 'Только на официальном сайте — ' + nS + ' ' + plural(nS, "дата", "даты", "дат") : ''].filter(Boolean).join("<br>") || '—' : '—') + '</dd>' +
       (ours.length ? '<dt>Наши площадки</dt><dd>' + ours.map(function (e) { return '<button class="link-btn" data-open="' + e.i + '">' + human(e.date) + ' · ' + esc(e.venue) + (e.gross ? ' · заполнено ' + fill(e) + '%' : '') + '</button>'; }).join("<br>") + '</dd>' : '') +
       (rec && rec.note ? '<dt>Заметка</dt><dd class="mytext">' + esc(rec.note) + '</dd>' : '') +
       '<dt>Архив</dt><dd>' + (past.length ? '<button class="pj-plain" data-pj="mode" data-mode="' + (S.m.pjMode === "arch" ? 'list' : 'arch') + '" aria-pressed="' + (S.m.pjMode === "arch") + '">' +
@@ -5245,17 +5288,20 @@ function pjDateHtml(e) {
   var grossSub = d ? (d.gross ? "оценка по схеме зала" : "") : s && s.g ? (s.gx != null ? "точные цены — " + Math.round(s.gx * 100) + "%" : "оценка") : "нет схемы мест";
   var rev = d ? (d.gross && !d.suspect ? money(d.revenue) : "—") : s && s.sold ? money(s.rev) : "—";
   var revSub = d ? "занятые места × цена — оценка сверху" : s && s.since ? (s.sold ? num(s.sold) + " мест с " + human(s.since.slice(0, 10)) : "продаж с " + human(s.since.slice(0, 10)) + " пока нет") : "продажи не отслеживаются";
-  var links = [d && d.link ? [d.link, /odk33\.ru/.test(d.link) ? "Сайт ОДКиИ" : op ? op.name : "Сайт площадки"] : null, e.urlK ? [e.urlK, "Кассир"] : null, e.urlY ? [e.urlY, "Яндекс Афиша"] : null, e.urlQ ? [e.urlQ, "Qtickets"] : null].filter(Boolean);
+  var site = e.src === "s";
+  var links = [d && d.link ? [d.link, /odk33\.ru/.test(d.link) ? "Сайт ОДКиИ" : op ? op.name : "Сайт площадки"] : null, e.urlK ? [e.urlK, "Кассир"] : null, e.urlY ? [e.urlY, "Яндекс Афиша"] : null, e.urlQ ? [e.urlQ, "Qtickets"] : null,
+    site && e.urlS !== e.siteUrl ? [e.urlS, e.siteKassa] : null, site ? [e.siteUrl, "Официальный сайт"] : null].filter(Boolean);
+  if (site) { grossSub = "нет схемы мест"; revSub = "продажи не видны"; }
   return '<div class="pjd-wrap"><div class="pjd-main"><div class="pjd-head"><div class="pj-c2"><span class="pj-day num">' + p[2] + '</span><span class="pj-dm"><span class="pj-cap">' + WD_FULL[dd.getUTCDay()] + (e.time ? ' · ' + esc(e.time) : '') + '</span><span>' + MONTHS_GEN[+p[1] - 1] + ' ' + p[0] + '</span></span></div>' +
       '<div class="pjd-title"><span class="pj-cap">' + esc(e.city) + '</span><b>' + esc(e.venue) + '</b></div></div>' +
     '<div class="pjd-fill">' + (fx ? '<div class="pjd-fill-top"><span class="v num">' + fx.f + '%</span><span class="sub2">занято ' + num(fx.taken) + ' из ' + num(fx.total) + ' · свободно ' + num(fx.left) + '</span></div>' +
         '<span class="pj-fill" title="' + esc(fx.tip) + '"><i style="width:' + Math.min(100, fx.f) + '%"></i></span>'
-      : '<div class="pjd-fill-top"><span class="v muted">—</span><span class="sub2">данных о продажах нет</span></div><span class="pj-fill none"></span>') + '</div>' +
+      : '<div class="pjd-fill-top"><span class="v muted">—</span><span class="sub2">' + (site ? 'дата с официального сайта — в собираемых кассах её нет' : 'данных о продажах нет') + '</span></div><span class="pj-fill none"></span>') + '</div>' +
     '<div class="pjd-stats">' + stat("Цены", e.pmin ? prices(e) : "—", "без сервисного сбора") + stat("Вал", gross, grossSub) + stat("Выручка", rev, revSub) + '</div>' +
-    '<dl class="pj-dl">' + '<dt>Организатор</dt><dd id="pjdOrg">' + pjOrgView(e) + '</dd>' +
-      '<dt>В афише</dt><dd>с ' + human(e.seen) + '</dd></dl>' +
+    '<dl class="pj-dl">' + (site ? '' : '<dt>Организатор</dt><dd id="pjdOrg">' + pjOrgView(e) + '</dd>') +
+      (site ? '<dt>Источник</dt><dd>официальный сайт · билеты — ' + esc(e.siteKassa) + '</dd><dt>На сайте</dt><dd>с ' + human(e.seen) + '</dd>' : '<dt>В афише</dt><dd>с ' + human(e.seen) + '</dd>') + '</dl>' +
     (links.length ? '<div class="pjd-links">' + links.map(function (x) { return '<a class="fbtn" href="' + esc(x[0]) + '" target="_blank" rel="noopener">' + esc(x[1]) + ' ↗</a>'; }).join("") + '</div>' : '') +
-    '<div class="form-actions"><button class="btn-dark pjd-sales-btn" data-pj="sales" data-i="' + e.i + '" aria-expanded="false" aria-controls="pjdSide">Продажи <span aria-hidden="true">→</span></button></div>' +
+    (site ? '' : '<div class="form-actions"><button class="btn-dark pjd-sales-btn" data-pj="sales" data-i="' + e.i + '" aria-expanded="false" aria-controls="pjdSide">Продажи <span aria-hidden="true">→</span></button></div>') +
     '</div><aside class="pjd-side" id="pjdSide" hidden aria-label="Продажи: динамика и распоясовка"></aside></div>';
 }
 // Окно даты: заголовок окна не показываем (дата, город и площадка — внутри); рядом с крестиком — «Редактировать мероприятие»
@@ -5263,7 +5309,7 @@ function pjOpenDate(i) {
   var e = MR[i]; if (!e) return;
   var dlg = pjDialog("pj-date", e.title + " — " + e.city + ", " + dayLabel(e.date), pjDateHtml(e)), head = dlg.querySelector(".pj-dlg-head");
   head.querySelector("h2").classList.add("sr-only");
-  head.querySelector("[data-pj=close]").insertAdjacentHTML("beforebegin", '<button class="icon-btn" data-pj="evedit" data-i="' + i + '" aria-label="Редактировать мероприятие" title="Редактировать мероприятие">' + PJ_ICON.edit + '</button>');
+  if (e.src !== "s") head.querySelector("[data-pj=close]").insertAdjacentHTML("beforebegin", '<button class="icon-btn" data-pj="evedit" data-i="' + i + '" aria-label="Редактировать мероприятие" title="Редактировать мероприятие">' + PJ_ICON.edit + '</button>');
   var top = dlg.querySelector(".pjd-head"); if (top) head.insertBefore(top, head.querySelector("h2").nextSibling);   // меньше воздуха сверху
 }
 // Редактирование — то же, что в карточке мероприятия: площадка прямого сбора — её форма, рынок — форма правок рынка
@@ -5617,6 +5663,7 @@ function pjAction(t) {
   else if (a === "an-ven-all") { S.m.anVenAll = true; var y3 = window.scrollY; render(); window.scrollTo(0, y3); }
   else if (a === "an-more") { var key = t.getAttribute("data-key"); S.m[key] = !S.m[key]; var y4 = window.scrollY; render(); window.scrollTo(0, y4); }
   else if (a === "an-flip") { S.m.anFlip = !S.m.anFlip; t.classList.toggle("flipped", S.m.anFlip); t.setAttribute("aria-pressed", S.m.anFlip); var tp = t.getAttribute(S.m.anFlip ? "data-tip-back" : "data-tip-front"); t.title = tp; t.setAttribute("aria-label", tp); }   // без перерисовки — переворот виден
+  else if (a.indexOf("site-") === 0) siteAction(a, t);
   else if (a === "an-tab") { S.m.anTab = t.getAttribute("data-tab"); var y5 = window.scrollY; render(); window.scrollTo(0, y5); }
   else if (a === "period-all") { S.period = "all"; S.from = S.to = null; render(); }
   else if (a === "mode") { var y = window.scrollY; S.m.pjMode = t.getAttribute("data-mode"); S.m.datesAll = false; render(); window.scrollTo(0, y); }   // экран остаётся на месте
@@ -5904,8 +5951,180 @@ function anFlipTile(avg, l, fills, title, k) {
   return '<button class="an-tile an-flip' + (flip ? ' flipped' : '') + '" data-pj="an-flip" data-tip-front="' + esc(tipFront) + '" data-tip-back="' + esc(tipBack) + '" aria-pressed="' + flip + '" aria-label="' + esc(flip ? tipBack : tipFront) + '" title="' + esc(flip ? tipBack : tipFront) + '">' +
     '<span class="an-flip-in">' + front + back + '</span></button>';
 }
+// ---------- Официальный сайт проекта: сверка дат с сайта с нашей базой и встраивание недостающих (раздел «Аналитика → Сайт»)
+// Совпало — тот же день и тот же город (или до 50 км: Ессентуки ↔ Пятигорск); нет у нас — дата идёт в проект строкой «s»;
+// расхождение — в этот день у нас другой город: в проект не идёт, пока пользователь не выберет «верно на сайте» / «в кассах».
+PJ_ICON.an_site = PJ_ICON.site;
+var SITE_KASSA = [[/intickets\.ru$/, "Intickets"], [/kassy\.ru$/, "Kassy.ru"], [/kassir\.ru$/, "Кассир"], [/afisha\.yandex\.ru$/, "Яндекс Афиша"], [/qtickets\.(ru|events)$/, "Qtickets"],
+  [/ticketscloud\.(org|com)$/, "Ticketscloud"], [/quicktickets\.ru$/, "Quicktickets"], [/radario\.ru$/, "Radario"], [/ticketland\.ru$/, "Ticketland"], [/mts-live|live\.mts\.ru$/, "МТС Live"]];
+function siteSave() { try { localStorage.setItem(SITE_LS, JSON.stringify(SITE_ST)); } catch (e) { /* хранилище недоступно */ } }
+function siteHost(u) { return String(u || "").replace(/^https?:\/\/(www\.)?/i, "").split(/[\/?#]/)[0].toLowerCase(); }
+function siteKassa(u, site) {   // подпись кассы по ссылке «купить билет»
+  var h = siteHost(u);
+  for (var i = 0; i < SITE_KASSA.length; i++) if (SITE_KASSA[i][0].test(h)) return SITE_KASSA[i][1];
+  return h === siteHost(site) ? "сайт проекта" : h;
+}
+function siteKm(a, b) {   // расстояние между городами, км (нет координат — null; одно название — 0)
+  if (!a || !b) return null;
+  if (a.toLowerCase().replace(/ё/g, "е") === b.toLowerCase().replace(/ё/g, "е")) return 0;
+  var g = typeof MGEO !== "undefined" && MGEO.cities, p = g && g[a], q = g && g[b];
+  if (!p || !q) return null;
+  var r = Math.PI / 180, x = (q[3] - p[3]) * r * Math.cos((p[2] + q[2]) / 2 * r), y = (q[2] - p[2]) * r;
+  return Math.round(Math.sqrt(x * x + y * y) * 6371);
+}
+function siteLike(pk, k) {   // строка кассы — того же проекта под другим названием: 2+ общих слова, не меньше 2/3 слов проекта
+  if (!pk || !k) return false;
+  if (pk === k) return true;
+  var w = k.split(" "), v = " " + pk + " ", n = w.filter(function (x) { return v.indexOf(" " + x + " ") >= 0; }).length;
+  return n >= 2 && n * 3 >= w.length * 2;
+}
+function siteKeys(k) {
+  var r = typeof MYP !== "undefined" && MYP && MYP.projects ? myRec(k) : null;
+  return r && r.keys && r.keys.length ? r.keys : [k];
+}
+function siteSrcNames(e) {
+  var op = directOpOf(e);
+  return [op ? op.name : "", e.urlK ? "Кассир" : "", e.urlY ? "Яндекс" : "", e.urlQ ? "Qtickets" : ""].filter(Boolean).join(", ");
+}
+function siteCompare(k) {
+  var data = MSITE[k], st = SITE_ST[k] || {}, keys = siteKeys(k), ch = st.choices || {};
+  var pkOf = function (e) { return e.pkSite != null ? e.pkSite : e.pk; };
+  var mine = function (e) { var p = pkOf(e); return keys.some(function (x) { return siteLike(p, x); }); };
+  var kassa = MR.filter(function (e) { return e.src !== "s" && e.date >= TODAY && mine(e); }), used = {};
+  var rows = data.rows.filter(function (r) { return r.date >= TODAY; }).map(function (r) {
+    var same = kassa.filter(function (e) { return e.date === r.date; });
+    var hit = same.filter(function (e) { var km = siteKm(r.city, e.city); return km != null && km <= SITE_NEAR_KM; });
+    var o = { r: r, off: MK.cities.indexOf(r.city) < 0, kassa: r.buy ? siteKassa(r.buy, data.url) : "" };
+    if (hit.length) { o.st = "match"; o.e = hit; o.alias = hit.filter(function (e) { return keys.indexOf(pkOf(e)) < 0; }); }
+    else if (same.length) { o.st = "conflict"; o.e = same; o.pick = ch[r.date] || ""; }
+    else o.st = "new";
+    (o.e || []).forEach(function (e) { used[e.i] = 1; });
+    return o;
+  });
+  var only = kassa.filter(function (e) { return !used[e.i] && keys.indexOf(pkOf(e)) >= 0; });
+  return { data: data, st: st, rows: rows, only: only };
+}
+// Строки с сайтов — в конец MR (после строк рынка и прямого сбора); пересобираются при каждой разметке (curApply)
+function siteSync() {
+  if (typeof MSITE === "undefined" || !SITE_FROM || (typeof ARCH_ON !== "undefined" && ARCH_ON)) return;
+  MR.length = SITE_FROM;
+  MR.forEach(function (e) { if (e.pkSite != null) { if (e.pk === "") e.pk = e.pkSite; delete e.pkSite; } });
+  Object.keys(SITE_ST).forEach(function (k) {
+    var st = SITE_ST[k];
+    if (!st.confirmed || !MSITE[k]) return;
+    var c = siteCompare(k), own = MR.filter(function (e) { return e.pk === k; }), first = (st.at || TODAY).slice(0, 10);
+    var base = { title: mostOf(own, "title") || st.title || k, sphere: mostOf(own, "sphere") || "", format: mostOf(own, "format") || "", genre: mostOf(own, "genre") || "" };
+    c.rows.forEach(function (o) {
+      if (o.st === "match" || (o.st === "conflict" && o.pick !== "site")) return;
+      if (o.st === "conflict") o.e.forEach(function (e) { e.pkSite = e.pk; e.pk = ""; });   // «верно на сайте»: строка кассы уходит из проекта, в рынке остаётся
+      var r = o.r;
+      MR.push({ i: MR.length, city: r.city, venue: r.venue, title: base.title, date: r.date, time: "", sphere: base.sphere, format: base.format, genre: base.genre,
+        pmin: r.pmin || null, pmax: r.pmin || null, pushkin: false, src: "s", urlK: "", urlY: "", urlQ: "", urlS: r.buy || c.data.url, siteUrl: st.url || c.data.url, siteKassa: o.kassa || "сайт проекта",
+        more: 0, until: "", seen: first, siteFirst: first, age: "", yt: false, key: "s:" + k + ":" + r.date + ":" + r.city, tk: tourKey(base.title), org: "", sales: null, duid: "", keys: [],
+        o: {}, edited: false, pk0: k, pk: k, offList: o.off });
+    });
+  });
+}
+function siteResync(msg) {
+  siteSave(); MRV_KEY = null; PROJ_CACHE.key = null;
+  var y = window.scrollY; curApply(); render(); window.scrollTo(0, y);
+  if (msg) toast(msg);
+}
+function siteFind(k, r) { var key = "s:" + k + ":" + r.date + ":" + r.city; for (var i = SITE_FROM; i < MR.length; i++) if (MR[i].key === key) return MR[i]; return null; }
+function siteSection(k, title) {
+  var st = SITE_ST[k] || {}, data = typeof MSITE !== "undefined" ? MSITE[k] : null, rec = myRec(k), prof = rec && rec.profile && rec.profile.site || "";
+  var intro = '<p class="sub" style="margin:0 0 14px;max-width:760px">Даты с афиши официального сайта сверяются с нашей базой. Тех, что есть только на сайте, у нас нет ни в одной кассе — они добавляются в проект и учитываются в маршруте, на карте, в «Где не были» и в разделах рынка. Продаж по ним нет.</p>';
+  if (!st.url || st.editing) {
+    var val = st.url || prof;
+    return anSec("Официальный сайт", '', intro + '<div class="site-form"><label class="field-label" for="siteUrl">Страница афиши на сайте проекта</label>' +
+      '<div class="site-form-row"><input id="siteUrl" type="url" inputmode="url" autocomplete="url" placeholder="https://…" value="' + esc(val) + '" aria-describedby="siteUrlHint siteUrlErr">' +
+      '<button class="btn-dark" data-pj="site-check">Проверить</button>' + (st.editing ? '<button class="btn-ghost" data-pj="site-cancel">Отмена</button>' : '') + '</div>' +
+      '<div class="err" id="siteUrlErr" hidden></div>' +
+      '<p class="sub2" id="siteUrlHint" style="margin:0">Главная страница или раздел «Афиша» — где перечислены города и даты. ' + (prof && !st.url ? 'Подставлен «Официальный сайт» из карточки проекта. ' : '') +
+      'Раз в сутки страница скачивается, GigaChat находит в ней даты, города, площадки и цены.</p></div>');
+  }
+  var host = siteHost(st.url);
+  if (!data || siteHost(data.url) !== host) {
+    return anSec("Официальный сайт", '', intro + '<div class="note">Ссылка сохранена: <a class="pj-plain" href="' + esc(st.url) + '" target="_blank" rel="noopener">' + esc(host) + ' ↗</a>. В прототипе страница разобрана только у группы «Рондо» (rondotour.ru) — разбор других сайтов появится вместе со сборщиком.' +
+      '<div class="form-actions" style="margin-top:12px"><button class="btn-ghost" data-pj="site-edit">Другая ссылка</button><button class="btn-ghost" data-pj="site-off">Убрать</button></div></div>');
+  }
+  var c = siteCompare(k), rows = c.rows, n = function (s) { return rows.filter(function (o) { return o.st === s; }).length; };
+  var nm = n("match"), nn = n("new"), nc = n("conflict"), no = c.only.length, conf = !!st.confirmed;
+  var checked = data.checked ? human(data.checked.slice(0, 10)) + ' в ' + data.checked.slice(11, 16) : '—';
+  var head = conf ? '<div class="pj-sum" style="margin:0 0 16px"><a class="pj-plain" href="' + esc(st.url) + '" target="_blank" rel="noopener">' + esc(host) + ' ↗</a><span>проверено ' + checked + ' · раз в сутки</span>' +
+      '<button class="pj-plain" data-pj="site-edit">Изменить ссылку</button><button class="pj-plain" data-pj="site-off">Убрать сайт</button></div>'
+    : '<div class="note site-confirm"><b style="font-weight:500">Первая проверка ссылки.</b> На ' + esc(host) + ' найдено ' + rows.length + ' ' + plural(rows.length, "будущая дата", "будущие даты", "будущих дат") + ': ' +
+      nm + ' уже есть у нас, ' + nn + ' ' + plural(nn, "будет добавлена", "будут добавлены", "будут добавлены") + ' в проект' + (nc ? ', ' + nc + ' ' + plural(nc, "расхождение", "расхождения", "расхождений") : '') + '. ' +
+      'Проверьте по таблице, правильно ли разобрана страница. После подтверждения сайт проверяется сам раз в сутки, новые даты добавляются без вопросов.' +
+      '<div class="form-actions"><button class="btn-dark" data-pj="site-confirm">Подтвердить</button><button class="btn-ghost" data-pj="site-edit">Другая ссылка</button></div></div>';
+  var f = S.m.siteF || "all";
+  var tabs = [["all", "Все", rows.length + no], ["new", "Нет у нас", nn], ["conflict", "Расхождения", nc], ["match", "Совпало", nm], ["only", "Только в кассах", no]];
+  var tools = '<div class="site-tools"><div class="pj-sum" style="margin:0"><span><b class="num">' + rows.length + '</b> на сайте</span><span><b class="num">' + nm + '</b> совпало</span>' +
+      '<span><b class="num">' + nn + '</b> ' + (conf ? 'добавлено с сайта' : 'нет у нас') + '</span>' + (nc ? '<span><b class="num">' + nc + '</b> ' + plural(nc, "расхождение", "расхождения", "расхождений") + '</span>' : '') +
+      '<span><b class="num">' + no + '</b> только в кассах</span></div>' +
+    '<div class="an-tabs" role="tablist" aria-label="Какие даты показать">' + tabs.map(function (t) {
+      return '<button role="tab" data-pj="site-f" data-f="' + t[0] + '" aria-selected="' + (f === t[0]) + '">' + t[1] + ' · ' + t[2] + '</button>'; }).join("") + '</div></div>';
+  var list = rows.map(function (o) { return { d: o.r.date, o: o }; }).concat(c.only.map(function (e) { return { d: e.date, e: e }; }))
+    .filter(function (x) { return f === "all" || (f === "only" ? !!x.e : x.o && x.o.st === f); })
+    .sort(function (a, b) { return a.d < b.d ? -1 : a.d > b.d ? 1 : 0; });
+  var dateCell = function (d, e) {
+    var y = d.slice(0, 4) !== TODAY.slice(0, 4) ? ' ' + d.slice(0, 4) : '';
+    return e ? '<button class="link-btn" data-pj="date" data-i="' + e.i + '" aria-haspopup="dialog">' + dayLabel(d) + y + '</button>' : '<span class="nowrap">' + dayLabel(d) + y + '</span>';
+  };
+  var tr = function (x) {
+    if (x.e) {   // есть в кассах, нет на сайте
+      var e = x.e;
+      return '<tr><td class="nowrap">' + dateCell(e.date, e) + '</td><td><b style="font-weight:500">' + esc(e.city) + '</b><div class="sub2">' + esc(e.venue) + '</div></td>' +
+        '<td class="r num nowrap">' + (e.pmin ? 'от ' + num(e.pmin) + ' ₽' : '—') + '</td><td><span class="site-links">' + [[e.urlK, "Кассир"], [e.urlY, "Яндекс"], [e.urlQ, "Qtickets"]].filter(function (u) { return u[0]; })
+          .map(function (u) { return '<a class="fbtn" href="' + esc(u[0]) + '" target="_blank" rel="noopener">' + u[1] + ' ↗</a>'; }).join("") + '</span></td>' +
+        '<td><span class="site-st">Нет на сайте</span><div class="sub2">есть у нас: ' + esc(siteSrcNames(e)) + '</div></td></tr>';
+    }
+    var o = x.o, r = o.r, added = o.st === "new" || (o.st === "conflict" && o.pick === "site") ? siteFind(k, r) : null, link = o.st === "match" ? o.e[0] : added, st;
+    if (o.st === "match") {
+      var other = o.e.filter(function (e) { return e.city !== r.city; })[0];
+      st = '<span class="site-st ok">Есть у нас</span><div class="sub2">' + esc(siteSrcNames(o.e[0])) + (other ? ' · город у касс — ' + esc(other.city) : '') + '</div>' +
+        (o.alias.length ? '<div class="sub2">отдельным проектом «' + esc(o.alias[0].title) + '» · <button class="pj-plain" style="font-size:13px" data-pj="site-alias" data-title="' + esc(o.alias[0].title) + '" data-target="' + esc(title) + '">Это тот же проект</button></div>' : '');
+    } else if (o.st === "new") {
+      st = '<span class="site-st new">' + (conf ? 'Добавлено с сайта' : 'Будет добавлено') + '</span>' + (o.off ? '<div class="sub2">город вне списка рынка — только на страницах проекта</div>' : '');
+    } else {
+      var ke = o.e[0];
+      st = '<span class="site-st warn">Расхождение</span><div class="sub2">у нас в этот день — ' + esc(ke.city) + ', ' + esc(ke.venue) + ' (' + esc(siteSrcNames(ke)) + ')</div>' +
+        (o.pick ? '<div class="sub2">Выбрано: ' + (o.pick === "site" ? 'верно на сайте — в проекте ' + esc(r.city) : 'верно в кассах — в проекте ' + esc(ke.city)) + ' · <button class="pj-plain" style="font-size:13px" data-pj="site-pick" data-date="' + r.date + '" data-v="">изменить</button></div>'
+          : '<div class="site-picks"><button class="btn-ghost" data-pj="site-pick" data-date="' + r.date + '" data-v="site">Верно на сайте</button><button class="btn-ghost" data-pj="site-pick" data-date="' + r.date + '" data-v="kassa">Верно в кассах</button></div>');
+    }
+    return '<tr><td class="nowrap">' + dateCell(r.date, link) + '</td><td><b style="font-weight:500">' + esc(r.city) + '</b><div class="sub2">' + esc(r.venue) + '</div></td>' +
+      '<td class="r num nowrap">' + (r.pmin ? 'от ' + num(r.pmin) + ' ₽' : '—') + '</td>' +
+      '<td>' + (r.buy ? '<a class="fbtn" href="' + esc(r.buy) + '" target="_blank" rel="noopener" title="Ссылка «купить билет» на сайте">' + esc(o.kassa) + ' ↗</a>' : '<span class="muted">—</span>') + '</td><td>' + st + '</td></tr>';
+  };
+  var table = list.length ? '<div class="an-legacy"><div style="overflow:auto"><table class="vtable site-tbl"><thead><tr><th scope="col">Дата</th><th scope="col">Город и площадка</th><th scope="col" class="r">Цена</th><th scope="col">Билеты</th><th scope="col">В нашей базе</th></tr></thead><tbody>' +
+      list.map(tr).join("") + '</tbody></table></div></div>' : '<p class="sub" style="margin:12px 0 0">В этом фильтре дат нет.</p>';
+  return anSec("Официальный сайт", '', head + tools + table);
+}
+function siteAction(a, t) {
+  var k = S.pj && S.pj.k; if (!k) return;
+  var st = SITE_ST[k] = SITE_ST[k] || {};
+  if (a === "site-check") {
+    var inp = $("siteUrl"), err = $("siteUrlErr"), v = pjUrl(inp.value);
+    if (!/^https?:\/\/[^\s\/]+\.[^\s\/]+/i.test(v)) { err.hidden = false; err.textContent = "Вставьте адрес страницы, например https://rondotour.ru/"; inp.setAttribute("aria-invalid", "true"); inp.focus(); return; }
+    if (st.url && siteHost(st.url) !== siteHost(v)) { st.confirmed = false; st.choices = {}; }   // другой сайт — снова первая проверка
+    st.url = v; st.title = S.pj.title; st.editing = false; S.m.siteF = "all";
+    siteResync(MSITE[k] && siteHost(MSITE[k].url) === siteHost(v) ? "Страница разобрана — проверьте даты" : "Ссылка сохранена");
+  } else if (a === "site-confirm") {
+    st.confirmed = true; st.at = (MSITE[k] && MSITE[k].checked) || new Date().toISOString();
+    var added = siteCompare(k).rows.filter(function (o) { return o.st === "new"; }).length;
+    siteResync("Сайт подключён: в проект " + plural(added, "добавлена", "добавлены", "добавлено") + " " + added + " " + plural(added, "дата", "даты", "дат"));
+  } else if (a === "site-edit") { st.editing = true; render(); var i2 = $("siteUrl"); if (i2) i2.focus(); }
+  else if (a === "site-cancel") { st.editing = false; render(); }
+  else if (a === "site-off") { delete SITE_ST[k]; siteResync("Сайт убран: даты с него больше не учитываются"); }
+  else if (a === "site-pick") {
+    st.choices = st.choices || {}; var d = t.getAttribute("data-date"), v2 = t.getAttribute("data-v");
+    if (v2) st.choices[d] = v2; else delete st.choices[d];
+    siteResync(v2 === "site" ? "Принята дата сайта" : v2 === "kassa" ? "Оставлена дата касс" : "");
+  } else if (a === "site-f") { S.m.siteF = t.getAttribute("data-f"); var y = window.scrollY; render(); window.scrollTo(0, y); }
+  else if (a === "site-alias") curSave({ op: "alias", title: t.getAttribute("data-title"), target: t.getAttribute("data-target") }, "«" + t.getAttribute("data-title") + "» — тот же проект");
+}
 // Разделы «Аналитики» — по одному, кнопками под шапкой (S.m.anTab); показатели тура — на самой шапке
-var AN_TABS = [["cands", "Где не были"], ["route", "Маршрут"], ["fill", "Заполняемость"], ["prices", "Цены"], ["venues", "Площадки"]];
+var AN_TABS = [["cands", "Где не были"], ["route", "Маршрут"], ["fill", "Заполняемость"], ["prices", "Цены"], ["venues", "Площадки"], ["site", "Официальный сайт"]];
 var AN_FEW = 3;   // в «Заполняемости» и «Ценах» сначала 3 строки, дальше «Показать все» / «Скрыть»
 function anMore(key, shown, total) {
   if (total <= AN_FEW) return '';
@@ -5936,7 +6155,7 @@ function anPage(k, l, past, p, cands, foN) {
   var strip = '<span class="an-strip" title="Даты по месяцам">' + mk.map(function (m) { return '<i style="height:' + Math.max(8, Math.round((months[m] || 0) / mmax * 100)) + '%' + (months[m] ? '' : ';opacity:.25') + '" title="' + MONTHS_FULL[+m.slice(5) - 1] + ': ' + (months[m] || 0) + '"></i>'; }).join("") + '</span>';
   var tile = function (v, label, extra) { return '<div class="an-tile"><b class="num">' + v + '</b><span>' + label + '</span>' + (extra || '') + '</div>'; };
   var tiles = '<div class="an-tiles">' +
-    tile(cities.length, plural(cities.length, "город", "города", "городов"), '<span class="an-tsub">нет в ' + (MK.cities.length - cities.length) + ' из ' + MK.cities.length + '</span>') +
+    tile(cities.length, plural(cities.length, "город", "города", "городов"), '<span class="an-tsub">нет в ' + (MK.cities.length - cities.filter(function (c) { return MK.cities.indexOf(c) >= 0; }).length) + ' из ' + MK.cities.length + '</span>') +
     tile(l.length, plural(l.length, "дата", "даты", "дат"), strip) +
     tile(priceTxt, "цены") +
     anFlipTile(avg, l, fills, title, k) + '</div>';
@@ -5987,6 +6206,7 @@ function anPage(k, l, past, p, cands, foN) {
       (orgs.length ? '<ul class="an-orgs">' + orgs.map(function (o) { return '<li><b>' + esc(o.name) + '</b><span class="sub2">' + o.n + ' ' + plural(o.n, "дата", "даты", "дат") + '</span><div class="an-org-cities">' + o.cities.map(function (c) { return '<span class="an-city">' + esc(c) + '</span>'; }).join("") + '</div></li>'; }).join("") + '</ul>' : '<p class="sub" style="margin:0">Организаторы не указаны.</p>') +
       (noOrg.length ? '<p class="sub2" style="margin:10px 0 0">Без организатора — ' + noOrg.length + ' ' + plural(noOrg.length, "дата", "даты", "дат") + ': его пишет только Кассир.</p>' : ''));
   } else if (tab === "venues") body = '<div class="an-legacy">' + mRouteVenues(l, 8) + '</div>';
+  else if (tab === "site") body = siteSection(k, title);
   else body = '<div class="an-legacy">' + mCandTable(cands, foN, l, fmt, genre) + '</div>';
   return hero + nav + body;
 }
@@ -6162,7 +6382,9 @@ function mDrawer(e) {
   var line = function (x) { return '<li><button class="row-btn" data-mopen="' + x.i + '"><span class="nowrap" style="width:118px;flex-shrink:0">' + human(x.date) + ', ' + dparts(x.date).wd + '</span><span style="flex-grow:1;min-width:0">' + esc(x.city) + '<span class="sub2" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(x.venue) + '</span></span><span class="sub2 nowrap">' + (x.pmin ? prices(x) : "") + '</span></button></li>'; };
   var links = (e.urlK ? '<a href="' + esc(e.urlK) + '" target="_blank" rel="noopener" class="pill" style="justify-content:center;height:44px;color:var(--ink);font-weight:500;flex:1">Открыть на Кассире ↗</a>' : '') +
     (e.urlY ? '<a href="' + esc(e.urlY) + '" target="_blank" rel="noopener" class="pill" style="justify-content:center;height:44px;color:var(--ink);font-weight:500;flex:1">Открыть на Яндекс Афише ↗</a>' : '') +
-    (e.urlQ ? '<a href="' + esc(e.urlQ) + '" target="_blank" rel="noopener" class="pill" style="justify-content:center;height:44px;color:var(--ink);font-weight:500;flex:1">Открыть на Qtickets ↗</a>' : '');
+    (e.urlQ ? '<a href="' + esc(e.urlQ) + '" target="_blank" rel="noopener" class="pill" style="justify-content:center;height:44px;color:var(--ink);font-weight:500;flex:1">Открыть на Qtickets ↗</a>' : '') +
+    (e.src === "s" ? '<a href="' + esc(e.urlS) + '" target="_blank" rel="noopener" class="pill" style="justify-content:center;height:44px;color:var(--ink);font-weight:500;flex:1">Билеты — ' + esc(e.siteKassa) + ' ↗</a>' +
+      '<a href="' + esc(e.siteUrl) + '" target="_blank" rel="noopener" class="pill" style="justify-content:center;height:44px;color:var(--ink);font-weight:500;flex:1">Официальный сайт ↗</a>' : '');
   return '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px"><div class="sub" style="margin:0">' + esc(e.venue) + ' · ' + esc(e.city) + ' · <span class="' + (d.weekend ? "wknd" : "") + '">' + d.wd + ', ' + d.day + ' ' + d.mon + ' ' + d.y + '</span>' + esc(timeText(e)) + '</div>' +
       '<div style="display:flex;gap:8px">' + (e.pk ? starBtn(e.pk, mostOf(MR.filter(function (x) { return x.pk === e.pk; }), "title") || e.title) : '') + '<button class="icon-btn" data-drawer="medit" aria-label="Редактировать мероприятие" title="Редактировать"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M11 2.5l2.5 2.5L6 12.5 3 13l.5-3z"/><path d="M9.5 4l2.5 2.5"/></svg></button>' +
       '<button class="icon-btn" data-drawer="close" aria-label="Закрыть карточку"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg></button></div></div>' +
@@ -6377,6 +6599,7 @@ function curApply() {
     e.pk0 = projKey("title" in e.o ? e.o.title : e.title);  // проект — по названию парсера, как curation.classify
     e.pk = canonPk(e.pk0);  // ваше «это тот же проект» — новое название считается названием проекта
   });
+  siteSync();   // даты с официальных сайтов проектов — после ключей проектов, до разметки «гастроль / местное»
   MR_CITY = {}; MR.forEach(function (e) { (MR_CITY[e.city] = MR_CITY[e.city] || []).push(e); });
   mClassify(); CUR_VER++; PROJ_CACHE.key = null;
 }
@@ -6421,6 +6644,7 @@ function mClassify() {
 // Что попадает в аналитику: тип и цены из фильтра раздела
 function mPass(e) {
   var f = CUR.filters;
+  if (e.offList) return false;   // город вне списка рынка (дата с сайта проекта, например Москва) — только на страницах проекта
   if (f.show !== "all" && e.tour !== f.show) return false;
   if (f.pmin == null && f.pmax == null) return true;
   if (!e.pmin && !e.pmax) return f.noprice;
