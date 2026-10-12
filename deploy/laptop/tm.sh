@@ -17,7 +17,8 @@ export SALES_BUDGET_YANDEX=0
 export SALES_BUDGET_KASSIR=500             # с домашнего адреса Кассир — бережнее, чем с сервера (2 000): 04.10 он ограничивал этот адрес
 export SALES_BUDGET_QTICKETS=800           # потолок; сам лимит — ступенями (data/qtickets_ramp.json)
 export MARKET_KASSIR_PAUSE=2.0 MARKET_ORG_THREADS=1 MARKET_ORG_PAUSE=3.0
-export PATH="$APP/deploy/laptop/bin:$PATH"   # systemctl-заглушка: «Собрать сейчас» в интерфейсе → launchctl
+# systemctl-заглушка («Собрать сейчас» → launchctl) и gh (вход в GitHub для правок сайта и копий) — у launchd PATH короткий
+export PATH="$APP/deploy/laptop/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
 
 mkdir -p data/logs data/locks
 LOG="data/logs/$JOB.log"
@@ -32,7 +33,7 @@ LOCK="data/locks/$JOB"
 if ! mkdir "$LOCK" 2>/dev/null; then
   if [ -n "$(find "$LOCK" -maxdepth 0 -mmin +240 2>/dev/null)" ]; then rm -rf "$LOCK"; mkdir "$LOCK"; else log "уже идёт — пропуск"; exit 0; fi
 fi
-trap 'rm -rf "$LOCK"' EXIT
+trap 'rm -rf "$LOCK"; [ "$JOB" = market ] && rm -f data/.market_running' EXIT   # прервали — не оставлять «идёт афиша»
 
 log "=== начало: $JOB"
 # Свежий код с GitHub — как ExecStartPre у сборов на сервере (правки кода делаются в рабочей копии и пушатся)

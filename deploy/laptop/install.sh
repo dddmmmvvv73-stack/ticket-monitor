@@ -13,11 +13,16 @@ UIDN=$(id -u)
 JOBS="web collect sales sync market backup backupcfg awake"
 mkdir -p "$AG" "$APP/data/logs"
 
+# Идущий сбор не прерываем (12.10 переустановка убила сбор афиши на 12-й минуте): такое дело оставляем как есть
+running() { launchctl list | awk -v l="ru.ticketmonitor.$1" '$3 == l && $1 != "-" {f=1} END {exit !f}'; }
+KEEP=""
 for j in $JOBS; do
+  if [ "${1:-}" != "remove" ] && [ "$j" != web ] && [ "$j" != awake ] && running "$j"; then KEEP="$KEEP $j"; continue; fi
   launchctl bootout "gui/$UIDN/ru.ticketmonitor.$j" 2>/dev/null || true
   rm -f "$AG/ru.ticketmonitor.$j.plist"
 done
 [ "${1:-}" = "remove" ] && { echo "Расписание ноутбука убрано."; exit 0; }
+[ -n "$KEEP" ] && echo "Идут сейчас — не трогаю (переставить после окончания):$KEEP"
 
 cal() {   # cal <минута> [час]
   if [ -n "${2:-}" ]; then echo "<key>StartCalendarInterval</key><dict><key>Hour</key><integer>$2</integer><key>Minute</key><integer>$1</integer></dict>"
@@ -25,6 +30,7 @@ cal() {   # cal <минута> [час]
 }
 plist() {   # plist <дело> <программа…> -- <доп. ключи>
   local j="$1" prog="$2" extra="$3"
+  case " $KEEP " in *" $j "*) return ;; esac
   cat > "$AG/ru.ticketmonitor.$j.plist" <<P
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
