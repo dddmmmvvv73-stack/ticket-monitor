@@ -432,6 +432,9 @@ if __name__ == "__main__":
         print(f"Сжато старых сырых снимков: {compressed}, освобождено {freed / 1024 / 1024:.0f} МБ.")
     if ON_SERVER:  # сборы на сервере — по расписанию systemd; свой автосбор и браузер не нужны
         app.run(host="127.0.0.1", port=5050, debug=False, threaded=True)
+    elif os.environ.get("TM_NO_COLLECT") == "1":  # только просмотр на ноутбуке (сервер недоступен — авария 11.10): без сборов
+        Timer(1.0, lambda: webbrowser.open("http://127.0.0.1:5050/proto/")).start()
+        app.run(port=5050, debug=False, threaded=True)
     else:
         collector.start_scheduler()
         Timer(1.0, lambda: webbrowser.open("http://127.0.0.1:5050")).start()
