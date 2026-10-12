@@ -217,6 +217,9 @@ def fetch_kassir(plan) -> list[dict] | None:
 
 def _channel_open(channel: str, name: str) -> bool:
     """Закрытый сайт не трогаем до срока; после срока — пробуем (отказ — закроется снова, вдвое дольше)."""
+    if channel.split("/")[0] in blocks.DISABLED:
+        log(f"✖ {name}: отключён на этом компьютере (TM_DISABLED_OPERATORS) — из прошлого сбора")
+        return False
     if blocks.state(channel) == "blocked":
         log(f"✖ {name}: сайт закрыл доступ серверу — не опрашиваем до {blocks.until(channel)[:16].replace('T', ' ')}")
         return False

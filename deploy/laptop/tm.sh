@@ -35,6 +35,8 @@ fi
 trap 'rm -rf "$LOCK"' EXIT
 
 log "=== начало: $JOB"
+# Свежий код с GitHub — как ExecStartPre у сборов на сервере (правки кода делаются в рабочей копии и пушатся)
+case "$JOB" in collect|market|sync) git pull -q --ff-only >> "$LOG" 2>&1 || log "git pull не прошёл — на текущем коде" ;; esac
 case "$JOB" in
   collect) "$PY" -m competitors.collector auto >> "$LOG" 2>&1 ;;
   market)  touch data/.market_running

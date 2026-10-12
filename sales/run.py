@@ -361,7 +361,8 @@ def main() -> None:
     for op in work:
         if blocks.state("%s/sales" % op) == "blocked":   # сайт закрыл доступ — ни одного запроса до срока
             closed[op] = blocks.until("%s/sales" % op)
-            stats["%s: сайт закрыл доступ — пропуск до %s" % (LABEL[op], closed[op][:16])] += 1
+            stats["%s: %s" % (LABEL[op], "отключён на этом компьютере" if op in blocks.DISABLED
+                                else "сайт закрыл доступ — пропуск до %s" % closed[op][:16])] += 1
             work[op] = []
     nets = {op: (qtickets.Browser(deadline, cap=caps[op]) if op == "qtickets" else Net(op, deadline, cap=caps[op])) for op in work}
     for op in nets:   # в журнал отказов — сколько уже было за сутки и какой лимит
