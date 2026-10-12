@@ -561,6 +561,7 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pl-in.pl-text.pl-city { width: 130px; min-width: 0; } .pl-in.pl-text.pl-date { width: 132px; min-width: 0; }
 .pl-grid .dd-btn { max-width: 230px; }
 .pl-card { overflow-x: auto; max-width: 100%; min-width: 0; position: relative; }
+.pl-card.pl-card-fit { width: fit-content; }   /* таблица тура уже карточки — правый край карточки идёт за таблицей */
 .pl-tour .pl-in.pl-text.pl-city { width: 118px; } .pl-tour .dd-btn { max-width: 180px; } .pl-tour .pl-in.pl-sm { width: 90px; }
 .vtable.pl-tour td, .vtable.pl-tour th { padding: 6px 5px; }
 .vtable.pl-tour td:first-child, .vtable.pl-tour th:first-child { padding-left: 14px; }
@@ -7862,7 +7863,7 @@ function plTour(id) {
   if (!Object.keys(PLAN.cities).length) hints.push('Организационные затраты и комиссия касс — во вкладке <button class="pj-plain" data-pl="tab" data-tab="cities">«Города»</button>, логистика — в <button class="pj-plain" data-pl="tab" data-tab="regions">«Регионах»</button>.');
   if (!Object.keys(PLAN.venues).length) hints.push('Места в продаже, вал, аренда и пояса зала — в разделе <button class="pj-plain" data-pl="go-venues">«Площадки»</button>.');
   return head1 + sum + (hints.length ? plNote(hints.join(" ")) : '') + tools + cityList +
-    '<section class="card pl-card"><table class="vtable pl-grid pl-tour pl-flat" style="width:' + width + 'px">' + colgroup + th + '<tbody>' + body + '</tbody>' + foot + '</table>' + empty + '</section>' +
+    '<section class="card pl-card pl-card-fit"><table class="vtable pl-grid pl-tour pl-flat" style="width:' + width + 'px">' + colgroup + th + '<tbody>' + body + '</tbody>' + foot + '</table>' + empty + '</section>' +
     '<div style="margin-top:12px"><button class="btn-dark" data-pl="row-add">+ Город</button></div>';
 }
 function plPct(v) { return v == null || !isFinite(v) ? '—' : Math.round(v * 100) + '%'; }
