@@ -10,6 +10,9 @@
 //                        + реклама
 // Переменные издержки  = сборы × (РАО/ВОИС + налог + комиссия касс + агентские), %
 // Сборы                = вал × % от аншлага;  прибыль = сборы − переменные − постоянные
+// Распоясовка (если задана) — пояса: цена × билетов = вал пояса; сборы пояса = вал × заполняемость пояса (пусто — общий
+//                        % от аншлага); вал, мест и сборы даты — суммы по поясам (решение пользователя 12.10)
+// Рентабельность продаж = прибыль ÷ сборы;  окупаемость затрат = прибыль ÷ итоговые расходы;  эффективность слота = прибыль ÷ вал
 // ТБУ, билетов         = постоянные ÷ (средняя цена × (1 − переменные %))   — как в таблице
 var PLAN_DEFAULTS = {
   tax: 2,                                                    // налог, % от сборов
@@ -39,9 +42,16 @@ function planClass(profit, cfg) {
 //   org {transfer…other}, rent, logistics, ads, kassa (%), agent (%); cfg — параметры (налог, классы).
 function planCalc(x, cfg) {
   cfg = cfg || PLAN_DEFAULTS;
-  var n = planNum, gross = n(x.gross), seats = n(x.seats), fill = n(x.fill) / 100;
+  var n = planNum, gross = n(x.gross), seats = n(x.seats), fill = n(x.fill) / 100, sales, zones = null;
+  if (x.zones && x.zones.length) {   // распоясовка: вал, места и сборы — по поясам
+    gross = 0; seats = 0; sales = 0;
+    zones = x.zones.map(function (z) {
+      var zg = n(z.price) * n(z.seats), zf = z.fill != null && z.fill !== "" ? n(z.fill) / 100 : fill;
+      gross += zg; seats += n(z.seats); sales += zg * zf;
+      return { name: z.name || "", price: n(z.price), seats: n(z.seats), gross: zg, fill: zf * 100, own: z.fill != null && z.fill !== "", sales: zg * zf };
+    });
+  } else sales = gross * fill;
   var avg = seats > 0 ? gross / seats : 0;
-  var sales = gross * fill;
   var varPct = (x.rao_on ? n(x.rao) : 0) + n(cfg.tax) + n(x.kassa) + n(x.agent);
   var v = varPct / 100;
   var cities = Math.max(1, n(x.cities) || 1);
@@ -59,10 +69,12 @@ function planCalc(x, cfg) {
   var beTickets = net > 0 ? fixed / net : null;
   var cl = planClass(profit, cfg);
   return {
+    gross: gross, seats: seats, zones: zones, fillEff: gross > 0 ? sales / gross * 100 : n(x.fill),
     avg: avg, sales: sales, varPct: varPct, variable: variable, project: project, org: org, rent: n(x.rent), logistics: n(x.logistics), ads: n(x.ads),
     fixed: fixed, total: fixed + variable, revenue: revenue, profit: profit,
     beTickets: beTickets, beRub: beTickets == null ? null : beTickets * avg, beShare: beTickets == null || !seats ? null : beTickets / seats,
-    eff: gross > 0 ? profit / gross : null, cls: cl.cls, finScore: cl.score
+    eff: gross > 0 ? profit / gross : null, ros: sales > 0 ? profit / sales : null, roi: fixed + variable > 0 ? profit / (fixed + variable) : null,
+    cls: cl.cls, finScore: cl.score
   };
 }
 

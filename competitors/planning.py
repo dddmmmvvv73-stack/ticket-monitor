@@ -10,11 +10,13 @@
      "projects": {номер: {"title", "key", "fee", "cashless", "per_diem", "crew", "author", "rao_on", "rao", "moscow", "note"}},
      "regions":  {номер: {"title", "logistics", "note"}},
      "cities":   {город: {"region", "kassa", "org": {"transfer"…"other"}, "note"}},
-     "venues":   {ключ площадки «город|название»: {"city", "venue", "seats", "gross", "rent", "note"}},   ← раздел «Площадки»
+     "venues":   {ключ площадки «город|название»: {"city", "venue", "seats", "gross", "rent", "note",
+                  "zones": [{"name", "seats"}] — шаблон поясов зала}},   ← раздел «Площадки»
      "tours":    {номер: {"title", "project", "month", "status", "note", "rows": [строка]}}}
     строка тура: {"id", "city", "venue", "date", "days", "fill", "ads", "agent",
                   "ovr": {поле справочника: значение — правка в этой строке},
-                  "scores": {"comp", "ads", "attract", "market", "prep"}, "cannibal", "region_ban", "last_show", "decision", "note"}
+                  "scores": {"comp", "ads", "attract", "market", "prep"}, "cannibal", "region_ban", "last_show", "decision", "note",
+                  "zmode": вал по распоясовке, "zones": [{"name", "price", "seats", "fill" — своя заполняемость пояса}]}
 
     GET  /api/planning                      всё хранилище
     POST /api/planning  {"op": "put", "kind", "id", "data"}   запись целиком (проверяется по схеме)
@@ -117,7 +119,16 @@ VENUE = {"city": 100, "venue": 200, "seats": "int", "gross": "money", "rent": "m
 OVR = {"seats": "int", "gross": "money", "rent": "money", "logistics": "money", "kassa": "pct", "fee": "money", "cashless": "pct",
        "per_diem": "money", "crew": "int", "author": "money", "rao": "pct", "moscow": "money", **{o: "money" for o in ORG}}
 ROW = {"id": 24, "city": 100, "venue": 300, "date": "date", "days": "int", "fill": "pct", "ads": "money", "agent": "pct",
-       "cannibal": "bool", "region_ban": "bool", "last_show": "date", "decision": DECISIONS, "note": 1000}
+       "cannibal": "bool", "region_ban": "bool", "last_show": "date", "decision": DECISIONS, "note": 1000, "zmode": "bool"}
+ZONE = {"name": 60, "price": "money", "seats": "int", "fill": "pct"}
+ZONE_T = {"name": 60, "seats": "int"}
+
+
+def _zones(v, fields: dict, what: str) -> list:
+    """Пояса распоясовки: до 40, пустые строки (без названия, цены и мест) не храним."""
+    if not isinstance(v, list) or len(v) > 40:
+        raise PlanningError(f"{what}: до 40 поясов")
+    return [z for z in (_clean(x or {}, fields, what) for x in v) if z]
 TOUR = {"title": 200, "project": 24, "month": "date", "status": STATUSES, "note": 2000}
 
 
@@ -148,6 +159,8 @@ def _row(r: dict) -> dict:
     sc = _clean(r.get("scores") or {}, {k: "score" for k in SCORES}, "оценка")
     if sc:
         out["scores"] = sc
+    if r.get("zones"):
+        out["zones"] = _zones(r["zones"], ZONE, "распоясовка")
     return out
 
 
@@ -174,6 +187,8 @@ def _validate(kind: str, data: dict) -> dict:
         out = _clean(data, VENUE, "площадка")
         if not out.get("city") or not out.get("venue"):
             raise PlanningError("площадка: нужны город и название")
+        if data.get("zones"):
+            out["zones"] = _zones(data["zones"], ZONE_T, "пояса площадки")
         return out
     out = _clean(data, TOUR, "тур")
     if not out.get("title"):

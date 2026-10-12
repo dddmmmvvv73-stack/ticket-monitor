@@ -91,3 +91,24 @@ test("Без мест и вала — ТБУ нет, деления на нол�
   assert.equal(r.eff, null);
   assert.equal(r.profit, -100000);
 });
+
+test("Распоясовка: вал, места и сборы — по поясам; пустая заполняемость пояса — общий %", () => {
+  const zones = [{ name: "VIP", price: 6000, seats: 40, fill: 60 }, { name: "Партер", price: 4500, seats: 180 }, { name: "Балкон", price: 2500, seats: 156, fill: 95 }];
+  const r = planCalc({ zones, fill: 80, gross: 999, seats: 1 });   // вал и места площадки не используются
+  assert.equal(r.gross, 240000 + 810000 + 390000);
+  assert.equal(r.seats, 376);
+  near(r.sales, 240000 * 0.6 + 810000 * 0.8 + 390000 * 0.95, 1e-6);
+  near(r.avg, 1440000 / 376, 1e-9);
+  near(r.fillEff, r.sales / r.gross * 100, 1e-9);
+  assert.equal(r.zones[1].own, false);
+  assert.equal(r.zones[1].fill, 80);
+});
+
+test("Рентабельность продаж и окупаемость затрат", () => {
+  const r = planCalc({ gross: 1000000, seats: 500, fill: 100, fee: 600000 });
+  // сборы 1 000 000, переменные 2 % = 20 000, постоянные 600 000 → прибыль 380 000
+  assert.equal(r.profit, 380000);
+  near(r.ros, 0.38, 1e-12);
+  near(r.roi, 380000 / 620000, 1e-12);
+  assert.equal(planCalc({ fee: 1 }).ros, null);
+});
