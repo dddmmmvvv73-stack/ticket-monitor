@@ -108,8 +108,9 @@ def encrypt(src: Path, dst: Path) -> None:
                     "-pass", "env:TM_BACKUP_PASS"], check=True, env={**os.environ, "TM_BACKUP_PASS": passphrase()})
 
 
-def make_config() -> bool:
-    """Настройки (config/) → WORK/config-latest.tar.enc. False — с прошлого раза ничего не изменилось."""
+def make_config() -> str | None:
+    """Настройки (config/) → WORK/config-latest.tar.enc. Отпечаток — если изменились (отметить после удачной отправки:
+    mark_config), None — с прошлой отправки ничего не изменилось."""
     import hashlib
     files = sorted(p for p in (ROOT / "config").rglob("*") if p.is_file())
     h = hashlib.sha256()
@@ -118,16 +119,20 @@ def make_config() -> bool:
         h.update(p.read_bytes())
     sig, mark = h.hexdigest(), WORK / "config.sha256"
     if mark.exists() and mark.read_text() == sig and (WORK / CONFIG_FILE).exists():
-        return False
+        return None
     WORK.mkdir(parents=True, exist_ok=True)
     tmp = WORK / "config.tar.gz"
     with tarfile.open(tmp, "w:gz") as tar:
         tar.add(ROOT / "config", arcname="config")
     encrypt(tmp, WORK / CONFIG_FILE)
     tmp.unlink()
-    mark.write_text(sig)
     log("настройки изменились — копия config/ (%.1f МБ)" % ((WORK / CONFIG_FILE).stat().st_size / 1e6))
-    return True
+    return sig
+
+
+def mark_config(sig: str | None) -> None:
+    if sig:
+        (WORK / "config.sha256").write_text(sig)
 
 
 def make(day: str) -> Path:
@@ -203,14 +208,17 @@ def push() -> None:
 
 def main() -> None:
     if "--config" in sys.argv:   # каждый час: только настройки, только если изменились
-        if make_config():
+        sig = make_config()
+        if sig:
             push()
+            mark_config(sig)
         return
     day = datetime.now().strftime("%Y-%m-%d")
     make(day)
-    make_config()
+    sig = make_config()
     if "--local" not in sys.argv:
         push()
+        mark_config(sig)
 
 
 if __name__ == "__main__":
