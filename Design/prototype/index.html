@@ -654,6 +654,12 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pl-kv small { font: 500 12px/1 var(--sans, inherit); color: var(--muted); letter-spacing: 0; }
 .pl-kv small.pl-kx { margin-left: 6px; padding: 1px 6px; border-radius: 9999px; background: var(--line-soft); color: var(--ink-3); }
 .pl-ktg { display: flex; align-items: center; gap: 4px; overflow: visible; }
+.pl-kpi-in .pl-kv { display: flex; align-items: baseline; gap: 2px; overflow: visible; }
+.pl-kpi-in .pl-kv .pl-in { font: 600 19px/1.15 var(--display); height: 26px; padding: 0 1px; text-align: left; color: var(--ink); }
+.pl-kpi-in .pl-kv .pl-in::placeholder { color: var(--ink); opacity: 1; }
+.pl-kpi-in .pl-kv .pl-in:focus::placeholder { color: var(--ash); }
+.pl-kreset { font-size: 12px; margin-left: 2px; }
+@container (max-width: 480px) { .pl-kpi-in .pl-kv .pl-in { font-size: 17px; } }
 .pl-ktg .pl-in { height: 18px; font-size: 12px; text-align: left; color: var(--ink); padding: 0 1px; }
 .pl-cls-big { display: inline-block; min-width: 32px; text-align: center; border-radius: 6px; padding: 0 8px; font: 700 17px/1.35 var(--display); background: var(--line-soft); color: var(--ink-2); }
 .pl-cls-big.pl-cls-S { background: #dcfce7; color: #14532d; } .pl-cls-big.pl-cls-A { background: #e7f4ec; color: #166534; } .pl-cls-big.pl-cls-B { background: #dcebf8; color: #104a78; }
@@ -7677,6 +7683,7 @@ function plRowInputs(tour, row, scen) {
     per_diem: v("per_diem", pr.per_diem), crew: v("crew", pr.crew), days: row.days || 1, author: v("author", pr.author), rao_on: !!pr.rao_on, rao: v("rao", pr.rao),
     moscow: v("moscow", pr.moscow), cities: (tour.rows || []).length, org: org, rent: v("rent", vn.rent), logistics: v("logistics", rg.logistics), ads: row.ads,
     kassa: v("kassa", ct.kassa), agent: row.agent, target: row.target };
+  if (row.avg != null && !(row.zmode && row.zones && row.zones.length)) { x.gross = planNum(row.avg) * planNum(x.seats); src.gross = "avg"; }   // вал = введённая средняя цена × мест
   if (row.zmode && row.zones && row.zones.length)   // распоясовка; сценарий тура (50/70/90) — одна заполняемость для всех поясов
     x.zones = row.zones.map(function (z) { return scen != null && scen !== "" ? { name: z.name, price: z.price, seats: z.seats } : z; });
   return { x: x, src: src, refs: { project: pr, city: ct, region: rg, venue: vn } };
@@ -7848,7 +7855,7 @@ function plTour(id) {
       case "agent": return plFitIn(sg("agent"), r.agent, { label: "Агентские, %", ph: "—" });
       case "days": return plFitIn(sg("days"), r.days, { label: "Дней в городе", ph: 1 });
       case "seats": return k.seats ? num(k.seats) : '—';
-      case "avg": return k.avg ? plShort(k.avg) : '—';
+      case "avg": return r.zmode && r.zones && r.zones.length ? (k.avg ? num(Math.round(k.avg)) : '—') : plFitIn(sg("avg"), r.avg, { ph: k.avg ? Math.round(k.avg) : "—", label: "Средняя цена билета — вал пересчитается" });
       case "gross": return plShort(k.gross);
       case "sales": return plShort(k.sales);
       case "variable": return plShort(k.variable);
@@ -8015,7 +8022,11 @@ function plKpiTile(k, c, r, tid) {
     case "ros": return tile("Рентабельность", plPct(c.ros), neg(c.ros));
     case "roi": return tile("Окупаемость затрат", plPct(c.roi), neg(c.roi));
     case "beShare": return tile("ТБУ, % от аншлага", plPct(c.beShare), c.beShare != null && c.beShare > 1 ? ' pl-neg' : '');
-    case "avg": return tile("Средняя цена билета", c.avg ? money(c.avg) : "—");
+    case "avg":
+      if (r.zmode && r.zones && r.zones.length) return tile("Средняя цена билета", c.avg ? money(c.avg) : "—");   // по распоясовке — считается из поясов
+      return '<div class="pl-kpi pl-kpi-in" draggable="true" data-plkpi="avg" title="Впишите среднюю цену — вал пересчитается: цена × мест в продаже. Перетащите плитку, чтобы поменять порядок">' +
+        '<span class="pl-kl"><span class="pl-kl-full">Средняя цена билета</span><span class="pl-kl-short">Ср. цена</span>' + (r.avg != null ? ' <button class="pj-plain pl-kreset" data-pl="avg-reset" title="Вернуть вал площадки">↺</button>' : '') + '</span>' +
+        '<span class="pl-kv pl-flat">' + plFitIn("row|" + tid + "|" + r.id + "|avg", r.avg, { ph: c.avg ? Math.round(c.avg) : "цена", label: "Средняя цена билета, ₽ — вал пересчитается" }) + '<small> ₽</small></span></div>';
     case "seats": return tile("Мест в реализацию", c.seats ? num(c.seats) : "—");
     case "beT": return tile("ТБУ, билетов", c.beTickets == null ? "—" : num(Math.ceil(c.beTickets)) + '<small> бил.</small>');
     case "gross": return tile("Вал", money(c.gross));
@@ -8088,7 +8099,9 @@ function plOpenRow(rowId, keep) {
         '<div class="pl-line"><span class="pl-lbl">Дней в городе</span>' + plInput(rs("days"), r.days, { ph: 1, label: "Дней в городе", cls: "pl-sm" }) + '<span></span></div>' +
         line("Авторские", "author", x.author, prName) + line("Московские, на тур", "moscow", x.moscow, prName, p.moscow ? "÷ " + x.cities + " = " + plMoney(p.moscow) : "")) +
       grp("− Организационные", c.org, PLAN_ORG.map(function (o) { return line(o[1], o[0], x.org[o[0]], ctName); }).join("")) +
-      grp("− Аренда", c.rent, line("Аренда", "rent", x.rent, vnName) + (r.zmode ? '' : line("Мест в продаже", "seats", x.seats, vnName) + line("Вал площадки", "gross", x.gross, vnName))) +
+      grp("− Аренда", c.rent, line("Аренда", "rent", x.rent, vnName) + (r.zmode ? '' : line("Мест в продаже", "seats", x.seats, vnName) +
+        (r.avg != null ? '<div class="pl-line"><span class="pl-lbl">Вал = ' + num(planNum(r.avg)) + ' ₽ × ' + num(planNum(x.seats)) + ' мест</span><span class="num">' + plMoney(x.gross) + '</span><span class="pl-src"><button class="pj-plain" data-pl="avg-reset" title="Вернуть вал площадки">↺</button></span></div>'
+          : line("Вал площадки", "gross", x.gross, vnName)))) +
       grp("− Логистика", c.logistics, line("Логистика", "logistics", x.logistics, rgName)) +
       grp("− Реклама", c.ads, '<div class="pl-line"><span class="pl-lbl">Рекламный бюджет</span>' + plInput(rs("ads"), r.ads, { label: "Рекламный бюджет", cls: "pl-sm" }) + '<span></span></div>') +
       '<div class="pl-wl pl-tot"><span>Итоговые расходы</span><b class="num">' + plMoney(c.total) + '</b></div>' +
@@ -8235,7 +8248,7 @@ function plSetPath(obj, path, val) {
   for (var i = 0; i < p.length - 1; i++) { if (o[p[i]] == null || typeof o[p[i]] !== "object") o[p[i]] = /^\d+$/.test(p[i + 1]) ? [] : {}; o = o[p[i]]; }
   if (val === null || val === "") delete o[p[p.length - 1]]; else o[p[p.length - 1]] = val;
 }
-var PL_NUM = /^(target|fee|cashless|per_diem|crew|author|rao|moscow|logistics|kassa|seats|gross|rent|days|fill|ads|agent|tax|base|ban_months|org\.\w+|scenarios\.\d|classes\.\d|weights\.\w+|transfer|hotel|tech|catering|loaders|security|services|other)$/;
+var PL_NUM = /^(avg|target|fee|cashless|per_diem|crew|author|rao|moscow|logistics|kassa|seats|gross|rent|days|fill|ads|agent|tax|base|ban_months|org\.\w+|scenarios\.\d|classes\.\d|weights\.\w+|transfer|hotel|tech|catering|loaders|security|services|other)$/;
 function plValue(el, field) {
   if (el.type === "checkbox") return el.checked;
   var v = el.value.trim();
@@ -8275,7 +8288,8 @@ function plChange(el) {
     else {
       var row = (t.rows || []).filter(function (x) { return x.id === p[2]; })[0]; if (!row) return;
       var fld = p[3], val = plValue(el, fld);
-      if (kind === "ovr") { row.ovr = row.ovr || {}; if (val == null) delete row.ovr[fld]; else row.ovr[fld] = val; if (!Object.keys(row.ovr).length) delete row.ovr; }
+      if (kind === "ovr") { row.ovr = row.ovr || {}; if (val == null) delete row.ovr[fld]; else row.ovr[fld] = val; if (fld === "gross" && val != null) delete row.avg; if (!Object.keys(row.ovr).length) delete row.ovr; }
+      else if (fld === "avg") { if (val == null) delete row.avg; else { row.avg = val; if (row.ovr) { delete row.ovr.gross; if (!Object.keys(row.ovr).length) delete row.ovr; } } }
       else if (fld === "city") { row.city = val || ""; if (row.venue && row.venue.split("|")[0] !== row.city) delete row.venue; }
       else { if (fld === "fill" && val != null) val = Math.max(0, Math.min(100, val)); plSetPath(row, fld, val); }
     }
@@ -8295,6 +8309,7 @@ function plAction(b) {
   var a = b.getAttribute("data-pl"), id = b.getAttribute("data-id"), copy = function (o) { return JSON.parse(JSON.stringify(o || {})); };
   if (a === "tab") { S.pl.tab = b.getAttribute("data-tab"); S.pl.tour = null; closeDrawer(); render(); }
   else if (a === "cols") { S.pl.cols = !S.pl.cols; render(); }
+  else if (a === "avg-reset") { var ta = copy(PLAN.tours[S.pl.tour]), ra = (ta.rows || []).filter(function (x) { return x.id === S.pl.row; })[0]; if (!ra) return; delete ra.avg; plPut("tours", S.pl.tour, ta, "Вал — снова из площадки"); }
   else if (a === "map-layer") { var mlp = plMapPrefs(), mk2 = b.getAttribute("data-k"); mlp[mk2] = !mlp[mk2]; PL_PREFS.mapl = mlp; plPrefsSave(); var y1m = window.scrollY; render(); window.scrollTo(0, y1m); }
   else if (a === "map-replace" || a === "map-add") {
     var tm = copy(PLAN.tours[S.pl.tour]), city = b.getAttribute("data-city"); tm.rows = tm.rows || [];
