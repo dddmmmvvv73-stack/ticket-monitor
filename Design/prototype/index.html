@@ -677,7 +677,25 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pl-pin { cursor: pointer; font-size: 12px; }
 .pl-map-layers { margin: 0; align-items: center; }
 .pl-gm-tools { display: flex; gap: 10px 18px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
-.pl-gm-period { margin-left: auto; } .pl-gm-period b { font-weight: 600; color: var(--ink); }
+.pl-gm-period { margin-left: auto; }
+.tb-head, .tb-tools { display: flex; gap: 10px 16px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
+.tb-tools .pl-sm { width: 76px; } .tb-tools .pl-lab { white-space: nowrap; }
+.tb-editor { padding: 16px; display: grid; gap: 12px; }
+.tb-meta { display: flex; gap: 10px 24px; flex-wrap: wrap; }
+.tb-text { width: 100%; box-sizing: border-box; font: 14px/1.5 inherit; font-family: inherit; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); resize: vertical; }
+.tb-text:focus { outline: 2px solid #1d6fae; outline-offset: 0; }
+.tb-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tb-parsed { margin-top: 12px; } .tb-sum { display: flex; gap: 6px 16px; flex-wrap: wrap; align-items: baseline; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.tb-ptable td { vertical-align: top; } .tb-ptable .tb-in { width: 100%; min-width: 120px; text-align: left; }
+.tb-line { max-width: 420px; font-size: 13px; } .tb-fix { color: #b45309; } tr.tb-dim td { opacity: .6; }
+.tb-info { display: flex; gap: 8px 22px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; font-size: 14px; }
+.tb-info i, .tb-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: 0; }
+.tb-warn { color: #b45309; font-size: 13px; }
+.tb-st { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; white-space: nowrap; margin-right: 8px; } .tb-st::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c); }
+.tb-list td, .tb-list th { vertical-align: top; } .tb-ck { width: 28px; } .tb-vname { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: auto; }
+.tb-win { color: #15803d; } .tb-list tr.sel > * { background: #eaf2fa; }
+.tb-selbar { position: sticky; top: 8px; z-index: 5; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--soot); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+.tb-selbar[hidden] { display: none; } .pl-gm-period b { font-weight: 600; color: var(--ink); }
 .pl-gm-regbtn { height: 32px; padding: 0 12px; font-size: 13px; } .pl-gm-regbtn[aria-expanded="true"] { border-color: var(--soot); }
 .pl-gm-reg { padding: 12px 14px; margin-bottom: 10px; }
 .pl-gm-reg-head { display: flex; gap: 8px 14px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; } .pl-gm-reg-head .pl-in { width: 220px; max-width: 100%; text-align: left; }
@@ -1551,6 +1569,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <script src="site-data.js"></script>
 <script src="project-rating.js"></script>
 <script src="plan-model.js"></script>
+<script src="tour-parse.js"></script>
 <script src="market-pop.js"></script>
 <script src="venue-cap.js"></script>
 <script>
@@ -7669,10 +7688,10 @@ $("view").addEventListener("change", function (ev) {
 // можно переписать в строке (правка видна и сбрасывается). Формулы — plan-model.js (planCalc), тест — tests/plan-model.test.js.
 // Хранение — config/planning.json на сервере (competitors/planning.py, вне git); прототип файлом — в браузере.
 var PL_KEY = "ticketmonitor.prototype.planning";
-var PLAN = { params: {}, projects: {}, regions: {}, cities: {}, venues: {}, tours: {} };
+var PLAN = { params: {}, projects: {}, regions: {}, cities: {}, venues: {}, tours: {}, lists: {} };
 if (!CAN_SAVE) { try { var plSaved = JSON.parse(localStorage.getItem(PL_KEY)); if (plSaved) PLAN = Object.assign(PLAN, plSaved); } catch (e) { /* записей ещё нет */ } }
 S.pl = { tab: "tours", tour: null, row: null, scen: "", adding: false };
-var PL_TABS = [["tours", "Туры"], ["map", "Карта"], ["projects", "Проекты"], ["cities", "Города"], ["regions", "Регионы"], ["params", "Параметры"]];
+var PL_TABS = [["tours", "Туры"], ["build", "Построение гастролей"], ["map", "Карта"], ["projects", "Проекты"], ["cities", "Города"], ["regions", "Регионы"], ["params", "Параметры"]];
 var PL_STATUS = ["Черновик", "Планируется", "В процессе", "Подтверждён", "Отменён"];
 var PL_DECISION = ["", "В работу", "Отмена", "Замена города", "Перенос месяца", "Замена площадки"];
 function plLoad() {
@@ -7768,13 +7787,14 @@ function renderPlanning() {
   var tab = S.pl.tab, body;
   if (tab === "projects") body = plProjects();
   else if (tab === "map") body = plMapTab();
+  else if (tab === "build") body = plBuild();
   else if (tab === "cities") body = plCities();
   else if (tab === "regions") body = plRegions();
   else if (tab === "params") body = plParams();
   else body = S.pl.tour && PLAN.tours[S.pl.tour] ? plTour(S.pl.tour) : plTours();
   return head("Планирование", "Финансовая модель туров — ручной ввод. Места в продаже, вал и аренда площадок — в разделе «Площадки».") +
     '<div class="mtabs subtabs" role="tablist" aria-label="Разделы планирования">' + PL_TABS.map(function (t) {
-      return '<button role="tab" data-pl="tab" data-tab="' + t[0] + '" aria-selected="' + (tab === t[0]) + '">' + t[1] + (t[0] !== "tours" && t[0] !== "params" && t[0] !== "map" ? ' <span class="sub2">' + Object.keys(PLAN[t[0]] || {}).length + '</span>' : '') + '</button>';
+      return '<button role="tab" data-pl="tab" data-tab="' + t[0] + '" aria-selected="' + (tab === t[0]) + '">' + t[1] + (t[0] !== "tours" && t[0] !== "params" && t[0] !== "map" ? ' <span class="sub2">' + Object.keys(PLAN[t[0] === "build" ? "lists" : t[0]] || {}).length + '</span>' : '') + '</button>';
     }).join("") + '</div>' + body;
 }
 function plNote(html) { return '<div class="note" style="margin-top:0">' + html + '</div>'; }
@@ -8154,6 +8174,325 @@ function plGmLogi(map, layer, c, st) {   // логистика от города
     });
 }
 
+// ---------- «Планирование → Построение гастролей» (запрос пользователя 13.10): продюсер присылает города и даты, где проект
+// уже работает в сезоне; список вставляется как есть (разбор — tour-parse.js, проверка и правка — здесь), сохраняется за
+// проектом (PLAN.lists). Два источника: список продюсера и наша база касс (даты проекта в афише рынка), плюс «был недавно»
+// (архив и даты до сезона — за «бан, мес.» из «Параметров»). Сезон — календарь «Даты» в шапке. Свободные города — списком
+// (области, население, вместимость зала, расстояние до гастролей, логистика: трансфер до 500 км, поезд — до ~24 ч,
+// дальше — авиа) и на карте; выбранные — «Создать тур» в «Туры».
+var TB_ST = { prod: ["работает — продюсер", "#ea580c"], base: ["работает — наша база", "#b91c1c"], recent: ["был недавно", "#a8a29e"], free: ["свободен", "#1d6fae"] };
+var TB_ROW_ST = [["ok", "выступление"], ["maybe", "под вопросом"], ["nodate", "без даты"], ["transit", "переезд"], ["other", "другой спектакль"], ["note", "заметка"], ["title", "название"]];
+var TB_TRANSFER = 500, TB_TRAIN = 1100;   // км по прямой: трансфер; поезд ≈ 24 ч (путь по ж/д ≈ 1,3 × по прямой, ~60 км/ч)
+var TB_LOGI = [["transfer", "Трансфер ≤ 500 км"], ["train", "Поезд ≤ 24 ч"], ["avia", "Авиа"]];
+S.pl.tb = { list: null, draft: null, view: "list", sel: {}, regOpen: false, regQ: "" };
+function tbPrefs() {
+  var p = Object.assign({ show: "free", km: "", all: false, sort: "near", offReg: {}, logi: { transfer: true, train: true, avia: true },
+    layers: { prod: true, base: true, recent: true, free: true, route: true, logi: false } }, PL_PREFS.tb || {});
+  p.offReg = p.offReg || {}; p.logi = Object.assign({ transfer: true, train: true, avia: true }, p.logi || {});
+  p.layers = Object.assign({ prod: true, base: true, recent: true, free: true, route: true, logi: false }, p.layers || {});
+  return p;
+}
+function tbSave(p) { PL_PREFS.tb = p; plPrefsSave(); }
+function tbRe() { var y = window.scrollY; render(); window.scrollTo(0, y); }
+var TB_CITIES = null;
+function tbCities() {   // справочник городов для разбора и подсказок: города рынка + города от 20 тыс. жителей
+  if (!TB_CITIES) { var o = {}; (MK.cities || []).forEach(function (c) { o[c] = 1; }); if (typeof MPOP !== "undefined") Object.keys(MPOP).forEach(function (c) { o[c] = 1; }); TB_CITIES = Object.keys(o).sort(function (a, b) { return a.localeCompare(b, "ru"); }); }
+  return TB_CITIES;
+}
+var TB_PROJ = null;
+function tbProjects() {   // названия проектов афиши для подсказки (по числу дат)
+  if (!TB_PROJ) { var n = {}, t = {}; MR.forEach(function (e) { if (!e.pk) return; n[e.pk] = (n[e.pk] || 0) + 1; if (!t[e.pk]) t[e.pk] = e.title; });
+    TB_PROJ = Object.keys(n).filter(function (k) { return n[k] >= 2; }).sort(function (a, b) { return n[b] - n[a]; }).slice(0, 4000).map(function (k) { return t[k]; }); }
+  return TB_PROJ;
+}
+function tbCur() { var t = S.pl.tb; return t.draft || (t.list && PLAN.lists && PLAN.lists[t.list]) || null; }
+function tbLogi(d) { return d == null ? "" : d <= TB_TRANSFER ? "transfer" : d <= TB_TRAIN ? "train" : "avia"; }
+function tbLogiText(d) {
+  var k = tbLogi(d); if (!k) return '<span class="muted">—</span>';
+  return k === "transfer" ? 'трансфер · ' + num(d) + ' км' : k === "train" ? 'поезд ≈ ' + Math.max(1, Math.round(d * 1.3 / 60)) + ' ч' : 'авиа · ' + num(d) + ' км';
+}
+function plCityVenues(c) {   // площадки города: из афиши и вписанные в «Площадках»; вместимость — вписанная, иначе по схемам касс
+  var vn = {}; (MR_CITY[c] || []).forEach(function (e) { vn[e.venue] = 1; }); Object.keys(PLAN.venues).forEach(function (k) { if (PLAN.venues[k].city === c) vn[PLAN.venues[k].venue] = 1; });
+  return Object.keys(vn).map(function (v) { var cp = plVenueCap(c, v); return { name: v, cap: cp ? cp.cap : null, src: cp ? cp.src : "", rent: (PLAN.venues[plVenueKey(c, v)] || {}).rent }; })
+    .sort(function (a, b) { return (b.cap || 0) - (a.cap || 0); });
+}
+// Сведение: статус каждого города, ближайший город гастролей, логистика
+function tbAnalyze(list, p) {
+  var rg = mRange(), from = rg[0], to = rg[1], key = list.project ? canonPk(projKey(list.project)) : "";
+  var banFrom = (function () { var d = new Date(from + "T00:00:00Z"); d.setUTCMonth(d.getUTCMonth() - (plCfg().ban_months || 13)); return d.toISOString().slice(0, 10); })();
+  var prod = {}, base = {}, recent = {}, stops = [], out = 0;
+  (list.rows || []).forEach(function (r) {
+    if (!r.city || ["ok", "maybe", "nodate"].indexOf(r.status) < 0) return;
+    if (r.date && (r.date < from || r.date > to)) { out++; return; }
+    (prod[r.city] = prod[r.city] || []).push(r);
+    if (r.date) stops.push({ city: r.city, date: r.date, src: "prod" });
+  });
+  var nb = 0;
+  if (key) {
+    MR.forEach(function (e) {
+      if (e.pk !== key || e.offList) return;
+      if (e.date >= from && e.date <= to) { (base[e.city] = base[e.city] || []).push(e); stops.push({ city: e.city, date: e.date, src: "base" }); nb++; }
+      else if (e.date < from && e.date >= banFrom) (recent[e.city] = recent[e.city] || []).push(e.date);
+    });
+    MA.forEach(function (a) { if (a.pk === key && a.date >= banFrom && a.date < from) (recent[a.city] = recent[a.city] || []).push(a.date); });
+  }
+  stops.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+  var uni = {}; (MK.cities || []).forEach(function (c) { uni[c] = 1; });
+  if (p.all && typeof MPOP !== "undefined") Object.keys(MPOP).forEach(function (c) { uni[c] = 1; });
+  [prod, base, recent].forEach(function (o) { Object.keys(o).forEach(function (c) { uni[c] = 1; }); });
+  var stopLL = stops.map(function (s) { return { s: s, ll: plLL(s.city) }; }).filter(function (x) { return x.ll; });
+  var rows = [];
+  Object.keys(uni).forEach(function (c) {
+    var ll = plLL(c); if (!ll) return;
+    var st = prod[c] ? "prod" : base[c] ? "base" : recent[c] ? "recent" : "free", near = null, win = null;
+    stopLL.forEach(function (x) { if (x.s.city === c) return; var d = plKm(c, x.s.city); if (d != null && (!near || d < near.d)) near = { d: d, city: x.s.city, date: x.s.date }; });
+    for (var i = 0; i + 1 < stops.length && st === "free"; i++) {   // окно в маршруте: между соседними датами свободный день и небольшой крюк
+      var A = stops[i], B = stops[i + 1], gap = dDiff(A.date, B.date), ab = plKm(A.city, B.city), ac = plKm(A.city, c), cb = plKm(c, B.city);
+      if (gap < 2 || gap > 14 || ab == null || ac == null || cb == null) continue;
+      var det = ac + cb - ab;
+      if (det <= Math.max(80, Math.min(250, ab * 0.4)) && (!win || det < win.det)) win = { det: det, a: A, b: B };
+    }
+    var vs = plCityVenues(c), pop = typeof MPOP !== "undefined" && MPOP[c] ? MPOP[c][0] : null;
+    var comp = (MR_CITY[c] || []).filter(function (e) { return e.date >= from && e.date <= to && !e.offList; }).length;
+    rows.push({ city: c, ll: ll, st: st, prod: prod[c] || [], base: base[c] || [], recent: recent[c] || [], reg: typeof MREG !== "undefined" ? MREG.city[c] || "" : "",
+      pop: pop, venues: vs, maxCap: vs.length && vs[0].cap ? vs[0].cap : null, near: near, win: win, comp: comp, logi: near ? tbLogi(near.d) : "" });
+  });
+  var baseOnly = Object.keys(base).filter(function (c) { return !prod[c]; });
+  return { rows: rows, stops: stops, key: key, nb: nb, out: out, baseOnly: baseOnly, from: from, to: to };
+}
+function tbFilter(rows, p) {   // фильтры списка и карты; города гастролей (продюсер, база) не скрываются областями
+  var n = function (v) { return v == null || v === "" ? null : planNum(v); };
+  var pmin = n(p.popMin), pmax = n(p.popMax), cmin = n(p.capMin), cmax = n(p.capMax), km = n(p.km);
+  return rows.filter(function (r) {
+    var busy = r.st === "prod" || r.st === "base";
+    if (!busy && r.reg && p.offReg[r.reg]) return false;
+    if (busy) return true;
+    if (p.show === "free" && r.st !== "free") return false;
+    if (pmin != null && (r.pop || 0) < pmin) return false;
+    if (pmax != null && r.pop != null && r.pop > pmax) return false;
+    if (cmin != null && (r.maxCap == null || r.maxCap < cmin)) return false;
+    if (cmax != null && r.maxCap != null && r.venues.every(function (v) { return v.cap == null || v.cap > cmax; })) return false;
+    if (km != null && (!r.near || r.near.d > km)) return false;
+    if (r.logi && !p.logi[r.logi]) return false;
+    return true;
+  });
+}
+function tbStatusText(r) {
+  var d = function (l) { return l.slice(0, 3).map(function (x) { return x.date ? human(x.date) : "без даты"; }).join(", ") + (l.length > 3 ? " и ещё " + (l.length - 3) : ""); };
+  var parts = [];
+  if (r.prod.length) parts.push('<span class="tb-st" style="--c:' + TB_ST.prod[1] + '">продюсер: ' + esc(d(r.prod)) + (r.prod.some(function (x) { return x.status === "maybe"; }) ? ' (?)' : '') + '</span>');
+  if (r.base.length) parts.push('<span class="tb-st" style="--c:' + TB_ST.base[1] + '">база: ' + esc(d(r.base)) + '</span>');
+  if (r.recent.length) parts.push('<span class="tb-st" style="--c:' + TB_ST.recent[1] + '">был ' + esc(human(r.recent.sort().slice(-1)[0])) + '</span>');
+  return parts.length ? parts.join(" ") : '<span class="tb-st" style="--c:' + TB_ST.free[1] + '">свободен</span>';
+}
+function plBuild() {
+  if (typeof MREG === "undefined" && !S.pl.tbRegLoad) { S.pl.tbRegLoad = true; anLoad(function () { if (S.view === "planning" && S.pl.tab === "build") tbRe(); }); }   // области городов — из market-regions.js
+  var t = S.pl.tb, lists = PLAN.lists || {}, ids = Object.keys(lists).sort(function (a, b) { return (lists[b].upd || "") < (lists[a].upd || "") ? -1 : 1; });
+  if (!t.draft && t.list && !lists[t.list]) t.list = null;
+  if (!t.draft && !t.list && ids.length) t.list = ids[0];
+  var head = '<div class="tb-head pl-flat">' +
+    (ids.length ? '<label class="pl-lab">Список ' + plSelect("tb|list", t.draft ? "" : t.list, (t.draft ? [["", "— новый —"]] : []).concat(ids.map(function (id) { return [id, lists[id].title]; })), "Список продюсера") + '</label>' : '') +
+    (t.draft ? '' : '<button class="btn-dark" data-pl="tb-new">+ Новый список</button>' + (t.list ? '<button class="btn-ghost" data-pl="tb-edit">Изменить список</button><button class="btn-ghost" data-pl="tb-del">Удалить</button>' : '')) +
+    '<span style="flex-grow:1"></span><span class="sub2 pl-gm-period" title="Сезон — кнопка «Даты» в шапке: месяц или несколько месяцев подряд">Сезон: <b>' + esc(periodLabel()) + '</b> — «Даты» в шапке</span></div>';
+  if (t.draft) return head + tbEditor(t.draft);
+  var L = tbCur();
+  if (!L) return head + '<div class="empty" style="margin-top:16px"><h2>Списков пока нет</h2><p style="margin:0 0 12px">Вставьте список городов и дат от продюсера как есть — из письма, мессенджера или таблицы. Программа разберёт строки, сверит с нашей базой касс и покажет свободные города.</p><button class="btn-dark" data-pl="tb-new">+ Новый список</button></div>';
+  return head + tbResults(L);
+}
+function tbEditor(d) {
+  var rows = d.rows || [], cnt = {}; rows.forEach(function (r) { cnt[r.status] = (cnt[r.status] || 0) + 1; });
+  var dl = '<datalist id="tbCityList">' + tbCities().map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + '</datalist>' +
+    '<datalist id="tbProjList">' + tbProjects().map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + '</datalist>';
+  var table = rows.length ? '<section class="card pl-card tb-parsed"><div class="tb-sum">' + TB_ROW_ST.filter(function (s) { return cnt[s[0]]; }).map(function (s) { return '<span><b>' + cnt[s[0]] + '</b> ' + s[1] + '</span>'; }).join("") +
+      '<span class="sub2">Проверьте строки: город и дату можно поправить, статус — выбрать. В расчёт идут «выступление», «под вопросом» и «без даты».</span></div>' +
+    '<table class="vtable tb-ptable"><thead><tr><th scope="col">Как написано</th><th scope="col">Город</th><th scope="col">Дата</th><th scope="col">Статус</th></tr></thead><tbody>' +
+    rows.map(function (r, i) {
+      var dim = ["note", "title", "other", "transit"].indexOf(r.status) >= 0;
+      return '<tr class="' + (dim ? 'tb-dim' : '') + '"><td class="tb-line">' + esc(r.line || "") + (r.fix ? '<div class="sub2 tb-fix">' + (r.fix === "опечатка" ? 'исправлено: «' + esc(r.raw) + '» → ' + esc(r.city) : 'район: «' + esc(r.raw) + '» → ' + esc(r.city)) + '</div>' : '') +
+          (r.other ? '<div class="sub2">другой спектакль: ' + esc(r.other) + '</div>' : '') + (r.note ? '<div class="sub2">' + esc(r.note) + '</div>' : '') + '</td>' +
+        '<td><input class="pl-in pl-text tb-in" list="tbCityList" data-tbr="' + i + '|city" value="' + esc(r.city || "") + '" aria-label="Город, строка ' + (i + 1) + '" placeholder="—"></td>' +
+        '<td><input class="pl-in pl-text tb-in" type="date" data-tbr="' + i + '|date" value="' + esc(r.date || "") + '" aria-label="Дата, строка ' + (i + 1) + '">' + (r.date2 ? '<div class="sub2">по ' + human(r.date2) + '</div>' : '') + (r.time ? '<div class="sub2">' + esc(r.time) + '</div>' : '') + '</td>' +
+        '<td><select class="pl-sel" data-tbr="' + i + '|status" aria-label="Статус, строка ' + (i + 1) + '">' + TB_ROW_ST.map(function (s) { return '<option value="' + s[0] + '"' + (r.status === s[0] ? ' selected' : '') + '>' + s[1] + '</option>'; }).join("") + '</select></td></tr>';
+    }).join("") + '</tbody></table></section>' : '';
+  return dl + '<section class="card pl-card tb-editor"><div class="tb-meta pl-flat">' +
+      '<label class="pl-lab">Название <input class="pl-in pl-text" id="tbTitle" value="' + esc(d.title || "") + '" placeholder="например, «Призрак Оперы — сезон 26/27»" style="min-width:280px"></label>' +
+      '<label class="pl-lab">Проект в афише <input class="pl-in pl-text" id="tbProject" list="tbProjList" value="' + esc(d.project || "") + '" placeholder="название, как в «Мероприятиях»" style="min-width:260px" title="По нему ищем даты проекта в нашей базе касс"></label></div>' +
+    '<textarea id="tbText" class="tb-text" rows="10" placeholder="Вставьте список от продюсера как есть, например:&#10;Тольятти - 1 февраля&#10;Самара - 2 февраля&#10;11 января 2027 Призрак Оперы Салехард">' + esc(d.text || "") + '</textarea>' +
+    '<div class="tb-actions"><button class="btn-dark" data-pl="tb-parse">Разобрать</button>' + (rows.length ? '<button class="btn-dark" data-pl="tb-save">Сохранить список</button>' : '') + '<button class="btn-ghost" data-pl="tb-cancel">Отмена</button>' +
+      '<span class="sub2">Даты без года — ближайшие будущие. Строки чата («01:06 PM ред.») пропускаются.</span></div></section>' + table;
+}
+function tbResults(L) {
+  var p = tbPrefs(), A = tbAnalyze(L, p), all = A.rows, vis = tbFilter(all, p), t = S.pl.tb;
+  S.pl.tbCtx = { A: A, vis: vis, visMap: tbFilter(all, Object.assign({}, p, { show: "all" })), p: p };   // на карте — все статусы, слоями
+  var prodN = all.filter(function (r) { return r.st === "prod"; }).length, baseN = all.filter(function (r) { return r.base.length; }).length;
+  var shows = (L.rows || []).filter(function (r) { return r.city && (r.status === "ok" || r.status === "maybe"); }).length;
+  var free = vis.filter(function (r) { return r.st === "free"; });
+  var info = '<div class="tb-info">' +
+    '<span><i style="background:' + TB_ST.prod[1] + '"></i><b>' + prodN + '</b> ' + plural(prodN, "город", "города", "городов") + ' у продюсера · ' + shows + ' ' + plural(shows, "выступление", "выступления", "выступлений") + (A.out ? ' <span class="sub2">(' + A.out + ' вне сезона)</span>' : '') + '</span>' +
+    '<span><i style="background:' + TB_ST.base[1] + '"></i>' + (A.key ? '<b>' + baseN + '</b> ' + plural(baseN, "город", "города", "городов") + ' по нашей базе · ' + A.nb + ' ' + plural(A.nb, "дата", "даты", "дат") : '<span class="muted">проект в афише не указан — базу не сверяем</span>') + '</span>' +
+    (A.baseOnly.length ? '<span class="tb-warn" title="Даты проекта есть в кассах, а в списке продюсера этих городов нет">нет у продюсера, есть в кассах: ' + esc(A.baseOnly.slice(0, 6).join(", ")) + (A.baseOnly.length > 6 ? " и ещё " + (A.baseOnly.length - 6) : "") + '</span>' : '') +
+    '<span><i style="background:' + TB_ST.free[1] + '"></i><b>' + free.length + '</b> ' + plural(free.length, "свободный город", "свободных города", "свободных городов") + ' по фильтрам</span></div>';
+  var seg = function (k, opts, cur) { return '<div class="seg" role="group">' + opts.map(function (o) { return '<button data-pl="tb-set" data-k="' + k + '" data-v="' + o[0] + '" aria-pressed="' + (String(cur) === String(o[0])) + '">' + o[1] + '</button>'; }).join("") + '</div>'; };
+  var nOff = Object.keys(p.offReg).length;
+  var tools = '<div class="tb-tools pl-flat">' + seg("view", [["list", "Список"], ["map", "Карта"]], t.view) + seg("show", [["free", "Свободные"], ["all", "Все города"]], p.show) +
+      '<button class="btn-ghost pl-gm-regbtn" data-pl="tb-reg" aria-expanded="' + !!t.regOpen + '">Области: ' + (nOff ? 'скрыто ' + nOff : 'все') + ' <span aria-hidden="true">▾</span></button>' +
+      '<label class="pl-lab">Жителей от ' + plInput("tb|popMin", p.popMin, { label: "Жителей от", cls: "pl-sm", ph: "—" }) + ' до ' + plInput("tb|popMax", p.popMax, { label: "Жителей до", cls: "pl-sm", ph: "—" }) + '</label>' +
+      '<label class="pl-lab">Зал от ' + plInput("tb|capMin", p.capMin, { label: "Мест в зале от", cls: "pl-sm", ph: "—" }) + ' до ' + plInput("tb|capMax", p.capMax, { label: "Мест в зале до", cls: "pl-sm", ph: "—" }) + '</label>' +
+      '<label class="pl-lab">До гастролей ' + plSelect("tb|km", p.km, [["", "любое"], [150, "≤ 150 км"], [300, "≤ 300 км"], [500, "≤ 500 км"], [800, "≤ 800 км"], [1100, "≤ 1 100 км"], [2000, "≤ 2 000 км"]], "Расстояние до ближайшего города гастролей") + '</label>' +
+    '</div><div class="tb-tools pl-flat"><div class="an-layers" role="group" aria-label="Логистика">' + TB_LOGI.map(function (x) { return '<button class="an-layer" data-pl="tb-logi" data-k="' + x[0] + '" aria-pressed="' + !!p.logi[x[0]] + '">' + x[1] + '</button>'; }).join("") + '</div>' +
+      '<button class="an-layer" data-pl="tb-all" aria-pressed="' + !!p.all + '" title="Кроме 344 городов рынка — все города от 20 тыс. жителей (у многих нет данных о залах)">+ все города от 20 тыс.</button>' +
+      (t.view === "list" ? '<label class="pl-lab" style="margin-left:auto">Сортировка ' + plSelect("tb|sort", p.sort, [["near", "ближе к гастролям"], ["pop", "население"], ["cap", "вместимость зала"], ["comp", "меньше конкуренции"], ["name", "по алфавиту"]], "Сортировка") + '</label>' : '') + '</div>' +
+    (t.regOpen ? tbRegPanel(p) : '');
+  var nsel = Object.keys(t.sel).length;
+  var selBar = '<div class="tb-selbar"' + (nsel ? '' : ' hidden') + '><b>Выбрано: ' + nsel + '</b> <span class="sub2">' + esc(Object.keys(t.sel).slice(0, 8).join(", ")) + (nsel > 8 ? "…" : "") + '</span><span style="flex-grow:1"></span>' +
+    '<button class="btn-dark" data-pl="tb-tour">Создать тур из выбранных</button><button class="btn-ghost" data-pl="tb-unsel">Снять выбор</button></div>';
+  return info + tools + selBar + (t.view === "map" ? tbMapHtml(A, vis, p) : tbListHtml(vis, p)) +
+    '<p class="sub2" style="margin:8px 0 0">Логистика — от ближайшего города гастролей, по прямой: трансфер — до ' + TB_TRANSFER + ' км, поезд — примерно до 24 ч (путь по железной дороге ≈ 1,3 × по прямой, ~60 км/ч), дальше — авиа. ' +
+      '«Был недавно» — проект был в городе за ' + (plCfg().ban_months || 13) + ' мес. до начала сезона (архив гастролей и даты до сезона). Наша база видит около 40 % мероприятий площадок, которые продают билеты сами.</p>';
+}
+function tbListHtml(vis, p) {
+  var rows = vis.slice(), t = S.pl.tb, by = { near: function (r) { return r.near ? r.near.d : 1e9; }, pop: function (r) { return -(r.pop || 0); }, cap: function (r) { return -(r.maxCap || 0); }, comp: function (r) { return r.comp; } }[p.sort];
+  var rank = { prod: 0, base: 1, recent: 2, free: 3 };
+  rows.sort(function (a, b) { return p.sort === "name" ? a.city.localeCompare(b.city, "ru") : (p.show === "all" && rank[a.st] !== rank[b.st] ? rank[a.st] - rank[b.st] : by(a) - by(b)); });
+  if (p.show === "free") rows = rows.filter(function (r) { return r.st === "free"; });
+  if (!rows.length) return '<div class="empty" style="margin-top:12px"><h2>Городов нет</h2><p style="margin:0">Ослабьте фильтры: области, население, зал, расстояние или логистику.</p></div>';
+  var shown = rows.slice(0, t.limit || 300);
+  return '<section class="card pl-card tb-list"><table class="vtable"><thead><tr><th scope="col" class="tb-ck"><span class="sr-only">Выбрать</span></th><th scope="col">Город</th><th scope="col">Область</th><th scope="col" class="r">Жителей</th><th scope="col" class="r">Самый большой зал</th>' +
+      '<th scope="col">Ближайший город гастролей</th><th scope="col">Логистика</th><th scope="col" class="r" title="Мероприятий в городе за сезон по афише рынка">Конкуренция</th>' + (p.show === "all" ? '<th scope="col">Статус</th>' : '') + '</tr></thead><tbody>' +
+    shown.map(function (r) {
+      var v0 = r.venues[0];
+      return '<tr class="' + (t.sel[r.city] ? 'sel' : '') + '"><td class="tb-ck">' + (r.st === "free" || r.st === "recent" ? '<input type="checkbox" data-tbsel="' + esc(r.city) + '"' + (t.sel[r.city] ? ' checked' : '') + ' aria-label="Выбрать: ' + esc(r.city) + '">' : '') + '</td>' +
+        '<th scope="row"><button class="ev-title" data-pl="tb-onmap" data-city="' + esc(r.city) + '" title="Показать на карте">' + esc(r.city) + '</button>' + (r.win ? '<div class="sub2 tb-win">по пути: ' + esc(r.win.a.city) + ' ' + human(r.win.a.date) + ' → ' + esc(r.win.b.city) + ' ' + human(r.win.b.date) + '</div>' : '') + '</th>' +
+        '<td class="sub2">' + esc(r.reg || "—") + '</td><td class="r num">' + (r.pop ? plShort(r.pop) : '<span class="muted">—</span>') + '</td>' +
+        '<td class="r">' + (r.maxCap ? '<span class="num">' + num(r.maxCap) + '</span><div class="sub2 tb-vname">' + esc(v0.name) + '</div>' : '<span class="muted" title="Вместимость неизвестна — впишите в «Площадках»">—</span>') + '</td>' +
+        '<td>' + (r.near ? esc(r.near.city) + ' <span class="sub2">' + human(r.near.date) + ' · ' + num(r.near.d) + ' км</span>' : '<span class="muted">—</span>') + '</td>' +
+        '<td class="nowrap">' + tbLogiText(r.near ? r.near.d : null) + '</td><td class="r num">' + r.comp + '</td>' + (p.show === "all" ? '<td>' + tbStatusText(r) + '</td>' : '') + '</tr>';
+    }).join("") + '</tbody></table></section>' +
+    (rows.length > shown.length ? '<div style="display:flex;justify-content:center;margin-top:10px"><button class="btn-ghost" data-pl="tb-more">Показать ещё (' + (rows.length - shown.length) + ')</button></div>' : '');
+}
+function tbRegPanel(p) {   // как «Области» на «Карте»: снятая область — её свободные города не показываются
+  if (typeof MREG === "undefined") { anLoad(function () { if (S.view === "planning" && S.pl.tab === "build") render(); }); return '<div class="card pl-gm-reg"><span class="sub2">Загружаем список областей…</span></div>'; }
+  var n = {}; (S.pl.tbCtx ? S.pl.tbCtx.A.rows : []).forEach(function (r) { if (r.reg && r.st === "free") n[r.reg] = (n[r.reg] || 0) + 1; });
+  var names = MREG.regions.map(function (r) { return r.n; }).filter(function (x, i, a) { return x && a.indexOf(x) === i; }).sort(function (a, b) { return a.localeCompare(b, "ru"); });
+  var nOff = names.filter(function (x) { return p.offReg[x]; }).length, q = S.pl.tb.regQ || "";
+  return '<div id="tbReg" class="card pl-gm-reg"><div class="pl-gm-reg-head"><input type="search" id="tbRegQ" class="pl-in" placeholder="Найти область" aria-label="Найти область" value="' + esc(q) + '">' +
+      '<span class="sub2">показано ' + (names.length - nOff) + ' из ' + names.length + ' · число — свободных городов</span><span style="flex-grow:1"></span>' +
+      '<button class="pj-plain" data-pl="tb-reg-all">Показать все</button><button class="pj-plain" data-pl="tb-reg-none">Скрыть все</button><button class="pj-plain" data-pl="tb-reg">Готово</button></div>' +
+    '<div class="pl-gm-reg-list" role="group" aria-label="Области">' + names.map(function (x) {
+      return '<label' + (q && x.toLowerCase().indexOf(q) < 0 ? ' hidden' : '') + ' data-regname="' + esc(x.toLowerCase()) + '"><input type="checkbox" data-tbreg="' + esc(x) + '"' + (p.offReg[x] ? '' : ' checked') + '><span>' + esc(x) + '</span>' + (n[x] ? '<span class="sub2 num">' + n[x] + '</span>' : '') + '</label>';
+    }).join("") + '</div></div>';
+}
+function tbMapHtml(A, vis, p) {
+  setTimeout(tbMapInit, 0);
+  var L0 = p.layers, lay = function (k, label, color) { return '<button class="an-layer" data-pl="tb-layer" data-k="' + k + '" aria-pressed="' + !!L0[k] + '">' + (color ? '<i class="tb-dot" style="background:' + color + '"></i>' : '') + label + '</button>'; };
+  return '<div class="an-layers" role="group" aria-label="Слои карты">' + lay("prod", "Работает — продюсер", TB_ST.prod[1]) + lay("base", "Работает — наша база", TB_ST.base[1]) + lay("recent", "Был недавно", TB_ST.recent[1]) + lay("free", "Свободные", TB_ST.free[1]) +
+      lay("route", "Маршрут") + lay("logi", "Логистика") + '</div>' +
+    '<div id="tbMap" class="an-map pl-geomap"><div class="sub" style="padding:16px">Загружаем карту…</div></div>' +
+    '<div class="an-legend"><span class="sub2">размер кружка — население; обводка — выбран</span>' + (L0.route ? '<span class="sub2">маршрут: сплошная — продюсер, пунктир — наша база</span>' : '') + (L0.logi ? '<span class="sub2">логистика: нажмите на город — круги трансфера (500 км) и поезда (~24 ч), ближайшие города</span>' : '') +
+      (Object.keys(p.offReg).length ? '<span><i class="sq" style="background:rgba(29,111,174,.3);border:1px solid #1d6fae"></i>выбранные области</span>' : '') + '<span class="sub2">нажмите на свободный город — «Выбрать»</span></div>';
+}
+function tbPopup(r) {
+  var t = S.pl.tb, vs = r.venues.slice(0, 6).map(function (v) { return '<li><button class="pl-gmv-go" data-pl="gm-venue" data-city="' + esc(r.city) + '" data-venue="' + esc(v.name) + '">' + esc(v.name) + '</button><span class="num">' + (v.cap ? num(v.cap) + (v.src === "manual" ? "" : "*") : "—") + '</span><span></span></li>'; }).join("");
+  return '<div class="an-pop pl-pop pl-gmpop"><b>' + esc(r.city) + '</b><span class="sub2">' + esc(r.reg || "") + '</span><div style="margin:6px 0">' + tbStatusText(r) + '</div>' +
+    '<dl><dt>Население</dt><dd>' + (r.pop ? num(r.pop) : '—') + '</dd><dt>Мероприятий за сезон</dt><dd>' + r.comp + '</dd>' +
+      (r.near ? '<dt>До гастролей</dt><dd>' + num(r.near.d) + ' км — ' + esc(r.near.city) + ', ' + human(r.near.date) + '</dd><dt>Логистика</dt><dd>' + tbLogiText(r.near.d) + '</dd>' : '') +
+      (r.win ? '<dt>По пути</dt><dd>' + esc(r.win.a.city) + ' ' + human(r.win.a.date) + ' → ' + esc(r.win.b.city) + ' ' + human(r.win.b.date) + '</dd>' : '') + '</dl>' +
+    (vs ? '<div class="sub2">Площадки · мест — нажмите, чтобы открыть</div><ul class="pl-gmv">' + vs + '</ul>' : '') +
+    (r.st === "free" || r.st === "recent" ? '<button class="btn-' + (t.sel[r.city] ? 'ghost' : 'dark') + '" data-pl="tb-pick" data-city="' + esc(r.city) + '">' + (t.sel[r.city] ? 'Убрать из выбранных' : 'Выбрать') + '</button>' : '') + '</div>';
+}
+function tbMapInit() {
+  var el = $("tbMap"), cx = S.pl.tbCtx; if (!el || !cx) return;
+  anLoad(function (err) {
+    if (!$("tbMap")) return;
+    if (err || !window.L) { el.innerHTML = '<div class="note" style="margin:16px">Карта не загрузилась: нет связи с OpenStreetMap или cdnjs.</div>'; return; }
+    el.innerHTML = "";
+    if (S.pl.tbObj) { try { S.pl.tbObj.remove(); } catch (e) { /* ушла вместе со страницей */ } S.pl.tbObj = null; }
+    var p = cx.p, L0 = p.layers, t = S.pl.tb, map = L.map(el, { scrollWheelZoom: true, zoomControl: false, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 90 });
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
+    if (typeof MREG !== "undefined" && Object.keys(p.offReg).length) MREG.regions.forEach(function (rg) {   // выбраны не все области — выбранные выделены
+      if (!rg.n || p.offReg[rg.n]) return;
+      L.polygon(rg.p, { color: "#1d6fae", weight: 1.2, opacity: 0.7, fillColor: "#1d6fae", fillOpacity: 0.12, interactive: false }).addTo(map);
+    });
+    if (L0.route) {   // маршрут по датам — отдельно продюсера (сплошная) и нашей базы (пунктир); перерыв больше 3 дней — линия не тянется
+      ["prod", "base"].forEach(function (src) {
+        var st = cx.A.stops.filter(function (s) { return s.src === src; }).map(function (s) { return { s: s, ll: plLL(s.city) }; }).filter(function (x) { return x.ll; });
+        for (var i = 1; i < st.length; i++) {
+          if (dDiff(st[i - 1].s.date, st[i].s.date) > 3 || st[i - 1].s.city === st[i].s.city) continue;
+          L.polyline([st[i - 1].ll, st[i].ll], { color: src === "prod" ? "#9a3412" : "#7f1d1d", weight: 2, opacity: 0.5, dashArray: src === "base" ? "4 5" : null })
+            .bindTooltip(esc(st[i - 1].s.city) + " " + human(st[i - 1].s.date) + " → " + esc(st[i].s.city) + " " + human(st[i].s.date), { sticky: true }).addTo(map);
+        }
+      });
+    }
+    var logi = L.layerGroup().addTo(map), byCity = {}, shown = [];
+    cx.visMap.forEach(function (r) {
+      if (!L0[r.st]) return;
+      byCity[r.city] = r; shown.push(r);
+      var rad = r.pop ? Math.max(3.5, Math.min(15, 3 + 10 * Math.sqrt(r.pop / 1.2e6))) : 4.5, sel = t.sel[r.city];
+      var mk = L.circleMarker(r.ll, { radius: r.st === "prod" || r.st === "base" ? rad + 1.5 : rad, color: sel ? "#0c0a09" : "#fff", weight: sel ? 2.5 : 1, fillColor: TB_ST[r.st][1], fillOpacity: r.st === "recent" ? 0.75 : 0.95 });
+      mk.bindTooltip(esc(r.city) + " · " + TB_ST[r.st][0] + (r.near && r.st === "free" ? " · " + num(r.near.d) + " км до гастролей" : ""), { direction: "top" });
+      mk.bindPopup(function () { return tbPopup(r); }, { maxWidth: 320 });
+      mk.on("click", function () { if (L0.logi) tbLogiDraw(map, logi, r, shown); });
+      mk.addTo(map);
+      if (S.pl.tbFocus === r.city) setTimeout(function () { mk.openPopup(); }, 50);
+    });
+    var f = S.pl.tbFocus && byCity[S.pl.tbFocus];
+    if (f) { map.setView(f.ll, 7, { animate: false }); S.pl.tbFocus = null; }
+    else if (S.pl.tbView) map.setView(S.pl.tbView.center, S.pl.tbView.zoom, { animate: false });
+    else { var pts = cx.A.stops.map(function (s) { return plLL(s.city); }).filter(Boolean); if (pts.length > 1) map.fitBounds(pts, { padding: [60, 60], maxZoom: 6 }); else map.setView([56.5, 50], 4); }
+    map.on("moveend zoomend", function () { S.pl.tbView = { center: map.getCenter(), zoom: map.getZoom() }; });
+    S.pl.tbObj = map;
+  });
+}
+function tbLogiDraw(map, layer, r, shown) {   // логистика от города: трансфер (500 км), поезд (~24 ч), 6 ближайших городов
+  layer.clearLayers();
+  [[TB_TRANSFER, "трансфер"], [TB_TRAIN, "поезд ~24 ч"]].forEach(function (x) { L.circle(r.ll, { radius: x[0] * 1000, color: "#1d6fae", weight: 1, opacity: 0.55, dashArray: "4 4", fill: false, interactive: false }).addTo(layer); });
+  shown.map(function (x) { return { x: x, d: x.city === r.city ? null : plKm(r.city, x.city) }; }).filter(function (o) { return o.d != null; }).sort(function (a, b) { return a.d - b.d; }).slice(0, 6).forEach(function (o) {
+    L.polyline([r.ll, o.x.ll], { color: "#1d6fae", weight: 1.5, opacity: 0.7, dashArray: "2 4", interactive: false }).addTo(layer);
+    L.marker([(r.ll[0] + o.x.ll[0]) / 2, (r.ll[1] + o.x.ll[1]) / 2], { icon: L.divIcon({ className: "pl-kml", html: '<span>' + num(o.d) + ' км</span>', iconSize: [56, 16], iconAnchor: [28, 8] }), interactive: false, keyboard: false }).addTo(layer);
+  });
+}
+function tbAction(a, b) {   // кнопки вкладки (из общего обработчика data-pl)
+  var t = S.pl.tb, p = tbPrefs();
+  if (a === "tb-new") { t.draft = { title: "", project: "", text: "", rows: [] }; t.editId = null; render(); if ($("tbTitle")) $("tbTitle").focus(); }
+  else if (a === "tb-edit") { var L = PLAN.lists[t.list]; t.draft = JSON.parse(JSON.stringify(L)); t.editId = t.list; render(); }
+  else if (a === "tb-cancel") { t.draft = null; render(); }
+  else if (a === "tb-parse") {
+    var d = t.draft; d.title = $("tbTitle").value.trim(); d.project = $("tbProject").value.trim(); d.text = $("tbText").value;
+    var res = tpParse(d.text, { cities: tbCities(), today: TODAY, title: d.project });
+    d.rows = res.rows.map(function (r) { var o = {}; ["city", "date", "date2", "time", "status", "other", "note", "line", "fix", "raw"].forEach(function (k) { if (r[k]) o[k] = r[k]; }); return o; });
+    if (!d.title) d.title = res.title || d.project || "Список продюсера";
+    if (!d.project && res.title) d.project = res.title;
+    tbRe();
+    if (!d.rows.length) toast("Не нашли ни одной строки — вставьте список в поле");
+  }
+  else if (a === "tb-save") {
+    var dd = t.draft; dd.title = $("tbTitle").value.trim() || dd.title || "Список продюсера"; dd.project = $("tbProject").value.trim(); dd.text = $("tbText").value;
+    var id = t.editId || plId("l"); PLAN.lists = PLAN.lists || {};
+    t.draft = null; t.list = id; t.sel = {};
+    plPut("lists", id, { title: dd.title, project: dd.project, text: dd.text, rows: dd.rows }, "Список «" + dd.title + "» сохранён");
+  }
+  else if (a === "tb-del") { if (!confirm("Удалить список «" + PLAN.lists[t.list].title + "»?")) return; var did = t.list; t.list = null; plDel("lists", did, "Список удалён"); }
+  else if (a === "tb-set") { var k = b.getAttribute("data-k"), v = b.getAttribute("data-v"); if (k === "view") { t.view = v; } else { p[k] = v; tbSave(p); } tbRe(); }
+  else if (a === "tb-logi") { var lk = b.getAttribute("data-k"); p.logi[lk] = !p.logi[lk]; tbSave(p); tbRe(); }
+  else if (a === "tb-all") { p.all = !p.all; tbSave(p); tbRe(); }
+  else if (a === "tb-layer") { var yk = b.getAttribute("data-k"); p.layers[yk] = !p.layers[yk]; tbSave(p); tbRe(); }
+  else if (a === "tb-reg") { t.regOpen = !t.regOpen; tbRe(); if (t.regOpen && $("tbRegQ")) $("tbRegQ").focus(); }
+  else if (a === "tb-reg-all" || a === "tb-reg-none") { p.offReg = {}; if (a === "tb-reg-none" && typeof MREG !== "undefined") MREG.regions.forEach(function (r) { if (r.n) p.offReg[r.n] = 1; }); tbSave(p); tbRe(); }
+  else if (a === "tb-more") { t.limit = (t.limit || 300) + 300; tbRe(); }
+  else if (a === "tb-unsel") { t.sel = {}; tbRe(); }
+  else if (a === "tb-pick") { var pc = b.getAttribute("data-city"); if (t.sel[pc]) delete t.sel[pc]; else t.sel[pc] = 1; if (S.pl.tbObj) S.pl.tbObj.closePopup(); tbRe(); }
+  else if (a === "tb-onmap") { t.view = "map"; S.pl.tbFocus = b.getAttribute("data-city"); tbRe(); var m = $("tbMap"); if (m) m.scrollIntoView({ block: "center" }); }
+  else if (a === "tb-tour") {
+    var Lc = tbCur(), cx = S.pl.tbCtx, byc = {}; (cx ? cx.A.rows : []).forEach(function (r) { byc[r.city] = r; });
+    var cities = Object.keys(t.sel).sort(function (x, y) { var a1 = byc[x] && byc[x].near ? byc[x].near.date : "9", b1 = byc[y] && byc[y].near ? byc[y].near.date : "9"; return a1 < b1 ? -1 : a1 > b1 ? 1 : 0; });
+    var pk = Lc && Lc.project ? projKey(Lc.project) : "", pid = Object.keys(PLAN.projects).filter(function (k) { return pk && projKey(PLAN.projects[k].title) === pk; })[0];
+    var tid = plId("t"), tour = { title: (Lc ? Lc.title : "Тур") + " — новые города", status: "Черновик", rows: cities.map(function (c) { return { id: plId("r"), city: c }; }) };
+    if (pid) tour.project = pid;
+    t.sel = {}; S.pl.tab = "tours"; S.pl.tour = tid;
+    plPut("tours", tid, tour, "Тур создан: " + cities.length + " " + plural(cities.length, "город", "города", "городов") + (pid ? "" : " — выберите проект тура"));
+  }
+}
+
 // ---------- Карта тура — в стиле «Маршрута» «Аналитики» (OpenStreetMap, Leaflet): синие кружки с номером города по порядку
 // тура, линии со стрелками направления и километрами, подсвечены области тура; по кнопкам — крупные (от 100 тыс.) и
 // небольшие (20–100 тыс.) города рядом с маршрутом: «заменить» город тура или «добавить» в тур (население — market-pop.js)
@@ -8524,6 +8863,12 @@ function plChange(el) {
   var sig = el.getAttribute("data-plf"), p = sig.split("|"), kind = p[0];
   if (kind === "new") return;
   if (kind === "gm") { var gp = plGmPrefs(); gp[p[1]] = el.value; if (p[1] === "tour") S.pl.gmView = null; plGmSave(gp); var ygm = window.scrollY; render(); window.scrollTo(0, ygm); return; }
+  if (kind === "tb") {   // «Построение гастролей»: список, фильтры
+    var tbp = tbPrefs();
+    if (p[1] === "list") { S.pl.tb.list = el.value || null; S.pl.tb.draft = null; S.pl.tb.sel = {}; S.pl.tbView = null; }
+    else { tbp[p[1]] = el.value; tbSave(tbp); }
+    tbRe(); return;
+  }
   if (kind === "mapr") { var mpr = plMapPrefs(); mpr.r = +el.value; PL_PREFS.mapl = mpr; plPrefsSave(); var ymr = window.scrollY; render(); window.scrollTo(0, ymr); return; }
   if (kind === "zone" || kind === "zcopy") {   // пояс распоясовки строки тура / скопировать пояса из другого города
     var tz = JSON.parse(JSON.stringify(PLAN.tours[p[1]])), rz = (tz.rows || []).filter(function (x) { return x.id === p[2]; })[0]; if (!rz) return;
@@ -8573,6 +8918,7 @@ function plChange(el) {
 function plAction(b) {
   var a = b.getAttribute("data-pl"), id = b.getAttribute("data-id"), copy = function (o) { return JSON.parse(JSON.stringify(o || {})); };
   if (a === "tab") { S.pl.tab = b.getAttribute("data-tab"); S.pl.tour = null; closeDrawer(); render(); }
+  else if (a.indexOf("tb-") === 0) tbAction(a, b);
   else if (a === "cols") { S.pl.cols = !S.pl.cols; render(); }
   else if (a === "gross-reset") { var tg = copy(PLAN.tours[S.pl.tour]), rg = (tg.rows || []).filter(function (x) { return x.id === S.pl.row; })[0]; if (!rg) return; delete rg.avg; if (rg.ovr) { delete rg.ovr.gross; if (!Object.keys(rg.ovr).length) delete rg.ovr; } plPut("tours", S.pl.tour, tg, "Вал — снова из площадки"); }
   else if (a === "avg-reset") { var ta = copy(PLAN.tours[S.pl.tour]), ra = (ta.rows || []).filter(function (x) { return x.id === S.pl.row; })[0]; if (!ra) return; delete ra.avg; plPut("tours", S.pl.tour, ta, "Вал — снова из площадки"); }
@@ -8675,6 +9021,27 @@ document.addEventListener("click", function (ev) {
 document.addEventListener("change", function (ev) {   // «Столбцы»: показать / скрыть
   var c = ev.target.closest && ev.target.closest("[data-pl-col]"); if (!c) return;
   PL_PREFS.vis = PL_PREFS.vis || {}; PL_PREFS.vis[c.getAttribute("data-pl-col")] = c.checked; plPrefsSave(); render();
+});
+// «Построение гастролей»: правка разобранных строк, выбор городов, области
+document.addEventListener("change", function (ev) {
+  var el = ev.target; if (!el.closest) return;
+  var r = el.closest("[data-tbr]"), t = S.pl.tb;
+  if (r && t.draft) {
+    var q = r.getAttribute("data-tbr").split("|"), row = t.draft.rows[+q[0]]; if (!row) return;
+    if (r.value) row[q[1]] = r.value; else delete row[q[1]];
+    if (q[1] === "city") { delete row.fix; if (row.city && (row.status === "note" || row.status === "title")) row.status = row.date ? "ok" : "nodate"; }
+    if (q[1] === "city" || q[1] === "status") { t.draft.title = ($("tbTitle") || {}).value || t.draft.title; t.draft.project = ($("tbProject") || {}).value || t.draft.project; t.draft.text = ($("tbText") || {}).value || t.draft.text; tbRe(); }
+    return;
+  }
+  var c = el.closest("[data-tbsel]");
+  if (c) { var cc = c.getAttribute("data-tbsel"); if (c.checked) t.sel[cc] = 1; else delete t.sel[cc]; tbRe(); return; }
+  var g = el.closest("[data-tbreg]");
+  if (g) { var p = tbPrefs(), n = g.getAttribute("data-tbreg"); if (g.checked) delete p.offReg[n]; else p.offReg[n] = 1; tbSave(p); tbRe(); var again = document.querySelector('[data-tbreg="' + CSS.escape(n) + '"]'); if (again) again.focus({ preventScroll: true }); }
+});
+document.addEventListener("input", function (ev) {
+  if (ev.target.id !== "tbRegQ") return;
+  var q = S.pl.tb.regQ = ev.target.value.trim().toLowerCase();
+  document.querySelectorAll("#tbReg [data-regname]").forEach(function (l) { l.hidden = !!q && l.getAttribute("data-regname").indexOf(q) < 0; });
 });
 // «Карта»: флажок области — показать / скрыть её на карте; поиск по списку областей — без перерисовки
 document.addEventListener("change", function (ev) {
