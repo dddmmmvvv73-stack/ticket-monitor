@@ -8002,7 +8002,9 @@ function plGmStats(g) {   // по каждому городу: населени�
       .sort(function (a, b) { return (b.cap || 0) - (a.cap || 0); });
     out.push({ city: c, ll: ll, pop: pop, n: ev.length, same: same, sat: pop ? ev.length / months / pop * 1e5 : null, venues: venues, maxCap: venues.length && venues[0].cap ? venues[0].cap : null });
   });
-  return { cities: out, fmt: fmt, from: from, to: to, months: months, label: periodLabel(), hidden: hidden, tour: tour };
+  var reg = {}, regMax = 1;   // по областям: мероприятий за период и городов — для выделения выбранных областей
+  if (typeof MREG !== "undefined") out.forEach(function (c) { var r = MREG.city[c.city]; if (!r) return; var o = reg[r] = reg[r] || { n: 0, c: 0 }; o.n += c.n; o.c++; regMax = Math.max(regMax, o.n); });
+  return { cities: out, fmt: fmt, from: from, to: to, months: months, label: periodLabel(), hidden: hidden, tour: tour, reg: reg, regMax: regMax, sel: Object.keys(g.offReg).length > 0 };
 }
 function plGmBreaks(vals) {   // 5 ступеней по квантилям ненулевых значений
   var v = vals.filter(function (x) { return x > 0; }).sort(function (a, b) { return a - b; });
@@ -8026,7 +8028,8 @@ function plMapTab() {
     (L0.pop ? '<span class="sub2">размер кружка — население</span>' : '') +
     (colorBy ? '<span class="pl-gm-scale">' + (colorBy === "comp" ? 'конкуренция — ' + esc(st.label) + ' (' + fmtTxt + '):' : 'насыщенность — мероприятий в месяц на 100 тыс. жителей:') +
       ' <i style="background:#e7e5e4"></i>0 ' + PL_GM_BLUES.map(function (c, i) { return '<i style="background:' + c + '"></i>' + (i < br.length ? '≤ ' + plGmNum(br[i]) : 'больше'); }).join(" ") + '</span>' : '') +
-    (L0.regions ? '<span><i class="sq" style="background:rgba(29,111,174,.25)"></i>области тура</span>' : '') +
+    (L0.regions && st.sel ? '<span><i class="sq" style="background:linear-gradient(90deg,rgba(29,111,174,.12),rgba(29,111,174,.5));border:1px solid #1d6fae"></i>выбранные области — чем темнее, тем больше мероприятий за период (до ' + num(st.regMax) + ')</span>' : '') +
+    (L0.regions && !st.sel ? '<span><i class="sq" style="background:rgba(29,111,174,.25)"></i>области тура</span>' : '') +
     (L0.venues ? '<span class="sub2">число — самый большой зал города</span>' : '') +
     (L0.logi ? '<span class="sub2">логистика: нажмите на город — круги 150 / 300 / 500 км и ближайшие города</span>' : '');
   var nOff = Object.keys(g.offReg).length;
@@ -8081,13 +8084,22 @@ function plGeoMapInit() {
     if (err || !window.L) { el.innerHTML = '<div class="note" style="margin:16px">Карта не загрузилась: нет связи с OpenStreetMap или cdnjs.</div>'; return; }
     el.innerHTML = "";
     if (S.pl.gmObj) { try { S.pl.gmObj.remove(); } catch (e) { /* ушла вместе со страницей */ } S.pl.gmObj = null; }
-    var g = plGmPrefs(), L0 = g.layers, map = L.map(el, { scrollWheelZoom: true, zoomControl: false, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 90, touchZoom: true, preferCanvas: false });
+    var g = plGmPrefs(), L0 = g.layers, selB = null, map = L.map(el, { scrollWheelZoom: true, zoomControl: false, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 90, touchZoom: true, preferCanvas: false });
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
     var t = st.tour, rows = t && t.rows || [], tourCities = {}; rows.forEach(function (r) { if (r.city) tourCities[r.city] = 1; });
     if (L0.regions && typeof MREG !== "undefined") {   // контуры областей; области тура — заливкой
       var cnt = {}; rows.forEach(function (r) { var rg = MREG.city[r.city]; if (rg) cnt[rg] = (cnt[rg] || 0) + 1; });
+      var selB = [];
       MREG.regions.forEach(function (rg) {
-        if (g.offReg[rg.n] && !cnt[rg.n]) return;   // область отключена списком «Области»
+        var off = g.offReg[rg.n];
+        if (off && !cnt[rg.n]) return;   // область отключена списком «Области»
+        if (st.sel && !off) {   // выбраны не все — выбранные выделены, как на карте «Аналитики»: синий контур, заливка по числу мероприятий
+          var ro = st.reg[rg.n] || { n: 0, c: 0 };
+          selB.push(rg.p);
+          L.polygon(rg.p, { color: "#1d6fae", weight: cnt[rg.n] ? 2 : 1.2, opacity: 0.75, fillColor: "#1d6fae", fillOpacity: 0.1 + 0.4 * ro.n / st.regMax })
+            .bindTooltip(esc(rg.n) + " — " + num(ro.n) + " " + plural(ro.n, "мероприятие", "мероприятия", "мероприятий") + " · " + ro.c + " " + plural(ro.c, "город", "города", "городов") + (cnt[rg.n] ? " · в туре" : ""), { sticky: true }).addTo(map);
+          return;
+        }
         L.polygon(rg.p, { color: "#1d6fae", weight: 0.8, opacity: 0.45, fillColor: "#1d6fae", fillOpacity: cnt[rg.n] ? 0.16 : 0, interactive: false }).addTo(map);
       });
     }
@@ -8123,7 +8135,8 @@ function plGeoMapInit() {
       mk.addTo(map);
     });
     var v = S.pl.gmView;
-    if (v) map.setView(v.center, v.zoom, { animate: false });
+    if (S.pl.gmFit && selB && selB.length) { S.pl.gmFit = false; map.fitBounds(L.latLngBounds(selB.map(function (p) { return L.polygon(p).getBounds(); }).reduce(function (a, b) { return a.extend(b); })), { padding: [30, 30], animate: false }); S.pl.gmView = { center: map.getCenter(), zoom: map.getZoom() }; }   // список областей изменился — к выбранным (и запомнить)
+    else if (v) map.setView(v.center, v.zoom, { animate: false });
     else if (pts.length > 1) map.fitBounds(pts.map(function (p) { return p.ll; }), { padding: [60, 60], maxZoom: 7 });
     else map.setView([56.5, 50], 4);
     map.on("moveend zoomend", function () { S.pl.gmView = { center: map.getCenter(), zoom: map.getZoom() }; });
@@ -8572,7 +8585,7 @@ function plAction(b) {
   else if (a === "gm-reg-all" || a === "gm-reg-none") {
     var gr = plGmPrefs(); gr.offReg = {};
     if (a === "gm-reg-none" && typeof MREG !== "undefined") MREG.regions.forEach(function (r) { if (r.n) gr.offReg[r.n] = 1; });
-    plGmSave(gr); var yr2 = window.scrollY; render(); window.scrollTo(0, yr2);
+    plGmSave(gr); if (a === "gm-reg-all") S.pl.gmView = null; var yr2 = window.scrollY; render(); window.scrollTo(0, yr2);
   }
   else if (a === "gm-venue") {   // площадка из карточки города → «Площадки» (База площадок РФ): город, площадка — первой строкой
     var vc = b.getAttribute("data-city"), vv = b.getAttribute("data-venue");
@@ -8668,7 +8681,7 @@ document.addEventListener("change", function (ev) {
   var c = ev.target.closest && ev.target.closest("[data-gmreg]"); if (!c) return;
   var g = plGmPrefs(), n = c.getAttribute("data-gmreg");
   if (c.checked) delete g.offReg[n]; else g.offReg[n] = 1;
-  plGmSave(g); var y = window.scrollY; render(); window.scrollTo(0, y);
+  plGmSave(g); S.pl.gmFit = true; var y = window.scrollY; render(); window.scrollTo(0, y);
   var again = document.querySelector('[data-gmreg="' + CSS.escape(n) + '"]'); if (again) again.focus({ preventScroll: true });
 });
 document.addEventListener("input", function (ev) {
