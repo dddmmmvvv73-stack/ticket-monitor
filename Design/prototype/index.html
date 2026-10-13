@@ -677,6 +677,19 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pl-pin { cursor: pointer; font-size: 12px; }
 .pl-map-layers { margin: 0; align-items: center; }
 .pl-gm-tools { display: flex; gap: 10px 18px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+.pl-gm-period { margin-left: auto; } .pl-gm-period b { font-weight: 600; color: var(--ink); }
+.pl-gm-regbtn { height: 32px; padding: 0 12px; font-size: 13px; } .pl-gm-regbtn[aria-expanded="true"] { border-color: var(--soot); }
+.pl-gm-reg { padding: 12px 14px; margin-bottom: 10px; }
+.pl-gm-reg-head { display: flex; gap: 8px 14px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; } .pl-gm-reg-head .pl-in { width: 220px; max-width: 100%; text-align: left; }
+.pl-gm-reg-list { columns: 4 200px; column-gap: 20px; max-height: 300px; overflow: auto; }
+.pl-gm-reg-list label { display: flex; gap: 8px; align-items: center; padding: 3px 0; font-size: 13px; break-inside: avoid; cursor: pointer; }
+.pl-gm-reg-list label[hidden] { display: none; } .pl-gm-reg-list .num { margin-left: auto; }
+.pl-gm-reg-list input:not(:checked) + span { color: var(--muted); text-decoration: line-through; }
+.pl-gmv-go { all: unset; cursor: pointer; color: var(--ink); text-align: left; text-decoration: underline; text-decoration-color: var(--line-strong); text-underline-offset: 2px; }
+.pl-gmv-go:hover { text-decoration-color: currentColor; color: #1d6fae; } .pl-gmv-go:focus-visible { outline: 2px solid #1d6fae; outline-offset: 1px; border-radius: 2px; }
+.pl-gmv-all { font-size: 12px; margin-top: 2px; }
+tr.pl-vfocus > * { background: #eaf2fa; animation: pl-vfocus 2.4s ease-out; } @keyframes pl-vfocus { from { background: #bcd7f0; } to { background: #eaf2fa; } }
+.vfocus-note { margin-bottom: 8px; }
 .an-map.pl-geomap { height: 620px; }
 .pl-gm-scale { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; } .pl-gm-scale i { border-radius: 2px !important; margin: 0 2px 0 6px !important; }
 .pl-gmpop dl { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; margin: 4px 0; font-size: 12px; } .pl-gmpop dt { color: var(--muted); } .pl-gmpop dd { margin: 0; }
@@ -1706,6 +1719,7 @@ function rangeLabel(a, b) {
   if (!a) return "Даты";
   if (!b || a === b) return human(a);
   if (a.slice(8) === "01" && b === monthEnd(a)) return MONTHS_FULL[+a.slice(5, 7) - 1] + " " + a.slice(0, 4);
+  if (a.slice(8) === "01" && b === monthEnd(b)) return MONTHS_FULL[+a.slice(5, 7) - 1] + (a.slice(0, 4) !== b.slice(0, 4) ? " " + a.slice(0, 4) : "") + " – " + MONTHS_FULL[+b.slice(5, 7) - 1] + " " + b.slice(0, 4);   // несколько месяцев целиком
   return human(a) + " – " + human(b);
 }
 function periodLabel() {
@@ -3664,25 +3678,26 @@ function renderCal() {
   cal.hidden = !S.calOpen; $("dateBtn").setAttribute("aria-expanded", String(S.calOpen));
   cal.style.left = "";
   if (!S.calOpen) return;
-  var months = ["2026-09-01", "2026-10-01", "2026-11-01", "2026-12-01", "2027-01-01", "2027-02-01", "2027-03-01"];
-  var right = shiftMonth(S.calMonth, 1);
+  var months = [], m0 = (ARCH_ON ? shiftMonth(TODAY.slice(0, 8) + "01", -6) : TODAY.slice(0, 8) + "01");
+  for (var mi = 0; mi < 12; mi++) months.push(shiftMonth(m0, mi));   // месяцы — от текущего на год вперёд (в архиве — полгода назад)
+  var right = shiftMonth(S.calMonth, 1), curY = TODAY.slice(0, 4);
   cal.innerHTML =
     '<div class="cal-months" role="group" aria-label="Быстрый выбор месяца">' + months.map(function (m) {
-      var on = S.pickFrom === m && S.pickTo === monthEnd(m);
-      return '<button data-month="' + m + '" aria-pressed="' + on + '">' + MONTHS_FULL[+m.slice(5, 7) - 1][0].toUpperCase() + MONTHS_FULL[+m.slice(5, 7) - 1].slice(1) + (m.slice(0, 4) !== "2026" ? " " + m.slice(0, 4) : "") + '</button>';
+      var on = !!(S.pickFrom && S.pickTo && m >= S.pickFrom && monthEnd(m) <= S.pickTo);   // месяц целиком внутри выбранного
+      return '<button data-month="' + m + '" aria-pressed="' + on + '">' + MONTHS_FULL[+m.slice(5, 7) - 1][0].toUpperCase() + MONTHS_FULL[+m.slice(5, 7) - 1].slice(1) + (m.slice(0, 4) !== curY ? " " + m.slice(0, 4) : "") + '</button>';
     }).join("") + '</div>' +
     '<div style="display:flex;justify-content:space-between;margin-bottom:-30px;position:relative;z-index:1">' +
       '<button class="cal-nav" data-calnav="-1" aria-label="Предыдущий месяц"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7.5 3l-3 3 3 3"/></svg></button>' +
       '<button class="cal-nav" data-calnav="1" aria-label="Следующий месяц"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4.5 3l3 3-3 3"/></svg></button></div>' +
     '<div class="cal-body" style="padding:0 40px">' + monthGrid(S.calMonth) + monthGrid(right) + '</div>' +
-    '<div class="cal-foot"><span class="sel-text">' + (S.pickFrom ? (S.pickTo ? "Выбрано: " + rangeLabel(S.pickFrom, S.pickTo) : "Начало: " + human(S.pickFrom) + " — выберите конец") : "Нажмите на первый и последний день — в любом порядке. Точка — есть мероприятия.") + '</span>' +
+    '<div class="cal-foot"><span class="sel-text">' + (S.pickFrom ? (S.pickTo ? "Выбрано: " + rangeLabel(S.pickFrom, S.pickTo) + (S.calMA && S.pickFrom === S.calMA ? " · нажмите ещё месяц — выберутся все месяцы между ними" : "") : "Начало: " + human(S.pickFrom) + " — выберите конец") : "Нажмите на первый и последний день — в любом порядке. Точка — есть мероприятия.") + '</span>' +
       '<button class="btn-ghost" data-calact="reset">Сбросить</button><button class="btn-dark" data-calact="apply"' + (S.pickFrom ? "" : " disabled") + '>Показать</button></div>';
   // Календарь не должен уходить за правый край: кнопка «Даты» стоит по-разному в разных разделах
   var over = cal.getBoundingClientRect().right - (window.innerWidth - 16);
   if (over > 0) cal.style.left = -Math.round(over) + "px";
 }
 function openCal() {
-  S.calOpen = true; S.pickFrom = S.period === "custom" ? S.from : null; S.pickTo = S.period === "custom" ? S.to : null;
+  S.calOpen = true; S.calMA = null; S.pickFrom = S.period === "custom" ? S.from : null; S.pickTo = S.period === "custom" ? S.to : null;
   if (ARCH_ON) { S.pickFrom = S.m.afrom; S.pickTo = S.m.ato; }  // в «Архиве» календарь выбирает период архива
   if (S.pickFrom) S.calMonth = S.pickFrom.slice(0, 8) + "01";
   renderCal();
@@ -3692,10 +3707,16 @@ $("cal").addEventListener("click", function (ev) {
   var t = ev.target.closest("button"); if (!t) return;
   if (t.hasAttribute("data-day")) {
     var d = t.getAttribute("data-day");
+    S.calMA = null;
     if (!S.pickFrom || S.pickTo) { S.pickFrom = d; S.pickTo = null; }
     else if (d < S.pickFrom) { S.pickTo = S.pickFrom; S.pickFrom = d; }  // конец раньше начала — меняем местами
     else S.pickTo = d;
-  } else if (t.hasAttribute("data-month")) { var m = t.getAttribute("data-month"); S.pickFrom = m; S.pickTo = monthEnd(m); S.calMonth = m; }
+  } else if (t.hasAttribute("data-month")) {   // месяц; второй месяц сразу после первого — все месяцы между ними
+    var m = t.getAttribute("data-month"), a0 = S.calMA;
+    if (a0 && a0 !== m && S.pickFrom === a0 && S.pickTo === monthEnd(a0)) { S.pickFrom = a0 < m ? a0 : m; S.pickTo = monthEnd(a0 < m ? m : a0); S.calMA = null; }
+    else { S.pickFrom = m; S.pickTo = monthEnd(m); S.calMA = m; }
+    S.calMonth = S.pickFrom;
+  }
   else if (t.hasAttribute("data-calnav")) S.calMonth = shiftMonth(S.calMonth, +t.getAttribute("data-calnav"));
   else if (ARCH_ON && t.getAttribute("data-calact") === "reset") { S.m.afrom = TODAY.slice(0, 8) + "01"; S.m.ato = monthEnd(TODAY); S.m.limit = 200; S.m.aopen = null; S.calOpen = false; render(); }
   else if (ARCH_ON && t.getAttribute("data-calact") === "apply" && S.pickFrom) { S.m.afrom = S.pickFrom; S.m.ato = S.pickTo || S.pickFrom; S.m.limit = 200; S.m.aopen = null; S.m.day = null; S.calOpen = false; render(); }
@@ -6640,26 +6661,37 @@ function mHeatBars(base, dim, single, rowsK, catCnt) {
 function mVenues() {
   var base = mBase({ noVenue: true });
   if (S.m.vmark === "none") base = MR.filter(function (e) { return mInScope(e) && inPeriod(e) && !CUR.venues[venueKey(e.city, e.venue)]; });
-  if (!base.length) return mEmpty();
+  var vf = S.m.vfocus && S.m.vfocus.city === S.m.city ? S.m.vfocus : null, fNote = "";   // площадка, открытая с карты «Планирования»
+  if (!base.length && !vf) return mEmpty();
   var cityTot = mCount(base, "city"), g = {};
   base.forEach(function (e) { var k = e.city + "|" + e.venue; (g[k] = g[k] || []).push(e); });
   var list = Object.keys(g).map(function (k) { return { city: g[k][0].city, venue: g[k][0].venue, l: g[k] }; }).sort(function (a, b) { return b.l.length - a.l.length; });
-  var shown = list.slice(0, S.m.limit), maxN = list[0].l.length;
+  if (vf) {   // первой строкой и подсвечена; нет в выбранном периоде — все её даты; нет в афише — только поля для планирования
+    var fi = list.map(function (x) { return x.venue; }).indexOf(vf.venue);
+    if (fi >= 0) { var fx = list.splice(fi, 1)[0]; fx.focus = true; list.unshift(fx); }
+    else {
+      var fall = MRV.filter(function (e) { return e.city === vf.city && e.venue === vf.venue; });
+      list.unshift({ city: vf.city, venue: vf.venue, l: fall, focus: true });
+      fNote = fall.length ? " В выбранном периоде у неё мероприятий нет — в строке все её даты." : " В афише рынка у неё мероприятий нет — только поля для планирования.";
+    }
+  }
+  var shown = list.slice(0, S.m.limit), maxN = Math.max(1, Math.max.apply(null, list.map(function (x) { return x.l.length; })));
   M_COUNT = [list.length, "площадка", "площадки", "площадок"];
   var med = function (arr) { arr = arr.filter(Boolean).sort(function (a, b) { return a - b; }); return arr.length ? arr[Math.floor(arr.length / 2)] : null; };
   return '<div class="toolbar mtools"><span class="sub" style="margin:0">' + num(list.length) + ' ' + plural(list.length, "площадка", "площадки", "площадок") + ' · по числу мероприятий</span>' +
       '<div class="seg" role="group" aria-label="Разметка площадок">' + [["", "Все"], ["none", "Не размечены"]].map(function (x) { return '<button data-mset="vmark" data-mval="' + x[0] + '" aria-pressed="' + ((S.m.vmark || "") === x[0]) + '">' + x[1] + '</button>'; }).join("") + '</div>' +
       '<div style="flex-grow:1"></div>' + mNicheSelects(base) + '</div>' +
+    (vf ? '<div class="note vfocus-note">«' + esc(vf.venue) + '» — первой строкой (открыто с карты «Планирования»).' + fNote + '</div>' : '') +
     '<section class="card" style="overflow:auto"><table class="vtable"><thead><tr><th scope="col">Площадка</th><th scope="col" class="r">Мероприятий</th><th scope="col">Доля в городе</th><th scope="col">Ниши</th><th scope="col" class="r">Цены, медиана</th><th scope="col">Ближайшее</th><th scope="col">Тип площадки<div class="sub2" title="Ручной ввод — значения идут в «Планирование» (финмодель туров)">для планирования</div></th></tr></thead><tbody>' +
       shown.map(function (v) {
-        var sc = mCount(v.l, "sphere"), top = mTop(sc, 3), share = Math.round(v.l.length / cityTot[v.city] * 100), next = v.l.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; })[0];
+        var sc = mCount(v.l, "sphere"), top = mTop(sc, 3), tot = cityTot[v.city] || v.l.length, share = tot ? Math.round(v.l.length / tot * 100) : 0, next = v.l.slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; })[0];
         var pmin = med(v.l.map(function (e) { return e.pmin; })), pmax = med(v.l.map(function (e) { return e.pmax; }));
-        return '<tr><th scope="row"><button class="ev-title" data-mvenue="' + esc(v.venue) + '" data-mvenue-city="' + esc(v.city) + '">' + esc(v.venue) + '</button><div class="sub2">' + esc(v.city) + '</div></th>' +
+        return '<tr' + (v.focus ? ' class="pl-vfocus"' : '') + '><th scope="row"><button class="ev-title" data-mvenue="' + esc(v.venue) + '" data-mvenue-city="' + esc(v.city) + '">' + esc(v.venue) + '</button><div class="sub2">' + esc(v.city) + '</div></th>' +
           '<td class="r"><div class="mvbar"><span class="num">' + v.l.length + '</span><i style="width:' + Math.max(4, Math.round(v.l.length / maxN * 100)) + '%"></i></div></td>' +
-          '<td class="nowrap"><span class="num">' + share + '%</span><span class="sub2"> из ' + cityTot[v.city] + '</span></td>' +
+          '<td class="nowrap"><span class="num">' + share + '%</span><span class="sub2"> из ' + tot + '</span></td>' +
           '<td class="sub2" style="font-size:13px">' + top.map(function (s) { return esc(s) + ' ' + Math.round(sc[s] / v.l.length * 100) + '%'; }).join(" · ") + '</td>' +
           '<td class="r num nowrap">' + (pmin ? prices({ pmin: pmin, pmax: pmax || pmin }) : '<span class="muted">—</span>') + '</td>' +
-          '<td><button class="link-btn" data-mopen="' + next.i + '" style="text-align:left">' + human(next.date) + '</button><div class="sub2" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(next.title) + '</div></td><td class="pl-vcell">' + venueSelect(v.city, v.venue) + plVenueCells(v.city, v.venue) + '</td></tr>';
+          '<td>' + (next ? '<button class="link-btn" data-mopen="' + next.i + '" style="text-align:left">' + human(next.date) + '</button><div class="sub2" style="max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(next.title) + '</div>' : '<span class="muted">—</span>') + '</td><td class="pl-vcell">' + venueSelect(v.city, v.venue) + plVenueCells(v.city, v.venue) + '</td></tr>';
       }).join("") + '</tbody></table></section>' +
     (list.length > shown.length ? '<div style="display:flex;justify-content:center;gap:12px;align-items:center"><span class="sub" style="margin:0">Показано ' + shown.length + ' из ' + num(list.length) + '</span><button class="btn-ghost" data-maction="more">Показать ещё</button></div>' : '') +
     '<p class="sub" style="margin:0">Нажмите на площадку, чтобы открыть её мероприятия в таблице.</p>';
@@ -6708,7 +6740,7 @@ function openMDrawer(i) {
   S.m.sel = i; S.m.editing = false; showDrawer(mDrawer(e)); mSalesLoad(e);
   document.querySelectorAll(".ev-table tbody tr[data-mi]").forEach(function (tr) { tr.classList.toggle("sel", +tr.getAttribute("data-mi") === i); });
 }
-function mGo(patch) { for (var k in patch) S.m[k] = patch[k]; S.m.limit = 200; S.m.filter = "all"; buildCitySelect(); render(); window.scrollTo(0, 0); }
+function mGo(patch) { S.m.vfocus = null; for (var k in patch) S.m[k] = patch[k]; S.m.limit = 200; S.m.filter = "all"; buildCitySelect(); render(); window.scrollTo(0, 0); }
 
 $("view").addEventListener("click", function (ev) {
   if (!isM() || ev.target.closest(".resizer") || ev.target.closest("a")) return;
@@ -7934,15 +7966,19 @@ function plVenueCap(city, venue) {
 var PL_CAP_SRC = { manual: "вписано вручную", hall: "по схеме зала (Яндекс)", scheme: "по схеме кассы — её квота" };
 
 // ---------- «Планирование → Карта» (решения пользователя 13.10): города списка рынка на карте, слои — население,
-// площадки (вместимость), области, конкуренция и насыщенность за месяц, логистика; выбранный тур — маршрутом; город с
-// карты — «добавить в тур» / «заменить». Конкуренция — мероприятия города за месяц (всего и того же формата);
-// насыщенность — мероприятий за месяц на 100 тыс. жителей. Афиша видит ~40 % мероприятий площадок, продающих сами.
+// площадки (вместимость), области, конкуренция и насыщенность, логистика; выбранный тур — маршрутом; город с
+// карты — «добавить в тур» / «заменить». Период — календарь «Даты» в шапке (месяц или несколько месяцев подряд);
+// конкуренция — мероприятия города за период (всего и того же формата); насыщенность — мероприятий в месяц на 100 тыс.
+// жителей. Области можно отключить списком — их города и контуры не показываются (кроме городов выбранного тура).
+// Площадка в карточке города — переход в «Площадки» (там места, вал, аренда для финмодели). Афиша видит ~40 % мероприятий
+// площадок, продающих сами.
 var PL_GM_LAYERS = [["pop", "Население"], ["venues", "Площадки"], ["regions", "Области"], ["comp", "Конкуренция"], ["sat", "Насыщенность"], ["logi", "Логистика"]];
 var PL_MONTH_IN = ["январе", "феврале", "марте", "апреле", "мае", "июне", "июле", "августе", "сентябре", "октябре", "ноябре", "декабре"];
 var PL_GM_BLUES = ["#dbe9f6", "#a9cbe8", "#6fa7d6", "#3a7fc0", "#1d5f9a"];
 function plGmPrefs() {
-  var g = Object.assign({ tour: "", month: "", fmt: "*", layers: { pop: true, venues: false, regions: true, comp: false, sat: true, logi: false } }, PL_PREFS.gm || {});
+  var g = Object.assign({ tour: "", fmt: "*", offReg: {}, layers: { pop: true, venues: false, regions: true, comp: false, sat: true, logi: false } }, PL_PREFS.gm || {});
   g.layers = Object.assign({ pop: true, venues: false, regions: true, comp: false, sat: true, logi: false }, g.layers || {});
+  g.offReg = g.offReg || {}; delete g.month;   // месяц — раньше был свой выбор, теперь календарь шапки
   return g;
 }
 function plGmSave(g) { PL_PREFS.gm = g; plPrefsSave(); }
@@ -7952,19 +7988,21 @@ function plProjFormat(pid) {   // формат проекта — по его м
   return mostOf(l, "format");
 }
 function plGmStats(g) {   // по каждому городу: население, мероприятия месяца (всего / того же формата), насыщенность, площадки
-  var tour = PLAN.tours[g.tour], fmt = g.fmt === "*" ? (tour ? plProjFormat(tour.project) : "") : g.fmt, month = g.month || (tour && tour.month) || TODAY.slice(0, 7);
-  var cities = (MK.cities || []).slice(), out = [];
-  (tour && tour.rows || []).forEach(function (r) { if (r.city && cities.indexOf(r.city) < 0) cities.push(r.city); });
+  var tour = PLAN.tours[g.tour], fmt = g.fmt === "*" ? (tour ? plProjFormat(tour.project) : "") : g.fmt;
+  var rg = mRange(), from = rg[0], to = rg[1], months = Math.max(1, (Date.parse(to) - Date.parse(from)) / 864e5 / 30.44);
+  var cities = (MK.cities || []).slice(), out = [], inTour = {}, hidden = 0;
+  (tour && tour.rows || []).forEach(function (r) { if (!r.city) return; inTour[r.city] = 1; if (cities.indexOf(r.city) < 0) cities.push(r.city); });
   cities.forEach(function (c) {
     var ll = plLL(c); if (!ll) return;
-    var pop = typeof MPOP !== "undefined" && MPOP[c] ? MPOP[c][0] : null, ev = (MR_CITY[c] || []).filter(function (e) { return e.date.slice(0, 7) === month && !e.offList; });
+    if (!inTour[c] && typeof MREG !== "undefined" && g.offReg[MREG.city[c]]) { hidden++; return; }   // область отключена
+    var pop = typeof MPOP !== "undefined" && MPOP[c] ? MPOP[c][0] : null, ev = (MR_CITY[c] || []).filter(function (e) { return e.date >= from && e.date <= to && !e.offList; });
     var same = fmt ? ev.filter(function (e) { return e.format === fmt; }).length : null;
     var vn = {}; (MR_CITY[c] || []).forEach(function (e) { vn[e.venue] = 1; }); Object.keys(PLAN.venues).forEach(function (k) { if (PLAN.venues[k].city === c) vn[PLAN.venues[k].venue] = 1; });
     var venues = Object.keys(vn).map(function (v) { var cp = plVenueCap(c, v); return { name: v, cap: cp ? cp.cap : null, src: cp ? cp.src : "", rent: (PLAN.venues[plVenueKey(c, v)] || {}).rent }; })
       .sort(function (a, b) { return (b.cap || 0) - (a.cap || 0); });
-    out.push({ city: c, ll: ll, pop: pop, n: ev.length, same: same, sat: pop ? ev.length / pop * 1e5 : null, venues: venues, maxCap: venues.length && venues[0].cap ? venues[0].cap : null });
+    out.push({ city: c, ll: ll, pop: pop, n: ev.length, same: same, sat: pop ? ev.length / months / pop * 1e5 : null, venues: venues, maxCap: venues.length && venues[0].cap ? venues[0].cap : null });
   });
-  return { cities: out, fmt: fmt, month: month, tour: tour };
+  return { cities: out, fmt: fmt, from: from, to: to, months: months, label: periodLabel(), hidden: hidden, tour: tour };
 }
 function plGmBreaks(vals) {   // 5 ступеней по квантилям ненулевых значений
   var v = vals.filter(function (x) { return x > 0; }).sort(function (a, b) { return a - b; });
@@ -7977,7 +8015,6 @@ function plMapTab() {
   S.pl.gmCtx = st;
   setTimeout(plGeoMapInit, 0);
   var tours = [["", "— без тура —"]].concat(Object.keys(PLAN.tours).map(function (id) { return [id, PLAN.tours[id].title]; }));
-  var months = []; for (var i = 0; i < 12; i++) { var d = new Date(TODAY.slice(0, 7) + "-01T12:00:00Z"); d.setUTCMonth(d.getUTCMonth() + i); var m = d.toISOString().slice(0, 7); months.push([m, MONTHS_FULL[+m.slice(5) - 1] + " " + m.slice(0, 4)]); }
   var fmts = [["*", "как у проекта тура"], ["", "все форматы"]].concat((MK.formats || []).filter(Boolean).slice().sort().map(function (f) { return [f, f]; }));
   var lay = function (x) { return '<button class="an-layer" data-pl="gm-layer" data-k="' + x[0] + '" aria-pressed="' + !!L0[x[0]] + '">' + x[1] + '</button>'; };
   var colorBy = L0.comp ? "comp" : L0.sat ? "sat" : "";
@@ -7987,19 +8024,36 @@ function plMapTab() {
   var fmtTxt = st.fmt ? "«" + st.fmt + "»" : "все форматы";
   var legend = '<span><i style="background:#1d6fae"></i>город тура — цифра: порядок</span>' +
     (L0.pop ? '<span class="sub2">размер кружка — население</span>' : '') +
-    (colorBy ? '<span class="pl-gm-scale">' + (colorBy === "comp" ? 'конкуренция в ' + PL_MONTH_IN[+st.month.slice(5) - 1] + ' (' + fmtTxt + '):' : 'насыщенность — мероприятий на 100 тыс. жителей:') +
+    (colorBy ? '<span class="pl-gm-scale">' + (colorBy === "comp" ? 'конкуренция — ' + esc(st.label) + ' (' + fmtTxt + '):' : 'насыщенность — мероприятий в месяц на 100 тыс. жителей:') +
       ' <i style="background:#e7e5e4"></i>0 ' + PL_GM_BLUES.map(function (c, i) { return '<i style="background:' + c + '"></i>' + (i < br.length ? '≤ ' + plGmNum(br[i]) : 'больше'); }).join(" ") + '</span>' : '') +
     (L0.regions ? '<span><i class="sq" style="background:rgba(29,111,174,.25)"></i>области тура</span>' : '') +
     (L0.venues ? '<span class="sub2">число — самый большой зал города</span>' : '') +
     (L0.logi ? '<span class="sub2">логистика: нажмите на город — круги 150 / 300 / 500 км и ближайшие города</span>' : '');
+  var nOff = Object.keys(g.offReg).length;
   return '<div class="pl-gm-tools pl-flat"><label class="pl-lab">Тур ' + plSelect("gm|tour", g.tour, tours, "Тур") + '</label>' +
-      '<label class="pl-lab">Месяц ' + plSelect("gm|month", st.month, months, "Месяц") + '</label>' +
-      '<label class="pl-lab">Формат ' + plSelect("gm|fmt", g.fmt, fmts, "Формат для конкуренции") + '</label></div>' +
+      '<label class="pl-lab">Формат ' + plSelect("gm|fmt", g.fmt, fmts, "Формат для конкуренции") + '</label>' +
+      '<button class="btn-ghost pl-gm-regbtn" data-pl="gm-reg" aria-expanded="' + !!S.pl.gmRegOpen + '" aria-controls="plGmReg">Области: ' + (nOff ? 'скрыто ' + nOff : 'все') + ' <span aria-hidden="true">▾</span></button>' +
+      '<span class="sub2 pl-gm-period" title="Период меняется кнопкой «Даты» в шапке: месяц или несколько месяцев подряд">Период: <b>' + esc(st.label) + '</b> — «Даты» в шапке</span></div>' +
+    (S.pl.gmRegOpen ? plGmRegPanel(g) : '') +
     '<div class="an-layers" role="group" aria-label="Слои карты">' + PL_GM_LAYERS.map(lay).join("") + '</div>' +
     '<div id="plGeoMap" class="an-map pl-geomap"><div class="sub" style="padding:16px">Загружаем карту…</div></div>' +
     '<div class="an-legend">' + legend + '</div>' +
+    (st.hidden ? '<p class="sub2" style="margin:0">Не показано ' + st.hidden + ' ' + plural(st.hidden, "город", "города", "городов") + ' из отключённых областей.</p>' : '') +
     '<p class="sub2" style="margin:0">Конкуренция и насыщенность — по афише рынка: кассы видят около 40 % мероприятий площадок, которые продают билеты сами, — это нижняя граница. ' +
       'Население — OpenStreetMap. Вместимость — вписанная в «Площадках», иначе по схемам касс.</p>';
+}
+function plGmRegPanel(g) {   // список областей с флажками: снятый флажок — область не показывается на карте
+  if (typeof MREG === "undefined") { anLoad(function () { if (S.view === "planning" && S.pl.tab === "map") render(); }); return '<div id="plGmReg" class="card pl-gm-reg"><span class="sub2">Загружаем список областей…</span></div>'; }
+  var n = {}; (MK.cities || []).forEach(function (c) { var r = MREG.city[c]; if (r) n[r] = (n[r] || 0) + 1; });
+  var names = MREG.regions.map(function (r) { return r.n; }).filter(function (x, i, a) { return x && a.indexOf(x) === i; }).sort(function (a, b) { return a.localeCompare(b, "ru"); });
+  var nOff = names.filter(function (x) { return g.offReg[x]; }).length;
+  return '<div id="plGmReg" class="card pl-gm-reg"><div class="pl-gm-reg-head"><input type="search" id="plGmRegQ" class="pl-in" placeholder="Найти область" aria-label="Найти область" value="' + esc(S.pl.gmRegQ || "") + '">' +
+      '<span class="sub2">показано ' + (names.length - nOff) + ' из ' + names.length + '</span><span style="flex-grow:1"></span>' +
+      '<button class="pj-plain" data-pl="gm-reg-all">Показать все</button><button class="pj-plain" data-pl="gm-reg-none">Скрыть все</button><button class="pj-plain" data-pl="gm-reg">Готово</button></div>' +
+    '<div class="pl-gm-reg-list" role="group" aria-label="Области на карте">' + names.map(function (x) {
+      var hide = S.pl.gmRegQ && x.toLowerCase().indexOf(S.pl.gmRegQ.toLowerCase()) < 0;
+      return '<label' + (hide ? ' hidden' : '') + ' data-regname="' + esc(x.toLowerCase()) + '"><input type="checkbox" data-gmreg="' + esc(x) + '"' + (g.offReg[x] ? '' : ' checked') + '><span>' + esc(x) + '</span>' + (n[x] ? '<span class="sub2 num">' + n[x] + '</span>' : '') + '</label>';
+    }).join("") + '</div></div>';
 }
 function plGmNum(v) { return (v >= 10 ? Math.round(v) : Math.round(v * 10) / 10).toLocaleString("ru-RU"); }
 function plGmPopup(c, st) {
@@ -8007,14 +8061,15 @@ function plGmPopup(c, st) {
   rows.forEach(function (r) { if (!r.city || r.city === c.city) return; var d = plKm(r.city, c.city); if (d != null && (nearKm == null || d < nearKm)) { nearKm = d; nearRow = r; } });
   var inTour = rows.some(function (r) { return r.city === c.city; });
   var rg = PLAN.regions[(PLAN.cities[c.city] || {}).region], reg = typeof MREG !== "undefined" ? MREG.city[c.city] : "";
-  var vs = c.venues.slice(0, 6).map(function (v) { return '<li><span>' + esc(v.name) + '</span><span class="num" title="' + esc(PL_CAP_SRC[v.src] || "вместимость неизвестна") + '">' + (v.cap ? num(v.cap) + (v.src === "manual" ? "" : "*") : "—") + '</span>' + (v.rent ? '<span class="num">' + plShort(v.rent) + '</span>' : '<span></span>') + '</li>'; }).join("");
+  var vs = c.venues.slice(0, 8).map(function (v) { return '<li><button class="pl-gmv-go" data-pl="gm-venue" data-city="' + esc(c.city) + '" data-venue="' + esc(v.name) + '" title="Открыть площадку в «Площадках»: места, вал, аренда, мероприятия">' + esc(v.name) + '</button><span class="num" title="' + esc(PL_CAP_SRC[v.src] || "вместимость неизвестна") + '">' + (v.cap ? num(v.cap) + (v.src === "manual" ? "" : "*") : "—") + '</span>' + (v.rent ? '<span class="num">' + plShort(v.rent) + '</span>' : '<span></span>') + '</li>'; }).join("");
   return '<div class="an-pop pl-pop pl-gmpop"><b>' + esc(c.city) + '</b><span class="sub2">' + (reg ? esc(reg) : '') + '</span>' +
     '<dl><dt>Население</dt><dd>' + (c.pop ? num(c.pop) : '—') + '</dd>' +
-      '<dt>Мероприятий в ' + PL_MONTH_IN[+st.month.slice(5) - 1] + '</dt><dd>' + c.n + (st.fmt ? ' · ' + esc(st.fmt.toLowerCase()) + ' — ' + c.same : '') + '</dd>' +
-      '<dt>Насыщенность</dt><dd>' + (c.sat == null ? '—' : plGmNum(c.sat) + ' на 100 тыс.') + '</dd>' +
+      '<dt>Мероприятий · ' + esc(st.label) + '</dt><dd>' + c.n + (st.fmt ? ' · ' + esc(st.fmt.toLowerCase()) + ' — ' + c.same : '') + '</dd>' +
+      '<dt>Насыщенность</dt><dd>' + (c.sat == null ? '—' : plGmNum(c.sat) + ' в месяц на 100 тыс.') + '</dd>' +
       (rg && rg.logistics ? '<dt>Логистика</dt><dd>' + plShort(rg.logistics) + ' ₽ · ' + esc(rg.title) + '</dd>' : '') +
       (nearRow ? '<dt>До тура</dt><dd>' + num(nearKm) + ' км — ' + esc(nearRow.city) + '</dd>' : '') + '</dl>' +
-    (vs ? '<div class="sub2">Площадки · мест · аренда</div><ul class="pl-gmv">' + vs + '</ul>' + (c.venues.some(function (v) { return v.cap && v.src !== "manual"; }) ? '<span class="sub2">* по схемам касс</span>' : '') : '') +
+    (vs ? '<div class="sub2">Площадки · мест · аренда — нажмите, чтобы открыть</div><ul class="pl-gmv">' + vs + '</ul>' +
+      (c.venues.length > 8 ? '<button class="pj-plain pl-gmv-all" data-pl="gm-venue" data-city="' + esc(c.city) + '" data-venue="">Все ' + c.venues.length + ' ' + plural(c.venues.length, "площадка", "площадки", "площадок") + ' города →</button>' : '') + (c.venues.some(function (v) { return v.cap && v.src !== "manual"; }) ? '<span class="sub2">* по схемам касс</span>' : '') : '') +
     (t && !inTour ? (nearRow ? '<button class="btn-ghost" data-pl="gm-replace" data-row="' + nearRow.id + '" data-city="' + esc(c.city) + '">Заменить «' + esc(nearRow.city) + '»</button>' : '') +
       '<button class="btn-ghost" data-pl="gm-add" data-after="' + (nearRow ? nearRow.id : "") + '" data-city="' + esc(c.city) + '">Добавить в тур</button>' : '') +
     (t && inTour ? '<span class="sub2">уже в туре</span>' : '') + '</div>';
@@ -8032,6 +8087,7 @@ function plGeoMapInit() {
     if (L0.regions && typeof MREG !== "undefined") {   // контуры областей; области тура — заливкой
       var cnt = {}; rows.forEach(function (r) { var rg = MREG.city[r.city]; if (rg) cnt[rg] = (cnt[rg] || 0) + 1; });
       MREG.regions.forEach(function (rg) {
+        if (g.offReg[rg.n] && !cnt[rg.n]) return;   // область отключена списком «Области»
         L.polygon(rg.p, { color: "#1d6fae", weight: 0.8, opacity: 0.45, fillColor: "#1d6fae", fillOpacity: cnt[rg.n] ? 0.16 : 0, interactive: false }).addTo(map);
       });
     }
@@ -8454,7 +8510,7 @@ function plValue(el, field) {
 function plChange(el) {
   var sig = el.getAttribute("data-plf"), p = sig.split("|"), kind = p[0];
   if (kind === "new") return;
-  if (kind === "gm") { var gp = plGmPrefs(); gp[p[1]] = el.value; if (p[1] === "tour") { S.pl.gmView = null; gp.month = ""; } plGmSave(gp); var ygm = window.scrollY; render(); window.scrollTo(0, ygm); return; }
+  if (kind === "gm") { var gp = plGmPrefs(); gp[p[1]] = el.value; if (p[1] === "tour") S.pl.gmView = null; plGmSave(gp); var ygm = window.scrollY; render(); window.scrollTo(0, ygm); return; }
   if (kind === "mapr") { var mpr = plMapPrefs(); mpr.r = +el.value; PL_PREFS.mapl = mpr; plPrefsSave(); var ymr = window.scrollY; render(); window.scrollTo(0, ymr); return; }
   if (kind === "zone" || kind === "zcopy") {   // пояс распоясовки строки тура / скопировать пояса из другого города
     var tz = JSON.parse(JSON.stringify(PLAN.tours[p[1]])), rz = (tz.rows || []).filter(function (x) { return x.id === p[2]; })[0]; if (!rz) return;
@@ -8511,6 +8567,19 @@ function plAction(b) {
     var gm = plGmPrefs(), gk = b.getAttribute("data-k"); gm.layers[gk] = !gm.layers[gk];
     if (gk === "comp" && gm.layers.comp) gm.layers.sat = false; if (gk === "sat" && gm.layers.sat) gm.layers.comp = false;   // цвет — что-то одно
     plGmSave(gm); var yg = window.scrollY; render(); window.scrollTo(0, yg);
+  }
+  else if (a === "gm-reg") { S.pl.gmRegOpen = !S.pl.gmRegOpen; var yr = window.scrollY; render(); window.scrollTo(0, yr); if (S.pl.gmRegOpen && $("plGmRegQ")) $("plGmRegQ").focus(); }
+  else if (a === "gm-reg-all" || a === "gm-reg-none") {
+    var gr = plGmPrefs(); gr.offReg = {};
+    if (a === "gm-reg-none" && typeof MREG !== "undefined") MREG.regions.forEach(function (r) { if (r.n) gr.offReg[r.n] = 1; });
+    plGmSave(gr); var yr2 = window.scrollY; render(); window.scrollTo(0, yr2);
+  }
+  else if (a === "gm-venue") {   // площадка из карточки города → «Площадки» (База площадок РФ): город, площадка — первой строкой
+    var vc = b.getAttribute("data-city"), vv = b.getAttribute("data-venue");
+    if (S.pl.gmObj) S.pl.gmObj.closePopup();
+    S.m.vfocus = vv ? { city: vc, venue: vv } : null; S.m.city = vc; S.m.venue = ""; S.m.tab = "venues"; S.m.limit = 200;
+    goView("venues:market");
+    var fr = document.querySelector("tr.pl-vfocus"); if (fr) { fr.scrollIntoView({ block: "center" }); var fb = fr.querySelector(".ev-title"); if (fb) fb.focus({ preventScroll: true }); }
   }
   else if (a === "gm-replace" || a === "gm-add") {
     var gt = plGmPrefs().tour; if (!PLAN.tours[gt]) return;
@@ -8593,6 +8662,19 @@ document.addEventListener("click", function (ev) {
 document.addEventListener("change", function (ev) {   // «Столбцы»: показать / скрыть
   var c = ev.target.closest && ev.target.closest("[data-pl-col]"); if (!c) return;
   PL_PREFS.vis = PL_PREFS.vis || {}; PL_PREFS.vis[c.getAttribute("data-pl-col")] = c.checked; plPrefsSave(); render();
+});
+// «Карта»: флажок области — показать / скрыть её на карте; поиск по списку областей — без перерисовки
+document.addEventListener("change", function (ev) {
+  var c = ev.target.closest && ev.target.closest("[data-gmreg]"); if (!c) return;
+  var g = plGmPrefs(), n = c.getAttribute("data-gmreg");
+  if (c.checked) delete g.offReg[n]; else g.offReg[n] = 1;
+  plGmSave(g); var y = window.scrollY; render(); window.scrollTo(0, y);
+  var again = document.querySelector('[data-gmreg="' + CSS.escape(n) + '"]'); if (again) again.focus({ preventScroll: true });
+});
+document.addEventListener("input", function (ev) {
+  if (ev.target.id !== "plGmRegQ") return;
+  var q = S.pl.gmRegQ = ev.target.value.trim().toLowerCase();
+  document.querySelectorAll("#plGmReg [data-regname]").forEach(function (l) { l.hidden = !!q && l.getAttribute("data-regname").indexOf(q) < 0; });
 });
 // Ширина столбцов тура — перетаскиванием границы заголовка (как в «Мероприятиях»), двойной клик — вернуть
 var plDrag = null;
