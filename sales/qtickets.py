@@ -5,6 +5,7 @@ Qtickets для сбора продаж (TICKET_PLATFORMS.md, 9.3 и 9.5): ст�
     - занятые места — ответ окна `/widget/seats` (`ordered_seats`; проверку 428 проходит код самой страницы);
     - танцпол и входные — остаток по зоне (`appends.zones[зона].free_quantity`): мест у них нет, вместимости тоже.
 Цены известны у всех мест, поэтому вал точный (как у vladimirkoncert), а продажи — по местам.
+Несколько сеансов у мероприятия — окно сначала показывает выбор даты и времени: нажимается время нашего сеанса (PICK_JS).
 
 Нагрузка (TICKET_PLATFORMS 9.5): одна страница — 5 запросов к серверу Qtickets (страница, загрузчик окна, окно зала,
 проверка 428, места) и ~6 к его CDN (скрипты, стили, схема — из кэша браузера); лимит и паузы — в страницах (`Browser`), по
@@ -67,6 +68,21 @@ SCHEME_JS = """() => {
   const sh = c.show || {};
   return {seats, zones, show: sh.id || null, date: sh.date_text || '', event: (c.event || {}).id || null};
 }"""
+# Выбор сеанса: у мероприятия с несколькими сеансами окно сначала показывает даты и время (как покупателю), схема зала —
+# после нажатия на время (окно переходит на `<организатор>.qtickets.ru/show/<номер>`). [{day, time, show}]
+PICK_JS = """() => {
+  const box = document.querySelector('.event-dates'); if (!box) return null;
+  const out = [];
+  for (const row of box.querySelectorAll('.row')) {
+    const day = ((row.querySelector('.day') || {}).textContent || '').trim().replace(/\\s+/g, ' ');
+    for (const a of row.querySelectorAll('a.times__item')) {
+      const m = (a.getAttribute('onclick') || '').match(/loadShow'?,\\s*(\\d+)/);
+      if (m) out.push({day, time: a.textContent.trim().replace(/\\s+/g, ' '), show: m[1]});
+    }
+  }
+  return out;
+}"""
+WIDGET = re.compile(r"\.qtickets\.ru/(event|show)/")
 
 
 class Browser:
@@ -121,9 +137,10 @@ class Browser:
         return self.deadline - time.time()
 
     # ------------------------------------------------------------ страница
-    def snapshot(self, event_id: str) -> dict | None:
+    def snapshot(self, event_id: str, d: date | None = None, t: str | None = None) -> dict | None:
         """{seats, zones, show, date, ordered, appends, all_sold, raw} — окно зала загрузилось; {"gone": True} — мероприятия
-        нет (404); None — не загрузилось (сбой, повтор позже). Stopped — лимит, отказ сайта или предохранитель."""
+        нет (404); {"no_show": True, "date": …} — в выборе сеансов нет даты d и времени t; None — не загрузилось (сбой,
+        повтор позже). Stopped — лимит, отказ сайта или предохранитель. Несколько сеансов — нажимается время сеанса (d, t)."""
         if self.stopped:
             raise Stopped(self.site)
         if self.cap is not None and self.sent >= self.cap:
@@ -162,9 +179,9 @@ class Browser:
                 out = {"gone": True}
             elif status and status < 400:
                 end = time.time() + PAGE_TIMEOUT
-                scheme = None
+                scheme, picked = None, False
                 while time.time() < end and not bad:
-                    frame = next((f for f in page.frames if re.search(r"\.qtickets\.ru/event/", f.url)), None)
+                    frame = next((f for f in page.frames if WIDGET.search(f.url)), None)
                     if frame and "seats" in got:
                         try:
                             scheme = frame.evaluate(SCHEME_JS)
@@ -172,8 +189,26 @@ class Browser:
                             scheme = None
                         if scheme and scheme["seats"] is not None:
                             break
+                    elif frame and not picked:
+                        try:
+                            picks = frame.evaluate(PICK_JS)
+                        except Exception:
+                            picks = None
+                        for x in picks or []:   # у дня две подписи (широкий и узкий экран): «13 октября вторник 13 октября вторник»
+                            x["day"] = re.sub(r"^(.+) \1$", r"\1", x["day"])
+                        if picks:   # выбор сеансов: нажать время нужного сеанса, как покупатель
+                            pick = pick_show(picks, d, t)
+                            if not pick:
+                                out = {"no_show": True, "date": "; ".join(sorted({"%s %s" % (x["day"], x["time"]) for x in picks}))[:300]}
+                                break
+                            picked = True
+                            got.pop("seats", None)
+                            frame.locator("a.times__item[onclick*='%s']" % pick["show"]).first.click(timeout=10000)
+                            end = max(end, time.time() + PAGE_TIMEOUT * 2 / 3)
                     page.wait_for_timeout(400)
-                if scheme and "seats" in got:
+                if out:
+                    status = 200
+                elif scheme and "seats" in got:
                     s = json.loads(got["seats"])
                     out = {**scheme, "ordered": s.get("ordered_seats") or {}, "appends": s.get("appends") or {},
                            "all_sold": bool(s.get("all_sold")), "raw": got["seats"]}
@@ -257,6 +292,19 @@ class Browser:
 
 # ---------------------------------------------------------------- разбор снимка
 
+def pick_show(picks: list, d: date | None, t: str | None) -> dict | None:
+    """Сеанс из выбора дат: день «13 октября» и время «20:00» (без времени — единственный в этот день)."""
+    if d is None:
+        return picks[0] if len(picks) == 1 else None
+    day = re.compile(r"(?<!\d)%d %s" % (d.day, MONTHS[d.month - 1]), re.I)
+    same_day = [x for x in picks if day.search(x["day"])]
+    hm = lambda v: re.sub(r"^0(?=\d:)", "", (re.search(r"\d{1,2}:\d{2}", v or "") or [""])[0])   # «09:00» = «9:00»
+    hit = [x for x in same_day if t and hm(x["time"]) == hm(t)]
+    if hit:
+        return hit[0]
+    return same_day[0] if len(same_day) == 1 else None
+
+
 def same_date(snap: dict, d: date, t: str | None) -> bool:
     """Окно открыло тот же сеанс: «18 октября, 18:00» — день, месяц и (если известно) время совпадают."""
     text = (snap.get("date") or "").lower()
@@ -326,7 +374,7 @@ def daily_budget(now: datetime | None = None) -> tuple[int, str]:
     elif (now - datetime.fromisoformat(since) >= RAMP_HOLD and now >= datetime.fromisoformat(hold)
           and blocks.state("qtickets/sales") == "ok" and RAMP[step] < cap and step < len(RAMP) - 1):
         step, since, note = step + 1, now.isoformat(timespec="seconds"), "сутки без отказов — ступень выше"
-    if note or not st:
+    if note or "since" not in st:   # в файле может быть только «pow» (сложность 428) — ступень всё равно записать
         save_json(RAMP_FILE, {**st, "step": step, "since": since, "hold": hold, "budget": min(cap, RAMP[step])})
         if note:
             blocks.log_event("qtickets/sales", "warn" if "ниже" in note else "ramp", "%s: %d страниц в сутки" % (note, min(cap, RAMP[step])))

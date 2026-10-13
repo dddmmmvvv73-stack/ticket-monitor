@@ -227,7 +227,7 @@ def _qtickets_job(conn, br: qtickets.Browser, items: list, stats: Counter) -> No
             now = datetime.now().astimezone()
             p = store.pool(cur, "qtickets", key, sid)
             try:
-                snap = br.snapshot(key.split(":", 1)[1])
+                snap = br.snapshot(key.split(":", 1)[1], d, t)
             except Stopped:
                 conn.rollback()
                 break
@@ -238,6 +238,11 @@ def _qtickets_job(conn, br: qtickets.Browser, items: list, stats: Counter) -> No
                 elif snap.get("gone"):
                     stats["qtickets: мероприятия нет на сайте"] += 1
                     p["ext"].update(gone=now.isoformat(timespec="seconds"))
+                    store.save_ext(cur, p)
+                    cur.execute("UPDATE pools SET next_check = %s WHERE id = %s", (now + store.FAR, p["id"]))
+                elif snap.get("no_show"):   # несколько сеансов, а нашей даты и времени среди них нет
+                    stats["qtickets: сеанса нет в выборе дат"] += 1
+                    p["ext"].update(other_date=snap.get("date"))
                     store.save_ext(cur, p)
                     cur.execute("UPDATE pools SET next_check = %s WHERE id = %s", (now + store.FAR, p["id"]))
                 elif not qtickets.same_date(snap, d, t):
