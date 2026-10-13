@@ -1029,7 +1029,7 @@
     }
   },
   "filters": {
-    "show": "tour",
+    "show": "all",
     "pmin": null,
     "pmax": null,
     "noprice": false
