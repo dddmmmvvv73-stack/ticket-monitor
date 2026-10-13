@@ -686,6 +686,18 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pl-kml span { display: inline-block; padding: 0 4px; border-radius: 4px; background: rgba(255, 255, 255, 0.9); font-size: 11px; line-height: 16px; color: #1d5f9a; white-space: nowrap; } .pl-map-layers .pl-lab { white-space: nowrap; }
 .pl-pop { display: flex; flex-direction: column; gap: 6px; min-width: 180px; } .pl-pop .btn-ghost { height: 30px; font-size: 12px; }
 .pl-pin:hover { transform: scale(1.12); }
+/* «Продажи» по кассам: карточки касс, метка кассы в строке */
+.sf-ops { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.sf-op { text-align: left; display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); font: inherit; color: var(--ink); cursor: pointer;
+  transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 160ms, border-color 160ms; }
+.sf-op:hover { transform: translateY(-1px); box-shadow: 0 6px 18px -10px rgba(12, 10, 9, 0.25); }
+.sf-op.on { border-color: var(--soot); box-shadow: inset 0 0 0 1px var(--soot); }
+.sf-op-h { display: flex; align-items: center; gap: 8px; } .sf-op-h i { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; } .sf-op-h b { font-weight: 600; }
+.sf-st { margin-left: auto; font-size: 11px; padding: 1px 8px; border-radius: 9999px; background: var(--line-soft); color: var(--ink-3); white-space: nowrap; } .sf-st.ok { background: #e7f4ec; color: #166534; }
+.sf-op-n { font-size: 14px; } .sf-op-n b { font: 600 18px/1.2 var(--display); }
+.sf-tag { display: inline-block; font-size: 11px; font-weight: 500; padding: 1px 8px; border-radius: 9999px; color: var(--c); background: color-mix(in srgb, var(--c) 12%, transparent); white-space: nowrap; }
+.sf-sub { font: 600 22px/1.2 var(--display); margin: 12px 0 0; }
+@media (prefers-reduced-motion: reduce) { .sf-op, .sf-op:hover { transition: none; transform: none; } }
 .pl-zleft { font-size: 13px; color: var(--ink-2); } .pl-zleft b { font-weight: 600; } .pl-ok { color: #166534; }
 @media (max-width: 480px) { .pl-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .pl-tools { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 12px; }
@@ -2362,7 +2374,7 @@ function salesInDrawer(e) {
         '<div style="text-align:right"><div class="sale-plus">+' + x.s.n + ' ' + plural(x.s.n, "место", "места", "мест") + '</div><div class="sub num" style="margin:0">' + num(x.s.r) + '\u00a0₽</div></div></li>';
     }).join("") + '</ul></div>';
 }
-function renderSales() {
+function renderSalesOld() {
   var t = salesTotals();
   var venues = []; SALES.forEach(function (g) { g.items.forEach(function (it) { var e = saleEvent(it); if (e && inCity(e) && venues.indexOf(e.venue) < 0) venues.push(e.venue); }); });
   var groups = SALES.map(function (g) {
@@ -2864,7 +2876,7 @@ function scatterSvg(list) {
   }).join("");
   return '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="group" aria-label="Заполняемость и дней до события: ' + list.length + ' мероприятий">' + out + '</svg>';
 }
-function renderDynamics() {
+function renderDynamicsOld() {
   var data = cityData();
   if (!data.length) return head("Динамика продаж", cityLabel()) + cityEmpty();
   var t = { n: 0, r: 0 }, byV = {};
@@ -8666,6 +8678,149 @@ function plVenueCells(city, venue) {
   var zn = (v.zones || []).length, zs = (v.zones || []).reduce(function (a, z) { return a + planNum(z.seats); }, 0);
   return '<div class="pl-vfs pl-flat">' + f("seats", "мест в продаже", "pl-sm") + f("gross", "вал", "pl-sm") + f("rent", "аренда", "pl-sm") +
     '<button class="pj-plain pl-vz" data-pl="vz-open" data-k="' + esc(k) + '">' + (zn ? 'пояса: ' + zn + ' · ' + num(zs) + ' мест' : '+ пояса зала') + '</button></div>';
+}
+// ---------- Продажи по кассам (запрос пользователя 13.10): «История продаж» и «Динамика продаж» — по всем кассам из базы
+// (sales/feed.py → /api/sales/feed): vladimirkoncert, ОрелКонцерт, Кассир, Qtickets, Яндекс; фильтр «Касса». Сверху —
+// карточки касс: где идёт сбор, сколько сеансов под слежением, снимков за сутки, продано. Прототип файлом — прежний вид.
+var SF = null, SF_LOAD = false, SF_DAYS = 30;
+var SF_OPS = { vladimirkoncert: ["vladimirkoncert", "#1d6fae"], orelkoncert: ["ОрелКонцерт", "#7c3aed"], kassir: ["Кассир", "#ea580c"], qtickets: ["Qtickets", "#16a34a"],
+  yandex: ["Яндекс Афиша", "#db2777"], odk33: ["ОДКиИ", "#0891b2"] };
+var SF_ORDER = ["kassir", "qtickets", "yandex", "vladimirkoncert", "orelkoncert", "odk33"];
+function sfLoad() {
+  if (!CAN_SAVE || SF_LOAD) return;
+  SF_LOAD = true;
+  apiJson("GET", "/api/sales/feed?days=" + SF_DAYS).then(function (x) {
+    if (x.ok) { SF = x.d; if (S.view === "sales" || S.view === "dynamics") render(); } else SF = { error: x.d.error || "ошибка" };
+    setTimeout(function () { SF_LOAD = false; }, 5 * 60 * 1000);   // свежие продажи — раз в 5 минут, при следующем заходе
+  }, function () { SF = { error: NO_APP }; SF_LOAD = false; });
+}
+function sfName(op) { return (SF_OPS[op] || [op])[0]; }
+function sfColor(op) { return (SF_OPS[op] || [0, "#78716c"])[1]; }
+function sfOpsList() { return SF_ORDER.filter(function (op) { var o = SF.ops[op]; return o && (o.tracked || o.sold || o.snaps24); }); }
+function sfRows(opts) {
+  opts = opts || {};
+  return SF.rows.filter(function (r) { return (!S.salesOp || r.op === S.salesOp) && cityOk(r.c) && (opts.noVenue || !S.salesVenue || r.v === S.salesVenue); });
+}
+function sfOpen(r) {   // карточка: площадка прямого сбора — её карточка, касса рынка — карточка мероприятия рынка
+  var d = ALL.filter(function (e) { return e.uid === r.key; })[0];
+  if (d) { openDrawer(d.i); return; }
+  var i = MR.findIndex(function (e) { return e.key === r.key || (e.keys || []).indexOf(r.key) >= 0; });
+  if (i >= 0) { openMDrawer(i); return; }
+  toast("Мероприятие уже не в афише — карточки нет");
+}
+function sfOpsBlock() {   // где идёт сбор и как продаётся — карточка на кассу; нажатие — фильтр
+  var now = Date.now();
+  return '<section class="sf-ops" aria-label="Сбор продаж по кассам">' + sfOpsList().map(function (op) {
+    var o = SF.ops[op], on = S.salesOp === op, last = o.last ? new Date(o.last).getTime() : 0, age = last ? (now - last) / 36e5 : null;
+    var st = !o.snaps24 ? (op === "yandex" ? "закрыт" : "нет снимков") : age != null && age > 3 ? "пауза" : "идёт сбор";
+    var stTip = !o.snaps24 ? (op === "yandex" ? "Яндекс закрыл доступ серверу 06.10 — не собирается" : "За сутки снимков не было") : age != null && age > 3 ? "Последний снимок больше 3 часов назад" : "Снимки идут";
+    var ok = o.snaps24 && age != null && age <= 3;
+    return '<button class="sf-op' + (on ? ' on' : '') + '" data-sfop="' + op + '" aria-pressed="' + on + '">' +
+      '<span class="sf-op-h"><i style="background:' + sfColor(op) + '"></i><b>' + sfName(op) + '</b><span class="sf-st' + (ok ? ' ok' : '') + '" title="' + esc(stTip) + '">' + st + '</span></span>' +
+      '<span class="sf-op-n"><b class="num">' + num(o.sold24 || 0) + '</b> мест за сутки <span class="sub2">· ' + money(o.rub24 || 0) + '</span></span>' +
+      '<span class="sub2">под слежением ' + num(o.tracked) + ' · снимков за сутки ' + num(o.snaps24) + (o.last ? ' · последний ' + atText(o.last) : '') + '</span>' +
+      '<span class="sub2">всего ' + num(o.sold || 0) + ' мест · ' + money(o.rub || 0) + (o.since ? ' с ' + human(o.since.slice(0, 10)) : '') + '</span></button>';
+  }).join("") + '</section>';
+}
+function sfToolbar(rowsAll) {
+  var venues = []; rowsAll.forEach(function (r) { if (venues.indexOf(r.v) < 0) venues.push(r.v); }); venues.sort();
+  return '<div class="toolbar"><select class="chip-select" id="salesOp" aria-label="Касса"><option value="">Касса: все</option>' +
+      sfOpsList().map(function (op) { return '<option value="' + op + '"' + (S.salesOp === op ? ' selected' : '') + '>' + sfName(op) + '</option>'; }).join("") + '</select>' +
+    '<select class="chip-select" id="salesVenue" aria-label="Площадка"><option value="">Площадка: все</option>' + venues.map(function (v) { return '<option' + (S.salesVenue === v ? ' selected' : '') + '>' + esc(v) + '</option>'; }).join("") + '</select>' +
+    '<div style="flex-grow:1"></div><span class="sub" style="margin:0">Нажмите на мероприятие — карточка</span></div>';
+}
+function sfKpis(rows) {
+  var n = 0, r = 0, ret = 0, ev = {}; rows.forEach(function (x) { n += x.n; ret += x.ret; r += x.rub; if (x.n) ev[x.op + x.key] = 1; });
+  return '<section class="card kpis k4" aria-label="Итог за ' + SF_DAYS + ' дней">' +
+    '<div><div class="kpi-label">Продано мест</div><div class="kpi-value num">' + num(n) + '</div><div class="sub">за ' + SF_DAYS + ' дней' + (ret ? ' · вернулось ' + num(ret) : '') + '</div></div>' +
+    '<div><div class="kpi-label">На сумму</div><div class="kpi-value">' + money(r) + '</div><div class="sub">по ценам мест</div></div>' +
+    '<div><div class="kpi-label">Средний билет</div><div class="kpi-value num">' + (n ? num(Math.round(r / n)) + ' ₽' : '—') + '</div><div class="sub">по проданным местам</div></div>' +
+    '<div><div class="kpi-label">Мероприятий с продажами</div><div class="kpi-value num">' + num(Object.keys(ev).length) + '</div><div class="sub">' + (S.salesOp ? sfName(S.salesOp) : 'все кассы') + '</div></div></section>';
+}
+var SF_SHOW = 30;
+function renderSalesFeed() {
+  var all = sfRows({ noVenue: true }), rows = sfRows();
+  var groups = {}, order = [];
+  rows.forEach(function (r) { if (!groups[r.at]) { groups[r.at] = []; order.push(r.at); } groups[r.at].push(r); });
+  var shown = order.slice(0, S.sfShow || SF_SHOW);
+  var html = shown.map(function (at) {
+    var g = groups[at].slice().sort(function (a, b) { return b.rub - a.rub; }), gn = 0, gr = 0; g.forEach(function (x) { gn += x.n; gr += x.rub; });
+    var ops = []; g.forEach(function (x) { if (ops.indexOf(x.op) < 0) ops.push(x.op); });
+    return '<section class="card"><div class="sale-group-head"><div><h2>' + human(at.slice(0, 10)) + ', сбор в ' + at.slice(11, 16) + '</h2><p class="sub" style="margin:2px 0 0">' + ops.map(sfName).join(" · ") + '</p></div>' +
+      '<div class="num" style="font-weight:500">' + num(gn) + ' ' + plural(gn, "место", "места", "мест") + ' · ' + num(gr) + ' ₽</div></div>' +
+      '<ul class="sale-list">' + g.map(function (x, i) {
+        var d = x.d ? dparts(x.d) : null;
+        return '<li><button class="sale-row" data-sfrow="' + esc(at) + '|' + i + '" aria-label="' + esc(x.t) + ': продано ' + x.n + ', открыть карточку">' +
+          '<div style="min-width:0"><div style="font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(x.t) + '</div>' +
+            '<div class="sub" style="margin:0">' + esc(x.c) + ' · ' + esc(x.v) + (d ? ' · <span class="' + (d.weekend ? "wknd" : "") + '">' + d.wd + ', ' + d.day + ' ' + d.mon + '</span>' : '') + (x.tm ? ', ' + x.tm : '') + '</div></div>' +
+          '<div class="sub sr-seats" style="margin:0"><span class="sf-tag" style="--c:' + sfColor(x.op) + '">' + sfName(x.op) + '</span></div>' +
+          '<div class="sale-plus">+' + x.n + ' ' + plural(x.n, "место", "места", "мест") + (x.ret ? ' <span class="sub2">−' + x.ret + '</span>' : '') + '</div>' +
+          '<div class="sale-sum">' + num(x.rub) + ' ₽</div>' +
+          '<svg class="chev" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M6 3.5l4.5 4.5L6 12.5"/></svg></button></li>';
+      }).join("") + '</ul></section>';
+  }).join("");
+  S.sfGroups = groups;
+  return head("История продаж", "Подтверждённые продажи по кассам за " + SF_DAYS + " дней · " + cityLabel()) + sfOpsBlock() + sfKpis(rows) + sfToolbar(all) +
+    (html || '<div class="empty"><h2>Продаж нет</h2><p style="margin:0">Выберите другую кассу, площадку или город.</p></div>') +
+    (order.length > shown.length ? '<div style="display:flex;justify-content:center"><button class="btn-ghost" data-sfmore="1">Показать ещё · ' + (order.length - shown.length) + ' ' + plural(order.length - shown.length, "сбор", "сбора", "сборов") + '</button></div>' : '') +
+    '<div class="note">Продажа — место было свободно в прошлом снимке кассы и стало занятым в следующем; у касс без схемы мест — убыль остатка по ценам. ' +
+      'Каждая касса видит только свою квоту. Пачки мест, снятых с продажи, пока считаются продажами (вопрос 27) — крупные «продажи» одним снимком стоит проверять. ' +
+      'Кассир с ноутбука — до 500 запросов в сутки, поэтому сеансы обновляются выборочно.</div>';
+}
+function sfDaysSvg(rows) {   // продано мест по дням, столбики — по кассам (стопкой)
+  var days = [], end = new Date(TODAY + "T12:00:00Z");
+  for (var i = SF_DAYS - 1; i >= 0; i--) { var d = new Date(end); d.setUTCDate(d.getUTCDate() - i); days.push(d.toISOString().slice(0, 10)); }
+  var by = {}, ops = [];
+  rows.forEach(function (r) { var k = r.at.slice(0, 10); by[k] = by[k] || {}; by[k][r.op] = (by[k][r.op] || 0) + r.n; if (ops.indexOf(r.op) < 0) ops.push(r.op); });
+  ops.sort(function (a, b) { return SF_ORDER.indexOf(a) - SF_ORDER.indexOf(b); });
+  var max = Math.max.apply(null, days.map(function (d) { var s = 0; ops.forEach(function (op) { s += (by[d] || {})[op] || 0; }); return s; }).concat([1]));
+  var W = 760, H = 190, pad = 22, bw = (W - 10) / days.length;
+  var bars = days.map(function (d, i) {
+    var y = H - pad, out = "", tot = 0;
+    ops.forEach(function (op) { var v = (by[d] || {})[op] || 0; if (!v) return; tot += v; var h = v / max * (H - pad - 18); y -= h; out += '<rect x="' + (5 + i * bw + 2).toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + (bw - 4).toFixed(1) + '" height="' + h.toFixed(1) + '" fill="' + sfColor(op) + '" rx="2"><title>' + human(d) + ' · ' + sfName(op) + ': ' + v + '</title></rect>'; });
+    var lab = (i % Math.ceil(days.length / 10) === 0 || i === days.length - 1) ? '<text x="' + (5 + i * bw + bw / 2).toFixed(1) + '" y="' + (H - 6) + '" font-size="10" text-anchor="middle" fill="#78716c">' + human(d) + '</text>' : '';
+    return out + (tot ? '<text x="' + (5 + i * bw + bw / 2).toFixed(1) + '" y="' + (y - 3).toFixed(1) + '" font-size="9.5" text-anchor="middle" fill="#57534e">' + tot + '</text>' : '') + lab;
+  }).join("");
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="Продано мест по дням и кассам">' + bars + '</svg>' +
+    '<div class="legend" style="margin-top:6px">' + ops.map(function (op) { return '<span><i class="key" style="background:' + sfColor(op) + '"></i>' + sfName(op) + '</span>'; }).join("") + '</div>';
+}
+function sfDynamicsBlock() {
+  var rows = sfRows(), top = {};
+  rows.forEach(function (r) { var k = r.op + "|" + r.key; var t = top[k] = top[k] || { r: r, n: 0, rub: 0 }; t.n += r.n; t.rub += r.rub; });
+  var best = Object.keys(top).map(function (k) { return top[k]; }).sort(function (a, b) { return b.n - a.n; }).slice(0, 10);
+  return sfOpsBlock() + sfToolbar(sfRows({ noVenue: true })) + sfKpis(rows) +
+    '<div class="dyn-grid"><section class="card card-pad"><h2>Продано мест по дням</h2><p class="sub">' + (S.salesOp ? sfName(S.salesOp) : 'все кассы') + ' · ' + cityLabel() + ' · ' + SF_DAYS + ' дней</p>' + sfDaysSvg(rows) + '</section>' +
+      '<section class="card card-pad"><h2>Больше всего продаж</h2><p class="sub">за ' + SF_DAYS + ' дней</p>' + (best.length ? '<ul class="list">' + best.map(function (b, i) {
+        return '<li><button class="row-btn" data-sftop="' + i + '"><span style="flex-grow:1;min-width:0"><b style="font-weight:500">' + esc(b.r.t) + '</b><span class="sub2" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+          esc(b.r.c) + ' · ' + esc(b.r.v) + (b.r.d ? ' · ' + human(b.r.d) : '') + ' · ' + sfName(b.r.op) + '</span></span><span class="num nowrap">' + num(b.n) + ' мест · ' + money(b.rub) + '</span></button></li>';
+      }).join("") + '</ul>' : '<p class="sub">Продаж нет.</p>') + '</section></div>';
+}
+$("view").addEventListener("click", function (ev) {
+  if (!SF || (S.view !== "sales" && S.view !== "dynamics")) return;
+  var t = ev.target.closest("[data-sfop],[data-sfrow],[data-sfmore],[data-sftop]"); if (!t) return;
+  ev.stopPropagation();
+  if (t.hasAttribute("data-sfop")) { var op = t.getAttribute("data-sfop"); S.salesOp = S.salesOp === op ? "" : op; S.salesVenue = ""; S.sfShow = 0; render(); return; }
+  if (t.hasAttribute("data-sfmore")) { S.sfShow = (S.sfShow || SF_SHOW) + SF_SHOW; var y = window.scrollY; render(); window.scrollTo(0, y); return; }
+  if (t.hasAttribute("data-sftop")) {
+    var rows = sfRows(), top = {}; rows.forEach(function (r) { var k = r.op + "|" + r.key; var x = top[k] = top[k] || { r: r, n: 0 }; x.n += r.n; });
+    var best = Object.keys(top).map(function (k) { return top[k]; }).sort(function (a, b) { return b.n - a.n; })[+t.getAttribute("data-sftop")]; if (best) sfOpen(best.r); return;
+  }
+  var p = t.getAttribute("data-sfrow").split("|"), g = S.sfGroups && S.sfGroups[p[0]];
+  if (g) sfOpen(g.slice().sort(function (a, b) { return b.rub - a.rub; })[+p[1]]);
+}, true);
+$("view").addEventListener("change", function (ev) { if (ev.target.id === "salesOp") { S.salesOp = ev.target.value; S.salesVenue = ""; S.sfShow = 0; render(); } });
+function renderSales() {   // по кассам из базы; прототип файлом (или база не ответила) — прежний вид по площадкам прямого сбора
+  sfLoad();
+  if (SF && SF.rows) return renderSalesFeed();
+  return renderSalesOld() + (SF && SF.error ? '<div class="note">Продажи касс рынка не загрузились: ' + esc(SF.error) + '. Показаны площадки прямого сбора.</div>' : '');
+}
+function renderDynamics() {
+  sfLoad();
+  if (!(SF && SF.rows)) return renderDynamicsOld();
+  var direct = !S.salesOp || S.salesOp === "vladimirkoncert" || S.salesOp === "odk33";
+  var old = direct ? renderDynamicsOld().replace(/^<div class="page-head"[^]*?<\/div><\/div>/, "") : "";
+  return head("Динамика продаж", "Как идут продажи по кассам · " + cityLabel()) + sfDynamicsBlock() +
+    (old ? '<h2 class="sf-sub">Площадки прямого сбора — подробно</h2>' + old : '');
 }
 var VIEWS = ["overview", "city", "niches", "calendar", "new", "events", "projects", "touring", "favorites", "venues", "operators", "suggest", "archive", "sales", "dynamics", "settings", "market", "planning"];
 if (VIEWS.indexOf(location.hash.slice(1)) >= 0) S.view = location.hash.slice(1);

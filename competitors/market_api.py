@@ -13,6 +13,7 @@
     GET  /proto/site-data.js      даты с официальных сайтов проектов (competitors/officialsite.py)
     POST /api/market/site/check   {"key"} — разобрать сайт проекта сейчас (кнопка «Проверить», ~10–40 с)
     GET  /proto/venue-cap.js      вместимость площадок по схемам касс (competitors/venuecap.py)
+    GET  /api/sales/feed?days=14  продажи по кассам для «Истории» и «Динамики продаж» (sales/feed.py) — из базы
     GET  /api/planning            «Планирование»: справочники и туры (competitors/planning.py; config/planning.json вне git)
     POST /api/planning            {"op": "put" | "del", "kind", "id", "data"}
 
@@ -146,6 +147,43 @@ def sales_detail():
 
 
 _arch_cache: dict = {}
+
+
+_feed_cache: dict = {}
+
+
+@bp.get("/api/sales/feed")
+def sales_feed():
+    """Продажи по кассам (sales.feed): на сервере — из базы, на ноутбуке разработки — с сервера по SSH. Кэш — 5 минут."""
+    days = request.args.get("days", "14")
+    days = int(days) if days.isdigit() and 1 <= int(days) <= 120 else 14
+    key = (days, datetime.now().strftime("%Y-%m-%d %H:") + str(datetime.now().minute // 5))
+    if key in _feed_cache:
+        return Response(_feed_cache[key], mimetype="application/json")
+    if ON_SERVER:
+        from db import connect as dbc
+        from sales import feed
+        conn = dbc.connect()
+        try:
+            body = json.dumps(feed.build(conn, days), ensure_ascii=False, separators=(",", ":"))
+        finally:
+            conn.close()
+    else:
+        cfg = load_json(SERVER_FILE, {})
+        if not cfg.get("ssh"):
+            return jsonify(error="сервер не настроен на этом компьютере (config/server.json)"), 503
+        remote = "set -a; . /etc/ticket-monitor.env; set +a; cd /opt/ticket-monitor && .venv/bin/python -m sales.feed %d" % days
+        cmd = ["ssh", "-i", os.path.expanduser(cfg.get("key", "")), "-o", "BatchMode=yes", "-o", "ConnectTimeout=10", cfg["ssh"], remote]
+        try:
+            r = subprocess.run(cmd, capture_output=True, timeout=60)
+        except subprocess.TimeoutExpired:
+            return jsonify(error="сервер не ответил за 60 с"), 504
+        if r.returncode != 0:
+            return jsonify(error="сервер недоступен"), 502
+        body = r.stdout.decode("utf-8")
+    _feed_cache.clear()
+    _feed_cache[key] = body
+    return Response(body, mimetype="application/json")
 
 
 @bp.get("/api/archive")
