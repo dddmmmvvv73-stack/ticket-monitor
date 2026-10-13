@@ -8684,13 +8684,22 @@ function plVenueCells(city, venue) {
 // карточки касс: где идёт сбор, сколько сеансов под слежением, снимков за сутки, продано. Прототип файлом — прежний вид.
 var SF = null, SF_LOAD = false, SF_DAYS = 30;
 var SF_OPS = { vladimirkoncert: ["vladimirkoncert", "#1d6fae"], orelkoncert: ["ОрелКонцерт", "#7c3aed"], kassir: ["Кассир", "#ea580c"], qtickets: ["Qtickets", "#16a34a"],
-  yandex: ["Яндекс Афиша", "#db2777"], odk33: ["ОДКиИ", "#0891b2"] };
-var SF_ORDER = ["kassir", "qtickets", "yandex", "vladimirkoncert", "orelkoncert", "odk33"];
+  yandex: ["Яндекс Афиша", "#db2777"] };
+var SF_ORDER = ["kassir", "qtickets", "yandex", "vladimirkoncert", "orelkoncert"];
+// ОДКиИ — площадка, а не касса: её билеты продаёт vladimirkoncert — её продажи и слежение считаем там (решение 13.10)
+function sfMerge(d) {
+  var o = d.ops.odk33; delete d.ops.odk33;
+  if (o) { var v = d.ops.vladimirkoncert = d.ops.vladimirkoncert || { tracked: 0, snaps24: 0, pools24: 0 };
+    ["tracked", "snaps24", "pools24", "sold", "rub", "sold24", "rub24", "sold7", "rub7"].forEach(function (k) { if (o[k]) v[k] = (v[k] || 0) + o[k]; });
+    if (o.last && (!v.last || o.last > v.last)) v.last = o.last; }
+  d.rows.forEach(function (r) { if (r.op === "odk33") r.op = "vladimirkoncert"; });
+  return d;
+}
 function sfLoad() {
   if (!CAN_SAVE || SF_LOAD) return;
   SF_LOAD = true;
   apiJson("GET", "/api/sales/feed?days=" + SF_DAYS).then(function (x) {
-    if (x.ok) { SF = x.d; if (S.view === "sales" || S.view === "dynamics") render(); } else SF = { error: x.d.error || "ошибка" };
+    if (x.ok) { SF = sfMerge(x.d); if (S.view === "sales" || S.view === "dynamics") render(); } else SF = { error: x.d.error || "ошибка" };
     setTimeout(function () { SF_LOAD = false; }, 5 * 60 * 1000);   // свежие продажи — раз в 5 минут, при следующем заходе
   }, function () { SF = { error: NO_APP }; SF_LOAD = false; });
 }
@@ -8817,7 +8826,7 @@ function renderSales() {   // по кассам из базы; прототип 
 function renderDynamics() {
   sfLoad();
   if (!(SF && SF.rows)) return renderDynamicsOld();
-  var direct = !S.salesOp || S.salesOp === "vladimirkoncert" || S.salesOp === "odk33";
+  var direct = !S.salesOp || S.salesOp === "vladimirkoncert";
   var old = direct ? renderDynamicsOld().replace(/^<div class="page-head"[^]*?<\/div><\/div>/, "") : "";
   return head("Динамика продаж", "Как идут продажи по кассам · " + cityLabel()) + sfDynamicsBlock() +
     (old ? '<h2 class="sf-sub">Площадки прямого сбора — подробно</h2>' + old : '');
