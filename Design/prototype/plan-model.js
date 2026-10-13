@@ -101,5 +101,61 @@ function planBanned(lastShow, date, cfg) {
   return a > d;
 }
 
-if (typeof module !== "undefined") module.exports = { PLAN_DEFAULTS: PLAN_DEFAULTS, PLAN_ORG: PLAN_ORG, PLAN_SCORES: PLAN_SCORES,
-  planNum: planNum, planClass: planClass, planCalc: planCalc, planScore: planScore, planBanned: planBanned };
+// ---------- Аналитика тура (запрос пользователя 13.10: какие статьи крупнее, что сильнее влияет на маржу, доли расходов)
+// Статьи расходов одной даты: сумма статей = r.total (постоянные + переменные). Группы — для долей расходов.
+var PLAN_GROUPS = [["project", "Гонорар и проект", "#1d6fae"], ["perdiem", "Суточные", "#6fa7d6"], ["org", "Организационные", "#7c3aed"], ["rent", "Аренда", "#ea580c"],
+  ["logistics", "Логистика", "#0891b2"], ["ads", "Реклама", "#db2777"], ["variable", "Налог и комиссии", "#a16207"]];
+function planItems(r, x, cfg) {
+  var n = planNum, s = r.sales, out = [];
+  var add = function (id, label, group, sum) { if (sum) out.push({ id: id, label: label, group: group, sum: sum }); };
+  add("fee", "Гонорар", "project", r.project.fee); add("cashless", "% за безнал", "project", r.project.cashless);
+  add("author", "Авторские", "project", r.project.author); add("moscow", "Московские расходы", "project", r.project.moscow);
+  add("per_diem", "Суточные", "perdiem", r.project.per_diem);
+  PLAN_ORG.forEach(function (o) { add(o[0], o[1], "org", n((x.org || {})[o[0]])); });
+  add("rent", "Аренда", "rent", r.rent); add("logistics", "Логистика", "logistics", r.logistics); add("ads", "Реклама", "ads", r.ads);
+  add("tax", "Налог", "variable", s * n(cfg.tax) / 100); add("kassa", "Комиссия касс", "variable", s * n(x.kassa) / 100);
+  if (x.rao_on) add("rao", "РАО/ВОИС", "variable", s * n(x.rao) / 100);
+  add("agent", "Агентские", "variable", s * n(x.agent) / 100);
+  return out;
+}
+// Сдвиг одного фактора даты (решение пользователя: в рублях и процентах): заполняемость и комиссия касс — ± п.п.;
+// цена билета — ± ₽ за билет; статьи (гонорар, аренда, реклама, логистика, организационные, суточные) — ± ₽ на город.
+var PLAN_FACTORS = [["fill", "Заполняемость", "pp"], ["price", "Средняя цена билета", "rub_t"], ["fee", "Гонорар", "rub"], ["rent", "Аренда", "rub"],
+  ["ads", "Реклама", "rub"], ["logistics", "Логистика", "rub"], ["org", "Организационные", "rub"], ["per_diem", "Суточные", "rub"], ["kassa", "Комиссия касс", "pp"]];
+function planShift(x, f, d) {
+  var n = planNum, y = JSON.parse(JSON.stringify(x));
+  if (f === "fill") {
+    y.fill = Math.max(0, Math.min(100, n(y.fill) + d));
+    if (y.zones) y.zones.forEach(function (z) { if (z.fill != null && z.fill !== "") z.fill = Math.max(0, Math.min(100, n(z.fill) + d)); });
+  } else if (f === "price") {
+    if (y.zones && y.zones.length) y.zones.forEach(function (z) { z.price = Math.max(0, n(z.price) + d); });
+    else y.gross = Math.max(0, n(y.gross) + d * n(y.seats));
+  } else if (f === "org") {   // рост — в «прочие»; снижение — всех организационных статей поровну в долях (не ниже нуля)
+    y.org = y.org || {};
+    var tot = 0; Object.keys(y.org).forEach(function (k) { tot += n(y.org[k]); });
+    if (d >= 0) y.org.other = n(y.org.other) + d;
+    else if (tot > 0) { var kf = Math.max(0, tot + d) / tot; Object.keys(y.org).forEach(function (k) { y.org[k] = n(y.org[k]) * kf; }); }
+  }
+  else if (f === "per_diem") { var k = n(y.crew) * Math.max(1, n(y.days)); if (k > 0) y.per_diem = Math.max(0, n(y.per_diem) + d / k); }
+  else y[f] = Math.max(0, n(y[f]) + d);
+  return y;
+}
+// Чувствительность тура: прибыль и маржа при сдвиге каждого фактора вверх и вниз (по всем датам сразу).
+// steps: {pp — п.п. заполняемости, rub_t — ₽ на билет, rub — ₽ на город, kassa — п.п. комиссии}. Самый влиятельный — первым.
+function planSensitivity(xs, cfg, steps) {
+  var tot = function (list) { var p = 0, s = 0; list.forEach(function (x) { var r = planCalc(x, cfg); p += r.profit; s += r.sales; }); return { p: p, s: s, m: s > 0 ? p / s : null }; };
+  var base = tot(xs), out = [];
+  PLAN_FACTORS.forEach(function (f) {
+    var st = f[0] === "kassa" ? steps.kassa : f[2] === "pp" ? steps.pp : f[2] === "rub_t" ? steps.rub_t : steps.rub;
+    if (!st) return;
+    var up = tot(xs.map(function (x) { return planShift(x, f[0], st); })), dn = tot(xs.map(function (x) { return planShift(x, f[0], -st); }));
+    out.push({ id: f[0], label: f[1], unit: f[0] === "kassa" ? "pp" : f[2], step: st, up: up.p - base.p, down: dn.p - base.p,
+      upM: up.m != null && base.m != null ? (up.m - base.m) * 100 : null, downM: dn.m != null && base.m != null ? (dn.m - base.m) * 100 : null });
+  });
+  out = out.filter(function (o) { return o.up || o.down; });
+  out.sort(function (a, b) { return Math.max(Math.abs(b.up), Math.abs(b.down)) - Math.max(Math.abs(a.up), Math.abs(a.down)); });
+  return { base: base, factors: out };
+}
+
+if (typeof module !== "undefined") module.exports = { PLAN_DEFAULTS: PLAN_DEFAULTS, PLAN_ORG: PLAN_ORG, PLAN_SCORES: PLAN_SCORES, PLAN_GROUPS: PLAN_GROUPS, PLAN_FACTORS: PLAN_FACTORS,
+  planNum: planNum, planClass: planClass, planCalc: planCalc, planScore: planScore, planBanned: planBanned, planItems: planItems, planShift: planShift, planSensitivity: planSensitivity };

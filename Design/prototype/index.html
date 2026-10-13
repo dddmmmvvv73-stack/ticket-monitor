@@ -678,6 +678,34 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pl-map-layers { margin: 0; align-items: center; }
 .pl-gm-tools { display: flex; gap: 10px 18px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
 .pl-gm-period { margin-left: auto; }
+.pl-ana { margin-top: 22px; } .pl-ana-head { display: flex; gap: 10px 18px; align-items: center; flex-wrap: wrap; margin-bottom: 12px; } .pl-ana-head h3 { margin: 0; font-size: 18px; }
+.pl-ana-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; }
+.pl-ana-kpi { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); } .pl-ana-kpi b { font-size: 20px; font-weight: 600; }
+.pl-ana-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; } .pl-ana-wide { grid-column: 1 / -1; }
+@media (max-width: 1100px) { .pl-ana-grid { grid-template-columns: 1fr; } }
+.pl-ana-card { padding: 14px 16px; } .pl-ana-card h4 { margin: 0 0 10px; font-size: 15px; }
+.pl-ana-donut { display: flex; gap: 18px; align-items: center; flex-wrap: wrap; } .pl-donut { width: 150px; height: 150px; flex: none; }
+.pl-donut-v { font-size: 17px; font-weight: 600; fill: var(--ink); } .pl-donut-s { font-size: 11px; fill: var(--muted); }
+.pl-ana-leg { list-style: none; margin: 0; padding: 0; flex: 1; min-width: 220px; display: grid; gap: 4px; font-size: 13px; }
+.pl-ana-leg li { display: grid; grid-template-columns: 12px 1fr 48px 70px; gap: 8px; align-items: center; } .pl-ana-leg i { width: 10px; height: 10px; border-radius: 3px; } .pl-ana-leg b, .pl-ana-leg .sub2 { text-align: right; }
+.pl-ana-stack { display: flex; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 12px; } .pl-ana-stack i { display: block; height: 100%; }
+.pl-items { list-style: none; margin: 0; padding: 0; font-size: 13px; } .pl-items li { display: grid; grid-template-columns: 150px 1fr 74px 48px 48px 48px; gap: 8px; align-items: center; padding: 3px 0; }
+.pl-items li > :nth-child(n+3) { text-align: right; } .pl-items-h { border-bottom: 1px solid var(--line); padding-bottom: 4px !important; }
+.pl-it-l { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .pl-it-bar { height: 10px; background: var(--line-soft, #f0efee); border-radius: 5px; overflow: hidden; } .pl-it-bar i { display: block; height: 100%; border-radius: 5px; }
+.pl-items li.pl-cut { border-bottom: 2px solid var(--ink); padding-bottom: 5px; }
+.pl-wf { list-style: none; margin: 0; padding: 0; font-size: 13px; } .pl-wf li { display: grid; grid-template-columns: 150px 1fr 96px 46px; gap: 8px; align-items: center; padding: 3px 0; }
+.pl-wf li > :nth-child(n+3) { text-align: right; } .pl-wf-track { position: relative; height: 14px; } .pl-wf-track i { position: absolute; top: 0; height: 100%; border-radius: 3px; }
+.pl-wf li.pl-wf-start, .pl-wf li.pl-wf-end { font-weight: 600; } .pl-wf li.pl-wf-end { border-top: 1px solid var(--line); padding-top: 6px; margin-top: 3px; }
+.pl-ana-steps { display: flex; gap: 8px 18px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; } .pl-ana-steps .pl-sm { width: 80px; }
+.pl-tn { list-style: none; margin: 0; padding: 0; font-size: 13px; } .pl-tn li { display: grid; grid-template-columns: 140px 1fr 170px; gap: 10px; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line-soft, #f0efee); }
+.pl-tn-l { display: flex; flex-direction: column; } .pl-tn-track { position: relative; height: 14px; background: linear-gradient(90deg, transparent calc(50% - .5px), var(--line-strong) calc(50% - .5px), var(--line-strong) calc(50% + .5px), transparent calc(50% + .5px)); }
+.pl-tn-neg, .pl-tn-pos { position: absolute; top: 0; height: 100%; } .pl-tn-neg { right: 50%; background: #e57373; border-radius: 3px 0 0 3px; } .pl-tn-pos { left: 50%; background: #4caf7d; border-radius: 0 3px 3px 0; }
+.pl-tn-v { display: flex; flex-direction: column; text-align: right; white-space: nowrap; min-width: 0; } .pl-tn-v .sub2 { white-space: normal; } .pl-pos { color: #15803d; }
+@media (max-width: 700px) { .pl-tn li { grid-template-columns: 1fr 1fr; } .pl-tn-v { grid-column: 1 / -1; text-align: left; } }
+.pl-cities { list-style: none; margin: 0; padding: 0; font-size: 13px; } .pl-cities li { display: grid; grid-template-columns: 170px 1fr 80px 54px 300px; gap: 10px; align-items: center; padding: 5px 0; border-bottom: 1px solid var(--line-soft, #f0efee); }
+.pl-ct-l { display: flex; flex-direction: column; } .pl-ct-track { position: relative; display: flex; height: 14px; } .pl-ct-track i { display: block; height: 100%; }
+.pl-ct-sales { position: absolute; top: -3px; width: 2px; height: 20px; background: var(--ink); } .pl-cities li > .num { text-align: right; }
+.pl-hot { color: #b45309; } @media (max-width: 1100px) { .pl-cities li { grid-template-columns: 140px 1fr 70px 50px; } .pl-ct-why { grid-column: 1 / -1; } }
 .tb-head, .tb-tools { display: flex; gap: 10px 16px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
 .tb-tools .pl-sm { width: 76px; } .tb-tools .pl-lab { white-space: nowrap; }
 .tb-editor { padding: 16px; display: grid; gap: 12px; }
@@ -7974,8 +8002,116 @@ function plTour(id) {
     '<section class="card pl-card pl-card-fit"><table class="vtable pl-grid pl-tour pl-flat" style="width:' + width + 'px">' + colgroup + th + '<tbody>' + body + '</tbody>' + foot + '</table>' + empty + '</section>' +
     '<div class="pl-under"><button class="btn-dark" data-pl="row-add">+ Город</button>' +
       (rows.length ? '<button class="btn-ghost pl-map-btn" data-pl="map" aria-expanded="' + !!PL_PREFS.map + '" aria-controls="plMapSec">' + PJ_ICON.an_route + (PL_PREFS.map ? 'Скрыть карту' : 'Показать на карте') + '</button>' : '') + '</div>' +
+    plTourAnalytics(t, rows, calcs, cfg) +
     (rows.length && PL_PREFS.map ? plTourMapHtml(t, rows, calcs) : '');
 }
+// ---------- Аналитика тура — под таблицей (решения пользователя 13.10: под таблицей, чтобы видеть всё сразу; сдвиги —
+// в рублях и процентах; норм нет — подсветка статей заметно выше средней по туру; сравнение туров — позже).
+// Доли расходов (группы), статьи от крупной к мелкой, юнит-экономика билета, что сильнее влияет на маржу, города тура.
+// Формулы — plan-model.js (planItems, planSensitivity); здесь только сборка и рисование.
+function plSens() { return Object.assign({ pp: 5, rub_t: 100, rub: 10000, kassa: 1 }, PL_PREFS.sens || {}); }
+function plTourAnalytics(t, rows, calcs, cfg) {
+  if (!rows.length) return '';
+  var open = PL_PREFS.ana !== false;
+  var head = '<div class="pl-ana-head"><h3>Аналитика тура</h3>';
+  if (!open) return '<section class="pl-ana">' + head + '<button class="pj-plain" data-pl="ana-toggle">Показать</button></div></section>';
+  var cities = []; rows.forEach(function (r) { if (r.city && cities.indexOf(r.city) < 0) cities.push(r.city); });
+  var sel = S.pl.anaCity && cities.indexOf(S.pl.anaCity) >= 0 ? S.pl.anaCity : "";
+  var idx = rows.map(function (r, i) { return i; }).filter(function (i) { return !sel || rows[i].city === sel; });
+  var C = idx.map(function (i) { return calcs[i]; });
+  var items = {}, groups = {}, sales = 0, total = 0, profit = 0, tickets = 0, seats = 0, be = 0;
+  C.forEach(function (c) {
+    sales += c.sales; total += c.total; profit += c.profit; seats += c.seats || 0; if (c.beTickets != null) be += c.beTickets;
+    if (c.avg > 0) tickets += c.sales / c.avg;
+    planItems(c, c.inp.x, cfg).forEach(function (it) {
+      var o = items[it.id] = items[it.id] || { id: it.id, label: it.label, group: it.group, sum: 0 }; o.sum += it.sum;
+      groups[it.group] = (groups[it.group] || 0) + it.sum;
+    });
+  });
+  var list = Object.keys(items).map(function (k) { return items[k]; }).sort(function (a, b) { return b.sum - a.sum; });
+  head += '<label class="pl-lab">Показать ' + plSelect("ana|city", sel, [["", "весь тур"]].concat(cities.map(function (c) { return [c, c]; })), "Аналитика: весь тур или город") + '</label>' +
+    '<span class="sub2">сценарий: ' + (S.pl.scen ? S.pl.scen + "% заполняемости" : "заполняемость по строкам") + '</span><span style="flex-grow:1"></span><button class="pj-plain" data-pl="ana-toggle">Скрыть</button></div>';
+  if (!total) return '<section class="pl-ana">' + head + plNote('Расходов пока нет: заполните проект, города, регионы и площадки — аналитика появится сама.') + '</section>';
+  var pct = function (v, d) { return d > 0 ? (v / d * 100).toLocaleString("ru-RU", { maximumFractionDigits: v / d < 0.1 ? 1 : 0 }) + "%" : "—"; };
+  var margin = sales > 0 ? profit / sales : null, ord = C.map(function (c, k) { return { c: c, r: rows[idx[k]] }; }).filter(function (x) { return x.c.sales > 0; }).sort(function (a, b) { return b.c.profit / b.c.sales - a.c.profit / a.c.sales; });
+  var kpi = function (label, val, sub, neg) { return '<div class="pl-ana-kpi"><span class="sub2">' + label + '</span><b class="num' + (neg ? ' pl-neg' : '') + '">' + val + '</b>' + (sub ? '<span class="sub2">' + sub + '</span>' : '') + '</div>'; };
+  var kpis = '<div class="pl-ana-kpis">' +
+    kpi("Маржа", margin == null ? "—" : plPct(margin), "прибыль ÷ сборы", margin < 0) +
+    kpi("Прибыль с билета", tickets > 0 ? plMoney(profit / tickets) : "—", tickets > 0 ? "из " + plMoney(sales / tickets) + " средней цены" : "", profit < 0) +
+    kpi("Точка безубыточности", be ? num(Math.ceil(be)) + " бил." : "—", seats && be ? plPct(be / seats) + " мест" : "") +
+    kpi("Продано по сценарию", tickets ? num(Math.round(tickets)) + " бил." : "—", seats ? "из " + num(seats) + " мест" : "") +
+    (!sel && ord.length > 1 ? kpi("Лучший город", esc(ord[0].r.city), "маржа " + plPct(ord[0].c.profit / ord[0].c.sales)) + kpi("Худший город", esc(ord[ord.length - 1].r.city), "маржа " + plPct(ord[ord.length - 1].c.profit / ord[ord.length - 1].c.sales), ord[ord.length - 1].c.profit < 0) : '') + '</div>';
+  // 1. Доли расходов — кольцо и группы
+  var G = PLAN_GROUPS.filter(function (g) { return groups[g[0]] > 0; }).map(function (g) { return { id: g[0], label: g[1], color: g[2], sum: groups[g[0]] }; }).sort(function (a, b) { return b.sum - a.sum; });
+  var R = 54, L = 2 * Math.PI * R, off = 0;
+  var ring = '<svg class="pl-donut" viewBox="0 0 140 140" role="img" aria-label="Доли расходов по группам">' + G.map(function (g) {
+    var len = g.sum / total * L, seg = '<circle cx="70" cy="70" r="' + R + '" fill="none" stroke="' + g.color + '" stroke-width="22" stroke-dasharray="' + len.toFixed(2) + ' ' + (L - len).toFixed(2) + '" stroke-dashoffset="' + (-off).toFixed(2) + '" transform="rotate(-90 70 70)"><title>' + esc(g.label) + ' — ' + pct(g.sum, total) + '</title></circle>';
+    off += len; return seg; }).join("") + '<text x="70" y="66" text-anchor="middle" class="pl-donut-v">' + plShort(total) + '</text><text x="70" y="84" text-anchor="middle" class="pl-donut-s">расходы</text></svg>';
+  var shares = '<div class="card pl-ana-card"><h4>Доли расходов</h4><div class="pl-ana-donut">' + ring + '<ul class="pl-ana-leg">' + G.map(function (g) {
+    return '<li><i style="background:' + g.color + '"></i><span>' + esc(g.label) + '</span><b class="num">' + pct(g.sum, total) + '</b><span class="sub2 num">' + plShort(g.sum) + '</span></li>'; }).join("") +
+    '</ul></div><div class="pl-ana-stack" aria-hidden="true">' + G.map(function (g) { return '<i style="width:' + (g.sum / total * 100).toFixed(2) + '%;background:' + g.color + '" title="' + esc(g.label) + ' ' + pct(g.sum, total) + '"></i>'; }).join("") + '</div>' +
+    '<p class="sub2" style="margin:6px 0 0">Доля — от всех расходов ' + (sel ? 'города' : 'тура') + '. Сборы ' + plShort(sales) + ', расходы — ' + pct(total, sales) + ' от сборов.</p></div>';
+  // 2. Статьи от крупной к мелкой: доля в расходах, доля в сборах, накопленная доля (какие дают 80 %)
+  var max = list[0].sum, cum = 0, cut = -1;
+  var gColor = {}; PLAN_GROUPS.forEach(function (g) { gColor[g[0]] = g[2]; });
+  var bars = list.map(function (it, i) {
+    cum += it.sum; var c = cum / total; if (cut < 0 && c >= 0.8) cut = i;
+    return '<li class="' + (cut === i ? 'pl-cut' : '') + '"><span class="pl-it-l">' + esc(it.label) + '</span><span class="pl-it-bar"><i style="width:' + (it.sum / max * 100).toFixed(1) + '%;background:' + gColor[it.group] + '"></i></span>' +
+      '<b class="num">' + plShort(it.sum) + '</b><span class="num">' + pct(it.sum, total) + '</span><span class="num sub2">' + pct(it.sum, sales) + '</span><span class="num sub2">' + Math.round(c * 100) + '%</span></li>';
+  }).join("");
+  var itemsCard = '<div class="card pl-ana-card"><h4>Статьи расходов — от крупной к мелкой</h4><ul class="pl-items"><li class="pl-items-h sub2"><span>Статья</span><span></span><span>сумма</span><span>расходов</span><span>сборов</span><span>накопл.</span></li>' + bars + '</ul>' +
+    '<p class="sub2" style="margin:6px 0 0">' + (cut >= 0 ? 'Первые ' + (cut + 1) + ' ' + plural(cut + 1, "статья дают", "статьи дают", "статей дают") + ' 80 % расходов — черта под ними.' : '') + '</p></div>';
+  // 3. Юнит-экономика билета — водопад от средней цены до прибыли
+  var unit = '';
+  if (tickets > 0) {
+    var price = sales / tickets, steps = [{ label: "Средняя цена билета", v: price, kind: "start" }];
+    if (groups.variable) steps.push({ label: "Налог и комиссии", v: -groups.variable / tickets });
+    G.filter(function (g) { return g.id !== "variable"; }).forEach(function (g) { steps.push({ label: g.label, v: -g.sum / tickets, color: g.color }); });
+    steps.push({ label: "Прибыль с билета", v: profit / tickets, kind: "end" });
+    var lo = Math.min(0, profit / tickets), hi = price, span = hi - lo || 1, run = 0;
+    unit = '<div class="card pl-ana-card"><h4>Юнит-экономика билета</h4><ul class="pl-wf">' + steps.map(function (s) {
+      var a, b;
+      if (s.kind === "start") { a = 0; b = s.v; run = s.v; } else if (s.kind === "end") { a = Math.min(0, s.v); b = Math.max(0, s.v); } else { a = run + s.v; b = run; run += s.v; }
+      var left = (a - lo) / span * 100, w = Math.max(0.6, (b - a) / span * 100), col = s.kind === "start" ? "#57534e" : s.kind === "end" ? (s.v < 0 ? "#b91c1c" : "#15803d") : (s.color || "#a16207");
+      return '<li class="' + (s.kind ? 'pl-wf-' + s.kind : '') + '"><span>' + esc(s.label) + '</span><span class="pl-wf-track"><i style="left:' + left.toFixed(2) + '%;width:' + w.toFixed(2) + '%;background:' + col + '"></i></span><b class="num' + (s.v < 0 && s.kind === "end" ? ' pl-neg' : '') + '">' + (s.kind ? '' : '− ') + plMoney(Math.abs(s.v)) + '</b><span class="num sub2">' + (s.kind === "start" ? '100%' : pct(Math.abs(s.v), price)) + '</span></li>';
+    }).join("") + '</ul><p class="sub2" style="margin:6px 0 0">На один проданный билет по сценарию (' + num(Math.round(tickets)) + ' бил.). Точка безубыточности — ' + (be ? num(Math.ceil(be)) + ' бил.' + (seats ? ', ' + plPct(be / seats) + ' мест' : '') : '—') + '.</p></div>';
+  }
+  // 4. Что сильнее влияет на маржу — «торнадо»: сдвиг каждого фактора вверх и вниз
+  var sp = plSens(), sens = planSensitivity(C.map(function (c) { return c.inp.x; }), cfg, sp), mx = 0;
+  sens.factors.forEach(function (f) { mx = Math.max(mx, Math.abs(f.up), Math.abs(f.down)); });
+  var stepTxt = function (f) { return f.unit === "pp" ? "± " + plFmt(f.step) + " п.п." : f.unit === "rub_t" ? "± " + num(f.step) + " ₽ за билет" : "± " + plShort(f.step) + " ₽ на город"; };
+  var sgn = function (v) { return (v > 0 ? "+" : v < 0 ? "−" : "") + plShort(Math.abs(v)); };
+  var torn = sens.factors.map(function (f) {
+    var neg = Math.min(f.up, f.down), pos = Math.max(f.up, f.down), wn = mx ? Math.abs(neg) / mx * 50 : 0, wp = mx ? pos / mx * 50 : 0;
+    var mTxt = function (v) { return v == null ? "" : " · маржа " + (v > 0 ? "+" : v < 0 ? "−" : "") + Math.abs(v).toLocaleString("ru-RU", { maximumFractionDigits: 1 }) + " п.п."; };
+    return '<li><span class="pl-tn-l">' + esc(f.label) + '<span class="sub2">' + stepTxt(f) + '</span></span><span class="pl-tn-track"><i class="pl-tn-neg" style="width:' + wn.toFixed(2) + '%"></i><i class="pl-tn-pos" style="width:' + wp.toFixed(2) + '%"></i></span>' +
+      '<span class="pl-tn-v"><span class="num"><span class="pl-neg">' + sgn(neg) + '</span> / <span class="pl-pos">' + sgn(pos) + '</span></span><span class="sub2">вверх ' + sgn(f.up) + mTxt(f.upM) + '</span></span></li>';
+  }).join("");
+  var sensCard = '<div class="card pl-ana-card"><h4>Что сильнее всего влияет на прибыль</h4><div class="pl-ana-steps pl-flat"><span class="sub2">Сдвиг:</span>' +
+      '<label class="pl-lab">заполняемость ± ' + plInput("sens|pp", sp.pp, { label: "Сдвиг заполняемости, п.п.", cls: "pl-sm" }) + ' п.п.</label>' +
+      '<label class="pl-lab">цена билета ± ' + plInput("sens|rub_t", sp.rub_t, { label: "Сдвиг цены билета, ₽", cls: "pl-sm" }) + ' ₽</label>' +
+      '<label class="pl-lab">статьи ± ' + plInput("sens|rub", sp.rub, { label: "Сдвиг статей расходов, ₽ на город", cls: "pl-sm" }) + ' ₽ на город</label>' +
+      '<label class="pl-lab">комиссия касс ± ' + plInput("sens|kassa", sp.kassa, { label: "Сдвиг комиссии касс, п.п.", cls: "pl-sm" }) + ' п.п.</label></div>' +
+    (torn ? '<ul class="pl-tn">' + torn + '</ul><p class="sub2" style="margin:6px 0 0">Прибыль ' + (sel ? 'города' : 'тура') + ' сейчас ' + plShort(sens.base.p) + ' ₽. Полоса — на сколько она изменится при сдвиге фактора вниз (красное) и вверх (зелёное); сверху — самый влиятельный.</p>' : plNote('Факторов для сдвига нет — заполните статьи.')) + '</div>';
+  // 5. Города тура — расходы по группам против сборов; подсветка статьи, заметно выше средней по туру (норм нет — решение 13.10)
+  var cityCard = '';
+  if (!sel && rows.length > 1) {
+    var avgShare = {}; list.forEach(function (it) { avgShare[it.id] = sales > 0 ? it.sum / sales : 0; });
+    var cmax = 0; calcs.forEach(function (c) { cmax = Math.max(cmax, c.sales, c.total); });
+    cityCard = '<div class="card pl-ana-card pl-ana-wide"><h4>Города тура — расходы и сборы</h4><ul class="pl-cities">' + rows.map(function (r, i) {
+      var c = calcs[i], its = planItems(c, c.inp.x, cfg), gs = {}; its.forEach(function (it) { gs[it.group] = (gs[it.group] || 0) + it.sum; });
+      var hot = its.filter(function (it) { return c.sales > 0 && avgShare[it.id] > 0 && it.sum / c.sales > avgShare[it.id] * 1.5 && it.sum / c.sales > 0.05; }).sort(function (a, b) { return b.sum / c.sales / avgShare[b.id] - a.sum / c.sales / avgShare[a.id]; })[0];
+      var top = its.slice().sort(function (a, b) { return b.sum - a.sum; })[0];
+      return '<li><span class="pl-ct-l"><b>' + (i + 1) + '. ' + esc(r.city || "—") + '</b>' + (r.date ? '<span class="sub2">' + dayLabel(r.date) + '</span>' : '') + '</span>' +
+        '<span class="pl-ct-track">' + PLAN_GROUPS.map(function (g) { return gs[g[0]] ? '<i style="width:' + (gs[g[0]] / (cmax || 1) * 100).toFixed(2) + '%;background:' + g[2] + '" title="' + esc(g[1]) + ' ' + plShort(gs[g[0]]) + '"></i>' : ''; }).join("") +
+          (c.sales > 0 ? '<b class="pl-ct-sales" style="left:' + (c.sales / (cmax || 1) * 100).toFixed(2) + '%" title="Сборы ' + plShort(c.sales) + '"></b>' : '') + '</span>' +
+        '<span class="num' + (c.profit < 0 ? ' pl-neg' : '') + '">' + plShort(c.profit) + '</span><span class="num sub2">' + (c.sales > 0 ? plPct(c.profit / c.sales) : '—') + '</span>' +
+        '<span class="sub2 pl-ct-why">' + (hot ? '<span class="pl-hot">' + esc(hot.label) + ' — ' + pct(hot.sum, c.sales) + ' сборов (в среднем ' + pct(avgShare[hot.id] * 100, 100) + ')</span>' : top ? 'крупнее всего: ' + esc(top.label) + ' — ' + pct(top.sum, c.sales) + ' сборов' : '') + '</span></li>';
+    }).join("") + '</ul><p class="sub2" style="margin:6px 0 0">Полоса — расходы по группам (цвета — как в «Долях»), чёрная черта — сборы: правее полосы — прибыль, левее — убыток. Справа — прибыль, маржа и статья, которая в этом городе заметно выше средней по туру.</p></div>';
+  }
+  return '<section class="pl-ana" id="plAna">' + head + kpis + '<div class="pl-ana-grid">' + shares + unit + itemsCard + sensCard + cityCard + '</div></section>';
+}
+
 // ---------- Вместимость площадки: вписанная в «Площадках» — в первую очередь, иначе — по схемам касс (venuecap.py, MVCAP)
 function plVenueCap(city, venue) {
   var m = PLAN.venues[plVenueKey(city, venue)];
@@ -8863,6 +8999,8 @@ function plChange(el) {
   var sig = el.getAttribute("data-plf"), p = sig.split("|"), kind = p[0];
   if (kind === "new") return;
   if (kind === "gm") { var gp = plGmPrefs(); gp[p[1]] = el.value; if (p[1] === "tour") S.pl.gmView = null; plGmSave(gp); var ygm = window.scrollY; render(); window.scrollTo(0, ygm); return; }
+  if (kind === "ana") { S.pl.anaCity = el.value; tbRe(); return; }   // аналитика тура: весь тур или город
+  if (kind === "sens") { var sp = plSens(), sv = planNum(el.value); if (isFinite(sv) && sv >= 0) sp[p[1]] = sv; PL_PREFS.sens = sp; plPrefsSave(); tbRe(); return; }
   if (kind === "tb") {   // «Построение гастролей»: список, фильтры
     var tbp = tbPrefs();
     if (p[1] === "list") { S.pl.tb.list = el.value || null; S.pl.tb.draft = null; S.pl.tb.sel = {}; S.pl.tbView = null; }
@@ -8919,6 +9057,7 @@ function plAction(b) {
   var a = b.getAttribute("data-pl"), id = b.getAttribute("data-id"), copy = function (o) { return JSON.parse(JSON.stringify(o || {})); };
   if (a === "tab") { S.pl.tab = b.getAttribute("data-tab"); S.pl.tour = null; closeDrawer(); render(); }
   else if (a.indexOf("tb-") === 0) tbAction(a, b);
+  else if (a === "ana-toggle") { PL_PREFS.ana = PL_PREFS.ana === false; plPrefsSave(); tbRe(); }
   else if (a === "cols") { S.pl.cols = !S.pl.cols; render(); }
   else if (a === "gross-reset") { var tg = copy(PLAN.tours[S.pl.tour]), rg = (tg.rows || []).filter(function (x) { return x.id === S.pl.row; })[0]; if (!rg) return; delete rg.avg; if (rg.ovr) { delete rg.ovr.gross; if (!Object.keys(rg.ovr).length) delete rg.ovr; } plPut("tours", S.pl.tour, tg, "Вал — снова из площадки"); }
   else if (a === "avg-reset") { var ta = copy(PLAN.tours[S.pl.tour]), ra = (ta.rows || []).filter(function (x) { return x.id === S.pl.row; })[0]; if (!ra) return; delete ra.avg; plPut("tours", S.pl.tour, ta, "Вал — снова из площадки"); }

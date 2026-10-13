@@ -2,7 +2,7 @@
 // Эталон — строки листа «Структура портфеля» Google Таблицы пользователя (12.10.2026): те же входы — те же цифры.
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { PLAN_DEFAULTS, planCalc, planClass, planScore, planBanned, planNum } = require("../Design/prototype/plan-model.js");
+const { PLAN_DEFAULTS, planCalc, planClass, planScore, planBanned, planNum, planItems, planShift, planSensitivity } = require("../Design/prototype/plan-model.js");
 
 const near = (a, b, eps = 0.5) => assert.ok(Math.abs(a - b) <= eps, `${a} ≠ ${b}`);
 
@@ -120,4 +120,34 @@ test("Продать, чтобы заработать N: (постоянные +
   near(r.tgShare, r.tgTickets / 500, 1e-12);
   const r2 = planCalc({ gross: 1000000, seats: 500, fill: 100, fee: 600000, target: 0 });
   near(r2.tgTickets, r2.beTickets, 1e-9);                   // цель 0 — та же точка безубыточности
+});
+
+// ---------- Аналитика тура: статьи, сдвиги, чувствительность
+const xA = { gross: 1000000, seats: 500, fill: 70, fee: 200000, cashless: 10, per_diem: 2000, crew: 5, days: 2, author: 10000, moscow: 30000, cities: 3,
+  org: { transfer: 15000, hotel: 40000 }, rent: 80000, logistics: 50000, ads: 60000, kassa: 8, agent: 5, rao_on: true, rao: 4 };
+
+test("статьи расходов в сумме — все расходы даты", () => {
+  const r = planCalc(xA, PLAN_DEFAULTS), items = planItems(r, xA, PLAN_DEFAULTS);
+  near(items.reduce((a, i) => a + i.sum, 0), r.total, 0.01);
+  near(items.find((i) => i.id === "kassa").sum, r.sales * 0.08, 0.01);
+  near(items.find((i) => i.id === "per_diem").sum, 2000 * 5 * 2);
+});
+
+test("сдвиги: заполняемость в п.п., цена — ₽ на билет, статья — ₽ на город", () => {
+  assert.equal(planShift(xA, "fill", 5).fill, 75);
+  assert.equal(planShift(xA, "price", 100).gross, 1000000 + 100 * 500);
+  assert.equal(planShift(xA, "rent", -10000).rent, 70000);
+  assert.equal(planShift(xA, "org", 5000).org.other, 5000);
+  const down = planShift(xA, "org", -11000).org;   // 55 000 → 44 000: статьи в тех же долях
+  near(down.transfer + down.hotel, 44000, 0.01); near(down.transfer / down.hotel, 15000 / 40000, 1e-9);
+  near(planCalc(planShift(xA, "per_diem", 10000), PLAN_DEFAULTS).project.per_diem, 20000 + 10000);
+  assert.equal(xA.fill, 70);   // исходные данные не меняются
+});
+
+test("чувствительность: рост аренды на 10 000 ₽ в 2 городах — прибыль −20 000 ₽; самый влиятельный — первым", () => {
+  const s = planSensitivity([xA, { ...xA, rent: 50000 }], PLAN_DEFAULTS, { pp: 5, rub_t: 100, rub: 10000, kassa: 1 });
+  const rent = s.factors.find((f) => f.id === "rent");
+  near(rent.up, -20000); near(rent.down, 20000);
+  const m = (f) => Math.max(Math.abs(f.up), Math.abs(f.down));
+  assert.ok(s.factors.every((f, i) => i === 0 || m(s.factors[i - 1]) >= m(f)));
 });
