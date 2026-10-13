@@ -28,8 +28,8 @@ FILE = BASE_DIR / "data" / "operator_blocks.json"
 LOG_FILE = BASE_DIR / "data" / "operator_blocks_log.jsonl"
 FIRST = timedelta(hours=24)
 LONGEST = timedelta(days=7)
-# Операторы, которых на этом компьютере не опрашиваем совсем (ноутбук-сервер с 12.10: TM_DISABLED_OPERATORS=yandex —
-# Яндекс закрыл доступ серверу 06.10; с домашнего адреса его не собираем, это был бы обход отказа)
+# Операторы, которых на этом компьютере не опрашиваем совсем (TM_DISABLED_OPERATORS через запятую; ноутбук-сервер
+# 12–13.10 — yandex, с 13.10 — пусто: Яндекс собирается с лимитом SALES_BUDGET_YANDEX)
 DISABLED = {x.strip() for x in os.environ.get("TM_DISABLED_OPERATORS", "").split(",") if x.strip()}
 DENY_IN_WINDOW = 5     # отказов среди последних 20 ответов — сайт закрыл доступ (до 06.10 не было ни одного 403)
 _lock = threading.Lock()

@@ -12,8 +12,8 @@ PY=/usr/bin/python3
 # Окружение — как /etc/ticket-monitor.env и systemd-юниты на сервере
 export TZ=Europe/Moscow PYTHONUNBUFFERED=1
 export TM_ON_SERVER=1                      # сайт берёт продажи и архив из своей базы, сборы — по расписанию launchd
-export TM_DISABLED_OPERATORS=yandex        # Яндекс закрыл доступ серверу 06.10 — с домашнего адреса его не собираем
-export SALES_BUDGET_YANDEX=0
+export TM_DISABLED_OPERATORS=             # с 13.10 Яндекс собирается и с ноутбука (решение пользователя; отказ закрыл только облачный сервер)
+export SALES_BUDGET_YANDEX=2500            # запросов в сутки — решение пользователя 13.10 (с сервера было 4 000)
 export SALES_BUDGET_KASSIR=500             # с домашнего адреса Кассир — бережнее, чем с сервера (2 000): 04.10 он ограничивал этот адрес
 export SALES_BUDGET_QTICKETS=800           # потолок; сам лимит — ступенями (data/qtickets_ramp.json)
 export MARKET_KASSIR_PAUSE=2.0 MARKET_ORG_THREADS=1 MARKET_ORG_PAUSE=3.0
