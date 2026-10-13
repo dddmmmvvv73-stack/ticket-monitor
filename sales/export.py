@@ -173,6 +173,11 @@ def main() -> None:
     tmp.write_bytes(gzip.compress(json.dumps(data, ensure_ascii=False, separators=(",", ":")).encode()))
     tmp.replace(OUT)
     print("Сводка продаж: %d карточек → %s" % (len(data["rows"]), OUT))
+    try:   # вместимость площадок для «Планирования → Карта» копится из схем касс (competitors/venuecap.py)
+        from competitors import venuecap
+        venuecap.update(data["rows"])
+    except Exception as e:  # noqa: BLE001 — сводка продаж важнее справочника вместимости
+        print("Вместимость площадок: не пополнена —", e)
 
 
 if __name__ == "__main__":
