@@ -4916,7 +4916,13 @@ var P_STOP = " концерт шоу тур tour группа гр спекта�
 function projKey(t) {
   var w = String(t || "").toLowerCase().replace(/ё/g, "е").replace(/\([^)]*\)/g, " ").split(/[^a-zа-я0-9]+/), seen = {}, out = [];
   w.forEach(function (x) { if (x.length >= 2 && P_STOP.indexOf(" " + x + " ") < 0 && !seen[x]) { seen[x] = 1; out.push(x); } });
-  return out.some(function (x) { return x.length >= 3; }) ? out.sort().join(" ") : "";
+  return out.some(function (x) { return x.length >= 3; }) ? out.sort().join(" ") : compactKey(t);
+}
+// Короткие названия без значимых слов («На-На», «Б.А.У.», «F.P.G») — все буквы и цифры подряд (curation.compact_key)
+function compactKey(t) {
+  var k = String(t || "").toLowerCase().replace(/ё/g, "е").replace(/\([^)]*\)/g, " ").split(/[^a-zа-я0-9]+/)
+    .filter(function (x) { return x && !(x.length >= 3 && P_STOP.indexOf(" " + x + " ") >= 0); }).join("");
+  return k.length >= 2 && /[a-zа-я]/.test(k) ? k : "";
 }
 MR.forEach(function (e) { e.pk = projKey(e.title); });
 var ARTIST_SPLIT_RE = /\.\s|\s[—–-]\s|:\s|\s[«"]|\sс\s(?:новой\s)?(?:концертной\s)?программой/i;

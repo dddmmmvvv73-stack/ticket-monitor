@@ -105,7 +105,7 @@ class Sync(Migration):
             reg.projects[pid]["mark"], reg.projects[pid]["mark_at"] = m["type"], m.get("at")
         self.apply_aliases(reg)
         homonyms = homonym_keys(rows, lambda r: self.venue_kind.get((r["city"], curation.venue_key(r["city"], r["venue"]))))
-        for r in rows:
+        for r in sorted(rows, key=lambda r: len(r["_title"])):   # новый проект — под самым коротким написанием («На-На», а не «На-На (Димитровград)»)
             # пустой ключ (в названии одни служебные слова) — ищем и храним проект под тем же запасным ключом, иначе
             # каждое пополнение заводило бы его заново
             key = r["_key"] or r["_legacy"] or r["_title"].lower()

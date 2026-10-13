@@ -49,7 +49,16 @@ def project_key(title: str) -> str:
     """Проект = программа: слова названия без скобок и служебных слов, по алфавиту (как projKey в прототипе)."""
     words = re.split(r"[^a-zа-я0-9]+", re.sub(r"\([^)]*\)", " ", (title or "").lower().replace("ё", "е")))
     words = sorted({w for w in words if len(w) >= 2 and w not in _STOP})
-    return " ".join(words) if any(len(w) >= 3 for w in words) else ""
+    return " ".join(words) if any(len(w) >= 3 for w in words) else compact_key(title)
+
+
+def compact_key(title: str) -> str:
+    """Ключ коротких названий, у которых нет значимых слов («На-На», «Б.А.У.», «F.P.G», «36 и 6»; 13.10.2026 — их ключ
+    был пустым, и все их концерты считались местными): все буквы и цифры подряд, без общих слов («группа», «концерт»).
+    «Стендап концерт», «84», «№ 13» — по-прежнему без ключа. Тот же код — в прототипе (projKey) и db/projects.title_key."""
+    t = re.sub(r"\([^)]*\)", " ", (title or "").lower().replace("ё", "е"))
+    k = "".join(w for w in re.split(r"[^a-zа-я0-9]+", t) if w and not (len(w) >= 3 and w in _STOP))
+    return k if len(k) >= 2 and re.search(r"[a-zа-я]", k) else ""
 
 
 # Начало названия, после которого — программа: «Артист. Программа», «Артист — …», «Артист: …», «Артист «Программа»»

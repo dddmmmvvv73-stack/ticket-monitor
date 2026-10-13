@@ -14,7 +14,7 @@ from __future__ import annotations
 import re
 from collections import defaultdict
 
-from competitors.curation import REPERTORY, THEATRE_FORMATS, _STOP as CURATION_STOP, artist_part  # артист — одно правило везде
+from competitors.curation import REPERTORY, THEATRE_FORMATS, _STOP as CURATION_STOP, artist_part, compact_key  # артист — одно правило везде
 
 # Слова, которые меняются от сезона к сезону, а проект — тот же (пункт 4)
 SEASON_WORDS = {"юбилейный", "юбилейная", "юбилейное", "юбилейные", "новый", "новая", "новое", "новые", "премьера",
@@ -35,7 +35,7 @@ def _norm(title: str) -> str:
 def title_key(title: str) -> str:
     """Ключ названия: слова без служебных, сезонных и года, по алфавиту (развитие curation.project_key)."""
     words = sorted({w for w in re.split(r"[^a-zа-я0-9]+", _norm(title)) if len(w) >= 2 and w not in STOP})
-    return " ".join(words) if any(len(w) >= 3 for w in words) else ""
+    return " ".join(words) if any(len(w) >= 3 for w in words) else compact_key(_norm(title))
 
 
 def artist_key(name: str) -> str:
