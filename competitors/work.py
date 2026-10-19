@@ -231,6 +231,8 @@ def apply_op(op: dict) -> dict:
             for keep in ("media", "pfiles"):   # фото и документы проекта меняются отдельно — правка полей их не трогает
                 if kind == "projects" and (data[kind].get(oid) or {}).get(keep):
                     rec[keep] = data[kind][oid][keep]
+                elif kind == "projects" and oid not in data[kind] and isinstance((op.get("data") or {}).get(keep), dict):
+                    rec[keep] = _own_files(oid, op["data"][keep], keep)   # «Вернуть» удалённый проект: его файлы остались на диске
             data[kind][oid] = rec
         elif op.get("op") == "media":   # фото проекта: what — avatar | cover; data — data:image/…;base64 (пусто — убрать)
             p = data["projects"].get(oid)
@@ -298,6 +300,16 @@ def apply_op(op: dict) -> dict:
             raise WorkError("неизвестная операция")
         save_json(FILE, data)
         return data
+
+
+def _own_files(oid: str, given: dict, keep: str) -> dict:
+    """Ссылки на файлы проекта из возвращаемой записи — только свои (имя начинается с номера проекта) и только если файл есть."""
+    out = {}
+    for k, v in given.items():
+        name = (v.split("?")[0] if keep == "media" else (v or {}).get("file", "")) if v else ""
+        if name.startswith(oid + "-") and FILE_NAME.match(name) and (MEDIA_DIR / name).is_file():
+            out[k] = v
+    return out
 
 
 def doc_name(name: str) -> str:

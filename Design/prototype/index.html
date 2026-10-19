@@ -899,6 +899,27 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wkv-dlg { width: min(960px, calc(100vw - 32px)); }
 .wkv-frame { width: 100%; height: min(72vh, 900px); border: 1px solid var(--line); border-radius: 12px; background: #f4f3f1; }
 .wkv-img { max-height: 72vh; overflow: auto; border: 1px solid var(--line); border-radius: 12px; } .wkv-img img { display: block; max-width: 100%; margin: 0 auto; }
+/* ---------- Проект, 19.10 (седьмой проход): «Готово» закреплена, раздельный поиск, «Вернуть», дни недели, дедлайн-акцент ---------- */
+.wkt-vp-done tr.wkt-group td { position: sticky; top: 0; z-index: 2; }   /* строка «Готово» не уезжает при прокрутке */
+.wkm-w { font-size: 12px; font-weight: 600; color: #94a3b8; text-align: center; padding: 2px 0 6px; } .wkm-w.we { color: #e5848a; }
+.wk-snack { position: fixed; left: 50%; bottom: 24px; z-index: 120; transform: translate(-50%, 20px); opacity: 0; pointer-events: none; display: flex; align-items: center; gap: 16px; padding: 12px 12px 12px 18px; border-radius: 14px; background: #1c1917; color: #fff; font-size: 14px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28); overflow: hidden; transition: opacity 180ms var(--ease), transform 180ms var(--ease); }
+.wk-snack.show { opacity: 1; transform: translate(-50%, 0); pointer-events: auto; }
+.wk-snack-undo { border: 0; border-radius: 9px; background: #fff; color: #1c1917; font: inherit; font-size: 14px; font-weight: 600; padding: 7px 14px; cursor: pointer; }
+.wk-snack-undo:hover { background: #f2f1ef; }
+.wk-snack-bar { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: #e5484d; transform-origin: left; }
+.wk-snack.show .wk-snack-bar { animation: wk-snack-t 10s linear forwards; }
+@keyframes wk-snack-t { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (max-width: 820px) { .wk-snack { bottom: 88px; } }
+.wk-dlb { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 9px 14px 9px 12px; border: 0; border-radius: 12px; font: inherit; font-size: 13px; color: #fff; cursor: pointer;
+  background: linear-gradient(135deg, #f97316, #e5484d); box-shadow: 0 8px 22px rgba(229, 72, 77, 0.35); }
+.wk-dlb:hover { filter: brightness(1.06); }
+.wk-dlb-l { opacity: 0.88; } .wk-dlb b { font-size: 15px; font-weight: 700; }
+.wk-dlb-c { padding: 2px 8px; border-radius: 9999px; background: rgba(255, 255, 255, 0.22); font-weight: 600; font-size: 12px; }
+.wk-dlb.soon { background: linear-gradient(135deg, #ef4444, #be123c); animation: wk-dl-pulse 2.2s ease-in-out infinite; }
+.wk-dlb.over { background: linear-gradient(135deg, #7f1d1d, #b91c1c); box-shadow: 0 8px 22px rgba(127, 29, 29, 0.45); }
+.wk-dlb.none { background: rgba(255, 255, 255, 0.08); box-shadow: none; border: 1.5px dashed rgba(255, 255, 255, 0.45); color: rgba(255, 255, 255, 0.85); }
+@keyframes wk-dl-pulse { 0%, 100% { box-shadow: 0 8px 22px rgba(239, 68, 68, 0.35), 0 0 0 0 rgba(239, 68, 68, 0.55); } 50% { box-shadow: 0 8px 22px rgba(239, 68, 68, 0.35), 0 0 0 8px rgba(239, 68, 68, 0); } }
+@media (prefers-reduced-motion: reduce) { .wk-dlb.soon { animation: none; } }
 /* ---------- Страница проекта — вид как у Яндекс Афиши (Design/Reference/Project.png) ---------- */
 /* Шапка до самого верха — под основную панель сайта (убираем верхнее поле .view); «назад» — круглая кнопка поверх шапки */
 .view > .pj-hero:first-child { margin-top: -28px; }
@@ -1508,7 +1529,7 @@ details.pl-score[open] > summary span:first-child::before { content: "▾ "; }
 @media (prefers-reduced-motion: reduce) { .pj-date, .pjd-side { transition: none; animation: none; } }
 @media (max-width: 1100px) { .pjd-wrap { flex-direction: column; } .pjd-main { width: 100%; } .pjd-side { margin: 18px 0 0; padding: 18px 0 0; border-left: 0; border-top: 1px solid var(--line); } .pj-date.wide { width: min(640px, calc(100vw - 32px)); } }
 @media (max-width: 820px) { .pjd-stats { grid-template-columns: minmax(0, 1fr); gap: 10px; } .pjd-head { flex-direction: column; align-items: flex-start; gap: 8px; } }
-.pj-dlg { border: 1px solid var(--line); border-radius: 16px; padding: 0; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow: auto; overscroll-behavior: contain; box-shadow: rgba(17, 12, 46, 0.2) 0 16px 56px 0; color: var(--ink); }
+.pj-dlg { border: 1px solid var(--line); border-radius: 16px; padding: 0; width: min(560px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow: auto; overflow-x: hidden; overscroll-behavior: contain; box-shadow: rgba(17, 12, 46, 0.2) 0 16px 56px 0; color: var(--ink); }
 .pj-dlg::backdrop { background: rgba(12, 10, 9, 0.42); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px); }
 .pj-dlg[open] { animation: pj-dlg-in 220ms var(--ease) both; }
 @keyframes pj-dlg-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } to { opacity: 1; transform: none; } }
@@ -3763,11 +3784,35 @@ function wkPut(kind, id, rec, msg, quiet) {   // quiet — без перерис
   }, function () { toast("Не сохранено: " + NO_APP); wkLoad(); });
 }
 function wkDel(kind, id, msg) {
+  var rec = WK[kind][id] && JSON.parse(JSON.stringify(WK[kind][id])), linked = [];
+  if (kind === "projects") ["tasks", "docs", "costs", "notes"].forEach(function (k) { Object.keys(WK[k] || {}).forEach(function (x) { if (WK[k][x].project === id) linked.push([k, x]); }); });
   delete WK[kind][id]; render();
   apiJson("POST", "/api/work", { op: "del", kind: kind, id: id }).then(function (x) {
     if (!x.ok) { toast("Не удалено: " + ((x.d && x.d.error) || "ошибка")); wkLoad(); return; }
-    WK = x.d; toast(msg + " · вернуть — «Настройки → Журнал изменений»");
+    WK = x.d; if (!rec) { toast(msg); return; }
+    wkSnack(msg, function () { wkRestore(kind, id, rec, linked); });
   }, function () { toast("Не удалено: " + NO_APP); wkLoad(); });
+}
+// Вернуть удалённое: запись — как была (номер тот же); у проекта — и привязки его задач, документов, расходов, заметок
+function wkRestore(kind, id, rec, linked) {
+  var data = Object.assign({}, rec); delete data.upd;
+  apiJson("POST", "/api/work", { op: "put", kind: kind, id: id, data: data }).then(function (x) {
+    if (!x.ok) { toast("Не вернулось: " + ((x.d && x.d.error) || "ошибка")); return; }
+    WK = x.d;
+    (linked || []).forEach(function (l) { var r = WK[l[0]][l[1]]; if (r && !r.project) wkPut(l[0], l[1], Object.assign({}, r, { project: id }), "", true); });
+    if (kind === "projects") S.wk.proj = id;
+    render(); toast("Возвращено");
+  }, function () { toast("Не вернулось: " + NO_APP); });
+}
+// Плашка внизу с кнопкой «Вернуть» — 10 секунд (полоска показывает, сколько осталось)
+var WK_SNACK_T = null;
+function wkSnack(msg, onUndo) {
+  var el = $("wkSnack");
+  if (!el) { el = document.createElement("div"); el.id = "wkSnack"; el.className = "wk-snack"; el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
+  el.innerHTML = '<span>' + esc(msg) + '</span><button type="button" class="wk-snack-undo">Вернуть</button><i class="wk-snack-bar"></i>';
+  el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
+  el.querySelector(".wk-snack-undo").onclick = function () { clearTimeout(WK_SNACK_T); el.classList.remove("show"); onUndo(); };
+  clearTimeout(WK_SNACK_T); WK_SNACK_T = setTimeout(function () { el.classList.remove("show"); }, 10000);
 }
 // ---------- Задачи: по срокам — просрочено, сегодня, завтра, на неделе, позже, без срока; готовые — свёрнуты
 function wkTaskGroups(list) {
@@ -3900,7 +3945,7 @@ function wkProjectPage(pid) {
         '<span class="pj-ava-edit" aria-hidden="true">' + PJ_ICON.camera + '<span>' + (ava ? 'Сменить' : 'Фото') + '</span></span></button>' +
       '<div class="pj-hero-text"><h1 class="pj-name">' + esc(p.title) + '</h1>' +
         '<div class="pj-tags wk-hpills"><button type="button" class="pj-tag pj-tag-type wk-stagepill" data-wkp-stage aria-haspopup="menu" aria-label="Стадия проекта: ' + wkLabel(WK_STAGE, p.stage) + ' — изменить">' + wkLabel(WK_STAGE, p.stage) + WKT_ICON.fold + '</button>' +
-          hpill("start", "Начало гастролей", p.start) + hpill("end", "Окончание", p.end) + hpill("deadline", "Дедлайн проекта", dl, " wk-dl" + dlc) + '</div>' +
+          hpill("start", "Начало гастролей", p.start) + hpill("end", "Окончание", p.end) + '</div>' + wkDeadlineBadge(pid, dl) +
         '<div class="pj-actions"><button class="pj-btn primary" data-wkp-edit>' + PJ_ICON.edit + 'Редактировать</button>' + docs + '</div>' +
       '</div>' +
       '<div class="wk-hstats" role="group" aria-label="Задачи проекта">' +
@@ -3920,6 +3965,16 @@ function wkProjectPage(pid) {
     '<h2 class="wk-h2">Заметки</h2>' + wkNotesGrid(pid);
 }
 // «Фокус» под календарём: что сделать первым сегодня, что просрочено, у чего скоро срок
+// Дедлайн проекта — акцентная плашка: флажок, дата, отсчёт; далеко — тёплая, неделя — ярче с пульсом, прошёл — тёмно-красная
+function wkDeadlineBadge(pid, dl) {
+  var flag = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 14V2.5M3.5 2.5h8l-1.8 3 1.8 3h-8"/></svg>';
+  if (!dl) return '<button type="button" class="wk-dlb none" data-wk-date="projects|' + pid + '|deadline" data-wk-val="" aria-haspopup="dialog">' + flag + '<span class="wk-dlb-l">Указать дедлайн проекта</span></button>';
+  var days = Math.round((Date.parse(dl + "T12:00:00") - Date.parse(wkDay(0) + "T12:00:00")) / 864e5);
+  var left = days < 0 ? "просрочен на " + -days + " " + plural(-days, "день", "дня", "дней") : days === 0 ? "сегодня" : days === 1 ? "завтра" : "через " + days + " " + plural(days, "день", "дня", "дней");
+  var cls = days < 0 ? " over" : days <= 7 ? " soon" : "";
+  return '<button type="button" class="wk-dlb' + cls + '" data-wk-date="projects|' + pid + '|deadline" data-wk-val="' + esc(dl) + '" aria-haspopup="dialog" aria-label="Дедлайн проекта: ' + wkShortDate(dl) + ', ' + left + ' — изменить">' +
+    flag + '<span class="wk-dlb-l">Дедлайн проекта</span><b>' + wkShortDate(dl) + '</b><span class="wk-dlb-c">' + left + '</span></button>';
+}
 function wkFocusBlock(pid) {
   var open = wkTasksOf(pid).filter(function (t) { return !t.done; }), t0 = wkDay(0), t3 = wkDay(3);
   var pr = function (t) { return t.prio in WK_PRIO_RANK ? WK_PRIO_RANK[t.prio] : 3; };
@@ -4075,7 +4130,7 @@ function wkCalBlock(pid) {
   return '<div class="wkm"><div class="wkm-head"><h3>' + (cur ? WK_MON_NOM[c.m] + ', ' + c.y : '<button type="button" class="wkm-title" data-wkm-nav="today" title="Вернуться к текущему месяцу">' + WK_MON_NOM[c.m] + ', ' + c.y + '</button>') + '</h3><div class="wkm-navs">' +
       '<button type="button" class="wkm-nav" data-wkm-nav="-1" aria-label="Предыдущий месяц">' + WKM_ICON.prev + '</button>' +
       '<button type="button" class="wkm-nav" data-wkm-nav="1" aria-label="Следующий месяц">' + WKM_ICON.next + '</button></div></div>' +
-    '<div class="wkm-grid">' + cells + '</div></div>';
+    '<div class="wkm-grid"><span class="wkm-w">Пн</span><span class="wkm-w">Вт</span><span class="wkm-w">Ср</span><span class="wkm-w">Чт</span><span class="wkm-w">Пт</span><span class="wkm-w we">Сб</span><span class="wkm-w we">Вс</span>' + cells + '</div></div>';
 }
 function wkCalTipHtml(iso, pid) {
   var l = (wkDayTasks(pid)[iso] || []).slice().sort(function (a, b) { return (a.done ? 1 : 0) - (b.done ? 1 : 0); }), p = iso.split("-"), dt = new Date(+p[0], +p[1] - 1, +p[2]), over = iso < wkDay(0);
@@ -4323,24 +4378,26 @@ function wkSubChange(tid, fn, mode) {   // mode: "text" — без перери�
 function wkWeekEnd(off) { var d = new Date(), wd = (d.getDay() + 6) % 7; d.setDate(d.getDate() - wd + 6 + 7 * off); return wkIso(d.getFullYear(), d.getMonth(), d.getDate()); }
 var WKT_HEAD = '<tr><th class="wkt-n">№</th><th class="wkt-name-h">Задача</th><th class="wkt-prio">Приоритет</th><th class="wkt-tagcell">Теги</th><th class="wkt-time">Время</th><th class="wkt-due">Срок</th></tr>';
 function wktTable(list, pid) {
-  var pf = S.wk.prioF || "", q = (S.wk.q || "").trim().toLowerCase().replace(/ё/g, "е");
+  var pf = S.wk.prioF || "", qs = S.wk.qs || (S.wk.qs = { open: "", done: "" }), qa = S.wk.qAt || (S.wk.qAt = {});
   if (pf) list = list.filter(function (t) { return pf === "none" ? !t.prio : t.prio === pf; });   // фильтр по приоритету
-  if (q) list = list.filter(function (t) {   // поиск: название, описание, подзадачи
-    return [t.text, t.desc].concat((t.subs || []).map(function (x) { return x.text; })).join(" ").toLowerCase().replace(/ё/g, "е").indexOf(q) >= 0;
-  });
+  var hit = function (q) {   // поиск: название, описание, подзадачи — у «К выполнению» и «Готово» свой
+    q = (q || "").trim().toLowerCase().replace(/ё/g, "е");
+    return function (t) { return !q || [t.text, t.desc].concat((t.subs || []).map(function (x) { return x.text; })).join(" ").toLowerCase().replace(/ё/g, "е").indexOf(q) >= 0; };
+  };
   var pr = function (t) { return t.prio in WK_PRIO_RANK ? WK_PRIO_RANK[t.prio] : 3; };
   var byDue = function (a, b) { return (a.due || "9999").localeCompare(b.due || "9999") || pr(a) - pr(b) || (a.created || "").localeCompare(b.created || ""); };   // срок, при равном — приоритет
-  var open = list.filter(function (t) { return !t.done; }).sort(byDue);
-  var done = list.filter(function (t) { return t.done; }).sort(function (a, b) { return (b.done_at || "").localeCompare(a.done_at || ""); });
+  var open = list.filter(function (t) { return !t.done; }).filter(hit(qs.open)).sort(byDue);
+  var done = list.filter(function (t) { return t.done; }).filter(hit(qs.done)).sort(function (a, b) { return (b.done_at || "").localeCompare(a.done_at || ""); });
+  var anyDone = list.some(function (t) { return t.done; });
   var addRow = '<tr class="wkt-addrow"><td></td><td colspan="5"><form data-wk-add="tasks" class="wkt-addf"><input type="hidden" name="project" value="' + esc(pid || "") + '">' +
     '<input name="text" class="wkt-add-in" placeholder="+ Добавить задачу" aria-label="Новая задача" maxlength="1000" autocomplete="off"></form></td></tr>';
-  var group = function (key, label, l, withAdd, cls) {
-    if (!l.length && !withAdd) return "";
+  var group = function (key, label, l, withAdd, cls, keep) {   // keep — показывать и пустую (поиск в «Готово» ничего не нашёл)
+    if (!l.length && !withAdd && !keep && !(qa[key === "done" ? "done" : "open"] === key)) return "";
     var folded = S.wk.fold[key];
-    var qHere = S.wk.qOpen && S.wk.qAt === key;
+    var sec = key === "done" ? "done" : "open", qHere = qa[sec] === key;
     return '<tr class="wkt-group' + (cls ? ' ' + cls : '') + '"><td colspan="6"><div class="wkt-ghead"><button type="button" class="wkt-fold' + (folded ? ' folded' : '') + '" data-wkt-fold="' + key + '" aria-expanded="' + !folded + '">' + WKT_ICON.fold + '<b>' + label + '</b><span class="num">(' + ("0" + l.length).slice(-2) + ')</span></button>' +
-      (qHere ? '<label class="wkt-q"><span class="sr-only">Найти задачу</span>' + WKT_ICON.search + '<input data-wkt-q value="' + esc(S.wk.q || "") + '" placeholder="Найти задачу" autocomplete="off"><button type="button" class="wkt-qx" data-wkt-qclose aria-label="Закрыть поиск">' + PJ_ICON.close + '</button></label>'
-        : '<button type="button" class="wkt-qbtn' + (S.wk.q ? ' on' : '') + '" data-wkt-qopen="' + key + '" aria-label="Найти задачу" title="Найти задачу">' + WKT_ICON.search + '</button>') + '</div></td></tr>' +
+      (qHere ? '<label class="wkt-q"><span class="sr-only">Найти задачу — ' + (sec === "done" ? "в готовых" : "в невыполненных") + '</span>' + WKT_ICON.search + '<input data-wkt-q="' + sec + '" value="' + esc(qs[sec] || "") + '" placeholder="' + (sec === "done" ? "Найти в готовых" : "Найти задачу") + '" autocomplete="off"><button type="button" class="wkt-qx" data-wkt-qclose="' + sec + '" aria-label="Закрыть поиск">' + PJ_ICON.close + '</button></label>'
+        : '<button type="button" class="wkt-qbtn' + (qs[sec] ? ' on' : '') + '" data-wkt-qopen="' + key + '" aria-label="Найти задачу — ' + (sec === "done" ? "в готовых" : "в невыполненных") + '" title="Найти задачу">' + WKT_ICON.search + '</button>') + '</div></td></tr>' +
       (folded ? '' : l.map(function (t, i) { return wktRow(t, i + 1); }).join("") + (withAdd ? addRow : ''));
   };
   var body;
@@ -4350,11 +4407,10 @@ function wktTable(list, pid) {
     body = group("over", "Просрочено", g.over, false, "wkt-g-over") + group("week", "На этой неделе", g.week) + group("next", "На следующей неделе", g.next) +
       group("later", "Позже", g.later) + group("nodate", "Без срока", g.nodate) + addRow;
   } else body = group("open", "К выполнению", open, true);
-  if (q && !S.wk.qOpen) S.wk.q = "";
   var note = pf ? '<div class="wkt-fnote">Показаны задачи с приоритетом «' + (pf === "none" ? "без приоритета" : wkLabel(WK_PRIO, pf).toLowerCase()) + '» · <button type="button" class="pj-plain" data-wkt-prio-clear>показать все</button></div>' : '';
   // Задачи «К выполнению» — в своей прокрутке (видно 10); «Готово» — отдельной таблицей под ней, всегда на виду
   return note + '<div class="card wkt-card"><div class="wkt-vp" data-vp="open"><table class="wkt"><thead>' + WKT_HEAD + '</thead><tbody>' + body + '</tbody></table></div>' +
-    (done.length ? '<div class="wkt-vp wkt-vp-done" data-vp="done"><table class="wkt"><thead class="wkt-ghost" aria-hidden="true">' + WKT_HEAD + '</thead><tbody>' + group("done", "Готово", done) + '</tbody></table></div>' : '') + '</div>';
+    (anyDone ? '<div class="wkt-vp wkt-vp-done" data-vp="done"><table class="wkt"><thead class="wkt-ghost" aria-hidden="true">' + WKT_HEAD + '</thead><tbody>' + group("done", "Готово", done, false, "", true) + '</tbody></table></div>' : '') + '</div>';
 }
 // ---------- Таймер: одна задача за раз — запуск другой останавливает прежнюю
 function wkTimer(id) {
@@ -4489,7 +4545,9 @@ function wkPopPlace() {
   var a = WKPOP.anchor.getBoundingClientRect(), el = WKPOP.el, h = WKPOP.host, w = el.offsetWidth, ht = el.offsetHeight;
   var base = h === document.body ? { left: -window.scrollX, top: -window.scrollY } : h.getBoundingClientRect();
   var sx = h === document.body ? 0 : h.scrollLeft, sy = h === document.body ? 0 : h.scrollTop;
-  var left = Math.max(8, Math.min(a.left, window.innerWidth - w - 8)), top = a.bottom + 6;
+  var lo = 8, hi = window.innerWidth - w - 8;
+  if (h !== document.body) { var hr = h.getBoundingClientRect(); lo = Math.max(lo, hr.left + 12); hi = Math.min(hi, hr.right - w - 12); }   // в окне — не вылезать за его края (иначе окно уезжало вбок)
+  var left = Math.max(lo, Math.min(a.left, hi)), top = a.bottom + 6;
   if (top + ht > window.innerHeight - 8 && a.top - ht - 6 > 8) top = a.top - ht - 6;   // снизу не помещается — над кнопкой
   el.style.left = (left - base.left + sx) + "px"; el.style.top = (top - base.top + sy) + "px";
 }
@@ -4845,11 +4903,11 @@ $("view").addEventListener("change", function (ev) {
 });
 $("view").addEventListener("input", function (ev) {   // поиск задач — фильтрует таблицу по мере ввода
   if (S.view !== "work" || !ev.target.hasAttribute || !ev.target.hasAttribute("data-wkt-q")) return;
-  S.wk.q = ev.target.value; var pos = ev.target.selectionStart; render();
-  var qi = document.querySelector("[data-wkt-q]"); if (qi) { qi.focus(); qi.setSelectionRange(pos, pos); }
+  var sec = ev.target.getAttribute("data-wkt-q"); S.wk.qs[sec] = ev.target.value; var pos = ev.target.selectionStart; render();
+  var qi = document.querySelector('[data-wkt-q="' + sec + '"]'); if (qi) { qi.focus({ preventScroll: true }); qi.setSelectionRange(pos, pos); }   // фокус без прокрутки страницы
 });
 $("view").addEventListener("keydown", function (ev) {
-  if (S.view === "work" && ev.key === "Escape" && ev.target.hasAttribute && ev.target.hasAttribute("data-wkt-q")) { ev.preventDefault(); ev.stopPropagation(); S.wk.qOpen = false; S.wk.q = ""; render(); return; }
+  if (S.view === "work" && ev.key === "Escape" && ev.target.hasAttribute && ev.target.hasAttribute("data-wkt-q")) { ev.preventDefault(); ev.stopPropagation(); var sq = ev.target.getAttribute("data-wkt-q"); S.wk.qAt[sq] = null; S.wk.qs[sq] = ""; render(); return; }
   if (S.view !== "work" || !ev.target.classList || !ev.target.classList.contains("wk-in")) return;
   var t = ev.target;
   if (ev.key === "Enter" && t.tagName === "INPUT") { ev.preventDefault(); t.blur(); }
@@ -4859,8 +4917,13 @@ $("view").addEventListener("click", function (ev) {
   if (S.view !== "work") return;
   var t = ev.target.closest("[data-wk-tab],[data-wk-open],[data-wk-act],[data-wk-del],[data-wk-docf],[data-wkt-open],[data-wkt-timer],[data-wkt-fold],[data-wkt-tags],[data-wkt-subs],[data-wkt-group],[data-wkt-sub-del],[data-wk-ptab],[data-wkm-nav],[data-wkm-day],[data-wkn-open],[data-wkn-new],[data-wkt-groupmenu],[data-wkt-qopen],[data-wkt-qclose]"); if (!t) return;
   if (t.hasAttribute("data-wk-ptab")) { S.wk.ptab = t.getAttribute("data-wk-ptab"); render(); return; }
-  if (t.hasAttribute("data-wkt-qopen")) { S.wk.qOpen = true; S.wk.qAt = t.getAttribute("data-wkt-qopen"); render(); var qi = document.querySelector("[data-wkt-q]"); if (qi) { qi.focus(); qi.setSelectionRange(qi.value.length, qi.value.length); } return; }
-  if (t.hasAttribute("data-wkt-qclose")) { S.wk.qOpen = false; S.wk.q = ""; render(); return; }
+  if (t.hasAttribute("data-wkt-qopen")) {
+    var gk = t.getAttribute("data-wkt-qopen"), sq0 = gk === "done" ? "done" : "open"; S.wk.qAt = S.wk.qAt || {}; S.wk.qs = S.wk.qs || { open: "", done: "" };
+    S.wk.qAt[sq0] = gk; if (gk === "done") S.wk.fold.done = false; render();
+    var qi = document.querySelector('[data-wkt-q="' + sq0 + '"]'); if (qi) { qi.focus({ preventScroll: true }); qi.setSelectionRange(qi.value.length, qi.value.length); }
+    return;
+  }
+  if (t.hasAttribute("data-wkt-qclose")) { var sq1 = t.getAttribute("data-wkt-qclose"); S.wk.qAt[sq1] = null; S.wk.qs[sq1] = ""; render(); return; }
   if (t.hasAttribute("data-wkt-groupmenu")) {   // фильтры: группировка и приоритет — меню у вкладок
     if (WKPOP && WKPOP.anchor === t) { wkPopClose(); return; }
     var pfc = S.wk.prioF || "";
@@ -4898,7 +4961,7 @@ $("view").addEventListener("click", function (ev) {
   if (t.hasAttribute("data-wkt-group")) { S.wk.groupBy = t.getAttribute("data-wkt-group"); try { localStorage.setItem("ticketmonitor.work.groupBy", S.wk.groupBy); } catch (e) { /* нет хранилища */ } render(); return; }
   if (t.hasAttribute("data-wkt-sub-del")) { var sd = t.getAttribute("data-wkt-sub-del").split("|"); wkSubChange(sd[0], function (l) { return l.filter(function (x) { return x.id !== sd[1]; }); }); return; }
   if (t.hasAttribute("data-wk-tab")) { S.wk.tab = t.getAttribute("data-wk-tab"); S.enter = true; render(); }
-  else if (t.hasAttribute("data-wk-open")) { S.wk.y = window.scrollY; S.wk.proj = t.getAttribute("data-wk-open"); S.wk.ptab = "tasks"; S.wk.mcal = null; S.wk.scrollT = {}; render(); window.scrollTo(0, 0); }
+  else if (t.hasAttribute("data-wk-open")) { S.wk.y = window.scrollY; S.wk.proj = t.getAttribute("data-wk-open"); S.wk.ptab = "tasks"; S.wk.mcal = null; S.wk.scrollT = {}; S.wk.qs = { open: "", done: "" }; S.wk.qAt = {}; render(); window.scrollTo(0, 0); }
   else if (t.hasAttribute("data-wk-docf")) { S.wk.docF = t.getAttribute("data-wk-docf"); render(); }
   else if (t.getAttribute("data-wk-act") === "back") { S.wk.proj = null; render(); window.scrollTo(0, S.wk.y || 0); }
   else if (t.getAttribute("data-wk-act") === "toggle-done") { S.wk.showDone = !S.wk.showDone; render(); }
