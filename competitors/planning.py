@@ -17,7 +17,8 @@
                   "rows": [{"city", "date", "date2", "time", "status", "other", "note", "line", "fix", "raw"}]}}}
                  ← «Построение гастролей»: где проект уже работает по словам продюсера (разбор — tour-parse.js)
      "routes":   {номер: {"title", "month" — ГГГГ-ММ, "text" — «Город — Площадка — числа» как прислано, "limit" — км переезда,
-                  "project" — номер проекта}}   ← «Построение гастрольного маршрута» (route-plan.js)
+                  "project" — номер проекта, "trips" — {вариант: {"dep", "ret"}} выезд из Москвы и возвращение, если не день в день}}
+                 ← «Построение гастрольного маршрута» (route-plan.js)
     строка тура: {"id", "city", "venue", "date", "days", "fill", "ads", "agent",
                   "ovr": {поле справочника: значение — правка в этой строке},
                   "scores": {"comp", "ads", "attract", "market", "prep"}, "cannibal", "region_ban", "last_show", "decision", "note",
@@ -203,6 +204,12 @@ def _validate(kind: str, data: dict) -> dict:
         out = _clean(data, ROUTE, "маршрут")
         if not out.get("title"):
             raise PlanningError("маршрут: нужно название")
+        trips = data.get("trips") or {}   # выезд из Москвы / возвращение по варианту: {«город@день>…»: {"dep", "ret"}}
+        if not isinstance(trips, dict) or len(trips) > 500:
+            raise PlanningError("маршрут: до 500 сдвигов выезда")
+        trips = {str(k)[:800]: t for k, t in ((k, _clean(v or {}, {"dep": "date", "ret": "date"}, "выезд")) for k, v in trips.items()) if t}
+        if trips:
+            out["trips"] = trips
         return out
     if kind == "lists":
         out = _clean(data, LIST, "список гастролей")

@@ -713,10 +713,10 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .rp-grid th[scope="row"] .sub2 { display: block; font-weight: 400; max-width: 220px; overflow: hidden; text-overflow: ellipsis; } .rp-grid thead th { font-weight: 500; color: var(--muted); min-width: 24px; text-align: center; }
 .rp-grid td { width: 24px; height: 26px; text-align: center; border-radius: 5px; background: #fafaf9; } .rp-grid td.rp-we, .rp-grid th.rp-we { background: #f5f5f4; }
 .rp-grid td.rp-free { background: #cfe1f2; } .rp-grid td.rp-on { background: #1d6fae; color: #fff; font-weight: 600; }
-.rp-vars { margin-top: 16px; } .rp-split { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.rp-vars { margin-top: 16px; } .rp-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }
 @media (max-width: 1100px) { .rp-split { grid-template-columns: 1fr; } }
-.rp-mapcol { position: sticky; top: 8px; } .rp-map { height: 560px; }
-.rp-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 720px; overflow: auto; }
+.rp-mapcol { display: flex; flex-direction: column; min-width: 0; } .rp-map { flex: 1; min-height: 460px; height: auto; }
+.rp-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; align-content: start; min-width: 0; }
 .rp-sep { padding: 8px 2px 2px; }
 .rp-var { border: 1px solid var(--line); border-radius: 12px; background: var(--card); overflow: hidden; } .rp-var:hover { border-color: var(--line-strong); }
 .rp-var.sel { border-color: #1d6fae; box-shadow: 0 0 0 1px #1d6fae inset; }
@@ -724,7 +724,16 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .rp-pick { all: unset; box-sizing: border-box; cursor: pointer; flex: 1; display: flex; align-items: center; gap: 12px; padding: 10px 10px; border-radius: 9px; font-size: 15px; }
 .rp-pick:focus-visible { outline: 2px solid #1d6fae; outline-offset: -2px; } .rp-var.sel .rp-pick b { color: #1d6fae; }
 .rp-count { font-size: 13px; padding: 2px 10px; border-radius: 9999px; background: #f5f5f4; color: var(--ink-2); font-variant-numeric: tabular-nums; } .rp-count.full { background: #e6f4ea; color: #15803d; }
-.rp-more { font-size: 13px; white-space: nowrap; }
+.rp-card-h { padding-right: 8px !important; gap: 4px !important; }
+.rp-ico { width: 32px; height: 32px; border-radius: 8px; color: var(--ink-2); } .rp-ico:hover { background: #f5f5f4; color: var(--ink); }
+.rp-exp svg { transition: transform .18s ease; } .rp-var.open .rp-exp svg { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .rp-exp svg { transition: none; } }
+.rp-mini { table-layout: fixed; } .rp-c-date { width: 128px; } .rp-c-city { width: 26%; } .rp-c-km { width: 84px; }
+.rp-mini td, .rp-mini th { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } .rp-mini th, .rp-mini td { padding: 7px 10px !important; }
+.rp-base td, .rp-base th { background: #fafaf9; } .rp-base th { color: var(--ink-2); }
+.rp-step { display: inline-flex; align-items: center; gap: 2px; } .rp-step span { min-width: 76px; text-align: center; }
+.rp-stepb { width: 20px; height: 22px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); color: var(--ink-2); font-size: 13px; line-height: 1; cursor: pointer; padding: 0; }
+.rp-stepb:hover:not([disabled]) { border-color: var(--line-strong); color: var(--ink); } .rp-stepb[disabled] { opacity: .35; cursor: default; }
 .rp-mini { width: 100%; border-collapse: collapse; font-size: 13px; border-top: 1px solid var(--line); }
 .rp-mini th, .rp-mini td { padding: 7px 14px; text-align: left; border-bottom: 1px solid var(--line-soft, #f0efee); } .rp-mini thead th { font-weight: 500; color: var(--muted); font-size: 12px; }
 .rp-mini .r { text-align: right; } .rp-mini tbody th { font-weight: 600; } .rp-mini tfoot td { border-bottom: 0; padding-top: 8px; padding-bottom: 10px; }
@@ -8158,6 +8167,9 @@ function plTourAnalytics(t, rows, calcs, cfg) {
 // Логика — route-plan.js (тест tests/route-plan.test.js); здесь — страница: сетка дат, варианты, карта, связки.
 var RP_BASE = "Москва", RP_BASE_GEN = "Москвы";
 S.pl.rp = { id: null, draft: null, mode: "nogap", sel: 0 };
+var RP_TRIP_DAYS = 5;
+function rpSig(v) { return v.stops.map(function (s) { return s.city + "@" + s.day; }).join(">"); }
+function rpTrip(R, v) { var t = (R.trips || {})[rpSig(v)] || {}; return { dep: t.dep || v.stops[0].date, ret: t.ret || v.stops[v.stops.length - 1].date }; }
 function rpKm(a, b) { var d = plKm(a, b); return d == null ? null : Math.round(d * 1.3); }
 function rpCur() { var r = S.pl.rp; return r.draft || (r.id && PLAN.routes && PLAN.routes[r.id]) || null; }
 function rpDefMonth() { var d = new Date(TODAY + "T12:00:00Z"); d.setUTCMonth(d.getUTCMonth() + 1); return d.toISOString().slice(0, 7); }
@@ -8226,27 +8238,35 @@ function rpResults(R) {
   // варианты
   var seg = '<div class="seg" role="group">' + [["nogap", "Без выходных"], ["gap", "С выходными"]].map(function (o) { return '<button data-pl="rp-mode" data-v="' + o[0] + '" aria-pressed="' + (st.mode === o[0]) + '">' + o[1] + '</button>'; }).join("") + '</div>';
   var info = '<span class="sub2">' + (rt.total ? 'найдено ' + num(rt.total) + ' ' + plural(rt.total, "вариант", "варианта", "вариантов") + (rt.full ? ', полных (все ' + rt.cities + ' ' + plural(rt.cities, "город", "города", "городов") + ') — ' + rt.full : ', полных нет') + (rt.total > rt.list.length ? ' · показаны первые ' + rt.list.length : '') : (st.mode === "gap" ? 'вариантов с выходными нет — все склеиваются без них' : 'вариантов нет')) + (rt.cut ? ' · перебор остановлен — слишком много сочетаний' : '') + '</span>';
-  // Карточка варианта (решение пользователя 19.10): «Тур №N», «6 из 6», «Смотреть подробнее» — таблица: дата, город,
-  // площадка, км до следующего; нажатие на карточку — тур на карте справа
+  // Карточка варианта (решения пользователя 19.10): «Тур №N», «6 из 6»; значок раскрытия — таблица: выезд из Москвы, дата,
+  // город, площадка, км до следующего, возвращение (даты выезда и возвращения сдвигаются ‹ ›); «+» — в финмодель.
   st.open = st.open || {};
+  var ICO_DOWN = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6l4 4 4-4"/></svg>';
+  var ICO_PLUS = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"/></svg>';
   var vlist = rt.list.map(function (x, i) {
-    var open = !!st.open[i], rows = [];
+    var open = !!st.open[i], rows = [], tr = rpTrip(R, x), first = x.stops[0].date, last = x.stops[x.stops.length - 1].date;
+    var step = function (k, val, lo, hi) {
+      return '<span class="rp-step"><button class="rp-stepb" data-pl="rp-trip" data-i="' + i + '" data-k="' + k + '" data-d="-1"' + (val <= lo ? ' disabled' : '') + ' aria-label="На день раньше" title="На день раньше">‹</button>' +
+        '<span>' + esc(dayLabel(val)) + '</span><button class="rp-stepb" data-pl="rp-trip" data-i="' + i + '" data-k="' + k + '" data-d="1"' + (val >= hi ? ' disabled' : '') + ' aria-label="На день позже" title="На день позже">›</button></span>';
+    };
+    rows.push('<tr class="rp-base"><td>' + step("dep", tr.dep, addDays(first, -RP_TRIP_DAYS), first) + '</td><th scope="row">' + RP_BASE + '</th><td class="sub2">выезд' + (tr.dep < first ? ' за ' + dDiff(tr.dep, first) + ' ' + plural(dDiff(tr.dep, first), "день", "дня", "дней") : ' день в день') + '</td><td class="r num">' + (x.fromBase != null ? num(x.fromBase) + ' км' : '—') + '</td></tr>');
     x.stops.forEach(function (s, k) {
-      var last = k === x.stops.length - 1, gap = last ? 0 : x.stops[k + 1].day - s.day - 1;
-      rows.push('<tr><td class="nowrap">' + esc(dayLabel(s.date)) + '</td><th scope="row">' + esc(s.city) + '</th><td class="sub2">' + esc(s.venue || "—") + '</td>' +
-        '<td class="r num nowrap">' + (last ? '<span class="sub2">до ' + RP_BASE_GEN + '</span> ' + (x.toBase != null ? num(x.toBase) + ' км' : '—') : num(x.hops[k]) + ' км') + '</td></tr>');
+      var lastStop = k === x.stops.length - 1, gap = lastStop ? 0 : x.stops[k + 1].day - s.day - 1;
+      rows.push('<tr><td>' + esc(dayLabel(s.date)) + '</td><th scope="row">' + esc(s.city) + '</th><td class="sub2 rp-venue" title="' + esc(s.venue || "") + '">' + esc(s.venue || "—") + '</td>' +
+        '<td class="r num">' + (lastStop ? (x.toBase != null ? num(x.toBase) + ' км' : '—') : num(x.hops[k]) + ' км') + '</td></tr>');
       if (gap > 0) rows.push('<tr class="rp-offrow"><td colspan="4">выходной' + (gap > 1 ? ' × ' + gap : '') + '</td></tr>');
     });
+    rows.push('<tr class="rp-base"><td>' + step("ret", tr.ret, last, addDays(last, RP_TRIP_DAYS)) + '</td><th scope="row">' + RP_BASE + '</th><td class="sub2">возвращение' + (tr.ret > last ? ' через ' + dDiff(last, tr.ret) + ' ' + plural(dDiff(last, tr.ret), "день", "дня", "дней") : ' день в день') + '</td><td></td></tr>');
     var firstPartial = !x.full && (i === 0 || rt.list[i - 1].full);
     return (firstPartial ? '<li class="rp-sep sub2">Неполные — не все города подряд</li>' : '') +
       '<li class="rp-var' + (i === st.sel ? ' sel' : '') + (open ? ' open' : '') + '"><div class="rp-card-h">' +
         '<button class="rp-pick" data-pl="rp-sel" data-i="' + i + '" aria-pressed="' + (i === st.sel) + '" title="Показать на карте"><b>Тур №' + (i + 1) + '</b>' +
           '<span class="rp-count' + (x.full ? ' full' : '') + '">' + x.n + ' из ' + rt.cities + '</span>' + (x.off ? '<span class="rp-off">выходных ' + x.off + '</span>' : '') + '</button>' +
-        '<button class="pj-plain rp-more" data-pl="rp-more" data-i="' + i + '" aria-expanded="' + open + '">' + (open ? 'Свернуть' : 'Смотреть подробнее') + '</button></div>' +
-      (open ? '<table class="rp-mini"><thead><tr><th scope="col">Дата</th><th scope="col">Город</th><th scope="col">Площадка</th><th scope="col" class="r">До следующего</th></tr></thead><tbody>' + rows.join("") + '</tbody>' +
-        '<tfoot><tr><td colspan="4" class="sub2">Выезд из ' + RP_BASE_GEN + ' — ' + (x.fromBase != null ? num(x.fromBase) + ' км' : '—') + ' · всего ' + num(x.km) + ' км · самый длинный переезд ' + num(x.maxHop) + ' км</td></tr></tfoot></table>' : '') + '</li>';
+        '<button class="icon-btn rp-ico rp-exp" data-pl="rp-more" data-i="' + i + '" aria-expanded="' + open + '" aria-label="' + (open ? 'Свернуть таблицу' : 'Раскрыть: даты, города, площадки, км') + '" title="' + (open ? 'Свернуть' : 'Раскрыть: даты, города, площадки, км') + '">' + ICO_DOWN + '</button>' +
+        '<button class="icon-btn rp-ico" data-pl="rp-tour" data-i="' + i + '" aria-label="Перенести Тур №' + (i + 1) + ' в финмодель" title="Перенести в финмодель — создать тур в «Финмодели туров»">' + ICO_PLUS + '</button></div>' +
+      (open ? '<table class="rp-mini"><colgroup><col class="rp-c-date"><col class="rp-c-city"><col><col class="rp-c-km"></colgroup><thead><tr><th scope="col">Дата</th><th scope="col">Город</th><th scope="col">Площадка</th><th scope="col" class="r" title="Км до следующего города">До след.</th></tr></thead><tbody>' + rows.join("") + '</tbody></table>' : '') + '</li>';
   }).join("");
-  var vsec = '<section class="rp-vars"><div class="tb-tools pl-flat">' + seg + info + '<span style="flex-grow:1"></span>' + (v ? '<button class="btn-dark" data-pl="rp-tour" title="Создать тур в «Финмодели туров»: города, площадки, даты">Перенести Тур №' + (st.sel + 1) + ' в финмодель</button>' : '') + '</div>' +
+  var vsec = '<section class="rp-vars"><div class="tb-tools pl-flat">' + seg + info + '</div>' +
     (vlist ? '<div class="rp-split"><ol class="rp-list">' + vlist + '</ol><div class="rp-mapcol"><div id="rpMap" class="an-map rp-map"><div class="sub" style="padding:16px">Загружаем карту…</div></div>' +
       '<div class="an-legend"><span><i style="background:#1d6fae"></i>город варианта — номер дня по порядку</span><span><i style="background:#0c0a09"></i>' + RP_BASE + '</span><span><i style="background:#a8a29e"></i>другие города списка</span>' + (C.bridges.length ? '<span><i class="sq" style="background:none;border-top:2px dashed #b91c1c;height:0;width:16px"></i>подряд не поставить</span>' : '') + '</div></div></div>' : '') + '</section>';
   if (vlist) setTimeout(rpMapInit, 0);
@@ -8274,6 +8294,7 @@ function rpMapInit() {
     el.innerHTML = "";
     if (S.pl.rpObj) { try { S.pl.rpObj.remove(); } catch (e) { /* ушла вместе со страницей */ } S.pl.rpObj = null; }
     var map = L.map(el, { scrollWheelZoom: true, zoomControl: false, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 90 }), pts = [];
+    L.control.zoom({ position: "topright", zoomInTitle: "Приблизить", zoomOutTitle: "Отдалить" }).addTo(map);
     L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
     var base = plLL(RP_BASE), inV = {}; if (v) v.stops.forEach(function (s) { inV[s.city] = 1; });
     C.bridges.forEach(function (b) { var a = plLL(b.a), c = plLL(b.b); if (a && c) L.polyline([a, c], { color: "#b91c1c", weight: 1.5, opacity: 0.6, dashArray: "5 6" }).bindTooltip(esc(b.a) + " — " + esc(b.b) + ": " + num(b.km) + " км — нужен город-связка", { sticky: true }).addTo(map); });
@@ -8319,7 +8340,7 @@ function rpAction(a, b) {
     if (!d.title) d.title = "Маршрут — " + rpMonthLabel(d.month);
     var id = st.editId || plId("m"); PLAN.routes = PLAN.routes || {};
     st.draft = null; st.id = id;
-    plPut("routes", id, { title: d.title, month: d.month, limit: d.limit, project: d.project, text: d.text }, "Маршрут «" + d.title + "» сохранён");
+    plPut("routes", id, { title: d.title, month: d.month, limit: d.limit, project: d.project, text: d.text, trips: d.trips || {} }, "Маршрут «" + d.title + "» сохранён");
   }
   else if (a === "rp-del") { if (!confirm("Удалить маршрут «" + PLAN.routes[st.id].title + "»?")) return; var did = st.id; st.id = null; plDel("routes", did, "Маршрут удалён"); }
   else if (a === "rp-mode") { st.mode = b.getAttribute("data-v"); st.sel = 0; st.open = {}; tbRe(); }
@@ -8333,9 +8354,22 @@ function rpAction(a, b) {
     var ta = $("rpText"); if (ta) { ta.scrollIntoView({ block: "center" }); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
     toast("«" + c + "» добавлен в конец списка — впишите площадку и свободные даты, затем «Разобрать и построить»");
   }
+  else if (a === "rp-trip") {   // выезд из Москвы / возвращение — на день раньше или позже
+    var R3 = rpCur(), v3 = rpCalc(R3).routes.list[+b.getAttribute("data-i")]; if (!v3) return;
+    var k3 = b.getAttribute("data-k"), t3 = rpTrip(R3, v3), f3 = v3.stops[0].date, l3 = v3.stops[v3.stops.length - 1].date, nv = addDays(t3[k3], +b.getAttribute("data-d"));
+    if (k3 === "dep" && (nv > f3 || nv < addDays(f3, -RP_TRIP_DAYS))) return;
+    if (k3 === "ret" && (nv < l3 || nv > addDays(l3, RP_TRIP_DAYS))) return;
+    var trips = JSON.parse(JSON.stringify(R3.trips || {})), sg = rpSig(v3), o3 = trips[sg] = trips[sg] || {};
+    o3[k3] = nv; if (o3.dep === f3) delete o3.dep; if (o3.ret === l3) delete o3.ret; if (!o3.dep && !o3.ret) delete trips[sg];
+    if (st.draft) { st.draft.trips = trips; tbRe(); }
+    else { var rec = JSON.parse(JSON.stringify(PLAN.routes[st.id])); rec.trips = trips; delete rec.upd; plPut("routes", st.id, rec); }
+  }
   else if (a === "rp-tour") {
-    var R2 = rpCur(), C = rpCalc(R2), v = C.routes.list[st.sel]; if (!v) return;
-    var tid = plId("t"), tour = { title: R2.title + " — Тур №" + (st.sel + 1), month: C.month, status: "Черновик",
+    var ti = b.hasAttribute("data-i") ? +b.getAttribute("data-i") : st.sel;
+    var R2 = rpCur(), C = rpCalc(R2), v = C.routes.list[ti]; if (!v) return;
+    var trip = rpTrip(R2, v);
+    var tid = plId("t"), tour = { title: R2.title + " — Тур №" + (ti + 1), month: C.month, status: "Черновик",
+      note: "Выезд из " + RP_BASE_GEN + " — " + dayLabel(trip.dep) + ", возвращение — " + dayLabel(trip.ret) + " (из «Гастрольного маршрута»)",
       rows: v.stops.map(function (s) { return { id: plId("r"), city: s.city, venue: s.venue ? plVenueKey(s.city, s.venue) : undefined, date: s.date }; }) };
     tour.rows.forEach(function (r) { if (!r.venue) delete r.venue; });
     if (R2.project && PLAN.projects[R2.project]) tour.project = R2.project;
