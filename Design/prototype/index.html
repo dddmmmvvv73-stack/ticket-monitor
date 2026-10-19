@@ -412,6 +412,31 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
 .vb-table thead th.vb-stick { z-index: 5; }
 .vb-table tbody tr:hover .vb-stick { background: #fbfaf9; }
 .vb-table .vb-edge { box-shadow: inset -1px 0 0 var(--line); }
+/* Правка в таблице: ячейка под курсором подсвечена, открытая — поле ввода во всю ячейку */
+.vb-editbtn { display: inline-flex; align-items: center; gap: 6px; }
+.vb-editnote { margin-bottom: 12px; }
+.vb-editing tbody tr { cursor: default; }
+.vb-editing tbody td { cursor: text; }
+.vb-editing tbody td:hover { box-shadow: inset 0 0 0 1px var(--line-strong); }
+.vb-table td.vb-cell-on { padding: 4px; vertical-align: top; }
+.vb-in { width: 100%; box-sizing: border-box; font: 13px/1.35 var(--ui); color: var(--ink); background: #fff; border: 1px solid var(--cta); border-radius: 6px; padding: 6px 7px; resize: vertical; outline: none; box-shadow: 0 0 0 3px rgba(59, 168, 245, 0.18); }
+select.vb-in { height: 34px; padding: 0 6px; }
+.vb-cell-saving { opacity: 0.55; }
+/* Страница площадки: ЭДО — выбор прямо в «О площадке», райдер — файл, «вписать» у пустых строк */
+.vb-edo { font: inherit; font-size: 14px; color: var(--ink); border: 0; border-bottom: 1px solid var(--line-strong); border-radius: 0; padding: 0 18px 1px 0; cursor: pointer;
+  -webkit-appearance: none; appearance: none; background: transparent var(--chevron) no-repeat right 0 center; background-size: 10px; }
+.vb-edo:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.pj-dl .vb-add { font-size: 14px; color: var(--muted); }
+.vb-rider-up { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; font-size: 13px; }
+.vb-rider-btns { display: flex; gap: 14px; margin-top: 4px; } .vb-rider-btns .pj-plain { font-size: 13px; color: var(--ink-3); }
+/* Окно «Редактировать» площадки: группы полей в две колонки */
+.vb-edit { width: min(720px, calc(100vw - 32px)); }
+.vb-fgroup { font: 500 13px/1.3 var(--ui); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; }
+.vb-fgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+.vb-fgrid textarea { resize: vertical; }
+.vb-fgrid .field { margin-bottom: 12px; }
+.vb-rider-box { margin-top: 10px; } .vb-rider-box > span { border-radius: 8px; }
+@media (max-width: 560px) { .vb-fgrid { grid-template-columns: 1fr; } }
 /* 821–1279 px: таблица «Мероприятий» уходит в карточки, справочник — остаётся таблицей с прокруткой внутри карточки */
 @media (max-width: 1279px) and (min-width: 821px) {
   .ev-card-table.vb-card { display: block; }
@@ -3268,14 +3293,21 @@ var VB_COLS = [
   { id: "sale", label: "Выход в продажу", w: 170, sort: "sale" },
   { id: "rent", label: "Аренда", w: 190, sort: "rent" },
   { id: "agent", label: "Агентский %", w: 120, sort: "agent" },
-  { id: "director", label: "Директор", w: 190, sort: "director" }
+  { id: "director", label: "Директор", w: 190, sort: "director" },
+  { id: "admin_row", label: "Административный ряд", w: 180, sort: "admin_row" },   // поля сайта (19.10) — в таблице пользователя их нет
+  { id: "stage", label: "Размер сцены", w: 150, sort: "stage" },
+  { id: "edo", label: "ЭДО", w: 150, sort: "edo" }
 ];
+var VB_EDO = [["full", "Полное"], ["in", "Только входящий"], ["none", "Не работают"]];
+function vbEdoText(v) { var x = VB_EDO.filter(function (o) { return o[0] === v; })[0]; return x ? x[1] : ""; }
+var VB_MULTI = { contact: 1, phone: 1, email: 1, rent: 1, director: 1, sale: 1, admin_row: 1, stage: 1, seats: 1, agent: 1, legal: 1 };   // правка — в несколько строк
 var VB_FIT = [["contact", 130], ["email", 160], ["director", 130], ["rent", 150], ["sale", 130], ["legal", 120], ["site", 110], ["name", 200], ["phone", 130]];   // «Город» не сжимаем — названия городов переносились посреди слова
 var VB_FILL = [["", "Все"], ["nophone", "Без телефона"], ["noseats", "Без числа мест"], ["norent", "Без аренды"], ["site", "Есть сайт"]];
 function vbLead(v) { var m = String(v || "").replace(/\s/g, "").match(/\d+(?:[.,]\d+)?/); return m ? parseFloat(m[0].replace(",", ".")) : null; }   // «664 ( 11 ряд не продаём )» → 664
 function vbKey(r, k) {
   var v = r[k] || "";
   if (k === "seats" || k === "agent") return vbLead(v);
+  if (k === "edo") v = vbEdoText(v);
   return v ? v.toLowerCase().replace(/ё/g, "е").replace(/^[^a-zа-я0-9]+/, "") : null;
 }
 function vbList() {
@@ -3318,7 +3350,8 @@ var VB_CELL = {
   city: function (r) { return '<div class="vb-t" style="font-weight:500">' + esc(r.city) + '</div>'; },
   name: function (r) { return '<div class="vb-t vb-name">' + esc(r.name || "без названия") + '</div>'; },
   site: function (r) { return '<div class="vb-t">' + vbSite(r.site) + '</div>'; },
-  email: function (r) { return '<div class="vb-t vb-mail">' + vbMails(r.email) + '</div>'; }
+  email: function (r) { return '<div class="vb-t vb-mail">' + vbMails(r.email) + '</div>'; },
+  edo: function (r) { return '<div class="vb-t">' + esc(vbEdoText(r.edo)) + '</div>'; }
 };
 function vbCell(c, r) {
   var v = r[c.id];
@@ -3358,7 +3391,7 @@ function renderVenueBook() {
   var stickAttr = function (c) { return c.id in stick ? ' style="left:' + stick[c.id] + 'px"' : ''; };
   var stickCls = function (c) { return c.id in stick ? " vb-stick" + (c.id === "name" ? " vb-edge" : "") : ""; };
   var rows = shown.map(function (r) {
-    return '<tr data-vbrow="' + esc(r.id) + '" tabindex="0" aria-label="' + esc(r.name + ", " + r.city) + '">' + cols.map(function (c) { return '<td class="' + mAlign(c) + stickCls(c) + '"' + stickAttr(c) + '>' + vbCell(c, r) + '</td>'; }).join("") + '</tr>';
+    return '<tr data-vbrow="' + esc(r.id) + '" tabindex="0" aria-label="' + esc(r.name + ", " + r.city) + '">' + cols.map(function (c) { return '<td data-f="' + c.id + '" class="' + mAlign(c) + stickCls(c) + '"' + stickAttr(c) + '>' + vbCell(c, r) + '</td>'; }).join("") + '</tr>';
   }).join("");
   var mobile = shown.map(function (r) {
     return '<button class="m-item" data-vbrow="' + esc(r.id) + '"><div class="d-sub">' + esc(r.city) + (r.seats ? ' · ' + esc(String(vbLead(r.seats) || r.seats)) + ' мест' : '') + '</div>' +
@@ -3372,9 +3405,11 @@ function renderVenueBook() {
       '<select class="flat-select" data-flat-label="Заполнено" data-vbsel="fill" aria-label="Что заполнено">' + VB_FILL.map(function (o) { return '<option value="' + o[0] + '"' + (S.vb.fill === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
       (S.q.trim() ? '<button class="chip-btn chip-active" data-vb="q-clear" aria-label="Убрать поиск">Поиск: ' + esc(S.q.trim()) + ' ✕</button>' : '') +
       '<span class="sub vb-count" style="margin:0">' + num(list.length) + ' ' + plural(list.length, "площадка", "площадки", "площадок") + '</span>' +
+      '<button class="chip-btn vb-editbtn' + (S.vb.edit ? ' chip-active' : '') + '" data-vb="table-edit" aria-pressed="' + !!S.vb.edit + '" title="Вписывать данные прямо в ячейки таблицы">' + PJ_ICON.edit + (S.vb.edit ? 'Правка включена' : 'Править в таблице') + '</button>' +
       vbColsControl() +
     '</div>' +
-    '<section class="card ev-card-table vb-card"><table class="ev-table vb-table" id="evTable" style="width:' + totalW + 'px"><colgroup>' + cols.map(function (c) { return '<col data-col="' + c.id + '" style="width:' + fitW[c.id] + 'px">'; }).join("") + '</colgroup>' +
+    (S.vb.edit ? '<div class="note vb-editnote">Режим правки: нажмите на ячейку и впишите. Enter — сохранить и вниз, Tab — вправо, Shift+Enter — новая строка в ячейке, Esc — отменить. Страница площадки в этом режиме не открывается.</div>' : '') +
+    '<section class="card ev-card-table vb-card"><table class="ev-table vb-table' + (S.vb.edit ? ' vb-editing' : '') + '" id="evTable" style="width:' + totalW + 'px"><colgroup>' + cols.map(function (c) { return '<col data-col="' + c.id + '" style="width:' + fitW[c.id] + 'px">'; }).join("") + '</colgroup>' +
       '<thead><tr>' + cols.map(function (c) { return mTh(c, S.vb.sort === c.sort, S.vb.desc, "data-vbsort").replace('<th scope="col" class="', '<th scope="col"' + stickAttr(c) + ' class="' + stickCls(c) + ' '); }).join("") + '</tr></thead><tbody>' + rows + '</tbody></table>' + empty + '</section>' +
     '<div class="m-list vb-mlist">' + mobile + (list.length ? "" : empty) + '</div>' +
     (list.length > shown.length ? '<div style="display:flex;justify-content:center;align-items:center;gap:12px"><span class="sub" style="margin:0">Показано ' + num(shown.length) + ' из ' + num(list.length) + '</span><button class="btn-ghost" data-vb="more">Показать ещё ' + Math.min(200, list.length - shown.length) + '</button></div>' : '') +
@@ -3409,67 +3444,241 @@ function vbEvents(r) {
   return { l: l, names: Object.keys(names).filter(function (n) { return names[n]; }) };
 }
 var VB_MAIL_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="M2.5 4.5L8 9l5.5-4.5"/></svg>';
+var VB_FILE_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M9.5 1.8H4.2a1 1 0 00-1 1v10.4a1 1 0 001 1h7.6a1 1 0 001-1V5.1z"/><path d="M9.5 1.8v3.3h3.3M5.8 8.5h4.4M5.8 11h4.4"/></svg>';
+function vbRec(id) { return VB_ROWS.filter(function (r) { return r.id === id; })[0]; }
+function vbMedia(r, kind) { return r && r.media && r.media[kind] ? "/api/venuebook/file/" + r.media[kind] : ""; }
+function vbSize(n) { return n >= 1048576 ? (n / 1048576).toFixed(1).replace(".", ",") + " МБ" : Math.max(1, Math.round(n / 1024)) + " КБ"; }
+// Сохранить правку на сервере (competitors/venuebook.py) → обновлённая запись площадки — на место прежней
+function vbSave2(op, okMsg, done) {
+  if (!ON_APP) { toast("Правка — только на сайте: справочник хранится на сервере"); return; }
+  apiJson("POST", "/api/venuebook", op).then(function (x) {
+    if (!x.ok) { toast("Не сохранено: " + ((x.d && x.d.error) || "ошибка")); if (done) done(false); return; }
+    var r = vbRec(op.id); if (r) { Object.keys(r).forEach(function (k) { delete r[k]; }); Object.assign(r, x.d.row); }
+    if (okMsg) toast(okMsg);
+    if (done) done(true);
+  }, function () { toast("Не сохранено: " + NO_APP); if (done) done(false); });
+}
 function vbPage(r) {
   var ev = vbEvents(r), l = ev.l, all = S.vb.all, rows = all ? l : l.slice(0, PJ_ROWS);
   var phone = String(r.phone || "").split(/\n|[,;]/).map(vbTel).filter(Boolean)[0], mail = (String(r.email || "").match(/[\w.+-]+@[\w-]+(\.[\w-]+)+/) || [])[0];
-  var seats = vbLead(r.seats), tags = [seats ? num(seats) + " мест" : "", r.sale].filter(Boolean);
-  var hero = '<section class="pj-hero">' +
+  var ava = vbMedia(r, "avatar"), cover = vbMedia(r, "cover");
+  var hero = '<section class="pj-hero' + (cover ? ' has-cover' : '') + '"' + (cover ? ' style="background-image:url(\'' + esc(cover) + '\');background-position:center 50%"' : '') + '>' +
     '<button class="pj-back-btn" data-vb="back" aria-label="Назад: Площадки" title="Назад: Площадки">' + PJ_ICON.back + '</button>' +
+    '<div class="pj-top-right"><button class="pj-cover-btn" data-vb="edit" aria-label="Редактировать всё о площадке">' + PJ_ICON.edit + '<span>Редактировать</span></button></div>' +
     '<div class="pj-hero-in">' +
-      '<div class="pj-ava" aria-hidden="true" style="display:grid;place-items:center"><span class="pj-ini">' + esc(pjInitials(r.name)) + '</span></div>' +
+      '<button class="pj-ava" data-vb="photo" data-kind="avatar" aria-label="' + (ava ? 'Сменить миниатюру' : 'Загрузить миниатюру') + ': ' + esc(r.name) + '">' +
+        (ava ? '<img src="' + esc(ava) + '" alt="">' : '<span class="pj-ini" aria-hidden="true">' + esc(pjInitials(r.name)) + '</span>') +
+        '<span class="pj-ava-edit" aria-hidden="true">' + PJ_ICON.camera + '<span>' + (ava ? 'Сменить' : 'Фото') + '</span></span></button>' +
       '<div class="pj-hero-text"><h1 class="pj-name">' + esc(r.name || "Без названия") + '</h1>' +
         '<p class="pj-sub">' + esc([r.city, r.legal].filter(Boolean).join(" · ")) + '</p>' +
-        (tags.length ? '<div class="pj-tags">' + tags.map(function (t) { return '<span class="pj-tag">' + esc(t) + '</span>'; }).join("") + '</div>' : '') +
         '<div class="pj-actions">' +
           (phone ? '<a class="pj-btn primary" href="' + phone.href + '">' + PJ_ICON.phone + phone.text + '</a>' : '') +
           (mail ? '<a class="pj-btn pj-icon" href="mailto:' + esc(mail) + '" aria-label="Написать: ' + esc(mail) + '" title="' + esc(mail) + '">' + VB_MAIL_ICON + '</a>' : '') +
           (/^https?:\/\//.test(r.site) ? '<a class="pj-btn pj-icon" href="' + esc(r.site) + '" target="_blank" rel="noopener" aria-label="Сайт площадки" title="' + esc(vbHost(r.site)) + '">' + PJ_ICON.site + '</a>' : '') +
+          (r.rider ? '<a class="pj-btn pj-icon" href="/api/venuebook/file/' + esc(r.rider.file) + '" aria-label="Технический райдер: ' + esc(r.rider.name) + '" title="Технический райдер · ' + esc(r.rider.name) + '">' + VB_FILE_ICON + '</a>' : '') +
         '</div></div></div></section>';
   var sum = ev.names.length ? '<div class="pj-sum"><span>в афише рынка как ' + ev.names.map(function (n) { return '<b style="font:inherit;color:var(--ink)">«' + esc(n) + '»</b>'; }).join(", ") + '</span></div>' : '';
   var body = l.length ? '<ul class="pj-dates">' + rows.map(function (e) { return pjRow(e, false, e.title); }).join("") + '</ul>' +
       (!all && l.length > PJ_ROWS ? '<div class="pj-all"><button class="btn-ghost" data-vb="all">Показать все · ' + l.length + ' ' + plural(l.length, "дата", "даты", "дат") + '</button></div>' : '')
     : '<div class="note">В афише рынка мероприятий этой площадки не нашли. Сопоставление — по городу и названию: если в афише площадка записана иначе, её даты здесь пока не видны.</div>';
-  var dd = function (v, html) { return '<dd>' + (v ? html || esc(v) : '<span class="muted">не указано</span>') + '</dd>'; };
+  // Пусто — «вписать»: откроет «Редактировать» сразу на этом поле
+  var dd = function (f, html) { return '<dd>' + (r[f] ? html || esc(r[f]) : '<button class="pj-plain vb-add" data-vb="edit" data-field="' + f + '">вписать</button>') + '</dd>'; };
+  var pre = function (f) { return '<span style="white-space:pre-line">' + esc(r[f]) + '</span>'; };
+  var edo = '<select class="vb-edo" data-vbedo data-native aria-label="ЭДО"><option value=""' + (r.edo ? '' : ' selected') + '>не указано</option>' +
+    VB_EDO.map(function (o) { return '<option value="' + o[0] + '"' + (r.edo === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join("") + '</select>';
+  var rider = r.rider ? '<a href="/api/venuebook/file/' + esc(r.rider.file) + '" title="Скачать">' + esc(r.rider.name) + '</a><span class="sub2"> · ' + vbSize(r.rider.size) + ' · ' + human(r.rider.at.slice(0, 10)) + '</span>' +
+      '<div class="vb-rider-btns"><button class="pj-plain" data-vb="rider">Заменить</button><button class="pj-plain" data-vb="unrider">Убрать</button></div>'
+    : '<button class="btn-ghost vb-rider-up" data-vb="rider">' + VB_FILE_ICON + 'Загрузить файл</button>';
   var aside = '<section><h2 class="pj-h3">Контакты</h2><dl class="pj-dl">' +
-      '<dt>Контакт</dt>' + dd(r.contact, '<span style="white-space:pre-line">' + esc(r.contact) + '</span>') +
-      '<dt>Телефон</dt>' + dd(r.phone, vbPhones(r.phone)) +
-      '<dt>Почта</dt>' + dd(r.email, '<span style="white-space:pre-line">' + vbMails(r.email) + '</span>') +
-      '<dt>Директор</dt>' + dd(r.director) +
+      '<dt>Контакт</dt>' + dd("contact", pre("contact")) +
+      '<dt>Телефон</dt>' + dd("phone", vbPhones(r.phone)) +
+      '<dt>Почта</dt>' + dd("email", '<span style="white-space:pre-line">' + vbMails(r.email) + '</span>') +
+      '<dt>Директор</dt>' + dd("director") +
     '</dl></section>' +
     '<section><h3 class="pj-h4">О площадке</h3><dl class="pj-dl">' +
-      '<dt>Город</dt>' + dd(r.city) +
-      '<dt>Юр лицо</dt>' + dd(r.legal) +
-      '<dt>ИНН</dt>' + dd(r.inn) +
-      '<dt>Сайт</dt>' + dd(r.site, vbSite(r.site, true)) +
-      '<dt>Кол-во мест</dt>' + dd(r.seats) +
-      '<dt>Выход в продажу</dt>' + dd(r.sale) +
-      '<dt>Аренда</dt>' + dd(r.rent, '<span style="white-space:pre-line">' + esc(r.rent) + '</span>') +
-      '<dt>Агентский %</dt>' + dd(r.agent) +
+      '<dt>Город</dt>' + dd("city") +
+      '<dt>Юр лицо</dt>' + dd("legal") +
+      '<dt>ИНН</dt>' + dd("inn") +
+      '<dt>ЭДО</dt><dd>' + edo + '</dd>' +
+      '<dt>Сайт</dt>' + dd("site", vbSite(r.site, true)) +
+      '<dt>Кол-во мест</dt>' + dd("seats") +
+      '<dt>Административный ряд</dt>' + dd("admin_row", pre("admin_row")) +
+      '<dt>Размер сцены</dt>' + dd("stage", pre("stage")) +
+      '<dt>Технический райдер</dt><dd>' + rider + '</dd>' +
+      '<dt>Выход в продажу</dt>' + dd("sale") +
+      '<dt>Аренда</dt>' + dd("rent", pre("rent")) +
+      '<dt>Агентский %</dt>' + dd("agent") +
     '</dl></section>' +
-    (VBOOK.imported ? '<section><p class="sub" style="margin:0">Из Google Таблицы «Площадки База данных с информацией» · загружено ' + atText(VBOOK.imported) + '</p></section>' : '');
+    (VBOOK.imported ? '<section><p class="sub" style="margin:0">Из Google Таблицы «Площадки База данных с информацией» · загружено ' + atText(VBOOK.imported) + (r.upd ? ' · изменено на сайте ' + atText(r.upd) : '') + '</p></section>' : '');
   return hero + '<div class="pj-grid"><div class="pj-main"><div class="pj-list-head"><div><h2 class="pj-h2">Мероприятия</h2>' + sum + '</div></div>' + body + '</div>' +
     '<aside class="pj-aside" aria-label="О площадке">' + aside + '</aside></div>';
 }
-function vbOpen(id) { S.vb.y = window.scrollY; S.vb.sel = id; S.vb.all = false; S.colsOpen = false; render(); window.scrollTo(0, 0); }
-$("view").addEventListener("click", function (ev) {
-  if (!vbOn() || ev.target.closest(".resizer")) return;
-  var t = ev.target.closest("[data-vb],[data-vbsort],[data-vbrow]");
-  if (!t) return;
-  if (t.hasAttribute("data-vbsort")) { var k = t.getAttribute("data-vbsort"); S.vb.desc = S.vb.sort === k ? !S.vb.desc : k === "seats"; S.vb.sort = k; render(); return; }
-  if (t.hasAttribute("data-vbrow")) { if (!ev.target.closest("a")) vbOpen(t.getAttribute("data-vbrow")); return; }   // ссылка в ячейке (сайт, почта) — сама по себе
-  var a = t.getAttribute("data-vb");
+// ---------- «Редактировать»: всё о площадке в одном окне (фото — сразу при загрузке, поля — кнопкой «Сохранить»)
+var VB_FORM = [
+  ["Основное", [["name", "Площадка"], ["city", "Город"], ["legal", "Юр лицо"], ["inn", "ИНН"], ["site", "Сайт", "https://…"], ["director", "Директор"]]],
+  ["Контакты", [["contact", "Имя", "Имя, роль — по одному в строке"], ["phone", "Телефон", "Можно несколько — по одному в строке"], ["email", "Почта"]]],
+  ["Зал и условия", [["seats", "Кол-во мест"], ["admin_row", "Административный ряд", "Например: 9 ряд, места 10–21"], ["stage", "Размер сцены", "Например: 12 × 8 м, высота 6 м"],
+    ["sale", "Выход в продажу"], ["rent", "Аренда"], ["agent", "Агентский %"]]]
+];
+var VB_PH_LABEL = { avatar: "Миниатюра", cover: "Фон шапки" };
+function vbPh(r, kind) {
+  var src = vbMedia(r, kind);
+  return '<div class="pj-ph ' + kind + '" id="vbPh-' + kind + '">' + (src ? '<img src="' + esc(src) + '" alt="">' : '<span>' + PJ_ICON.camera + '</span>') +
+    '<div><b>' + VB_PH_LABEL[kind] + '</b><div class="pj-ph-btns"><button type="button" class="btn-ghost" data-vb="photo" data-kind="' + kind + '">' + (src ? "Заменить" : "Загрузить") + '</button>' +
+    (src ? '<button type="button" class="btn-ghost" data-vb="unphoto" data-kind="' + kind + '">Убрать</button>' : '') + '</div></div></div>';
+}
+function vbRiderBox(r) {
+  return '<div class="pj-ph vb-rider-box" id="vbRiderBox"><span>' + VB_FILE_ICON + '</span><div style="min-width:0"><b>Технический райдер</b>' +
+    (r.rider ? '<div class="sub2" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(r.rider.name) + ' · ' + vbSize(r.rider.size) + '</div>' : '') +
+    '<div class="pj-ph-btns"><button type="button" class="btn-ghost" data-vb="rider">' + (r.rider ? "Заменить" : "Загрузить файл") + '</button>' +
+    (r.rider ? '<button type="button" class="btn-ghost" data-vb="unrider">Убрать</button>' : '') + '</div></div></div>';
+}
+function vbEditHtml(r) {
+  var field = function (x) {
+    var v = r[x[0]] || "", ph = x[2] ? ' placeholder="' + esc(x[2]) + '"' : '';
+    return '<div class="field"><label for="vb-' + x[0] + '">' + x[1] + '</label>' + (VB_MULTI[x[0]]
+      ? '<textarea id="vb-' + x[0] + '" name="' + x[0] + '" rows="' + Math.min(4, Math.max(1, v.split("\n").length)) + '" maxlength="3000"' + ph + '>' + esc(v) + '</textarea>'
+      : '<input id="vb-' + x[0] + '" name="' + x[0] + '" value="' + esc(v) + '" maxlength="3000"' + ph + '>') + '</div>';
+  };
+  return '<form id="vbForm" class="myform" novalidate>' +
+    '<div class="pj-ph-row">' + vbPh(r, "avatar") + vbPh(r, "cover") + '</div>' +
+    VB_FORM.map(function (g) { return '<h3 class="vb-fgroup">' + g[0] + '</h3><div class="vb-fgrid">' + g[1].map(field).join("") + '</div>'; }).join("") +
+    '<div class="vb-fgrid"><div class="field"><label for="vb-edo">ЭДО</label><select id="vb-edo" name="edo"><option value="">не указано</option>' +
+      VB_EDO.map(function (o) { return '<option value="' + o[0] + '"' + (r.edo === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join("") + '</select></div></div>' +
+    vbRiderBox(r) +
+    '<div class="err" id="vb-err" hidden></div></form>' +
+    '<div class="form-actions"><button class="btn-dark" data-vb="save">Сохранить</button><button class="btn-ghost" data-pj="close">Отмена</button></div>';
+}
+function vbEdit(focus) {
+  var r = vbRec(S.vb.sel); if (!r) return;
+  var d = pjDialog("pj-edit vb-edit", "Редактировать площадку", vbEditHtml(r));
+  var el = d.querySelector("#vb-" + (focus || "name")); if (el) { el.focus(); if (el.select && focus) el.select(); }
+}
+function vbFormSave() {
+  var r = vbRec(S.vb.sel), f = $("vbForm"), data = {}, err = $("vb-err");
+  if (!r || !f) return;
+  Array.prototype.forEach.call(f.elements, function (el) { if (el.name && (r[el.name] || "") !== el.value.trim()) data[el.name] = el.value.trim(); });
+  if ("name" in data && !data.name || "city" in data && !data.city) { err.hidden = false; err.textContent = "Город и название площадки не могут быть пустыми"; return; }
+  if (data.site && !/^https?:\/\//i.test(data.site) && /\./.test(data.site) && !/\s/.test(data.site)) data.site = "https://" + data.site;
+  if (!Object.keys(data).length) { $("pjDlg").close(); return; }
+  vbSave2({ op: "set", id: r.id, data: data }, "Площадка сохранена", function (ok) { if (ok) { $("pjDlg").close(); render(); } });
+}
+// Фото: уменьшаем в браузере — миниатюра — квадрат 480 px по центру, фон — до 1800 px по ширине; JPEG 85% (как у проекта)
+function vbPhoto(file, kind) {
+  var r = vbRec(S.vb.sel); if (!file || !r || !VB_PH_LABEL[kind]) return;
+  if (!/^image\//.test(file.type)) { toast("Нужна картинка: JPEG, PNG или WebP"); return; }
+  var fr = new FileReader();
+  fr.onload = function () {
+    var img = new Image();
+    img.onload = function () {
+      var w = img.width, h = img.height, c = document.createElement("canvas"), g = c.getContext("2d");
+      if (kind === "avatar") { var s0 = Math.min(w, h), S0 = Math.min(480, s0); c.width = c.height = S0; g.drawImage(img, (w - s0) / 2, (h - s0) / 2, s0, s0, 0, 0, S0, S0); }
+      else { var z = Math.min(1, 1800 / w); c.width = Math.round(w * z); c.height = Math.round(h * z); g.drawImage(img, 0, 0, c.width, c.height); }
+      vbSave2({ op: "media", id: r.id, kind: kind, data: c.toDataURL("image/jpeg", 0.85) }, kind === "avatar" ? "Миниатюра обновлена" : "Фон шапки обновлён", vbAfterFile);
+    };
+    img.onerror = function () { toast("Не удалось открыть картинку"); };
+    img.src = fr.result;
+  };
+  fr.readAsDataURL(file);
+}
+function vbRider(file) {
+  var r = vbRec(S.vb.sel); if (!file || !r) return;
+  if (file.size > 15 * 1048576) { toast("Райдер: не больше 15 МБ"); return; }
+  var fr = new FileReader();
+  fr.onload = function () { toast("Загружаем райдер…"); vbSave2({ op: "rider", id: r.id, name: file.name, data: fr.result }, "Технический райдер загружен", vbAfterFile); };
+  fr.readAsDataURL(file);
+}
+function vbAfterFile(ok) {   // окно «Редактировать» открыто — обновляем только превью, поля формы не теряются
+  if (!ok) return;
+  var r = vbRec(S.vb.sel), d = $("pjDlg");
+  if (d && d.open && $("vbForm")) { ["avatar", "cover"].forEach(function (k) { var el = $("vbPh-" + k); if (el) el.outerHTML = vbPh(r, k); }); var rb = $("vbRiderBox"); if (rb) rb.outerHTML = vbRiderBox(r); }
+  var y = window.scrollY; render(); window.scrollTo(0, y);
+}
+(function () {
+  var ph = document.createElement("input"); ph.type = "file"; ph.accept = "image/jpeg,image/png,image/webp"; ph.id = "vbFile"; ph.hidden = true;
+  ph.addEventListener("change", function () { var f = ph.files[0]; ph.value = ""; vbPhoto(f, ph.getAttribute("data-kind")); });
+  var rd = document.createElement("input"); rd.type = "file"; rd.id = "vbRiderFile"; rd.hidden = true;
+  rd.accept = ".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp,.rtf,.odt,.txt,.zip";
+  rd.addEventListener("change", function () { var f = rd.files[0]; rd.value = ""; vbRider(f); });
+  document.body.appendChild(ph); document.body.appendChild(rd);
+})();
+function vbAction(t, ev) {
+  var a = t.getAttribute("data-vb"), r = vbRec(S.vb.sel);
   if (a === "back") { S.vb.sel = null; render(); window.scrollTo(0, S.vb.y || 0); }
   else if (a === "more") { S.vb.limit += 200; render(); }
   else if (a === "all") { S.vb.all = true; render(); }
   else if (a === "q-clear") { S.q = ""; $("q").value = ""; render(); }
   else if (a === "reset-cols") { S.vb.hidden = ["legal", "inn"]; S.vb.widths = {}; vbSave(); render(); }
+  else if (a === "table-edit") { S.vb.edit = !S.vb.edit; render(); }
+  else if (a === "edit") vbEdit(t.getAttribute("data-field"));
+  else if (a === "save") vbFormSave();
+  else if (a === "photo") { var inp = $("vbFile"); inp.setAttribute("data-kind", t.getAttribute("data-kind")); inp.click(); }
+  else if (a === "unphoto" && r) vbSave2({ op: "media", id: r.id, kind: t.getAttribute("data-kind"), data: "" }, "Фото убрано", vbAfterFile);
+  else if (a === "rider") $("vbRiderFile").click();
+  else if (a === "unrider" && r) vbSave2({ op: "rider", id: r.id, data: "" }, "Райдер убран", vbAfterFile);
+}
+// ---------- Правка прямо в таблице (режим «Править в таблице»): ячейка → поле ввода; Enter — вниз, Tab — вправо, Esc — отмена
+var VB_CELL_ED = null;
+function vbCellEdit(td) {
+  if (VB_CELL_ED && VB_CELL_ED.td === td) return;
+  if (VB_CELL_ED) vbCellDone(true);   // перешли в другую ячейку мышью — прежняя сохраняется
+  var tr = td.closest("tr"), r = vbRec(tr.getAttribute("data-vbrow")), f = td.getAttribute("data-f");
+  if (!r || !f) return;
+  var v = r[f] || "";
+  td.classList.add("vb-cell-on");
+  if (f === "edo") td.innerHTML = '<select class="vb-in" aria-label="ЭДО"><option value="">—</option>' + VB_EDO.map(function (o) { return '<option value="' + o[0] + '"' + (v === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join("") + '</select>';
+  else td.innerHTML = '<textarea class="vb-in" rows="' + Math.max(2, Math.min(6, v.split("\n").length)) + '" aria-label="' + esc(f) + '">' + esc(v) + '</textarea>';
+  var inp = td.querySelector(".vb-in"); VB_CELL_ED = { td: td, r: r, f: f, inp: inp };
+  inp.focus(); if (inp.select && f !== "edo") inp.select();
+  inp.addEventListener("keydown", function (ev) {
+    if (ev.key === "Escape") { ev.preventDefault(); ev.stopPropagation(); vbCellDone(false); }
+    else if (ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); vbCellDone(true, "down"); }
+    else if (ev.key === "Tab") { ev.preventDefault(); vbCellDone(true, ev.shiftKey ? "left" : "right"); }
+  });
+  inp.addEventListener("blur", function () { setTimeout(function () { if (VB_CELL_ED && VB_CELL_ED.inp === inp) vbCellDone(true); }, 0); });
+  if (f === "edo") inp.addEventListener("change", function () { vbCellDone(true); });
+}
+function vbCellDone(save, move) {
+  var e = VB_CELL_ED; if (!e) return; VB_CELL_ED = null;
+  var nv = e.inp.value.trim(), c = VB_COLS.filter(function (x) { return x.id === e.f; })[0], td = e.td;
+  var paint = function () { td.classList.remove("vb-cell-on"); td.innerHTML = vbCell(c, e.r); };
+  var next = null;
+  if (move) {
+    var tr = td.parentNode;
+    if (move === "down") { var nt = tr.nextElementSibling; next = nt && nt.querySelector('td[data-f="' + e.f + '"]'); }
+    else next = move === "right" ? td.nextElementSibling : td.previousElementSibling;
+  }
+  if (save && nv !== (e.r[e.f] || "")) {
+    if ((e.f === "city" || e.f === "name") && !nv) { toast("Город и название площадки не могут быть пустыми"); paint(); return; }
+    td.classList.add("vb-cell-saving");
+    vbSave2({ op: "set", id: e.r.id, data: (function () { var o = {}; o[e.f] = nv; return o; })() }, "", function () { td.classList.remove("vb-cell-saving"); paint(); });
+    e.r[e.f] = nv;   // сразу показываем вписанное; ответ сервера поправит
+  }
+  paint();
+  if (next) vbCellEdit(next);
+}
+$("view").addEventListener("click", function (ev) {
+  if (!vbOn() || ev.target.closest(".resizer")) return;
+  if (S.vb.edit && !S.vb.sel) {   // режим правки: нажатие на ячейку — правка, ссылки в ячейках не открываются
+    var td = ev.target.closest(".vb-table td[data-f]");
+    if (td) { ev.preventDefault(); if (!ev.target.closest(".vb-in")) vbCellEdit(td); return; }
+  }
+  var t = ev.target.closest("[data-vb],[data-vbsort],[data-vbrow]");
+  if (!t) return;
+  if (t.hasAttribute("data-vbsort")) { var k = t.getAttribute("data-vbsort"); S.vb.desc = S.vb.sort === k ? !S.vb.desc : k === "seats"; S.vb.sort = k; render(); return; }
+  if (t.hasAttribute("data-vbrow")) { if (!ev.target.closest("a") && !S.vb.edit) vbOpen(t.getAttribute("data-vbrow")); return; }   // ссылка в ячейке (сайт, почта) — сама по себе
+  vbAction(t, ev);
+});
+document.addEventListener("click", function (ev) {   // кнопки в окне «Редактировать» (окно — вне #view)
+  var t = ev.target.closest && ev.target.closest("#pjDlg [data-vb]"); if (t && vbOn()) { ev.preventDefault(); vbAction(t, ev); }
 });
 $("view").addEventListener("keydown", function (ev) {
-  if (!vbOn() || ev.key !== "Enter" || !ev.target.hasAttribute || !ev.target.hasAttribute("data-vbrow") || ev.target.tagName !== "TR") return;
+  if (!vbOn() || S.vb.edit || ev.key !== "Enter" || !ev.target.hasAttribute || !ev.target.hasAttribute("data-vbrow") || ev.target.tagName !== "TR") return;
   vbOpen(ev.target.getAttribute("data-vbrow"));
 });
 $("view").addEventListener("change", function (ev) {
   if (!vbOn()) return;
+  if (ev.target.hasAttribute("data-vbedo")) { var r = vbRec(S.vb.sel); if (r) vbSave2({ op: "set", id: r.id, data: { edo: ev.target.value } }, "ЭДО: " + (vbEdoText(ev.target.value) || "не указано")); return; }
   var sel = ev.target.getAttribute("data-vbsel"), vis = ev.target.getAttribute("data-vbcolvis");
   if (sel) { S.vb[sel] = ev.target.value; S.vb.limit = 200; render(); }
   if (vis) {
@@ -3478,6 +3687,7 @@ $("view").addEventListener("change", function (ev) {
     vbSave(); S.colsAnim = false; render();
   }
 });
+function vbOpen(id) { S.vb.y = window.scrollY; S.vb.sel = id; S.vb.all = false; S.colsOpen = false; render(); window.scrollTo(0, 0); }
 
 function renderVenues() {
   var data = cityData();

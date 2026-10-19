@@ -14,6 +14,7 @@
     POST /api/market/site/check   {"key"} — разобрать сайт проекта сейчас (кнопка «Проверить», ~10–40 с)
     GET  /proto/venue-cap.js      вместимость площадок по схемам касс (competitors/venuecap.py)
     GET  /proto/venue-book.js     справочник площадок: контакты и условия (competitors/venuebook.py; config/venue_book.json вне git)
+    POST /api/venuebook           правка площадки: поля, фото, технический райдер; GET /api/venuebook/file/<файл> — фото и райдер
     GET  /api/sales/feed?days=14  продажи по кассам для «Истории» и «Динамики продаж» (sales/feed.py) — из базы
     GET  /api/planning            «Планирование»: справочники и туры (competitors/planning.py; config/planning.json вне git)
     POST /api/planning            {"op": "put" | "del", "kind", "id", "data"}
@@ -100,6 +101,26 @@ def proto_venue_cap():
 @bp.get("/proto/venue-book.js")
 def proto_venue_book():
     return Response(venuebook.export_js(), mimetype="application/javascript", headers={"Cache-Control": "no-store"})
+
+
+@bp.post("/api/venuebook")
+def venuebook_post():
+    try:
+        return jsonify({"row": venuebook.apply_op(request.get_json(silent=True) or {})})   # не на GitHub: там контакты
+    except venuebook.VenueBookError as e:
+        return jsonify({"error": str(e)}), 400
+
+
+@bp.get("/api/venuebook/file/<name>")
+def venuebook_file(name):
+    path = venuebook.media_file(name)
+    if not path:
+        return jsonify({"error": "нет такого файла"}), 404
+    rider = name.split("-", 1)[1].startswith("rider")
+    if rider:   # скачивается под тем именем, под которым вы его загружали
+        rec = next((r for r in venuebook.load().get("rows", []) if (r.get("rider") or {}).get("file") == name), {})
+        return send_file(path, as_attachment=True, download_name=(rec.get("rider") or {}).get("name") or name, max_age=0)
+    return send_file(path, max_age=86400)
 
 
 @bp.post("/api/market/site/check")

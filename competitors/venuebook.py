@@ -2,23 +2,37 @@
 Справочник площадок — «Площадки → Площадки» в прототипе (решение пользователя 19.10.2026: новое пространство отдельно от
 «Базы площадок РФ», потом соединить). Первая версия — столбцы таблицы пользователя «Площадки База данных с информацией»
 (Google Таблица): город, площадка, юрлицо, ИНН, сайт, контакт, телефон, почта, мест, выход в продажу, аренда, агентский %,
-директор. Значения — как в таблице (текст), разбор аренды и мест — позже.
+директор. Значения — как в таблице (текст), разбор аренды и мест — позже. 19.10 (решения пользователя): правка на сайте —
+окном «Редактировать» на странице площадки и прямо в ячейках таблицы; новые поля — ЭДО, размер сцены, административный
+ряд; фото (миниатюра и фон шапки) и файл технического райдера.
 
 Хранится в config/venue_book.json — вне git (контакты — персональные данные, репозиторий публичный), в часовой закрытой
 копии (db.offsite, весь config/):
     {"imported": ISO-время, "source": имя файла, "rows": [{"id", "city", "name", "legal", "inn", "site", "contact",
-                                                          "phone", "email", "seats", "sale", "rent", "agent", "director"}]}
+                                                          "phone", "email", "seats", "sale", "rent", "agent", "director",
+                                                          "edo" — full | in | none, "stage", "admin_row",
+                                                          "media": {"avatar" | "cover": файл?v=метка},
+                                                          "rider": {"file", "name" — как назывался у вас, "size", "at"},
+                                                          "edited": [поля, исправленные на сайте], "upd"}]}
+Фото и райдеры — файлами в config/venue_media/ (вне git, в часовой копии вместе с config/).
 
     python3 -m competitors.venuebook import <файл.xlsx>   загрузить из выгрузки Google Таблицы (Файл → Скачать → xlsx):
                                                          xlsx, а не csv — в csv теряются ссылки за словом «Сайт»
-    GET /proto/venue-book.js                              справочник для прототипа (competitors/market_api.py)
+                                                         повторная загрузка не затирает исправленное на сайте
+    GET  /proto/venue-book.js                             справочник для прототипа (competitors/market_api.py)
+    POST /api/venuebook  {"op": "set", "id", "data": {поле: значение}}   правка полей
+                         {"op": "media", "id", "kind": "avatar" | "cover", "data": data:image/…;base64 | ""}
+                         {"op": "rider", "id", "name", "data": data:…;base64 | ""}
+    GET  /api/venuebook/file/<файл>                       фото или райдер
 """
 
 from __future__ import annotations
 
+import base64
 import json
 import re
 import sys
+import threading
 import zipfile
 from datetime import datetime
 from pathlib import Path
@@ -32,6 +46,21 @@ HEAD = {"город": "city", "площадка": "name", "юр лицо": "lega
         "телефон": "phone", "почта": "email", "кол-во мест": "seats", "выход в продажу": "sale", "аренда": "rent",
         "агентский %": "agent", "директор": "director"}
 FIELDS = list(HEAD.values())
+EXTRA = ["edo", "stage", "admin_row"]   # поля, которых нет в таблице пользователя — только на сайте
+EDO = {"full": "полное", "in": "только входящий", "none": "не работают"}
+TEXT_MAX = 3000
+MEDIA_DIR = CONFIG_DIR / "venue_media"
+MEDIA_KINDS = ("avatar", "cover")
+PHOTO_MAX = 3 * 1024 * 1024        # прототип присылает уже уменьшенное (~100–400 КБ)
+RIDER_MAX = 15 * 1024 * 1024
+RIDER_EXT = {"pdf", "doc", "docx", "xls", "xlsx", "jpg", "jpeg", "png", "webp", "rtf", "odt", "txt", "zip"}
+PHOTO_TYPES = {b"\xff\xd8\xff": "jpg", b"\x89PNG": "png", b"RIFF": "webp"}
+FILE_NAME = re.compile(r"^v\d{1,6}-(avatar|cover|rider)\.[a-z0-9]{2,5}$")
+_lock = threading.Lock()
+
+
+class VenueBookError(ValueError):
+    pass
 _NS = {"m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
        "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships"}
 _EMPTY = {"", "-", "—", "–", "\\-"}
@@ -120,7 +149,8 @@ def import_xlsx(path: Path) -> dict:
     missing = [h for h, f in HEAD.items() if f not in idx]
     if missing:
         raise SystemExit(f"в таблице нет столбцов: {', '.join(missing)}")
-    out = []
+    prev = {_key(r): r for r in load().get("rows", [])}   # исправленное на сайте и поля сайта — не затираем
+    used, out = set(), []
     for n, r in enumerate(rows[1:], 1):
         rec = {f: _text(r[i]) if i < len(r) else "" for f, i in idx.items()}
         # «Сайт» в таблице — слово со ссылкой: берём саму ссылку. У почт ссылки не берём — там бывают чужие (mail.ru/compose…)
@@ -129,15 +159,124 @@ def import_xlsx(path: Path) -> dict:
             rec["site"] = site
         if not any(rec.values()):
             continue
-        rec = {"id": f"v{len(out) + 1}", **rec}
+        old = prev.get(_key(rec))
+        if old and old["id"] not in used:
+            used.add(old["id"])
+            for f in old.get("edited", []):
+                rec[f] = old.get(f, "")
+            rec = {"id": old["id"], **rec, **{k: old[k] for k in EXTRA + ["media", "rider", "edited", "upd"] if k in old}}
+        else:
+            rec = {"id": "", **rec}
         out.append(rec)
+    n_id = max([int(r["id"][1:]) for r in out if r["id"]] + [0])
+    for r in out:
+        if not r["id"]:
+            n_id += 1
+            r["id"] = f"v{n_id}"
     data = {"imported": datetime.now().isoformat(timespec="seconds"), "source": Path(path).name, "rows": out}
     save_json(FILE, data)
     return data
 
 
+def _key(r: dict) -> str:
+    norm = lambda v: re.sub(r"[^0-9a-zа-я]", "", (v or "").lower().replace("ё", "е"))
+    return norm(r.get("city")) + "|" + norm(r.get("name"))
+
+
 def load() -> dict:
     return load_json(FILE, {"rows": []})
+
+
+def _find(d: dict, vid: str) -> dict:
+    for r in d.get("rows", []):
+        if r.get("id") == vid:
+            return r
+    raise VenueBookError("нет такой площадки")
+
+
+def _decode(data: str, what: str) -> bytes:
+    m = re.match(r"^data:[\w.+/-]*;base64,([A-Za-z0-9+/=]+)$", data or "")
+    if not m:
+        raise VenueBookError(f"{what}: файл не прочитался")
+    return base64.b64decode(m.group(1))
+
+
+def _drop(vid: str, kind: str) -> None:
+    for old in MEDIA_DIR.glob(f"{vid}-{kind}.*"):
+        old.unlink()
+
+
+def apply_op(op: dict) -> dict:
+    """Одна правка с сайта → обновлённая запись площадки. Ошибка проверки — VenueBookError (текст — для человека)."""
+    kind, vid = op.get("op"), str(op.get("id") or "")
+    with _lock:
+        d = load()
+        rec = _find(d, vid)
+        if kind == "set":
+            data = op.get("data")
+            if not isinstance(data, dict) or not data:
+                raise VenueBookError("нечего сохранять")
+            for f, v in data.items():
+                if f not in FIELDS + EXTRA:
+                    raise VenueBookError(f"неизвестное поле: {f}")
+                v = _text(str(v if v is not None else ""))
+                if len(v) > TEXT_MAX:
+                    raise VenueBookError(f"слишком длинно: не больше {TEXT_MAX} знаков")
+                if f == "edo" and v not in ("", *EDO):
+                    raise VenueBookError("ЭДО: полное, только входящий или не работают")
+                if f in ("city", "name") and not v:
+                    raise VenueBookError("город и название площадки не могут быть пустыми")
+                rec[f] = v
+                if f in FIELDS and f not in rec.setdefault("edited", []):
+                    rec["edited"].append(f)
+        elif kind == "media":
+            what = str(op.get("kind") or "")
+            if what not in MEDIA_KINDS:
+                raise VenueBookError("неизвестный вид фото")
+            media = rec.setdefault("media", {})
+            raw = _decode(op["data"], "фото") if op.get("data") else None
+            ext = raw and next((e for sig, e in PHOTO_TYPES.items() if raw.startswith(sig)), None)
+            if raw is not None and (len(raw) > PHOTO_MAX or not ext):
+                raise VenueBookError("фото: нужен JPEG, PNG или WebP до 3 МБ")
+            _drop(vid, what)
+            if raw is None:
+                media.pop(what, None)
+            else:
+                MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+                (MEDIA_DIR / f"{vid}-{what}.{ext}").write_bytes(raw)
+                media[what] = f"{vid}-{what}.{ext}?v={int(datetime.now().timestamp())}"
+            if not media:
+                rec.pop("media", None)
+        elif kind == "rider":
+            name = _text(str(op.get("name") or ""))[:200]
+            raw = _decode(op["data"], "райдер") if op.get("data") else None
+            ext = name.rsplit(".", 1)[-1].lower() if "." in name else ""
+            if raw is not None:
+                if ext not in RIDER_EXT:
+                    raise VenueBookError("райдер: PDF, Word, Excel, картинка или архив")
+                if len(raw) > RIDER_MAX:
+                    raise VenueBookError("райдер: не больше 15 МБ")
+            _drop(vid, "rider")
+            if raw is None:
+                rec.pop("rider", None)
+            else:
+                MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+                (MEDIA_DIR / f"{vid}-rider.{ext}").write_bytes(raw)
+                rec["rider"] = {"file": f"{vid}-rider.{ext}", "name": name, "size": len(raw),
+                                "at": datetime.now().isoformat(timespec="seconds")}
+        else:
+            raise VenueBookError("неизвестная правка")
+        rec["upd"] = datetime.now().isoformat(timespec="seconds")
+        save_json(FILE, d)
+        return rec
+
+
+def media_file(name: str):
+    """Путь к фото или райдеру для выдачи; None — имя не наше или файла нет."""
+    if not FILE_NAME.match(name or ""):
+        return None
+    path = MEDIA_DIR / name
+    return path if path.is_file() else None
 
 
 def export_js() -> str:

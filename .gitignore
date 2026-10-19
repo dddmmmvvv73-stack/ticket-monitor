@@ -6,6 +6,7 @@ config/my_projects.json
 config/planning.json
 # Справочник площадок: контакты, телефоны, почты (competitors/venuebook.py)
 config/venue_book.json
+config/venue_media/
 config/project_media/
 # Адрес сервера в Яндекс Облаке и путь к SSH-ключу — только на этом компьютере (репозиторий публичный)
 config/server.json
