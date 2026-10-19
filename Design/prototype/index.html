@@ -674,13 +674,9 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wk-tabn { display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 4px; border-radius: 9999px; background: var(--line-soft); color: var(--ink-3); font-size: 12px; line-height: 18px; text-align: center; }
 .wk-pbody { margin-top: 4px; }
 .wk-pnote { min-height: 0; }
-.wk-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(380px, 41%); gap: 16px; align-items: start; }   /* таблица уже, календарь шире */
+.wk-split { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
 .wk-split-side { position: sticky; top: calc(var(--top-h, 64px) + 16px); }
-.wk-split .wkt .wkt-tagcell { width: 124px; } .wk-split .wkt .wkt-n { width: 34px; } .wk-split .wkt th.wkt-time, .wk-split .wkt td.wkt-time { width: 104px; } .wk-split .wkt th.wkt-due, .wk-split .wkt td.wkt-due { width: 104px; }
-.wk-split .wkt .wk-tag { padding: 0 6px; font-size: 11px; height: 22px; } .wk-split .wkt .wkt-tags { gap: 4px; }
-/* узкая таблица: название — до двух строк, а не многоточие после пары слов */
-.wk-split .wkt-title { font-size: 14px; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; overflow-wrap: anywhere; }
-.wk-split .wkt td, .wk-split .wkt th { padding-left: 10px; padding-right: 10px; }
+.wk-split .wkt .wkt-tagcell { width: 168px; } .wk-split .wkt .wkt-n { width: 40px; } .wk-split .wkt th.wkt-time, .wk-split .wkt td.wkt-time { width: 140px; } .wk-split .wkt th.wkt-due, .wk-split .wkt td.wkt-due { width: 124px; }
 @media (max-width: 1180px) { .wk-split { grid-template-columns: minmax(0, 1fr); } .wk-split-side { position: static; max-width: 420px; } }
 /* Календарь сроков — по образцу: крупные числа, сегодня — синий круг с тенью */
 .wkm { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 22px 20px 16px; }
@@ -690,8 +686,8 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wkm-nav { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: #1f2a3c; display: inline-grid; place-items: center; cursor: pointer; }
 .wkm-nav:hover { border-color: var(--line-strong); background: #f6f5f4; }
 .wkm-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 6px; }
-.wkm-d { position: relative; height: 52px; border: 0; background: none; padding: 0; cursor: default; display: grid; place-items: center; font: 500 16px/1 var(--ui); color: #1f2a3c; font-variant-numeric: tabular-nums; }
-.wkm-d > span { position: relative; width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; transition: background-color 150ms var(--ease); }
+.wkm-d { position: relative; height: 44px; border: 0; background: none; padding: 0; cursor: default; display: grid; place-items: center; font: 500 16px/1 var(--ui); color: #1f2a3c; font-variant-numeric: tabular-nums; }
+.wkm-d > span { position: relative; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; transition: background-color 150ms var(--ease); }
 /* наведение — круглый контур появляется с лёгким «расширением» */
 .wkm-d > span::after { content: ""; position: absolute; inset: -3px; border-radius: 50%; border: 2px solid #3b7ce8; opacity: 0; transform: scale(0.7); transition: transform 220ms cubic-bezier(.2, .9, .3, 1.3), opacity 160ms var(--ease); pointer-events: none; }
 .wkm-d:hover > span::after, .wkm-d:focus-visible > span::after, .wkm-d[aria-expanded="true"] > span::after { opacity: 1; transform: scale(1); }
@@ -738,11 +734,11 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wk-paidlbl { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--ink-3); }
 .wk-paid .wk-paidlbl span { color: var(--good); }
 /* Заметки — квадраты со скруглёнными углами; последний — с серым плюсом */
-.wkn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
-.wkn-card { aspect-ratio: 3 / 4; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); text-align: left; font: inherit; color: var(--ink); cursor: pointer; overflow: hidden; transition: box-shadow 150ms var(--ease), transform 150ms var(--ease); }
+.wkn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+.wkn-card { aspect-ratio: 16 / 10; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); text-align: left; font: inherit; color: var(--ink); cursor: pointer; overflow: hidden; transition: box-shadow 150ms var(--ease), transform 150ms var(--ease); }
 .wkn-card:hover { box-shadow: 0 8px 22px rgba(17, 12, 46, 0.08); transform: translateY(-1px); }
 .wkn-card b { font: 600 16px/1.25 var(--display); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-.wkn-card p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-3); display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; flex: 1; }
+.wkn-card p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-3); display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; flex: 1; }
 .wkn-date { font-size: 11px; color: var(--muted); }
 .wkn-add { align-items: center; justify-content: center; background: var(--canvas); border-style: dashed; }
 .wkn-plus { width: 48px; height: 48px; border-radius: 50%; background: #e7e5e3; color: #78716c; display: grid; place-items: center; font: 300 30px/1 var(--ui); }
@@ -752,7 +748,7 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wkn-title:focus { border-bottom-color: var(--cta); }
 .wkn-body { width: 100%; box-sizing: border-box; margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font: inherit; font-size: 15px; line-height: 1.55; resize: vertical; outline: none; min-height: 280px; }
 .wkn-body:focus { border-color: var(--cta); box-shadow: 0 0 0 3px rgba(59, 168, 245, 0.14); }
-@media (max-width: 560px) { .wkn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
+@media (max-width: 560px) { .wkn-grid { grid-template-columns: minmax(0, 1fr); gap: 10px; } }
 /* ---------- Страница проекта — вид как у Яндекс Афиши (Design/Reference/Project.png) ---------- */
 /* Шапка до самого верха — под основную панель сайта (убираем верхнее поле .view); «назад» — круглая кнопка поверх шапки */
 .view > .pj-hero:first-child { margin-top: -28px; }
