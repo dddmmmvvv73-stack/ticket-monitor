@@ -327,9 +327,14 @@ def check() -> int:
         with tarfile.open(tmp / "data.tar.gz") as t:
             members = t.getnames()
             need = ["config/venue_book.json", "config/planning.json", "config/my_projects.json"]
-            miss = [n for n in need if n not in members]
+            made = datetime.strptime(day, "%Y-%m-%d").timestamp() + 4 * 3600   # ночная копия — около 03:30 того дня
+            born = lambda n: getattr((ROOT / n).stat(), "st_birthtime", (ROOT / n).stat().st_mtime) if (ROOT / n).exists() else 0
+            miss = [n for n in need if n not in members and born(n) < made]
+            late = [n for n in need if n not in members and born(n) >= made]
             if miss:
                 problems.append("в ночной копии нет: " + ", ".join(miss))
+            if late:
+                report.append("появились после ночной копии — войдут в следующую (сейчас — в свежих настройках): " + ", ".join(late))
             for n in need:
                 if n in members:
                     json.load(t.extractfile(n))   # файл читается — не обрезан
