@@ -7791,6 +7791,13 @@ function plTextIn(sig, val, opts) {
   return '<input class="pl-in pl-text' + (opts.cls ? ' ' + opts.cls : '') + '" data-plf="' + esc(sig) + '" value="' + esc(val || "") + '"' + (opts.type ? ' type="' + opts.type + '"' : '') +
     (opts.list ? ' list="' + opts.list + '"' : '') + (opts.ph ? ' placeholder="' + esc(opts.ph) + '"' : '') + ' aria-label="' + esc(opts.label || "") + '">';
 }
+// Месяц — списком (поле type="month" в Safari — обычный текст: «Февраль» не понимался, случай 19.10): 2 месяца назад — 18 вперёд
+function plMonthOpts(cur) {
+  var out = [], d = new Date(TODAY.slice(0, 8) + "01T12:00:00Z"); d.setUTCMonth(d.getUTCMonth() - 2);
+  for (var i = 0; i < 21; i++) { var m = d.toISOString().slice(0, 7); out.push([m, MONTHS_FULL[+m.slice(5) - 1] + " " + m.slice(0, 4)]); d.setUTCMonth(d.getUTCMonth() + 1); }
+  if (cur && /^\d{4}-\d{2}$/.test(cur) && !out.some(function (o) { return o[0] === cur; })) out.unshift([cur, MONTHS_FULL[+cur.slice(5) - 1] + " " + cur.slice(0, 4)]);
+  return out;
+}
 function plSelect(sig, val, options, label) {
   return '<select class="pl-sel" data-plf="' + esc(sig) + '" aria-label="' + esc(label || "") + '">' + options.map(function (o) {
     var v = Array.isArray(o) ? o[0] : o, t = Array.isArray(o) ? o[1] : (o || "—");
@@ -7855,7 +7862,7 @@ function plTours() {
   var add = !projOpts.length ? plNote('Чтобы посчитать тур, сначала заведите проект во вкладке <button class="pj-plain" data-pl="tab" data-tab="projects">«Проекты»</button>: гонорар, суточные, состав, московские расходы.')
     : S.pl.adding ? '<div class="pl-add"><span class="field-label" style="margin:0">Новый тур</span>' + plSelect("new|project", projOpts[0][0], projOpts, "Проект") +
         '<input class="pl-in pl-text" id="plNewTitle" placeholder="Название тура, например «Север, ноябрь»" aria-label="Название тура" style="min-width:260px">' +
-        '<input class="pl-in pl-text" id="plNewMonth" type="month" aria-label="Месяц тура"><button class="btn-dark" data-pl="tour-create">Создать</button><button class="btn-ghost" data-pl="tour-add-cancel">Отмена</button></div>'
+        '<select class="pl-sel" id="plNewMonth" aria-label="Месяц тура">' + [["", "— месяц —"]].concat(plMonthOpts()).map(function (o) { return '<option value="' + o[0] + '">' + o[1] + '</option>'; }).join("") + '</select><button class="btn-dark" data-pl="tour-create">Создать</button><button class="btn-ghost" data-pl="tour-add-cancel">Отмена</button></div>'
       : '<button class="btn-dark" data-pl="tour-add">+ Новый тур</button>';
   if (!ids.length) return add + '<div class="empty" style="margin-top:16px"><h2>Туров пока нет</h2><p style="margin:0">Тур — проект и города: для каждого города считается прибыль, точка безубыточности и класс.</p></div>';
   return add + '<section class="card pl-card" style="margin-top:16px"><table class="vtable pl-list"><thead><tr><th scope="col">Тур</th><th scope="col">Проект</th><th scope="col">Месяц</th><th scope="col" class="r">Городов</th><th scope="col" class="r">Сборы</th><th scope="col" class="r">Прибыль</th><th scope="col">Статус</th></tr></thead><tbody>' +
@@ -7951,7 +7958,7 @@ function plTour(id) {
   var head1 = '<div class="pl-tour-head"><button class="pj-plain" data-pl="tour-back">← Все туры</button>' +
     '<div class="pl-tour-fields pl-flat">' + plTextIn("tour|" + id + "|title", t.title, { label: "Название тура", cls: "pl-title" }) +
       '<label class="pl-lab">Проект ' + plSelect("tour|" + id + "|project", t.project, projOpts, "Проект") + '</label>' +
-      '<label class="pl-lab">Месяц ' + plTextIn("tour|" + id + "|month", t.month, { type: "month", label: "Месяц" }) + '</label>' +
+      '<label class="pl-lab">Месяц ' + plSelect("tour|" + id + "|month", t.month || "", [["", "—"]].concat(plMonthOpts(t.month)), "Месяц") + '</label>' +
       '<label class="pl-lab">Статус ' + plSelect("tour|" + id + "|status", t.status || "Черновик", PL_STATUS, "Статус") + '</label>' +
       '<button class="btn-ghost" data-pl="tour-del" data-id="' + id + '">Удалить тур</button></div></div>';
   var sum = '<div class="pj-sum pl-sum"><span><b class="num">' + tt.n + '</b> ' + plural(tt.n, "город", "города", "городов") + '</span><span>вал <b class="num">' + plShort(tt.gross) + '</b></span>' +
@@ -8143,11 +8150,15 @@ S.pl.rp = { id: null, draft: null, mode: "nogap", sel: 0 };
 function rpKm(a, b) { var d = plKm(a, b); return d == null ? null : Math.round(d * 1.3); }
 function rpCur() { var r = S.pl.rp; return r.draft || (r.id && PLAN.routes && PLAN.routes[r.id]) || null; }
 function rpDefMonth() { var d = new Date(TODAY + "T12:00:00Z"); d.setUTCMonth(d.getUTCMonth() + 1); return d.toISOString().slice(0, 7); }
-function rpMonthLabel(ym) { return ym ? MONTHS_FULL[+ym.slice(5, 7) - 1] + " " + ym.slice(0, 4) : "—"; }
+function rpMonthOk(v) {   // «2027-02»; «Февраль» / «февраль 2027» (сохранённое до 19.10) → ГГГГ-ММ; иначе ""
+  v = String(v || "").trim(); if (/^\d{4}-\d{2}$/.test(v)) return v;
+  var p = v ? rpParse("Даты по " + v, { today: TODAY }) : null; return p && p.month ? p.month : "";
+}
+function rpMonthLabel(ym) { ym = rpMonthOk(ym); return ym ? MONTHS_FULL[+ym.slice(5, 7) - 1] + " " + ym.slice(0, 4) : "—"; }
 function rpCalc(R) {   // разбор и варианты; кэш — по тексту, месяцу, лимиту и режиму
   var key = [R.text, R.month, R.limit, S.pl.rp.mode].join("§");
   if (S.pl.rpCache && S.pl.rpCache.key === key) return S.pl.rpCache.v;
-  var P = rpParse(R.text || "", { cities: tbCities(), today: TODAY }), month = R.month || P.month || rpDefMonth(), limit = planNum(R.limit) || 600;
+  var P = rpParse(R.text || "", { cities: tbCities(), today: TODAY }), month = rpMonthOk(R.month) || P.month || rpDefMonth(), limit = planNum(R.limit) || 600;
   var opts = { km: rpKm, limit: limit, base: RP_BASE, month: month, top: 20 };
   var v = { P: P, month: month, limit: limit,
     routes: rpRoutes(P.rows, Object.assign({}, opts, S.pl.rp.mode === "gap" ? { gaps: 1, onlyOff: true } : {})),
@@ -8174,7 +8185,8 @@ function rpEditor(d) {
   var projOpts = [["", "— без проекта —"]].concat(Object.keys(PLAN.projects).map(function (id) { return [id, PLAN.projects[id].title]; }));
   return '<section class="card pl-card tb-editor"><div class="tb-meta pl-flat">' +
       '<label class="pl-lab">Название <input class="pl-in pl-text" id="rpTitle" value="' + esc(d.title || "") + '" placeholder="например, «Призрак Оперы — февраль»" style="min-width:260px"></label>' +
-      '<label class="pl-lab">Месяц <input class="pl-in pl-text" id="rpMonth" type="month" value="' + esc(d.month || "") + '" title="К какому месяцу относятся числа. Пусто — из строки «Даты по …» или следующий месяц"></label>' +
+      '<label class="pl-lab" title="К какому месяцу относятся числа. «Из текста» — по строке «Даты по …», иначе следующий месяц">Месяц <select class="pl-sel" id="rpMonth" aria-label="Месяц">' +
+        [["", "— из текста —"]].concat(plMonthOpts(rpMonthOk(d.month))).map(function (o) { return '<option value="' + o[0] + '"' + (rpMonthOk(d.month) === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join("") + '</select></label>' +
       '<label class="pl-lab">Переезд не больше <input class="pl-in pl-sm" id="rpLimit" inputmode="numeric" value="' + esc(plFmt(d.limit || 600)) + '"> км</label>' +
       '<label class="pl-lab">Проект ' + '<select class="pl-sel" id="rpProject" aria-label="Проект">' + projOpts.map(function (o) { return '<option value="' + esc(o[0]) + '"' + ((d.project || "") === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join("") + '</select></label></div>' +
     '<textarea id="rpText" class="tb-text" rows="8" placeholder="Даты по февралю:&#10;Воронеж - ГДК - 2,3,9&#10;Кострома - КВЦ Губернский - 6,14&#10;Подольск - ДК им. Лепсе - 1,2,3,4,5,8,9">' + esc(d.text || "") + '</textarea>' +
@@ -8277,6 +8289,7 @@ function rpAction(a, b) {
   else if (a === "rp-parse") {
     grab(st.draft);
     var P = rpParse(st.draft.text, { cities: tbCities(), today: TODAY });
+    st.draft.month = rpMonthOk(st.draft.month);
     if (!st.draft.month && P.month) st.draft.month = P.month;   // месяц из «Даты по февралю» — в поле, можно поменять
     if (!st.draft.title) st.draft.title = (PLAN.projects[st.draft.project] ? PLAN.projects[st.draft.project].title + " — " : "Маршрут — ") + rpMonthLabel(st.draft.month || P.month || rpDefMonth());
     st.sel = 0; tbRe();
@@ -8284,7 +8297,7 @@ function rpAction(a, b) {
   }
   else if (a === "rp-save") {
     var d = st.draft; grab(d);
-    if (!d.month) d.month = rpParse(d.text, { cities: tbCities(), today: TODAY }).month || rpDefMonth();
+    d.month = rpMonthOk(d.month) || rpParse(d.text, { cities: tbCities(), today: TODAY }).month || rpDefMonth();
     if (!d.title) d.title = "Маршрут — " + rpMonthLabel(d.month);
     var id = st.editId || plId("m"); PLAN.routes = PLAN.routes || {};
     st.draft = null; st.id = id;
