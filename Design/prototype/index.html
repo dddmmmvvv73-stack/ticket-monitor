@@ -676,7 +676,20 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wk-pnote { min-height: 0; }
 .wk-split { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
 .wk-split-side { position: sticky; top: calc(var(--top-h, 64px) + 16px); }
-.wk-split .wkt .wkt-tagcell { width: 150px; } .wk-split .wkt .wkt-n { width: 40px; } .wk-split .wkt th.wkt-time, .wk-split .wkt td.wkt-time { width: 124px; } .wk-split .wkt th.wkt-due, .wk-split .wkt td.wkt-due { width: 116px; }
+/* Столбцы ровнее: задача — остаток (уже, чем раньше), остальные — близкой ширины; приоритет, время, срок — по центру */
+.wkt th.wkt-prio, .wkt td.wkt-prio { width: 116px; }
+.wk-split .wkt .wkt-n { width: 34px; } .wk-split .wkt th.wkt-prio, .wk-split .wkt td.wkt-prio { width: 108px; } .wk-split .wkt .wkt-tagcell { width: 146px; }
+.wk-split .wkt th.wkt-time, .wk-split .wkt td.wkt-time { width: 94px; } .wk-split .wkt th.wkt-due, .wk-split .wkt td.wkt-due { width: 104px; }
+.wkt th.wkt-prio, .wkt td.wkt-prio, .wkt th.wkt-time, .wkt td.wkt-time, .wkt th.wkt-due, .wkt td.wkt-due { text-align: center; }
+.wkt td.wkt-due .wk-datebtn { margin-left: 0; }
+.wkt td.wkt-prio .wkt-tags { margin-left: 0; } .wkt td.wkt-prio { overflow: hidden; }
+.wk-split .wkt th.wkt-prio, .wk-split .wkt td.wkt-prio, .wk-split .wkt th.wkt-due, .wk-split .wkt td.wkt-due, .wk-split .wkt th.wkt-time, .wk-split .wkt td.wkt-time { padding-left: 4px; padding-right: 4px; }
+.wkt td.wkt-prio .wk-tag { padding: 0 8px; font-size: 11.5px; } .wkt td.wkt-prio .wk-tag svg { margin-right: 4px; width: 12px; height: 12px; }
+.pr-high { --tg: #b42318; --tg-bg: #fde8e6; } .pr-mid { --tg: #b45309; --tg-bg: #fdeedd; } .pr-low { --tg: #1d5fa8; --tg-bg: #e3eefb; }
+.wk-tag svg { margin-right: 5px; }
+.wkt-playpill { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 10px; border-radius: 9999px; border: 1.5px solid var(--line-strong); background: var(--card); color: var(--ink-2); font: inherit; font-size: 13px; cursor: pointer; }
+.wkt-playpill svg { color: var(--good-bar); } .wkt-playpill:hover { border-color: var(--good-bar); background: #eef8f0; }
+.wkt-playpill.wkt-red .num { color: var(--risk); }
 .wkt-nm { gap: 8px !important; }
 @media (max-width: 1180px) { .wk-split { grid-template-columns: minmax(0, 1fr); } .wk-split-side { position: static; max-width: 420px; } }
 /* Календарь сроков — по образцу: крупные числа, сегодня — синий круг с тенью */
@@ -3948,8 +3961,9 @@ function wkTimeCell(t) {
   if (t.done) return (spent || est) ? '<span class="wkt-plain' + (over ? ' wkt-overtime' : est ? ' wkt-intime' : '') + '"><span class="num">' + wkDur(spent) + '</span>' + (est ? ' <span class="wkt-est">/ ' + wkDur(est) + '</span>' : '') + '</span>' : '<span class="muted">—</span>';
   if (t.run) return '<button type="button" class="wkt-pill run' + (over ? ' wkt-overtime' : '') + '" data-wkt-timer="' + t.id + '" aria-label="Остановить таймер: ' + esc(t.text) + '" title="Нажмите, чтобы остановить">' + WKT_ICON.watch +
     '<span class="wkt-clock num" data-wk-tick="' + t.id + '">' + wkDur(spent, true) + '</span>' + (est ? '<span class="wkt-est num">/ ' + wkDur(est) + '</span>' : '') + '</button>';
-  return '<span class="wkt-timecell"><button type="button" class="wkt-play" data-wkt-timer="' + t.id + '" aria-label="Запустить таймер: ' + esc(t.text) + '" title="Засечь время">' + WKT_ICON.play + '</button>' +
-    (spent || est ? '<span class="wkt-spent num' + (over ? ' wkt-red' : '') + '">' + wkDur(spent) + (est ? ' / ' + wkDur(est) : '') + '</span>' : '') + '</span>';
+  // время уже есть — таблетка «▶ 0:30» (план — в подсказке); нет — круглая ▶; всё по центру столбца
+  if (spent || est) return '<button type="button" class="wkt-playpill' + (over ? ' wkt-red' : '') + '" data-wkt-timer="' + t.id + '" aria-label="Запустить таймер: ' + esc(t.text) + '" title="Затрачено ' + wkDur(spent) + (est ? ' из плана ' + wkDur(est) : '') + ' · засечь ещё">' + WKT_ICON.play + '<span class="num">' + wkDur(spent) + '</span></button>';
+  return '<button type="button" class="wkt-play" data-wkt-timer="' + t.id + '" aria-label="Запустить таймер: ' + esc(t.text) + '" title="Засечь время">' + WKT_ICON.play + '</button>';
 }
 function wkIcons(t) {
   var subs = t.subs || [], nd = subs.filter(function (s) { return s.done; }).length, open = S.wk.subOpen[t.id];
@@ -3969,6 +3983,11 @@ function wkPrioBtn(t) {
   var p = t.prio || "", label = wkLabel(WK_PRIO, p);
   return '<button type="button" class="wk-prio p-' + (p || "none") + '" data-wk-prio="' + t.id + '" aria-haspopup="menu" aria-label="Приоритет: ' + (label || "не задан") + '" title="Приоритет: ' + (label || "не задан") + '">' + wkPrioIcon(p) + '</button>';
 }
+function wkPrioChip(t) {   // столбец «Приоритет» — цветная метка, как теги; нажатие — окошко выбора
+  var p = t.prio || "", label = wkLabel(WK_PRIO, p);
+  return '<button type="button" class="wkt-tags wkt-priochip" data-wk-prio="' + t.id + '" aria-haspopup="menu" aria-label="Приоритет: ' + (label || "не задан") + '">' +
+    (p ? '<span class="wk-tag pr-' + p + '">' + wkPrioIcon(p) + label + '</span>' : '<span class="wkt-tag-add">+ приоритет</span>') + '</button>';
+}
 function wkPrioSet(id, p) {
   var t = WK.tasks[id]; if (!t || (t.prio || "") === p) return;
   wkPut("tasks", id, Object.assign({}, t, { prio: p }), p ? "Приоритет: " + wkLabel(WK_PRIO, p).toLowerCase() : "Приоритет снят");
@@ -3982,7 +4001,7 @@ document.addEventListener("click", function (ev) {
     var id = b.getAttribute("data-wk-prio"), cur = (WK.tasks[id] || {}).prio || "";
     wkPopOpen(b, "wk-menu wk-priomenu", '<div class="wkp-title">Приоритет</div>' + WK_PRIO.concat([["", "Без приоритета"]]).map(function (o) {
       return '<button type="button" class="wk-menu-item' + (cur === o[0] ? ' on' : '') + '" data-wk-prio-set="' + o[0] + '" role="menuitemradio" aria-checked="' + (cur === o[0]) + '">' +
-        '<span class="wk-prio-l p-' + (o[0] || "none") + '">' + wkPrioIcon(o[0]) + o[1] + '</span>' + (cur === o[0] ? WKT_ICON.check : '') + '</button>';
+        (o[0] ? '<span class="wk-tag pr-' + o[0] + '">' + wkPrioIcon(o[0]) + o[1] + '</span>' : '<span class="wk-prio-l p-none">' + o[1] + '</span>') + (cur === o[0] ? WKT_ICON.check : '') + '</button>';
     }).join(""), { prioId: id });
     return;
   }
@@ -3994,8 +4013,9 @@ function wktRow(t, n) {
   var color = wkTagColor(t);
   var row = '<tr class="wkt-row' + (t.done ? ' st-done' : '') + (color ? ' tg-' + color : '') + '" data-wkt-id="' + t.id + '" data-n="' + n + '">' +
     '<td class="wkt-n num">' + ("0" + n).slice(-2) + '</td>' +
-    '<td class="wkt-name"><div class="wkt-nm"><input type="checkbox" class="wk-check" data-wk-done="' + t.id + '"' + (t.done ? ' checked' : '') + ' aria-label="Готово: ' + esc(t.text) + '">' + wkPrioBtn(t) +
+    '<td class="wkt-name"><div class="wkt-nm"><input type="checkbox" class="wk-check" data-wk-done="' + t.id + '"' + (t.done ? ' checked' : '') + ' aria-label="Готово: ' + esc(t.text) + '">' +
       '<button type="button" class="wkt-title" data-wkt-open="' + t.id + '" title="' + esc(t.text) + ' — открыть">' + esc(t.text) + '</button>' + wkIcons(t) + '</div></td>' +
+    '<td class="wkt-prio">' + wkPrioChip(t) + '</td>' +
     '<td class="wkt-tagcell">' + wkTagsCell(t) + '</td>' +
     '<td class="wkt-time">' + wkTimeCell(t) + '</td>' +
     '<td class="wkt-due">' + wkDateBtn("tasks|" + t.id + "|due", t.due, { due: true, done: t.done, label: "Срок" }) + '</td></tr>';
@@ -4005,12 +4025,12 @@ function wktRow(t, n) {
 // Подзадачи под задачей — раскрываются значком: отметить, поправить, удалить, добавить
 function wktSubRows(t) {
   return (t.subs || []).map(function (s) {
-    return '<tr class="wkt-sub' + (s.done ? ' done' : '') + '"><td></td><td colspan="4"><div class="wkt-subin">' +
+    return '<tr class="wkt-sub' + (s.done ? ' done' : '') + '"><td></td><td colspan="5"><div class="wkt-subin">' +
       '<input type="checkbox" class="wk-check sm" data-wkt-sub-done="' + t.id + '|' + s.id + '"' + (s.done ? ' checked' : '') + ' aria-label="Подзадача готова">' +
       '<input class="wk-in wkt-subtext" data-wkt-sub-text="' + t.id + '|' + s.id + '" value="' + esc(s.text) + '" maxlength="500" aria-label="Подзадача">' +
       '<button type="button" class="icon-btn wk-x" data-wkt-sub-del="' + t.id + '|' + s.id + '" aria-label="Удалить подзадачу">' + PJ_ICON.close + '</button></div></td></tr>';
   }).join("") +
-    '<tr class="wkt-sub wkt-subadd"><td></td><td colspan="4"><form class="wkt-subin" data-wkt-sub-add="' + t.id + '"><span class="wkt-subdot" aria-hidden="true"></span>' +
+    '<tr class="wkt-sub wkt-subadd"><td></td><td colspan="5"><form class="wkt-subin" data-wkt-sub-add="' + t.id + '"><span class="wkt-subdot" aria-hidden="true"></span>' +
     '<input class="wkt-add-in" name="sub" placeholder="+ Подзадача — впишите и Enter" maxlength="500" autocomplete="off" aria-label="Новая подзадача"></form></td></tr>';
 }
 function wkSubChange(tid, fn, mode) {   // mode: "text" — без перерисовки (Tab ведёт дальше); "add" — курсор снова в строку добавления
@@ -4025,12 +4045,12 @@ function wktTable(list, pid) {
   var byDue = function (a, b) { return (a.due || "9999").localeCompare(b.due || "9999") || pr(a) - pr(b) || (a.created || "").localeCompare(b.created || ""); };   // срок, при равном — приоритет
   var open = list.filter(function (t) { return !t.done; }).sort(byDue);
   var done = list.filter(function (t) { return t.done; }).sort(function (a, b) { return (b.done_at || "").localeCompare(a.done_at || ""); });
-  var addRow = '<tr class="wkt-addrow"><td></td><td colspan="4"><form data-wk-add="tasks" class="wkt-addf"><input type="hidden" name="project" value="' + esc(pid || "") + '">' +
+  var addRow = '<tr class="wkt-addrow"><td></td><td colspan="5"><form data-wk-add="tasks" class="wkt-addf"><input type="hidden" name="project" value="' + esc(pid || "") + '">' +
     '<input name="text" class="wkt-add-in" placeholder="+ Добавить задачу" aria-label="Новая задача" maxlength="1000" autocomplete="off"></form></td></tr>';
   var group = function (key, label, l, withAdd, cls) {
     if (!l.length && !withAdd) return "";
     var folded = S.wk.fold[key];
-    return '<tr class="wkt-group' + (cls ? ' ' + cls : '') + '"><td colspan="5"><button type="button" class="wkt-fold' + (folded ? ' folded' : '') + '" data-wkt-fold="' + key + '" aria-expanded="' + !folded + '">' + WKT_ICON.fold + '<b>' + label + '</b><span class="num">(' + ("0" + l.length).slice(-2) + ')</span></button></td></tr>' +
+    return '<tr class="wkt-group' + (cls ? ' ' + cls : '') + '"><td colspan="6"><button type="button" class="wkt-fold' + (folded ? ' folded' : '') + '" data-wkt-fold="' + key + '" aria-expanded="' + !folded + '">' + WKT_ICON.fold + '<b>' + label + '</b><span class="num">(' + ("0" + l.length).slice(-2) + ')</span></button></td></tr>' +
       (folded ? '' : l.map(function (t, i) { return wktRow(t, i + 1); }).join("") + (withAdd ? addRow : ''));
   };
   var body;
@@ -4040,7 +4060,7 @@ function wktTable(list, pid) {
     body = group("over", "Просрочено", g.over, false, "wkt-g-over") + group("week", "На этой неделе", g.week) + group("next", "На следующей неделе", g.next) +
       group("later", "Позже", g.later) + group("nodate", "Без срока", g.nodate) + addRow;
   } else body = group("open", "К выполнению", open, true);
-  return '<div class="card wkt-card"><table class="wkt"><thead><tr><th class="wkt-n">№</th><th>Задача</th><th class="wkt-tagcell">Теги</th><th class="wkt-time">Время</th><th class="wkt-due">Срок</th></tr></thead><tbody>' +
+  return '<div class="card wkt-card"><table class="wkt"><thead><tr><th class="wkt-n">№</th><th>Задача</th><th class="wkt-prio">Приоритет</th><th class="wkt-tagcell">Теги</th><th class="wkt-time">Время</th><th class="wkt-due">Срок</th></tr></thead><tbody>' +
     body + (done.length ? group("done", "Готово", done) : '') + '</tbody></table></div>';
 }
 // ---------- Таймер: одна задача за раз — запуск другой останавливает прежнюю
