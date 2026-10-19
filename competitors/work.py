@@ -9,7 +9,7 @@
 
 Хранится в config/work.json — вне git (деньги, контрагенты), в копиях config/ каждые 15 минут и снимках по дням и месяцам;
 каждая правка — в журнале изменений (competitors/journal.py, область «work»), её можно вернуть.
-    {"projects": {номер: {"title", "stage", "start", "end", "note", "upd"}},
+    {"projects": {номер: {"title", "stage", "start", "end", "note", "upd", "media": {"avatar" | "cover": файл?v=метка}}},
      "tasks":    {номер: {"text", "due", "project", "done", "done_at", "note", "created", "upd",
                           "desc" — описание, "subs": [{"id", "text", "done"}] — подзадачи,
                           "time" — затрачено, секунд; "run" — таймер идёт с (ISO-время) или пусто; "est" — план, минут,
@@ -22,10 +22,13 @@
     GET  /api/work                                   всё
     POST /api/work {"op": "put", "kind", "id", "data"}   запись целиком (проверяется)
                    {"op": "del", "kind", "id"}
+                   {"op": "media", "kind": "projects", "id", "what": "avatar" | "cover", "data"}   фото проекта
+    GET  /api/work/file/<файл>                     фото проекта (config/work_media/, вне git)
 """
 
 from __future__ import annotations
 
+import base64
 import re
 import threading
 from datetime import datetime
@@ -53,6 +56,11 @@ _STAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$")
 SUBS_MAX = 200
 _ID = re.compile(r"^[a-z0-9]{3,40}$")
 _lock = threading.Lock()
+MEDIA_DIR = CONFIG_DIR / "work_media"   # фото проектов (миниатюра, фон шапки) — вне git, в копиях config/
+MEDIA_KINDS = ("avatar", "cover")
+PHOTO_MAX = 3 * 1024 * 1024
+PHOTO_TYPES = {b"\xff\xd8\xff": "jpg", b"\x89PNG": "png", b"RIFF": "webp"}
+FILE_NAME = re.compile(r"^[a-z0-9]{3,40}-(avatar|cover)\.(jpg|png|webp)$")
 
 
 class WorkError(ValueError):
@@ -214,7 +222,33 @@ def apply_op(op: dict) -> dict:
         if op.get("op") == "put":
             rec = _validate(kind, op.get("data") or {}, data)
             rec["upd"] = datetime.now().isoformat(timespec="seconds")
+            if kind == "projects" and (data[kind].get(oid) or {}).get("media"):   # фото меняются отдельно (media) — правка полей их не трогает
+                rec["media"] = data[kind][oid]["media"]
             data[kind][oid] = rec
+        elif op.get("op") == "media":   # фото проекта: what — avatar | cover; data — data:image/…;base64 (пусто — убрать)
+            p = data["projects"].get(oid)
+            what = str(op.get("what") or "")
+            if kind != "projects" or not p or what not in MEDIA_KINDS:
+                raise WorkError("фото: нет такого проекта")
+            raw = ext = None
+            if op.get("data"):
+                m = re.match(r"^data:image/[\w.+-]+;base64,([A-Za-z0-9+/=]+)$", str(op["data"]))
+                raw = base64.b64decode(m.group(1)) if m else b""
+                ext = next((e for sig, e in PHOTO_TYPES.items() if raw.startswith(sig)), None)
+                if not ext or len(raw) > PHOTO_MAX:
+                    raise WorkError("фото: нужен JPEG, PNG или WebP до 3 МБ")
+            for old in MEDIA_DIR.glob(f"{oid}-{what}.*"):
+                old.unlink()
+            media = p.setdefault("media", {})
+            if raw is None:
+                media.pop(what, None)
+            else:
+                MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+                (MEDIA_DIR / f"{oid}-{what}.{ext}").write_bytes(raw)
+                media[what] = f"{oid}-{what}.{ext}?v={int(datetime.now().timestamp())}"
+            if not media:
+                p.pop("media", None)
+            p["upd"] = datetime.now().isoformat(timespec="seconds")
         elif op.get("op") == "del":
             data[kind].pop(oid, None)
             if kind == "tags":   # убрали тег — снимается и с задач
@@ -230,3 +264,10 @@ def apply_op(op: dict) -> dict:
             raise WorkError("неизвестная операция")
         save_json(FILE, data)
         return data
+
+
+def media_file(name: str):
+    if not FILE_NAME.match(name or ""):
+        return None
+    path = MEDIA_DIR / name
+    return path if path.is_file() else None

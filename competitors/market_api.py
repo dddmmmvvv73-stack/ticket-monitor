@@ -121,6 +121,14 @@ def work_get():
     return jsonify(work.load())
 
 
+@bp.get("/api/work/file/<name>")
+def work_file(name):
+    path = work.media_file(name)
+    if not path:
+        return jsonify({"error": "нет такого фото"}), 404
+    return send_file(path, max_age=86400)
+
+
 @bp.post("/api/work")
 def work_post():
     """Раздел «Проекты»: задачи, проекты, документы (competitors/work.py; config/work.json вне git)."""

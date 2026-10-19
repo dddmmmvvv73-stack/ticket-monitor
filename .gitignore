@@ -13,6 +13,7 @@ config/telegram.json
 config/history/
 # Раздел «Проекты»: задачи, проекты, документы и суммы (competitors/work.py)
 config/work.json
+config/work_media/
 config/project_media/
 # Адрес сервера в Яндекс Облаке и путь к SSH-ключу — только на этом компьютере (репозиторий публичный)
 config/server.json
