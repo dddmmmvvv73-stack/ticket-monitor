@@ -38,7 +38,7 @@ from datetime import datetime
 
 from flask import Blueprint, Response, jsonify, redirect, request, send_file, send_from_directory
 
-from competitors import collector, curation, edits, journal, market, myprojects, officialsite, planning, protodata, sync, venuebook, venuecap, work
+from competitors import collector, curation, docpreview, edits, journal, market, myprojects, officialsite, planning, protodata, sync, venuebook, venuecap, work
 from competitors.classifier import FORMATS, GENRES, SPHERES
 from competitors.storage import BASE_DIR, ON_SERVER, load_json
 
@@ -129,6 +129,23 @@ def work_file(name):
     if request.args.get("dl"):   # «Скачать» — под именем, с которым загружали
         return send_file(path, as_attachment=True, download_name=work.doc_name(name), max_age=0)
     return send_file(path, max_age=0 if any(k in name for k in work.DOC_KINDS) else 86400)
+
+
+@bp.get("/api/work/preview/<name>")
+def work_preview(name):
+    """Документ проекта (Word, Excel, текст) страницей для просмотра (competitors/docpreview.py); скрипты запрещены."""
+    path, code = work.media_file(name), 200
+    try:
+        page = docpreview.render(path) if path else docpreview.message("Файл не найден — возможно, его заменили.")
+        code = 200 if path else 404
+    except Exception:   # noqa: BLE001 — битый файл, конвертер упал: окно предложит скачать
+        page, code = docpreview.message("Этот файл не получилось показать — скачайте и откройте у себя."), 422
+    if page is None:
+        page, code = docpreview.message("Предпросмотр для этого вида файла здесь недоступен — скачайте и откройте у себя."), 415
+    r = Response(page, code, mimetype="text/html")
+    r.headers["Content-Security-Policy"] = docpreview.CSP
+    r.headers["Cache-Control"] = "no-store"
+    return r
 
 
 @bp.post("/api/work")

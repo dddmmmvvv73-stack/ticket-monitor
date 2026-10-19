@@ -4804,7 +4804,7 @@ document.addEventListener("submit", function (ev) {
 document.addEventListener("keydown", function (ev) {   // Enter в названии новой задачи — не перенос строки
   if (ev.target.id === "wkn-text" && ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); $("wkn-desc").focus(); }
 });
-// ---------- Документы проекта: загрузка (окно «Редактировать») и просмотр — PDF и картинки прямо на странице
+// ---------- Документы проекта: загрузка (окно «Редактировать») и просмотр — PDF, картинки, Word, Excel прямо на странице
 function wkDocUpload(what, file) {
   var pid = S.wk.proj; if (!file || !pid) return;
   if (file.size > 15 * 1048576) { toast("Документ: не больше 15 МБ"); return; }
@@ -4827,11 +4827,14 @@ function wkDocRemove(what) {
 function wkDocView(what) {
   var f = ((WK.projects[S.wk.proj] || {}).pfiles || {})[what]; if (!f) return;
   var url = "/api/work/file/" + f.file + "?v=" + encodeURIComponent(f.at), ext = f.file.split(".").pop();
+  // Word, Excel, текст — сервер переводит в страницу (competitors/docpreview.py); открывается в изолированном окне без скриптов
+  var conv = /^(docx|doc|rtf|odt|xlsx|txt)$/.test(ext), purl = "/api/work/preview/" + f.file + "?v=" + encodeURIComponent(f.at);
   var body = ext === "pdf" ? '<iframe class="wkv-frame" src="' + url + '#view=FitH" title="' + esc(f.name) + '"></iframe>'
     : /^(jpg|jpeg|png|webp)$/.test(ext) ? '<div class="wkv-img"><img src="' + url + '" alt="' + esc(f.name) + '"></div>'
+    : conv ? '<iframe class="wkv-frame" sandbox src="' + purl + '" title="' + esc(f.name) + '"></iframe>'
     : '<div class="note">Предпросмотр для этого вида файла браузер не показывает — скачайте и откройте у себя.</div>';
   pjDialog("pj-edit wkv-dlg", wkLabel(WKP_DOCS, what) + " · " + f.name, body +
-    '<div class="form-actions wkd-foot"><a class="btn-dark" href="' + url + '&dl=1">Скачать</a><a class="btn-ghost" href="' + url + '" target="_blank" rel="noopener">Открыть в новой вкладке</a>' +
+    '<div class="form-actions wkd-foot"><a class="btn-dark" href="' + url + '&dl=1">Скачать</a><a class="btn-ghost" href="' + (conv ? purl : url) + '" target="_blank" rel="noopener">Открыть в новой вкладке</a>' +
     '<span class="sub2">' + vbSize(f.size) + ' · загружено ' + atText(f.at) + '</span></div>');
 }
 (function () {
