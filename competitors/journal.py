@@ -98,7 +98,7 @@ def _work_set(d, key, rec):
         d.setdefault(kind, {})[oid] = rec
 
 
-WORK_KIND = {"projects": "Проект", "tasks": "Задача", "docs": "Документ"}
+WORK_KIND = {"projects": "Проект", "tasks": "Задача", "docs": "Документ", "tags": "Тег"}
 PLAN_KIND = {"params": "Параметры", "projects": "Проект (финмодель)", "regions": "Регион", "cities": "Город",
              "venues": "Площадка (финмодель)", "tours": "Тур", "lists": "Список гастролей", "routes": "Маршрут"}
 
@@ -114,7 +114,7 @@ AREAS = {
                  "map": _proj_map, "set": _proj_set, "title": lambda k, r: str(r.get("title") or k)},
     "work": {"label": "Проекты: задачи и документы", "load": work.load, "file": work.FILE, "lock": work._lock,
              "map": _work_map, "set": _work_set,
-             "title": lambda k, r: WORK_KIND.get(k.split("/")[0], "") + " · " + str(r.get("title") or r.get("text") or
+             "title": lambda k, r: WORK_KIND.get(k.split("/")[0], "") + " · " + str(r.get("title") or r.get("text") or r.get("name") or
                                                                               " — ".join(x for x in (r.get("kind"), r.get("party")) if x) or k)},
 }
 

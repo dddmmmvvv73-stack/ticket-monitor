@@ -13,7 +13,8 @@
      "tasks":    {номер: {"text", "due", "project", "done", "done_at", "note", "created", "upd",
                           "desc" — описание, "subs": [{"id", "text", "done"}] — подзадачи,
                           "time" — затрачено, секунд; "run" — таймер идёт с (ISO-время) или пусто; "est" — план, минут}},
-     "docs":     {номер: {"project", "kind", "party", "status", "amount", "pay", "closing", "note", "upd"}}}
+     "docs":     {номер: {"project", "kind", "party", "status", "amount", "pay", "closing", "note", "upd"}},
+     "tags":     {номер: {"name", "color"}}}   ← с чем связана задача; у задачи — "tags": [номера]; пока своих нет — DEFAULT_TAGS
 
     GET  /api/work                                   всё
     POST /api/work {"op": "put", "kind", "id", "data"}   запись целиком (проверяется)
@@ -29,7 +30,12 @@ from datetime import datetime
 from competitors.storage import CONFIG_DIR, load_json, save_json
 
 FILE = CONFIG_DIR / "work.json"
-KINDS = ("projects", "tasks", "docs")
+KINDS = ("projects", "tasks", "docs", "tags")
+COLORS = ("blue", "green", "violet", "orange", "teal", "pink", "amber", "red", "gray")
+DEFAULT_TAGS = {"tgcontract": {"name": "Договоры", "color": "blue"}, "tgmoney": {"name": "Финансы", "color": "green"},
+                "tgvenue": {"name": "Площадка", "color": "violet"}, "tglogist": {"name": "Логистика", "color": "orange"},
+                "tgtech": {"name": "Техника", "color": "teal"}, "tgpromo": {"name": "Реклама", "color": "pink"},
+                "tgtickets": {"name": "Билеты", "color": "amber"}, "tgartist": {"name": "Артист", "color": "red"}}
 STAGES = ["idea", "talks", "prep", "sales", "live", "closing", "done"]
 DOC_STATUS = ["draft", "sent", "signed"]
 PAY = ["no", "part", "paid"]
@@ -48,7 +54,10 @@ class WorkError(ValueError):
 
 def load() -> dict:
     d = load_json(FILE, {})
-    return {k: d.get(k) or {} for k in KINDS}
+    out = {k: d.get(k) or {} for k in KINDS}
+    if "tags" not in d:   # своих тегов ещё не заводили — стандартные (с первой правкой тегов сохраняются в файл)
+        out["tags"] = {k: dict(v) for k, v in DEFAULT_TAGS.items()}
+    return out
 
 
 def _text(v, what: str, limit: int = TEXT_MAX) -> str:
@@ -126,6 +135,11 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
         if not out["title"]:
             raise WorkError("у проекта нужно название")
         return out
+    if kind == "tags":
+        out = {"name": _text(d.get("name"), "тег", 40), "color": _enum(d.get("color"), list(COLORS), "цвет", "gray")}
+        if not out["name"]:
+            raise WorkError("у тега нужно название")
+        return out
     if kind == "tasks":
         pid = str(d.get("project") or "")
         if pid and pid not in data["projects"]:
@@ -134,7 +148,8 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
                "done": bool(d.get("done")), "note": _text(d.get("note"), "заметка"),
                "created": _date(d.get("created"), "создана") or datetime.now().strftime("%Y-%m-%d"),
                "desc": _text(d.get("desc"), "описание", 20000), "subs": _subs(d.get("subs")),
-               "time": _int(d.get("time"), "время", 0, 10 ** 8), "run": _stamp(d.get("run")), "est": _int(d.get("est"), "план", 0, 10 ** 6)}
+               "time": _int(d.get("time"), "время", 0, 10 ** 8), "run": _stamp(d.get("run")), "est": _int(d.get("est"), "план", 0, 10 ** 6),
+               "tags": [t for t in (d.get("tags") or []) if t in data["tags"]][:12]}
         if not out["text"]:
             raise WorkError("у задачи нужен текст")
         if out["done"]:
@@ -176,6 +191,10 @@ def apply_op(op: dict) -> dict:
             data[kind][oid] = rec
         elif op.get("op") == "del":
             data[kind].pop(oid, None)
+            if kind == "tags":   # убрали тег — снимается и с задач
+                for r in data["tasks"].values():
+                    if oid in (r.get("tags") or []):
+                        r["tags"] = [t for t in r["tags"] if t != oid]
             if kind == "projects":   # задачи и документы проекта остаются — «без проекта»
                 for k in ("tasks", "docs"):
                     for r in data[k].values():
