@@ -523,7 +523,7 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
 }
 /* Задачи проекта — таблица по образцу: №, задача, время (таймер), срок; группы сворачиваются; светлая схема сайта */
 .wkt-card { overflow-x: auto; }
-.wkt { width: 100%; border-collapse: collapse; font-size: 14px; }
+.wkt { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }   /* название задачи — остаток ширины, длинное — многоточием */
 .wkt thead th { font-size: 12px; font-weight: 500; color: var(--muted); text-align: left; padding: 12px 12px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
 .wkt td { padding: 0 12px; height: 52px; border-top: 1px solid var(--line-soft); vertical-align: middle; }
 .wkt .wkt-n { width: 44px; color: var(--ink-3); font-size: 13px; text-align: right; padding-right: 4px; }
@@ -609,7 +609,8 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
 .wk-check.sm { width: 18px; height: 18px; background-size: 10px; }
 /* Теги в таблице */
 .wkt .wkt-tagcell { width: 210px; }
-.wkt-tags { display: inline-flex; gap: 5px; align-items: center; border: 0; background: none; padding: 4px; margin-left: -4px; border-radius: 8px; cursor: pointer; max-width: 100%; }
+.wkt-tags { display: inline-flex; gap: 5px; align-items: center; border: 0; background: none; padding: 4px; margin-left: -4px; border-radius: 8px; cursor: pointer; max-width: calc(100% + 4px); overflow: hidden; }
+.wkt td.wkt-tagcell { overflow: hidden; }
 .wkt-tags:hover { background: var(--line-soft); }
 .wkt-tag-add { font-size: 13px; color: var(--muted); opacity: 0; } .wkt-row:hover .wkt-tag-add, .wkt-tags:focus-visible .wkt-tag-add { opacity: 1; }
 /* Время — одна кнопка ▶; идёт — счётчик, нажатие — стоп */
@@ -670,6 +671,70 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wkd-tags .wk-tag { cursor: pointer; background: var(--card); color: var(--ink-3); border: 1px solid var(--line); font-weight: 500; }
 .wkd-tags .wk-tag.on { background: var(--tg-bg); color: var(--tg); border-color: transparent; font-weight: 600; }
 @media (max-width: 820px) { .wkt { min-width: 720px; } }
+/* ---------- Страница проекта: разделы, задачи + календарь, расходы, заметки (19.10, третий проход) ---------- */
+.wk-ptabs { margin: 18px 0 18px; }
+.wk-tabn { display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 4px; border-radius: 9999px; background: var(--line-soft); color: var(--ink-3); font-size: 12px; line-height: 18px; text-align: center; }
+.wk-pbody { margin-top: 4px; }
+.wk-pnote { min-height: 0; }
+.wk-split { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 24px; align-items: start; }
+.wk-split-side { position: sticky; top: calc(var(--top-h, 64px) + 16px); }
+.wk-split .wkt .wkt-tagcell { width: 168px; } .wk-split .wkt .wkt-n { width: 40px; } .wk-split .wkt th.wkt-time, .wk-split .wkt td.wkt-time { width: 140px; } .wk-split .wkt th.wkt-due, .wk-split .wkt td.wkt-due { width: 124px; }
+@media (max-width: 1180px) { .wk-split { grid-template-columns: minmax(0, 1fr); } .wk-split-side { position: static; max-width: 420px; } }
+/* Календарь сроков — по образцу: крупные числа, сегодня — синий круг с тенью */
+.wkm { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 22px 20px 16px; }
+.wkm-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+.wkm-head h3 { margin: 0; font: 700 22px/1.2 var(--display); letter-spacing: -0.01em; color: #1f2a3c; }
+.wkm-navs { display: flex; gap: 8px; }
+.wkm-nav { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); color: #1f2a3c; display: inline-grid; place-items: center; cursor: pointer; }
+.wkm-nav:hover { border-color: var(--line-strong); background: #f6f5f4; }
+.wkm-grid { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 6px; }
+.wkm-d { position: relative; height: 44px; border: 0; background: none; padding: 0; cursor: default; display: grid; place-items: center; font: 500 16px/1 var(--ui); color: #1f2a3c; font-variant-numeric: tabular-nums; }
+.wkm-d > span { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; transition: background-color 150ms var(--ease); }
+.wkm-d.out { color: #b9b5b2; }
+.wkm-d.has { cursor: pointer; }
+.wkm-d.has > span { background: #e8f0fd; color: #1d5fa8; font-weight: 600; }
+.wkm-d.has.over > span { background: #fde8e6; color: #b42318; }
+.wkm-d.has.alldone > span { background: #e7f4ea; color: #1f7a3a; }
+.wkm-d.has:hover > span, .wkm-d.has[aria-expanded="true"] > span { box-shadow: inset 0 0 0 1.5px currentColor; }
+.wkm-grid .wkm-d.today > span { background: #3b7ce8; color: #fff; font-weight: 600; box-shadow: 0 8px 18px rgba(59, 124, 232, 0.38); }   /* сегодня — всегда синий круг */
+.wkm-grid .wkm-d.today em i { background: #3b7ce8; }
+.wkm-d em { position: absolute; bottom: 0; left: 50%; transform: translateX(-50%); display: flex; gap: 3px; }
+.wkm-d em i { width: 5px; height: 5px; border-radius: 50%; background: var(--tg-bar, #94a3b8); }
+.wkm-d em i.dn { opacity: 0.4; }
+.wkm-foot { margin: 12px 2px 0; font-size: 12px; color: var(--muted); }
+.wkm-foot .pj-plain { font-size: 12px; }
+/* Подсказка дня: какие задачи расписаны; нажатие — окно задачи */
+.wkm-tip { width: 290px; padding: 14px; border-radius: 16px; box-shadow: 0 16px 44px rgba(17, 12, 46, 0.18); }
+.wkm-tiphead { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.wkm-tiphead b { font: 600 17px/1.2 var(--display); color: #1f2a3c; } .wkm-tiphead span { font-size: 12px; color: var(--muted); }
+.wkm-tiplist { list-style: none; margin: 0; padding: 0; }
+.wkm-task { width: 100%; display: flex; align-items: center; gap: 9px; padding: 8px; border: 0; background: none; border-radius: 10px; text-align: left; font: inherit; font-size: 14px; color: var(--ink); cursor: pointer; }
+.wkm-task:hover, .wkm-task:focus-visible { background: #f4f3f1; }
+.wkm-task.done .wkm-tt { color: var(--muted); text-decoration: line-through; }
+.wkm-tt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wkm-task .wk-tag { height: 20px; font-size: 11px; padding: 0 7px; }
+.wkm-st { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid #c9c5c2; flex-shrink: 0; }
+.wkm-st.ok { background: #22a04b; border-color: #22a04b; } .wkm-st.late { border-color: var(--risk); }
+.wkm-late { margin: 8px 8px 0; font-size: 12px; color: var(--risk); }
+/* Расходы */
+.wk-paidlbl { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: 13px; color: var(--ink-3); }
+.wk-paid .wk-paidlbl span { color: var(--good); }
+/* Заметки — квадраты со скруглёнными углами; последний — с серым плюсом */
+.wkn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 14px; }
+.wkn-card { aspect-ratio: 1 / 1; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); text-align: left; font: inherit; color: var(--ink); cursor: pointer; overflow: hidden; transition: box-shadow 150ms var(--ease), transform 150ms var(--ease); }
+.wkn-card:hover { box-shadow: 0 8px 22px rgba(17, 12, 46, 0.08); transform: translateY(-1px); }
+.wkn-card b { font: 600 16px/1.25 var(--display); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.wkn-card p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--ink-3); display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; flex: 1; }
+.wkn-date { font-size: 11px; color: var(--muted); }
+.wkn-add { align-items: center; justify-content: center; background: var(--canvas); border-style: dashed; }
+.wkn-plus { width: 48px; height: 48px; border-radius: 50%; background: #e7e5e3; color: #78716c; display: grid; place-items: center; font: 300 30px/1 var(--ui); }
+.wkn-add:hover .wkn-plus { background: #dcd9d6; color: var(--ink); }
+.wkn-dlg { width: min(680px, calc(100vw - 32px)); }
+.wkn-title { width: 100%; box-sizing: border-box; border: 0; border-bottom: 1px solid var(--line); padding: 6px 2px 10px; font: 600 22px/1.25 var(--display); outline: none; background: none; }
+.wkn-title:focus { border-bottom-color: var(--cta); }
+.wkn-body { width: 100%; box-sizing: border-box; margin-top: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; font: inherit; font-size: 15px; line-height: 1.55; resize: vertical; outline: none; min-height: 280px; }
+.wkn-body:focus { border-color: var(--cta); box-shadow: 0 0 0 3px rgba(59, 168, 245, 0.14); }
+@media (max-width: 560px) { .wkn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; } }
 /* ---------- Страница проекта — вид как у Яндекс Афиши (Design/Reference/Project.png) ---------- */
 /* Шапка до самого верха — под основную панель сайта (убираем верхнее поле .view); «назад» — круглая кнопка поверх шапки */
 .view > .pj-hero:first-child { margin-top: -28px; }
@@ -3650,10 +3715,150 @@ function wkProjectPage(pid) {
       '<label>Начало ' + wkDateBtn("projects|" + pid + "|start", p.start, { label: "Начало", empty: "не задано" }) + '</label>' +
       '<label>Окончание ' + wkDateBtn("projects|" + pid + "|end", p.end, { label: "Окончание", empty: "не задано" }) + '</label>' +
       '<span class="sub" style="margin:0">' + (s.open ? 'открытых задач ' + s.open + (s.over ? ', просрочено ' + s.over : '') : 'открытых задач нет') + '</span></div>' +
-    '<textarea class="wk-in wk-pnote" ' + f("note") + ' rows="2" placeholder="Заметка о проекте: состав, условия, важное" aria-label="Заметка о проекте">' + esc(p.note || "") + '</textarea>' +
-    '<h2 class="wk-h2">Задачи</h2>' + wktTable(wkTasksOf(pid), pid) +
-    '<h2 class="wk-h2">Документы</h2>' + wkDocsTable(wkDocsOf(pid), false, pid);
+    '<textarea class="wk-in wk-pnote" ' + f("note") + ' rows="1" placeholder="Коротко о проекте: состав, условия, важное" aria-label="Коротко о проекте">' + esc(p.note || "") + '</textarea>' +
+    '<div class="mtabs subtabs wk-ptabs" role="tablist" aria-label="Разделы проекта">' + [["tasks", "Задачи", s.open], ["docs", "Документы", wkDocsOf(pid).length], ["costs", "Расходы", wkCostsOf(pid).length]].map(function (t) {
+      return '<button role="tab" data-wk-ptab="' + t[0] + '" aria-selected="' + (S.wk.ptab === t[0]) + '">' + t[1] + (t[2] ? ' <span class="wk-tabn">' + t[2] + '</span>' : '') + '</button>'; }).join("") + '</div>' +
+    (S.wk.ptab === "docs" ? '<div class="wk-pbody">' + wkDocsTable(wkDocsOf(pid), false, pid) + '</div>'
+      : S.wk.ptab === "costs" ? '<div class="wk-pbody">' + wkCostsTable(wkCostsOf(pid), pid) + '</div>'
+      : '<div class="wk-split"><div class="wk-split-main">' + wktTable(wkTasksOf(pid), pid) + '</div><aside class="wk-split-side" aria-label="Календарь сроков">' + wkCalBlock(pid) + '</aside></div>') +
+    '<h2 class="wk-h2">Заметки</h2>' + wkNotesGrid(pid);
 }
+// ---------- Страница проекта: меню «Задачи · Документы · Расходы»; в «Задачах» — таблица слева, календарь сроков справа;
+// внизу — заметки карточками (решения пользователя 19.10, образец календаря — «Pambayun»)
+S.wk.ptab = "tasks"; S.wk.mcal = null;
+var WKM_ICON = { prev: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3.5L5.5 8l4.5 4.5"/></svg>',
+  next: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5L10.5 8 6 12.5"/></svg>' };
+var WK_WD_FULL = ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"];
+function wkCostsOf(pid) { return Object.keys(WK.costs || {}).map(function (id) { return Object.assign({ id: id }, WK.costs[id]); }).filter(function (d) { return pid == null || d.project === pid; }); }
+function wkNotesOf(pid) { return Object.keys(WK.notes || {}).map(function (id) { return Object.assign({ id: id }, WK.notes[id]); }).filter(function (d) { return d.project === pid; }); }
+function wkDayTasks(pid) {   // день → задачи проекта с этим сроком
+  var by = {};
+  wkTasksOf(pid).forEach(function (t) { if (t.due) (by[t.due] = by[t.due] || []).push(t); });
+  return by;
+}
+// Календарь сроков — как на образце: «Октябрь, 2026», ‹ ›, крупные числа, сегодня — синий круг; дни со сроками подкрашены
+function wkCalBlock(pid) {
+  var now = wkDay(0).split("-"), c = S.wk.mcal || (S.wk.mcal = { y: +now[0], m: +now[1] - 1 });
+  var by = wkDayTasks(pid), t0 = wkDay(0), first = new Date(c.y, c.m, 1), shift = (first.getDay() + 6) % 7, cells = "";
+  for (var i = 0; i < 42; i++) {
+    var dt = new Date(c.y, c.m, 1 - shift + i), iso = wkIso(dt.getFullYear(), dt.getMonth(), dt.getDate());
+    if (i >= 35 && dt.getMonth() !== c.m) break;
+    var l = by[iso] || [], open = l.filter(function (t) { return !t.done; }), cls = "wkm-d";
+    if (dt.getMonth() !== c.m) cls += " out";
+    if (iso === t0) cls += " today";
+    if (l.length) cls += open.length ? (iso < t0 ? " has over" : " has") : " has alldone";
+    var dots = l.slice(0, 3).map(function (t) { var col = wkTagColor(t); return '<i class="' + (col ? 'tg-' + col : '') + (t.done ? ' dn' : '') + '"></i>'; }).join("");
+    cells += '<button type="button" class="' + cls + '" data-wkm-day="' + iso + '"' + (l.length ? ' aria-haspopup="dialog"' : ' tabindex="-1"') +
+      ' aria-label="' + dt.getDate() + ' ' + MONTHS_GEN[dt.getMonth()] + (l.length ? ': задач ' + l.length + (open.length && iso < t0 ? ', просрочено' : '') : '') + '"><span>' + dt.getDate() + '</span>' + (dots ? '<em>' + dots + '</em>' : '') + '</button>';
+  }
+  var inMonth = Object.keys(by).filter(function (d) { return d.slice(0, 7) === wkIso(c.y, c.m, 1).slice(0, 7); }).reduce(function (s, d) { return s + by[d].length; }, 0);
+  return '<div class="wkm"><div class="wkm-head"><h3>' + WK_MON_NOM[c.m] + ', ' + c.y + '</h3><div class="wkm-navs">' +
+      '<button type="button" class="wkm-nav" data-wkm-nav="-1" aria-label="Предыдущий месяц">' + WKM_ICON.prev + '</button>' +
+      '<button type="button" class="wkm-nav" data-wkm-nav="1" aria-label="Следующий месяц">' + WKM_ICON.next + '</button></div></div>' +
+    '<div class="wkm-grid">' + cells + '</div>' +
+    '<p class="wkm-foot">' + (inMonth ? 'Сроков в этом месяце: ' + inMonth + ' · наведите на день' : 'В этом месяце сроков нет') +
+      (c.y + "-" + c.m !== +now[0] + "-" + (+now[1] - 1) ? ' · <button type="button" class="pj-plain" data-wkm-nav="today">к сегодня</button>' : '') + '</p></div>';
+}
+function wkCalTipHtml(iso, pid) {
+  var l = (wkDayTasks(pid)[iso] || []).slice().sort(function (a, b) { return (a.done ? 1 : 0) - (b.done ? 1 : 0); }), p = iso.split("-"), dt = new Date(+p[0], +p[1] - 1, +p[2]), over = iso < wkDay(0);
+  return '<div class="wkm-tiphead"><b>' + +p[2] + ' ' + MONTHS_GEN[+p[1] - 1] + '</b><span>' + WK_WD_FULL[dt.getDay()] + ' · ' + l.length + ' ' + plural(l.length, "задача", "задачи", "задач") + '</span></div>' +
+    '<ul class="wkm-tiplist">' + l.map(function (t) {
+      var g = (t.tags || []).filter(function (x) { return WK.tags[x]; })[0];
+      return '<li><button type="button" class="wkm-task' + (t.done ? ' done' : '') + '" data-wkt-open="' + t.id + '">' +
+        '<span class="wkm-st' + (t.done ? ' ok' : over ? ' late' : '') + '" aria-hidden="true"></span><span class="wkm-tt">' + esc(t.text) + '</span>' +
+        (g ? wkTagChip(g) : '') + '</button></li>';
+    }).join("") + '</ul>' + (over && l.some(function (t) { return !t.done; }) ? '<p class="wkm-late">Срок прошёл — не сделано ' + l.filter(function (t) { return !t.done; }).length + '</p>' : '');
+}
+var WKM_HOVER = null;
+function wkCalTip(btn) {
+  var iso = btn.getAttribute("data-wkm-day"); if (!btn.classList.contains("has")) return;
+  if (WKPOP && WKPOP.anchor === btn) return;
+  wkPopOpen(btn, "wkm-tip", wkCalTipHtml(iso, S.wk.proj), { tip: true });
+}
+document.addEventListener("mouseover", function (ev) {
+  if (S.view !== "work" || !ev.target.closest) return;
+  var d = ev.target.closest(".wkm-d.has"), inTip = ev.target.closest(".wkm-tip");
+  clearTimeout(WKM_HOVER);
+  if (d) WKM_HOVER = setTimeout(function () { wkCalTip(d); }, 120);
+  else if (!inTip && WKPOP && WKPOP.tip) WKM_HOVER = setTimeout(function () { if (WKPOP && WKPOP.tip) wkPopClose(); }, 260);
+});
+document.addEventListener("click", function (ev) {   // задача в подсказке — открыть её окно
+  var b = ev.target.closest && ev.target.closest(".wkm-tip [data-wkt-open]"); if (!b) return;
+  wkPopClose(); wkOpenTask(b.getAttribute("data-wkt-open"));
+});
+// ---------- Расходы проекта: статья, кому, сумма, дата, оплачено, заметка
+var WK_COST_KINDS = ["Гонорар", "Аренда", "Логистика", "Проживание", "Суточные", "Реклама", "Техника", "Билетная система", "Прочее"];
+function wkCostsTable(list, pid) {
+  var sum = function (fn) { return list.filter(fn).reduce(function (s, d) { return s + (d.amount || 0); }, 0); };
+  var total = sum(function () { return true; }), paid = sum(function (d) { return d.paid; });
+  list = list.slice().sort(function (a, b) { return (a.date || "9999").localeCompare(b.date || "9999") || (a.upd || "").localeCompare(b.upd || ""); });
+  var add = '<form class="wk-add wk-add-doc" data-wk-add="costs"><input type="hidden" name="project" value="' + esc(pid) + '">' +
+    '<input name="name" list="wkCostKinds" placeholder="Статья: аренда, логистика…" aria-label="Новый расход" autocomplete="off">' +
+    '<input name="party" placeholder="Кому" aria-label="Кому" autocomplete="off">' +
+    '<input name="amount" inputmode="decimal" placeholder="Сумма, ₽" aria-label="Сумма" autocomplete="off">' +
+    '<button class="btn-dark wk-add-btn">Добавить</button></form><datalist id="wkCostKinds">' + WK_COST_KINDS.map(function (k) { return '<option value="' + k + '">'; }).join("") + '</datalist>';
+  if (!list.length) return add + '<div class="note">Расходов пока нет. Впишите первый строкой выше — например, «Аренда», кому и сумму.</div>';
+  return add + '<div class="card wk-docs-card"><table class="wk-docs"><thead><tr><th>Статья</th><th>Кому</th><th class="r">Сумма, ₽</th><th>Дата</th><th>Оплачено</th><th>Заметка</th><th></th></tr></thead><tbody>' +
+    list.map(function (d) {
+      var f = function (fld) { return 'data-wk-f="costs|' + d.id + '|' + fld + '"'; };
+      return '<tr class="' + (d.paid ? 'wk-paid' : '') + '"><td><input class="wk-in" ' + f("name") + ' value="' + esc(d.name || "") + '" list="wkCostKinds" placeholder="Статья" aria-label="Статья"></td>' +
+        '<td><input class="wk-in" ' + f("party") + ' value="' + esc(d.party || "") + '" placeholder="Кому" aria-label="Кому"></td>' +
+        '<td class="r"><input class="wk-in wk-amount" inputmode="decimal" ' + f("amount") + ' value="' + esc(wkMoney(d.amount)) + '" placeholder="—" aria-label="Сумма, ₽"></td>' +
+        '<td>' + wkDateBtn("costs|" + d.id + "|date", d.date, { label: "Дата" }) + '</td>' +
+        '<td><label class="wk-paidlbl"><input type="checkbox" class="wk-check" data-wk-paid="' + d.id + '"' + (d.paid ? ' checked' : '') + '><span>' + (d.paid ? 'оплачено' : 'нет') + '</span></label></td>' +
+        '<td><input class="wk-in" ' + f("note") + ' value="' + esc(d.note || "") + '" placeholder="—" aria-label="Заметка"></td>' +
+        '<td><button class="icon-btn wk-x" data-wk-del="costs|' + d.id + '" aria-label="Удалить расход" title="Удалить расход">' + PJ_ICON.close + '</button></td></tr>';
+    }).join("") + '</tbody></table></div>' +
+    '<p class="sub wk-sum">Расходов <b class="num">' + wkMoney(total) + ' ₽</b> · оплачено <b class="num">' + wkMoney(paid) + ' ₽</b> · к оплате <b class="num">' + wkMoney(total - paid) + ' ₽</b></p>';
+}
+// ---------- Заметки — карточки-квадраты внизу проекта; нажатие — окно: название и текст (сохраняется само)
+function wkNotesGrid(pid) {
+  var l = wkNotesOf(pid).sort(function (a, b) { return (b.upd || "").localeCompare(a.upd || ""); });
+  return '<div class="wkn-grid">' + l.map(function (n) {
+      var body = (n.body || "").replace(/\s+/g, " ").trim();
+      return '<button type="button" class="wkn-card" data-wkn-open="' + n.id + '"><b>' + esc(n.title || "Без названия") + '</b>' +
+        (body ? '<p>' + esc(body.slice(0, 220)) + '</p>' : '<p class="muted">Пусто</p>') + '<span class="wkn-date">' + (n.upd ? human(n.upd.slice(0, 10)) : '') + '</span></button>';
+    }).join("") +
+    '<button type="button" class="wkn-card wkn-add" data-wkn-new aria-label="Новая заметка" title="Новая заметка"><span class="wkn-plus" aria-hidden="true">+</span></button></div>';
+}
+function wkNoteOpen(id) {
+  var n = id && WK.notes[id] ? WK.notes[id] : null;
+  S.wk.note = { id: id || wkId("n"), isNew: !n };
+  n = n || { title: "", body: "" };
+  pjDialog("pj-edit wkn-dlg", "Заметка", '<div class="wkn-ed" data-wkn="' + S.wk.note.id + '">' +
+    '<input class="wkn-title" data-wkn-f="title" value="' + esc(n.title || "") + '" placeholder="Название заметки" maxlength="200" aria-label="Название заметки">' +
+    '<textarea class="wkn-body" data-wkn-f="body" rows="14" maxlength="50000" placeholder="Текст заметки…" aria-label="Текст заметки">' + esc(n.body || "") + '</textarea>' +
+    '<div class="form-actions wkd-foot"><button class="btn-dark" data-pj="close">Готово</button>' + (S.wk.note.isNew ? '' : '<button class="pj-plain wkd-del" data-wkn-del>Удалить заметку</button>') +
+    '<span class="sub2" data-wkn-status>' + (n.upd ? 'сохранено ' + atText(n.upd) : 'сохраняется само') + '</span></div></div>');
+  var el = document.querySelector(S.wk.note.isNew ? "#pjDlg .wkn-title" : "#pjDlg .wkn-body"); if (el) el.focus();
+  var d = $("pjDlg"); if (!d.wknBound) { d.wknBound = true; d.addEventListener("close", function () { if (S.wk.note) { wkNoteSave(); S.wk.note = null; if (S.view === "work") render(); } }); }
+}
+var WKN_TIMER = null;
+function wkNoteSave() {   // заметка — целиком; пустая новая не сохраняется
+  clearTimeout(WKN_TIMER);
+  var st = S.wk.note, box = document.querySelector("#pjDlg .wkn-ed"); if (!st || !box) return;
+  var title = box.querySelector(".wkn-title").value.trim(), body = box.querySelector(".wkn-body").value;
+  var old = WK.notes[st.id];
+  if (!old && !title && !body.trim()) return;
+  if (old && (old.title || "") === title && (old.body || "") === body) return;
+  var rec = { project: S.wk.proj, title: title, body: body, created: old ? old.created : wkDay(0) };
+  WK.notes[st.id] = Object.assign({}, rec, { upd: wkStamp() });
+  st.isNew = false;
+  apiJson("POST", "/api/work", { op: "put", kind: "notes", id: st.id, data: rec }).then(function (x) {
+    if (!x.ok) { toast("Заметка не сохранена: " + ((x.d && x.d.error) || "ошибка")); return; }
+    WK = x.d; var s = document.querySelector("#pjDlg [data-wkn-status]"); if (s) s.textContent = "сохранено " + atText(WK.notes[st.id].upd);
+  }, function () { toast("Заметка не сохранена: " + NO_APP); });
+}
+document.addEventListener("input", function (ev) {
+  if (!ev.target.closest || !ev.target.closest("#pjDlg .wkn-ed")) return;
+  var s = document.querySelector("#pjDlg [data-wkn-status]"); if (s) s.textContent = "сохраняется…";
+  clearTimeout(WKN_TIMER); WKN_TIMER = setTimeout(wkNoteSave, 700);
+});
+document.addEventListener("click", function (ev) {
+  var b = ev.target.closest && ev.target.closest("#pjDlg [data-wkn-del]"); if (!b || !S.wk.note) return;
+  var id = S.wk.note.id; S.wk.note = null; $("pjDlg").close(); wkDel("notes", id, "Заметка удалена");
+});
+
 // ---------- Задачи проекта — таблица по образцу (решение пользователя 19.10): №, задача (описание, подзадачи, «Подробнее»),
 // время (таймер ▶ / ❚❚, затрачено / план), срок (просрочено — красным); группы «К выполнению» и «Готово» сворачиваются;
 // нажатие на задачу — окно: срок, время, описание, подзадачи. Теги и ответственные — не берём (решение пользователя).
@@ -3986,10 +4191,14 @@ document.addEventListener("click", function (ev) {
 // ---------- Теги: с чем связана работа (цвет — полоса слева у строки)
 function wkTagList() { return Object.keys(WK.tags || {}).map(function (id) { return Object.assign({ id: id }, WK.tags[id]); }).sort(function (a, b) { return a.name.localeCompare(b.name, "ru"); }); }
 function wkTagChip(id) { var t = WK.tags[id]; return t ? '<span class="wk-tag tg-' + t.color + '">' + esc(t.name) + '</span>' : ''; }
+function wkTagFit(ids) {   // сколько чипов влезает в столбец: два коротких, иначе один и «+N»
+  var a = WK.tags[ids[0]].name.length, b = ids[1] ? WK.tags[ids[1]].name.length : 0;
+  return ids.length === 1 ? 1 : a + b <= (ids.length > 2 ? 11 : 15) ? 2 : 1;
+}
 function wkTagsCell(t) {
   var ids = (t.tags || []).filter(function (x) { return WK.tags[x]; });
   return '<button type="button" class="wkt-tags" data-wkt-tags="' + t.id + '" aria-haspopup="dialog" aria-label="Теги: ' + esc(ids.map(function (x) { return WK.tags[x].name; }).join(", ") || "нет") + '">' +
-    (ids.length ? ids.slice(0, 2).map(wkTagChip).join("") + (ids.length > 2 ? '<span class="wk-tag more">+' + (ids.length - 2) + '</span>' : '') : '<span class="wkt-tag-add">+ тег</span>') + '</button>';
+    (ids.length ? ids.slice(0, wkTagFit(ids)).map(wkTagChip).join("") + (ids.length > wkTagFit(ids) ? '<span class="wk-tag more">+' + (ids.length - wkTagFit(ids)) + '</span>' : '') : '<span class="wkt-tag-add">+ тег</span>') + '</button>';
 }
 function wkTagPopHtml(tid) {
   var on = (WK.tasks[tid] && WK.tasks[tid].tags) || [];
@@ -4054,7 +4263,7 @@ function renderWork() {
   return head("Проекты", sub) + '<div class="mtabs subtabs" role="tablist" aria-label="Раздел «Проекты»">' + tabs.map(function (t) {
       return '<button role="tab" data-wk-tab="' + t[0] + '" aria-selected="' + (S.wk.tab === t[0]) + '">' + t[1] + '</button>'; }).join("") + '</div>' + '<div class="wk-body">' + body + '</div>';
 }
-function wkFocusAdd(kind) { var i = document.querySelector('[data-wk-add="' + kind + '"] input[name=' + ({ tasks: "text", projects: "title", docs: "kind" }[kind]) + ']'); if (i) i.focus(); }
+function wkFocusAdd(kind) { var i = document.querySelector('[data-wk-add="' + kind + '"] input[name=' + ({ tasks: "text", projects: "title", docs: "kind", costs: "name" }[kind]) + ']'); if (i) i.focus(); }
 $("view").addEventListener("submit", function (ev) {
   var sf = ev.target.closest("[data-wkt-sub-add]");
   if (sf && S.view === "work") {
@@ -4068,6 +4277,9 @@ $("view").addEventListener("submit", function (ev) {
     if (!v("text")) { fm.elements.text.focus(); return; }
     S.wk.addProj = v("project");
     wkPut("tasks", wkId("t"), { text: v("text"), due: v("due"), project: v("project"), done: false, created: wkDay(0) }, "Задача добавлена");
+  } else if (kind === "costs") {
+    if (!v("name") && !v("party")) { fm.elements.name.focus(); return; }
+    wkPut("costs", wkId("c"), { project: v("project"), name: v("name"), party: v("party"), amount: v("amount"), date: "", paid: false, note: "" }, "Расход добавлен");
   } else if (kind === "projects") {
     if (!v("title")) { fm.elements.title.focus(); return; }
     wkPut("projects", wkId("p"), { title: v("title"), stage: v("stage") || "idea", start: "", end: "", note: "" }, "Проект добавлен");
@@ -4087,6 +4299,7 @@ $("view").addEventListener("change", function (ev) {
     wkPut("tasks", id, r, t.checked ? "Готово" : ""); return;
   }
   if (t.hasAttribute("data-wk-fproj")) { S.wk.fproj = t.value; render(); return; }
+  if (t.hasAttribute("data-wk-paid")) { var cid = t.getAttribute("data-wk-paid"), cr = Object.assign({}, WK.costs[cid]); cr.paid = t.checked; wkPut("costs", cid, cr, t.checked ? "Оплачено" : ""); return; }
   var sp = t.getAttribute("data-wkt-sub-done") || t.getAttribute("data-wkt-sub-text");
   if (sp) {
     sp = sp.split("|"); var isD = t.hasAttribute("data-wkt-sub-done"), val = t.value.trim();
@@ -4101,6 +4314,7 @@ $("view").addEventListener("change", function (ev) {
   if (String(rec[fld] == null ? "" : rec[fld]) === val) return;
   rec[fld] = val;
   if (kind === "docs" && !rec.kind && !rec.party) { toast("У документа нужно название или контрагент"); render(); return; }
+  if (kind === "costs" && !rec.name && !rec.party) { toast("У расхода нужна статья или получатель"); render(); return; }
   var quiet = ["text", "title", "note", "kind", "party", "amount"].indexOf(fld) >= 0;   // порядок и группы от них не зависят
   var y = window.scrollY; wkPut(kind, rid, rec, "", quiet); window.scrollTo(0, y);
   if (fld === "amount") t.value = wkMoney(val === "" ? null : +val);
@@ -4113,7 +4327,16 @@ $("view").addEventListener("keydown", function (ev) {
 });
 $("view").addEventListener("click", function (ev) {
   if (S.view !== "work") return;
-  var t = ev.target.closest("[data-wk-tab],[data-wk-open],[data-wk-act],[data-wk-del],[data-wk-docf],[data-wkt-open],[data-wkt-timer],[data-wkt-fold],[data-wkt-tags],[data-wkt-subs],[data-wkt-group],[data-wkt-sub-del]"); if (!t) return;
+  var t = ev.target.closest("[data-wk-tab],[data-wk-open],[data-wk-act],[data-wk-del],[data-wk-docf],[data-wkt-open],[data-wkt-timer],[data-wkt-fold],[data-wkt-tags],[data-wkt-subs],[data-wkt-group],[data-wkt-sub-del],[data-wk-ptab],[data-wkm-nav],[data-wkm-day],[data-wkn-open],[data-wkn-new]"); if (!t) return;
+  if (t.hasAttribute("data-wk-ptab")) { S.wk.ptab = t.getAttribute("data-wk-ptab"); render(); return; }
+  if (t.hasAttribute("data-wkm-nav")) {
+    var nv = t.getAttribute("data-wkm-nav"), c = S.wk.mcal;
+    if (nv === "today") S.wk.mcal = null; else { c.m += +nv; if (c.m < 0) { c.m = 11; c.y--; } if (c.m > 11) { c.m = 0; c.y++; } }
+    wkPopClose(); render(); return;
+  }
+  if (t.hasAttribute("data-wkm-day")) { wkCalTip(t); return; }   // на телефоне наведения нет — нажатие открывает; закрыть — нажатием мимо
+  if (t.hasAttribute("data-wkn-open")) { wkNoteOpen(t.getAttribute("data-wkn-open")); return; }
+  if (t.hasAttribute("data-wkn-new")) { wkNoteOpen(null); return; }
   if (t.hasAttribute("data-wkt-open")) { wkOpenTask(t.getAttribute("data-wkt-open")); return; }
   if (t.hasAttribute("data-wkt-timer")) { wkTimer(t.getAttribute("data-wkt-timer")); return; }
   if (t.hasAttribute("data-wkt-fold")) { var fk = t.getAttribute("data-wkt-fold"); S.wk.fold[fk] = !S.wk.fold[fk]; render(); return; }
@@ -4129,7 +4352,7 @@ $("view").addEventListener("click", function (ev) {
   if (t.hasAttribute("data-wkt-group")) { S.wk.groupBy = t.getAttribute("data-wkt-group"); try { localStorage.setItem("ticketmonitor.work.groupBy", S.wk.groupBy); } catch (e) { /* нет хранилища */ } render(); return; }
   if (t.hasAttribute("data-wkt-sub-del")) { var sd = t.getAttribute("data-wkt-sub-del").split("|"); wkSubChange(sd[0], function (l) { return l.filter(function (x) { return x.id !== sd[1]; }); }); return; }
   if (t.hasAttribute("data-wk-tab")) { S.wk.tab = t.getAttribute("data-wk-tab"); S.enter = true; render(); }
-  else if (t.hasAttribute("data-wk-open")) { S.wk.y = window.scrollY; S.wk.proj = t.getAttribute("data-wk-open"); render(); window.scrollTo(0, 0); }
+  else if (t.hasAttribute("data-wk-open")) { S.wk.y = window.scrollY; S.wk.proj = t.getAttribute("data-wk-open"); S.wk.ptab = "tasks"; S.wk.mcal = null; render(); window.scrollTo(0, 0); }
   else if (t.hasAttribute("data-wk-docf")) { S.wk.docF = t.getAttribute("data-wk-docf"); render(); }
   else if (t.getAttribute("data-wk-act") === "back") { S.wk.proj = null; render(); window.scrollTo(0, S.wk.y || 0); }
   else if (t.getAttribute("data-wk-act") === "toggle-done") { S.wk.showDone = !S.wk.showDone; render(); }
@@ -4603,6 +4826,7 @@ var JR_FIELD = { title: "Название", rows: "Строки тура", note:
   project: "Проект", month: "Месяц", status: "Статус", text: "Текст", limit: "Лимит, км", trips: "Выезд и возвращение", zones: "Пояса",
   seats: "Места", gross: "Вал", rent: "Аренда", fee: "Гонорар", region: "Регион", org: "Организационные", logistics: "Логистика", keys: "Названия",
   desc: "Описание", subs: "Подзадачи", time: "Затрачено", est: "План", run: "Таймер", tags: "Теги", name: "Название", color: "Цвет",
+  body: "Текст", paid: "Оплачено", date: "Дата",
   text: "Задача", due: "Дедлайн", done: "Готово", done_at: "Сделано", stage: "Стадия", start: "Начало", end: "Окончание", kind: "Документ", party: "С кем",
   amount: "Сумма", pay: "Оплата", closing: "Закрывающие", created: "Создана" };
 function jrLabel(area, f) {

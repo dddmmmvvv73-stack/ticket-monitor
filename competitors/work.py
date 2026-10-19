@@ -14,7 +14,9 @@
                           "desc" — описание, "subs": [{"id", "text", "done"}] — подзадачи,
                           "time" — затрачено, секунд; "run" — таймер идёт с (ISO-время) или пусто; "est" — план, минут}},
      "docs":     {номер: {"project", "kind", "party", "status", "amount", "pay", "closing", "note", "upd"}},
-     "tags":     {номер: {"name", "color"}}}   ← с чем связана задача; у задачи — "tags": [номера]; пока своих нет — DEFAULT_TAGS
+     "tags":     {номер: {"name", "color"}},
+     "costs":    {номер: {"project", "name" — статья, "party" — кому, "amount", "date", "paid", "note", "upd"}},
+     "notes":    {номер: {"project", "title", "body", "created", "upd"}}}   ← с чем связана задача; у задачи — "tags": [номера]; пока своих нет — DEFAULT_TAGS
 
     GET  /api/work                                   всё
     POST /api/work {"op": "put", "kind", "id", "data"}   запись целиком (проверяется)
@@ -30,7 +32,7 @@ from datetime import datetime
 from competitors.storage import CONFIG_DIR, load_json, save_json
 
 FILE = CONFIG_DIR / "work.json"
-KINDS = ("projects", "tasks", "docs", "tags")
+KINDS = ("projects", "tasks", "docs", "tags", "costs", "notes")
 COLORS = ("blue", "green", "violet", "orange", "teal", "pink", "amber", "red", "gray")
 DEFAULT_TAGS = {"tgcontract": {"name": "Договоры", "color": "blue"}, "tgmoney": {"name": "Финансы", "color": "green"},
                 "tgvenue": {"name": "Площадка", "color": "violet"}, "tglogist": {"name": "Логистика", "color": "orange"},
@@ -80,6 +82,18 @@ def _valid_date(v: str) -> bool:
         return True
     except ValueError:
         return False
+
+
+def _amount(v):
+    if v in (None, ""):
+        return None
+    try:
+        v = round(float(str(v).replace(" ", "").replace("\xa0", "").replace(",", ".")), 2)
+    except ValueError:
+        raise WorkError("сумма: нужно число") from None
+    if not 0 <= v <= 1e10:
+        raise WorkError("сумма: от 0 до 10 млрд")
+    return v
 
 
 def _int(v, what: str, lo: int, hi: int) -> int:
@@ -135,6 +149,20 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
         if not out["title"]:
             raise WorkError("у проекта нужно название")
         return out
+    if kind in ("costs", "notes"):
+        pid = str(d.get("project") or "")
+        if pid and pid not in data["projects"]:
+            raise WorkError("такого проекта нет")
+        if kind == "notes":
+            out = {"project": pid, "title": _text(d.get("title"), "название", 200), "body": _text(d.get("body"), "заметка", 50000),
+                   "created": _date(d.get("created"), "создана") or datetime.now().strftime("%Y-%m-%d")}
+            return out
+        out = {"project": pid, "name": _text(d.get("name"), "статья", 300), "party": _text(d.get("party"), "кому", 300),
+               "amount": _amount(d.get("amount")), "date": _date(d.get("date"), "дата"), "paid": bool(d.get("paid")),
+               "note": _text(d.get("note"), "заметка")}
+        if not (out["name"] or out["party"]):
+            raise WorkError("у расхода нужна статья или получатель")
+        return out
     if kind == "tags":
         out = {"name": _text(d.get("name"), "тег", 40), "color": _enum(d.get("color"), list(COLORS), "цвет", "gray")}
         if not out["name"]:
@@ -158,18 +186,8 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
     pid = str(d.get("project") or "")
     if pid and pid not in data["projects"]:
         raise WorkError("такого проекта нет")
-    amount = d.get("amount")
-    if amount in (None, ""):
-        amount = None
-    else:
-        try:
-            amount = round(float(str(amount).replace(" ", "").replace("\xa0", "").replace(",", ".")), 2)
-        except ValueError:
-            raise WorkError("сумма: нужно число") from None
-        if not 0 <= amount <= 1e10:
-            raise WorkError("сумма: от 0 до 10 млрд")
     out = {"project": pid, "kind": _text(d.get("kind"), "документ", 200), "party": _text(d.get("party"), "с кем", 300),
-           "status": _enum(d.get("status"), DOC_STATUS, "статус", "draft"), "amount": amount,
+           "status": _enum(d.get("status"), DOC_STATUS, "статус", "draft"), "amount": _amount(d.get("amount")),
            "pay": _enum(d.get("pay"), PAY, "оплата", "no"), "closing": _enum(d.get("closing"), CLOSING, "закрывающие", "no"),
            "note": _text(d.get("note"), "заметка")}
     if not (out["kind"] or out["party"]):
@@ -196,7 +214,7 @@ def apply_op(op: dict) -> dict:
                     if oid in (r.get("tags") or []):
                         r["tags"] = [t for t in r["tags"] if t != oid]
             if kind == "projects":   # задачи и документы проекта остаются — «без проекта»
-                for k in ("tasks", "docs"):
+                for k in ("tasks", "docs", "costs", "notes"):
                     for r in data[k].values():
                         if r.get("project") == oid:
                             r["project"] = ""
