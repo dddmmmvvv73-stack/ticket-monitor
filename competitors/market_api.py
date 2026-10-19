@@ -125,8 +125,10 @@ def work_get():
 def work_file(name):
     path = work.media_file(name)
     if not path:
-        return jsonify({"error": "нет такого фото"}), 404
-    return send_file(path, max_age=86400)
+        return jsonify({"error": "нет такого файла"}), 404
+    if request.args.get("dl"):   # «Скачать» — под именем, с которым загружали
+        return send_file(path, as_attachment=True, download_name=work.doc_name(name), max_age=0)
+    return send_file(path, max_age=0 if any(k in name for k in work.DOC_KINDS) else 86400)
 
 
 @bp.post("/api/work")

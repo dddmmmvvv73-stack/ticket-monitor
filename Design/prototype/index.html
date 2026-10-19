@@ -838,6 +838,67 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wkt-vp-done { border-top: 1px solid var(--line); }
 .wkt-ghost th { height: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; border: 0 !important; font-size: 0; line-height: 0; visibility: hidden; }
 @media (max-width: 820px) { .wkt-card { overflow-x: auto !important; } .wkt-vp { width: 100%; } .wkt-vp > .wkt { width: 100%; } }
+/* ---------- Проект, 19.10 (шестой проход): шапка — метки-кнопки, счётчики, документы, корзина; поиск; удаление; «Фокус» ---------- */
+.wk-hero .pj-hero-in { align-items: center; }
+.wk-hero .pj-hero-text { flex: 1 1 auto; }
+.wk-hpills { gap: 8px; }
+.wk-hpill, .wk-stagepill { display: inline-flex; align-items: baseline; gap: 6px; height: auto; padding: 7px 12px; font: inherit; font-size: 12px; color: #fff; cursor: pointer; line-height: 1.1; }
+.wk-hpill span { color: rgba(255, 255, 255, 0.7); } .wk-hpill b { font-weight: 600; }
+.wk-hpill:hover, .wk-hpill[aria-expanded="true"] { background: rgba(255, 255, 255, 0.22); }
+.wk-stagepill { align-items: center; gap: 6px; font-weight: 600; }
+.wk-stagepill svg { width: 10px; height: 10px; }
+.wk-dl.over { background: rgba(229, 72, 77, 0.88); border-color: transparent; } .wk-dl.over span { color: rgba(255, 255, 255, 0.85); }
+.wk-dl.soon { background: rgba(240, 168, 36, 0.9); border-color: transparent; color: #1c1917; } .wk-dl.soon span { color: rgba(28, 25, 23, 0.7); }
+.wk-dl.none b { font-weight: 500; opacity: 0.85; }
+.wk-hstats { display: flex; gap: 10px; flex-shrink: 0; align-self: flex-end; }
+.wk-hstat { min-width: 104px; padding: 14px 16px; border-radius: 16px; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.18); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+.wk-hstat b { display: block; font: 600 34px/1 var(--display); letter-spacing: -0.02em; }
+.wk-hstat b small { font-size: 16px; font-weight: 500; opacity: 0.6; margin-left: 2px; }
+.wk-hstat span { display: block; margin-top: 6px; font-size: 12px; color: rgba(255, 255, 255, 0.75); }
+.wk-hstat.over { background: rgba(229, 72, 77, 0.9); border-color: transparent; } .wk-hstat.over span { color: rgba(255, 255, 255, 0.9); }
+.wk-hstat.done b { color: #86efac; }
+.wk-hbar { display: block; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.2); margin-top: 8px; overflow: hidden; } .wk-hbar em { display: block; height: 100%; background: #4ade80; }
+.wk-trash:hover { background: rgba(229, 72, 77, 0.85) !important; border-color: transparent; }
+@media (max-width: 1100px) { .wk-hero .pj-hero-in { flex-wrap: wrap; } .wk-hstats { width: 100%; } .wk-hstat { flex: 1; } }
+/* Поиск в заголовке группы; удаление задачи в строке */
+.wkt-ghead { display: flex; align-items: center; gap: 10px; }
+.wkt-qbtn { margin-left: auto; width: 30px; height: 30px; border: 0; border-radius: 8px; background: none; color: var(--ink-3); display: inline-grid; place-items: center; cursor: pointer; }
+.wkt-qbtn:hover, .wkt-qbtn.on { background: var(--line-soft); color: var(--ink); }
+.wkt-q { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 4px 0 10px; border: 1px solid #3b7ce8; border-radius: 9px; background: var(--card); color: var(--ink-3); box-shadow: 0 0 0 3px rgba(59, 124, 232, 0.12); }
+.wkt-q input { border: 0; outline: none; background: none; font: inherit; font-size: 14px; width: 200px; color: var(--ink); }
+.wkt-qx { width: 24px; height: 24px; border: 0; background: none; border-radius: 6px; display: inline-grid; place-items: center; color: var(--ink-3); cursor: pointer; } .wkt-qx:hover { background: var(--line-soft); }
+.wkt-qx svg { width: 12px; height: 12px; }
+.wkt td.wkt-due { position: relative; }
+.wkt-del { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 28px; height: 28px; border: 0; border-radius: 8px; background: var(--card); color: var(--ink-3); display: inline-grid; place-items: center; cursor: pointer; opacity: 0; box-shadow: -8px 0 8px var(--card); }
+.wkt-row:hover .wkt-del, .wkt-del:focus-visible { opacity: 1; } .wkt-del:hover { color: var(--risk); background: #fdeceb; box-shadow: -8px 0 8px #fbfaf9; }
+.wkt-row:hover .wkt-del { box-shadow: -8px 0 8px #fbfaf9; background: #fbfaf9; } .wkt-row:hover .wkt-del:hover { background: #fdeceb; }
+/* «Фокус» под календарём */
+.wkf { margin-top: 16px; }
+.wkf .wkm-head { margin-bottom: 10px; }
+.wkf-first { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 14px; border: 0; border-radius: 14px; background: linear-gradient(135deg, #fff3f0, #fdf6ea); text-align: left; font: inherit; color: var(--ink); cursor: pointer; box-shadow: inset 0 0 0 1px #f5d9cf; }
+.wkf-first:hover { box-shadow: inset 0 0 0 1.5px #e5484d; }
+.wkf-cap { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #b42318; }
+.wkf-first b { font: 600 17px/1.3 var(--display); }
+.wkf-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.wkf-due { font-size: 12px; color: var(--ink-3); white-space: nowrap; } .wkf-due.over { color: var(--risk); font-weight: 600; }
+.wkf-h { margin: 14px 0 4px; font: 600 12px/1.3 var(--ui); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); } .wkf-h.over { color: var(--risk); }
+.wkf-h .num { color: var(--ink-3); margin-left: 4px; }
+.wkf-list { list-style: none; margin: 0; padding: 0; }
+.wkf-task { width: 100%; display: flex; align-items: center; gap: 8px; padding: 7px 6px; border: 0; background: none; border-radius: 8px; text-align: left; font: inherit; font-size: 14px; color: var(--ink); cursor: pointer; }
+.wkf-task:hover { background: #f4f3f1; }
+.wkf-dot { width: 8px; height: 8px; border-radius: 50%; background: #f0a824; flex-shrink: 0; } .wkf-dot.over { background: var(--risk-bar); }
+.wkf-tt { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wkf-more { margin: 4px 6px 0; font-size: 12px; color: var(--muted); }
+.wkf-calm { padding: 12px 14px; border-radius: 12px; background: #eef8f0; color: #1f7a3a; font-size: 13px; }
+/* Окно редактирования: документы; просмотр документа */
+.wkd-meta .wk-datebtn { margin-left: 0; }
+.wkp-lbl { display: block; font-size: 12px; color: var(--ink-3); margin-bottom: 6px; }
+.wkp-dates { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; color: var(--muted); } .wkp-dates .wk-datebtn { margin-left: 0; }
+.wkp-docs { display: grid; gap: 10px; }
+.wkp-doc > span { border-radius: 10px; }
+.wkv-dlg { width: min(960px, calc(100vw - 32px)); }
+.wkv-frame { width: 100%; height: min(72vh, 900px); border: 1px solid var(--line); border-radius: 12px; background: #f4f3f1; }
+.wkv-img { max-height: 72vh; overflow: auto; border: 1px solid var(--line); border-radius: 12px; } .wkv-img img { display: block; max-width: 100%; margin: 0 auto; }
 /* ---------- Страница проекта — вид как у Яндекс Афиши (Design/Reference/Project.png) ---------- */
 /* Шапка до самого верха — под основную панель сайта (убираем верхнее поле .view); «назад» — круглая кнопка поверх шапки */
 .view > .pj-hero:first-child { margin-top: -28px; }
@@ -3810,33 +3871,80 @@ function wkProjectsTab() {
     }).join("") + '</tbody></table></div>';
 }
 function wkMedia(p, kind) { return p && p.media && p.media[kind] ? "/api/work/file/" + p.media[kind] : ""; }
+var WKP_DOCS = [["rider", "Технический райдер", '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M9.5 1.8H4.2a1 1 0 00-1 1v10.4a1 1 0 001 1h7.6a1 1 0 001-1V5.1z"/><path d="M9.5 1.8v3.3h3.3M5.6 8h1.6M8.8 8h1.6M5.6 10.6h4.8"/></svg>'],
+  ["logistics", "Логистика", '<svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M1.8 4.5h9v7.5h-9zM10.8 7.2h3.2l2.2 2.6V12h-5.4z"/><circle cx="5" cy="13.2" r="1.5" fill="var(--soot, #1c1917)"/><circle cx="13.4" cy="13.2" r="1.5" fill="var(--soot, #1c1917)"/></svg>'],
+  ["timing", "Тайминг", '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8.6" r="5.6"/><path d="M8 5.6v3l2 1.4M6.4 1.6h3.2"/></svg>']];
+var WKP_TRASH = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.8 4.2h10.4M6.4 4.2V2.6h3.2v1.6M4.2 4.2l.7 9.2h6.2l.7-9.2M6.6 6.8v4.2M9.4 6.8v4.2"/></svg>';
+function wkShortDate(iso) { return iso ? +iso.slice(8) + " " + WK_MON_SHORT[+iso.slice(5, 7) - 1] + " " + iso.slice(0, 4) : ""; }
+// Шапка проекта — как у проектов «Репертуара»: фон, миниатюра, название; метки: стадия (выбор), начало и окончание гастролей,
+// дедлайн готовности (календарь); справа — счётчики задач; кнопки: «Редактировать», документы (просмотр), корзина
 function wkProjectPage(pid) {
   var p = WK.projects[pid], s = wkProjStats(pid), ava = wkMedia(p, "avatar"), cover = wkMedia(p, "cover");
-  var dates = p.start || p.end ? (p.start ? wkDueInfo(p.start).text.replace(/^(Вчера|Сегодня|Завтра)$/, function () { return +p.start.slice(8) + " " + WK_MON_SHORT[+p.start.slice(5, 7) - 1]; }) : "…") + " — " + (p.end ? +p.end.slice(8) + " " + WK_MON_SHORT[+p.end.slice(5, 7) - 1] + " " + p.end.slice(0, 4) : "…") : "";
+  var all = wkTasksOf(pid), done = all.filter(function (t) { return t.done; }).length, pct = all.length ? Math.round(done / all.length * 100) : 0;
+  var dl = p.deadline, dlc = dl ? (dl < wkDay(0) ? " over" : dl <= wkDay(7) ? " soon" : "") : " none";
+  var hpill = function (field, label, iso, cls) {
+    return '<button type="button" class="pj-tag wk-hpill' + (cls || "") + '" data-wk-date="projects|' + pid + '|' + field + '" data-wk-val="' + esc(iso || "") + '" aria-haspopup="dialog" aria-label="' + label + ': ' + (iso ? wkShortDate(iso) : "не задано") + '">' +
+      '<span>' + label + '</span><b>' + (iso ? wkShortDate(iso) : "указать") + '</b></button>';
+  };
+  var docs = WKP_DOCS.map(function (d) {
+    var f = (p.pfiles || {})[d[0]];
+    return f ? '<button class="pj-btn pj-icon" data-wkp-docview="' + d[0] + '" aria-label="' + d[1] + ': ' + esc(f.name) + ' — открыть" title="' + d[1] + ' · ' + esc(f.name) + '">' + d[2] + '</button>'
+      : '<button class="pj-btn pj-icon pj-empty" data-wkp-edit data-focus="docs" aria-label="' + d[1] + ': загрузить" title="' + d[1] + ' — загрузить в «Редактировать»">' + d[2] + '</button>';
+  }).join("");
   var hero = '<section class="pj-hero wk-hero' + (cover ? ' has-cover' : '') + '"' + (cover ? ' style="background-image:url(\'' + esc(cover) + '\');background-position:center ' + (p.cover_y != null ? p.cover_y : 40) + '%"' : '') + '>' +
     '<button class="pj-back-btn" data-wk-act="back" aria-label="Назад: все проекты" title="Все проекты">' + PJ_ICON.back + '</button>' +
+    '<div class="pj-top-right"><button class="pj-cover-btn pj-icon wk-trash" data-wkp-delete aria-label="Удалить проект" title="Удалить проект">' + WKP_TRASH + '</button></div>' +
     '<div class="pj-hero-in">' +
       '<button class="pj-ava" data-wkp-photo="avatar" aria-label="' + (ava ? 'Сменить миниатюру' : 'Загрузить миниатюру') + ': ' + esc(p.title) + '">' +
         (ava ? '<img src="' + esc(ava) + '" alt="">' : '<span class="pj-ini" aria-hidden="true">' + esc(pjInitials(p.title)) + '</span>') +
         '<span class="pj-ava-edit" aria-hidden="true">' + PJ_ICON.camera + '<span>' + (ava ? 'Сменить' : 'Фото') + '</span></span></button>' +
       '<div class="pj-hero-text"><h1 class="pj-name">' + esc(p.title) + '</h1>' +
-        (p.note ? '<p class="pj-sub">' + esc(p.note) + '</p>' : '') +
-        '<div class="pj-tags"><span class="pj-tag pj-tag-type">' + wkLabel(WK_STAGE, p.stage) + '</span>' + (dates ? '<span class="pj-tag">' + esc(dates) + '</span>' : '') +
-          '<span class="pj-tag">' + (s.open ? 'открытых задач ' + s.open + (s.over ? ' · просрочено ' + s.over : '') : 'открытых задач нет') + '</span></div>' +
-        '<div class="pj-actions"><button class="pj-btn primary" data-wkp-edit>' + PJ_ICON.edit + 'Редактировать</button></div>' +
+        '<div class="pj-tags wk-hpills"><button type="button" class="pj-tag pj-tag-type wk-stagepill" data-wkp-stage aria-haspopup="menu" aria-label="Стадия проекта: ' + wkLabel(WK_STAGE, p.stage) + ' — изменить">' + wkLabel(WK_STAGE, p.stage) + WKT_ICON.fold + '</button>' +
+          hpill("start", "Начало гастролей", p.start) + hpill("end", "Окончание", p.end) + hpill("deadline", "Дедлайн проекта", dl, " wk-dl" + dlc) + '</div>' +
+        '<div class="pj-actions"><button class="pj-btn primary" data-wkp-edit>' + PJ_ICON.edit + 'Редактировать</button>' + docs + '</div>' +
+      '</div>' +
+      '<div class="wk-hstats" role="group" aria-label="Задачи проекта">' +
+        '<div class="wk-hstat"><b class="num">' + s.open + '</b><span>открыто</span></div>' +
+        '<div class="wk-hstat' + (s.over ? ' over' : '') + '"><b class="num">' + s.over + '</b><span>просрочено</span></div>' +
+        '<div class="wk-hstat done"><b class="num">' + done + '<small>/' + all.length + '</small></b><span>выполнено</span><i class="wk-hbar"><em style="width:' + pct + '%"></em></i></div>' +
       '</div></div></section>';
   var filtOn = S.wk.groupBy === "due" || !!S.wk.prioF;
   return hero +
     '<div class="wk-ptabs-row"><div class="mtabs subtabs wk-ptabs" role="tablist" aria-label="Разделы проекта">' + [["tasks", "Задачи", s.open], ["docs", "Документы", wkDocsOf(pid).length], ["costs", "Расходы", wkCostsOf(pid).length]].map(function (t) {
       return '<button role="tab" data-wk-ptab="' + t[0] + '" aria-selected="' + (S.wk.ptab === t[0]) + '">' + t[1] + (t[2] ? ' <span class="wk-tabn">' + t[2] + '</span>' : '') + '</button>'; }).join("") + '</div>' +
       (S.wk.ptab === "tasks" ? '<div class="wk-tabtools"><button type="button" class="wk-sq' + (filtOn ? ' on' : '') + '" data-wkt-groupmenu aria-haspopup="menu" aria-label="Фильтры и группировка задач" title="Фильтры и группировка">' + WKT_ICON.group + (filtOn ? '<i class="wk-sq-dot" aria-hidden="true"></i>' : '') + '</button>' +
-        '<button type="button" class="wk-sq wk-sq-add" data-wkt-quickadd aria-haspopup="dialog" aria-label="Добавить задачу" title="Добавить задачу">' + WKT_ICON.plus + '</button></div>' : '') + '</div>' +
+        '<button type="button" class="wk-sq wk-sq-add" data-wkt-quickadd aria-haspopup="dialog" aria-label="Новая задача" title="Новая задача">' + WKT_ICON.plus + '</button></div>' : '') + '</div>' +
     (S.wk.ptab === "docs" ? '<div class="wk-pbody">' + wkDocsTable(wkDocsOf(pid), false, pid) + '</div>'
       : S.wk.ptab === "costs" ? '<div class="wk-pbody">' + wkCostsTable(wkCostsOf(pid), pid) + '</div>'
-      : '<div class="wk-split"><div class="wk-split-main">' + wktTable(wkTasksOf(pid), pid) + '</div><aside class="wk-split-side" aria-label="Календарь сроков">' + wkCalBlock(pid) + '</aside></div>') +
+      : '<div class="wk-split"><div class="wk-split-main">' + wktTable(wkTasksOf(pid), pid) + '</div><aside class="wk-split-side" aria-label="Календарь сроков и фокус">' + wkCalBlock(pid) + wkFocusBlock(pid) + '</aside></div>') +
     '<h2 class="wk-h2">Заметки</h2>' + wkNotesGrid(pid);
 }
-// Окно «Редактировать проект»: название, стадия, даты, коротко о проекте, фото; «Удалить проект»
+// «Фокус» под календарём: что сделать первым сегодня, что просрочено, у чего скоро срок
+function wkFocusBlock(pid) {
+  var open = wkTasksOf(pid).filter(function (t) { return !t.done; }), t0 = wkDay(0), t3 = wkDay(3);
+  var pr = function (t) { return t.prio in WK_PRIO_RANK ? WK_PRIO_RANK[t.prio] : 3; };
+  var over = open.filter(function (t) { return t.due && t.due < t0; }).sort(function (a, b) { return pr(a) - pr(b) || a.due.localeCompare(b.due); });
+  var today = open.filter(function (t) { return t.due === t0; }).sort(function (a, b) { return pr(a) - pr(b); });
+  var soon = open.filter(function (t) { return t.due && t.due > t0 && t.due <= t3; }).sort(function (a, b) { return a.due.localeCompare(b.due) || pr(a) - pr(b); });
+  var first = over[0] || today[0] || soon.filter(function (t) { return t.prio === "high"; })[0] || null;
+  var line = function (t) {
+    var d = wkDueInfo(t.due);
+    return '<li><button type="button" class="wkf-task" data-wkt-open="' + t.id + '"><span class="wkf-dot' + (d.cls === "over" ? ' over' : '') + '" aria-hidden="true"></span><span class="wkf-tt">' + esc(t.text) + '</span>' +
+      (t.prio ? '<span class="wk-prio-i p-' + t.prio + '" title="Приоритет: ' + wkLabel(WK_PRIO, t.prio).toLowerCase() + '">' + wkPrioIcon(t.prio) + '</span>' : '') + '<span class="wkf-due' + (d.cls === "over" ? ' over' : '') + '">' + d.text + '</span></button></li>';
+  };
+  var list = function (title, l, cls) {
+    l = l.filter(function (t) { return t !== first; }); if (!l.length) return "";
+    return '<h4 class="wkf-h' + (cls ? ' ' + cls : '') + '">' + title + ' <span class="num">' + l.length + '</span></h4><ul class="wkf-list">' + l.slice(0, 5).map(line).join("") + '</ul>' + (l.length > 5 ? '<p class="wkf-more">и ещё ' + (l.length - 5) + '</p>' : '');
+  };
+  var hero = first ? (function () {
+    var d = wkDueInfo(first.due), g = (first.tags || []).filter(function (x) { return WK.tags[x]; })[0];
+    return '<button type="button" class="wkf-first" data-wkt-open="' + first.id + '"><span class="wkf-cap">Сделать первым</span><b>' + esc(first.text) + '</b>' +
+      '<span class="wkf-meta"><span class="wkf-due' + (d.cls === "over" ? ' over' : '') + '">' + (d.cls === "over" ? 'просрочено · ' + d.text : d.text) + '</span>' +
+      (first.prio ? '<span class="wk-tag pr-' + first.prio + '">' + wkPrioIcon(first.prio) + wkLabel(WK_PRIO, first.prio) + '</span>' : '') + (g ? wkTagChip(g) : '') + '</span></button>';
+  })() : '<div class="wkf-calm">На сегодня срочного нет — просроченных и горящих задач нет.</div>';
+  return '<div class="wkm wkf"><div class="wkm-head"><h3>Фокус</h3></div>' + hero + list("Просрочено", over, "over") + list("Сегодня", today) + list("Скоро срок · 3 дня", soon) + '</div>';
+}
+// Окно «Редактировать проект»: название, стадия, даты, фото, документы (райдер, логистика, тайминг)
 function wkProjEditHtml(pid) {
   var p = WK.projects[pid], ph = function (kind, label) {
     var src = wkMedia(p, kind);
@@ -3844,16 +3952,25 @@ function wkProjEditHtml(pid) {
       '<div><b>' + label + '</b><div class="pj-ph-btns"><button type="button" class="btn-ghost" data-wkp-photo="' + kind + '">' + (src ? "Заменить" : "Загрузить") + '</button>' +
       (src ? '<button type="button" class="btn-ghost" data-wkp-unphoto="' + kind + '">Убрать</button>' : '') + '</div></div></div>';
   };
+  var doc = function (d) {
+    var f = (p.pfiles || {})[d[0]];
+    return '<div class="pj-ph wkp-doc">' + '<span>' + d[2] + '</span><div style="min-width:0"><b>' + d[1] + '</b>' +
+      (f ? '<div class="sub2" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + esc(f.name) + ' · ' + vbSize(f.size) + '</div>' : '<div class="sub2">не загружен</div>') +
+      '<div class="pj-ph-btns">' + (f ? '<button type="button" class="btn-ghost" data-wkp-docview="' + d[0] + '">Открыть</button>' : '') +
+        '<button type="button" class="btn-ghost" data-wkp-docup="' + d[0] + '">' + (f ? "Заменить" : "Загрузить") + '</button>' +
+        (f ? '<button type="button" class="btn-ghost" data-wkp-docdel="' + d[0] + '">Убрать</button>' : '') + '</div></div></div>';
+  };
   return '<form id="wkpForm" class="myform" novalidate>' +
     '<div class="pj-ph-row">' + ph("avatar", "Миниатюра") + ph("cover", "Фон шапки") + '</div>' +
     '<div class="field"><label for="wkp-title">Название</label><input id="wkp-title" name="title" value="' + esc(p.title) + '" maxlength="300"></div>' +
-    '<div class="vb-fgrid"><div class="field"><label for="wkp-stage">Стадия</label><select id="wkp-stage" name="stage">' + wkOpts(WK_STAGE, p.stage) + '</select></div>' +
-      '<div class="field"><span class="field-label" style="display:block;font-size:12px;color:var(--ink-3);margin-bottom:4px">Даты</span>' +
-        wkDateBtn("projects|" + pid + "|start", p.start, { label: "Начало", empty: "начало", icon: true }) + ' — ' + wkDateBtn("projects|" + pid + "|end", p.end, { label: "Окончание", empty: "окончание", icon: true }) + '</div></div>' +
-    '<div class="field"><label for="wkp-note">Коротко о проекте</label><textarea id="wkp-note" name="note" rows="3" maxlength="3000" placeholder="Состав, условия, важное — видно под названием в шапке">' + esc(p.note || "") + '</textarea></div>' +
+    '<div class="field"><label for="wkp-stage">Стадия</label><select id="wkp-stage" name="stage">' + wkOpts(WK_STAGE, p.stage) + '</select></div>' +
+    '<div class="field"><span class="wkp-lbl">Даты гастролей и дедлайн проекта</span><div class="wkp-dates">' +
+      '<span>Начало ' + wkDateBtn("projects|" + pid + "|start", p.start, { label: "Начало гастролей", empty: "указать", icon: true }) + '</span>' +
+      '<span>Окончание ' + wkDateBtn("projects|" + pid + "|end", p.end, { label: "Окончание", empty: "указать", icon: true }) + '</span>' +
+      '<span>Дедлайн ' + wkDateBtn("projects|" + pid + "|deadline", p.deadline, { label: "Дедлайн проекта", empty: "указать", icon: true }) + '</span></div></div>' +
+    '<h3 class="vb-fgroup" id="wkpDocs">Документы проекта</h3><div class="wkp-docs">' + WKP_DOCS.map(doc).join("") + '</div>' +
     '<div class="err" id="wkp-err" hidden></div></form>' +
-    '<div class="form-actions wkd-foot"><button class="btn-dark" data-wkp-save>Сохранить</button><button class="btn-ghost" data-pj="close">Отмена</button>' +
-      '<button class="pj-plain wkd-del" data-wk-del="projects|' + pid + '">Удалить проект</button></div>';
+    '<div class="form-actions wkd-foot"><button class="btn-dark" data-wkp-save>Сохранить</button><button class="btn-ghost" data-pj="close">Отмена</button></div>';
 }
 function wkProjPhoto(file, kind) {   // как у карточек: миниатюра — квадрат 480 px, фон — до 1800 px; JPEG 85%
   var pid = S.wk.proj; if (!file || !pid) return;
@@ -3874,9 +3991,9 @@ function wkProjPhoto(file, kind) {   // как у карточек: миниат
 }
 function wkProjDlgRefresh() {   // окно «Редактировать проект» открыто — обновить фото и даты, не теряя вписанного
   var d = $("pjDlg"), f = $("wkpForm"); if (!d || !d.open || !f || !WK.projects[S.wk.proj]) return;
-  var keep = { title: f.elements.title.value, stage: f.elements.stage.value, note: f.elements.note.value };
+  var keep = { title: f.elements.title.value, stage: f.elements.stage.value }, sc = d.scrollTop;
   d.querySelector(".pj-dlg-body").innerHTML = wkProjEditHtml(S.wk.proj);
-  var f2 = $("wkpForm"); f2.elements.title.value = keep.title; f2.elements.stage.value = keep.stage; f2.elements.note.value = keep.note;
+  var f2 = $("wkpForm"); f2.elements.title.value = keep.title; f2.elements.stage.value = keep.stage; d.scrollTop = sc;
 }
 function wkProjMedia(kind, data) {
   var pid = S.wk.proj;
@@ -3903,22 +4020,19 @@ document.addEventListener("click", function (ev) {
   }
   if (t.hasAttribute("data-wkp-photo")) { var i = $("wkpFile"); i.setAttribute("data-kind", t.getAttribute("data-wkp-photo")); i.click(); }
   else if (t.hasAttribute("data-wkp-unphoto")) wkProjMedia(t.getAttribute("data-wkp-unphoto"), "");
-  else if (t.hasAttribute("data-wkp-edit")) { pjDialog("pj-edit wkp-dlg", "Редактировать проект", wkProjEditHtml(S.wk.proj)); var ti = $("wkp-title"); if (ti) ti.focus(); }
+  else if (t.hasAttribute("data-wkp-edit")) {
+    pjDialog("pj-edit wkp-dlg", "Редактировать проект", wkProjEditHtml(S.wk.proj));
+    if (t.getAttribute("data-focus") === "docs") { var dd = $("wkpDocs"); if (dd) dd.scrollIntoView({ block: "start" }); } else { var ti = $("wkp-title"); if (ti) ti.focus(); }
+  }
   else if (t.hasAttribute("data-wkp-save")) {
     var f = $("wkpForm"), p = WK.projects[S.wk.proj], title = f.elements.title.value.trim();
     if (!title) { var e = $("wkp-err"); e.hidden = false; e.textContent = "У проекта нужно название"; return; }
     $("pjDlg").close();
-    wkPut("projects", S.wk.proj, Object.assign({}, p, { title: title, stage: f.elements.stage.value, note: f.elements.note.value.trim() }), "Проект сохранён");
+    wkPut("projects", S.wk.proj, Object.assign({}, p, { title: title, stage: f.elements.stage.value }), "Проект сохранён");
   }
-  else if (t.hasAttribute("data-wkt-quickadd")) {   // красный «+» — новая задача в этот проект: впишите и Enter (можно несколько подряд)
-    if (WKPOP && WKPOP.anchor === t) { wkPopClose(); return; }
-    wkPopOpen(t, "wk-quickadd", '<div class="wkp-title">Новая задача</div><form data-wkt-qa><input name="text" placeholder="Что сделать — и Enter" maxlength="1000" autocomplete="off" aria-label="Новая задача"></form>' +
-      '<p class="sub2" style="margin:6px 0 0">Срок, приоритет и теги — потом, в строке задачи.</p>', {});
-    var r1 = t.getBoundingClientRect(); WKPOP.el.style.left = (r1.right - WKPOP.el.offsetWidth + window.scrollX) + "px";
-    WKPOP.el.querySelector("input").focus();
-  }
+  else if (t.hasAttribute("data-wkt-quickadd")) wkNewTaskOpen();   // красный «+» — полное окно новой задачи
   else if (t.hasAttribute("data-wkt-prio-clear")) { S.wk.prioF = ""; wkSavePrefs(); render(); }
-  else if (t.hasAttribute("data-wkt-prio-f")) { S.wk.prioF = t.getAttribute("data-wkt-prio-f"); wkSavePrefs(); wkPopClose(); S.wk.scrollT = {}; render(); }
+  else if (t.hasAttribute("data-wkt-prio-f")) { var pv = t.getAttribute("data-wkt-prio-f"); S.wk.prioF = S.wk.prioF === pv ? "" : pv; wkSavePrefs(); wkPopClose(); S.wk.scrollT = {}; render(); }   // повторное нажатие — снять
 });
 document.addEventListener("submit", function (ev) {
   var fm = ev.target.closest && ev.target.closest("[data-wkt-qa]"); if (!fm) return;
@@ -4096,7 +4210,8 @@ var WKT_ICON = {
   cal: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="3.5" width="11" height="10" rx="1.6"/><path d="M2.5 6.8h11M5.5 2v3M10.5 2v3"/></svg>',
   group: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M3 4.5h12M5.5 9h7M8 13.5h2"/></svg>',
   check: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>',
-  plus: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 3.5v11M3.5 9h11"/></svg>'
+  plus: '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 3.5v11M3.5 9h11"/></svg>',
+  search: '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="4.6"/><path d="M10.6 10.6l3.4 3.4"/></svg>'
 };
 function wkStamp() { var d = new Date(), p = function (n) { return ("0" + n).slice(-2); }; return wkDay(0) + "T" + p(d.getHours()) + ":" + p(d.getMinutes()) + ":" + p(d.getSeconds()); }
 function wkRunSec(t) { return t && t.run ? Math.max(0, Math.round((Date.now() - Date.parse(t.run)) / 1000)) : 0; }   // время без пояса — местное
@@ -4123,7 +4238,7 @@ function wkDueInfo(d) {   // «Вчера», «Сегодня», «Завтра�
 // Время: просто ▶ (рядом — сколько уже затрачено); нажали — счётчик идёт на месте кнопки; нажали на цифры — снова ▶
 function wkTimeCell(t) {
   var spent = wkSpent(t), est = (t.est || 0) * 60, over = est && spent > est;
-  if (t.done) return (spent || est) ? '<span class="wkt-plain' + (over ? ' wkt-overtime' : est ? ' wkt-intime' : '') + '"><span class="num">' + wkDur(spent) + '</span>' + (est ? ' <span class="wkt-est">/ ' + wkDur(est) + '</span>' : '') + '</span>' : '<span class="muted">—</span>';
+  if (t.done) return (spent >= 60 || est) ? '<span class="wkt-plain' + (over ? ' wkt-overtime' : est ? ' wkt-intime' : '') + '"><span class="num">' + wkDur(spent) + '</span>' + (est ? ' <span class="wkt-est">/ ' + wkDur(est) + '</span>' : '') + '</span>' : '<span class="muted">—</span>';
   if (t.run) return '<button type="button" class="wkt-running' + (over ? ' wkt-red' : '') + '" data-wkt-timer="' + t.id + '" aria-label="Остановить таймер: ' + esc(t.text) + '" title="Идёт' + (est ? ' · план ' + wkDur(est) : '') + ' — нажмите, чтобы остановить">' +
     '<i class="wkt-dot" aria-hidden="true"></i><span class="num" data-wk-tick="' + t.id + '">' + wkDur(spent, true) + '</span></button>';
   // время уже есть — таблетка «▶ 0:30» (план — в подсказке); нет — круглая ▶; всё по центру столбца
@@ -4183,7 +4298,8 @@ function wktRow(t, n) {
     '<td class="wkt-prio">' + wkPrioChip(t) + '</td>' +
     '<td class="wkt-tagcell">' + wkTagsCell(t) + '</td>' +
     '<td class="wkt-time">' + wkTimeCell(t) + '</td>' +
-    '<td class="wkt-due">' + wkDateBtn("tasks|" + t.id + "|due", t.due, { due: true, done: t.done, label: "Срок" }) + '</td></tr>';
+    '<td class="wkt-due">' + wkDateBtn("tasks|" + t.id + "|due", t.due, { due: true, done: t.done, label: "Срок" }) +
+      '<button type="button" class="wkt-del" data-wk-del="tasks|' + t.id + '" aria-label="Удалить задачу: ' + esc(t.text) + '" title="Удалить задачу">' + WKP_TRASH + '</button></td></tr>';
   if (S.wk.subOpen[t.id]) row += wktSubRows(t);
   return row;
 }
@@ -4207,8 +4323,11 @@ function wkSubChange(tid, fn, mode) {   // mode: "text" — без перери�
 function wkWeekEnd(off) { var d = new Date(), wd = (d.getDay() + 6) % 7; d.setDate(d.getDate() - wd + 6 + 7 * off); return wkIso(d.getFullYear(), d.getMonth(), d.getDate()); }
 var WKT_HEAD = '<tr><th class="wkt-n">№</th><th class="wkt-name-h">Задача</th><th class="wkt-prio">Приоритет</th><th class="wkt-tagcell">Теги</th><th class="wkt-time">Время</th><th class="wkt-due">Срок</th></tr>';
 function wktTable(list, pid) {
-  var pf = S.wk.prioF || "";
+  var pf = S.wk.prioF || "", q = (S.wk.q || "").trim().toLowerCase().replace(/ё/g, "е");
   if (pf) list = list.filter(function (t) { return pf === "none" ? !t.prio : t.prio === pf; });   // фильтр по приоритету
+  if (q) list = list.filter(function (t) {   // поиск: название, описание, подзадачи
+    return [t.text, t.desc].concat((t.subs || []).map(function (x) { return x.text; })).join(" ").toLowerCase().replace(/ё/g, "е").indexOf(q) >= 0;
+  });
   var pr = function (t) { return t.prio in WK_PRIO_RANK ? WK_PRIO_RANK[t.prio] : 3; };
   var byDue = function (a, b) { return (a.due || "9999").localeCompare(b.due || "9999") || pr(a) - pr(b) || (a.created || "").localeCompare(b.created || ""); };   // срок, при равном — приоритет
   var open = list.filter(function (t) { return !t.done; }).sort(byDue);
@@ -4218,7 +4337,10 @@ function wktTable(list, pid) {
   var group = function (key, label, l, withAdd, cls) {
     if (!l.length && !withAdd) return "";
     var folded = S.wk.fold[key];
-    return '<tr class="wkt-group' + (cls ? ' ' + cls : '') + '"><td colspan="6"><button type="button" class="wkt-fold' + (folded ? ' folded' : '') + '" data-wkt-fold="' + key + '" aria-expanded="' + !folded + '">' + WKT_ICON.fold + '<b>' + label + '</b><span class="num">(' + ("0" + l.length).slice(-2) + ')</span></button></td></tr>' +
+    var qHere = S.wk.qOpen && S.wk.qAt === key;
+    return '<tr class="wkt-group' + (cls ? ' ' + cls : '') + '"><td colspan="6"><div class="wkt-ghead"><button type="button" class="wkt-fold' + (folded ? ' folded' : '') + '" data-wkt-fold="' + key + '" aria-expanded="' + !folded + '">' + WKT_ICON.fold + '<b>' + label + '</b><span class="num">(' + ("0" + l.length).slice(-2) + ')</span></button>' +
+      (qHere ? '<label class="wkt-q"><span class="sr-only">Найти задачу</span>' + WKT_ICON.search + '<input data-wkt-q value="' + esc(S.wk.q || "") + '" placeholder="Найти задачу" autocomplete="off"><button type="button" class="wkt-qx" data-wkt-qclose aria-label="Закрыть поиск">' + PJ_ICON.close + '</button></label>'
+        : '<button type="button" class="wkt-qbtn' + (S.wk.q ? ' on' : '') + '" data-wkt-qopen="' + key + '" aria-label="Найти задачу" title="Найти задачу">' + WKT_ICON.search + '</button>') + '</div></td></tr>' +
       (folded ? '' : l.map(function (t, i) { return wktRow(t, i + 1); }).join("") + (withAdd ? addRow : ''));
   };
   var body;
@@ -4228,6 +4350,7 @@ function wktTable(list, pid) {
     body = group("over", "Просрочено", g.over, false, "wkt-g-over") + group("week", "На этой неделе", g.week) + group("next", "На следующей неделе", g.next) +
       group("later", "Позже", g.later) + group("nodate", "Без срока", g.nodate) + addRow;
   } else body = group("open", "К выполнению", open, true);
+  if (q && !S.wk.qOpen) S.wk.q = "";
   var note = pf ? '<div class="wkt-fnote">Показаны задачи с приоритетом «' + (pf === "none" ? "без приоритета" : wkLabel(WK_PRIO, pf).toLowerCase()) + '» · <button type="button" class="pj-plain" data-wkt-prio-clear>показать все</button></div>' : '';
   // Задачи «К выполнению» — в своей прокрутке (видно 10); «Готово» — отдельной таблицей под ней, всегда на виду
   return note + '<div class="card wkt-card"><div class="wkt-vp" data-vp="open"><table class="wkt"><thead>' + WKT_HEAD + '</thead><tbody>' + body + '</tbody></table></div>' +
@@ -4346,6 +4469,7 @@ document.addEventListener("submit", function (ev) {
 });
 document.addEventListener("keydown", function (ev) {
   var el = ev.target; if (!el.closest || !el.closest("#pjDlg .wkd")) return;
+  if (el.closest(".wknew")) return;   // окно новой задачи — свои правила Enter
   if (ev.key === "Enter" && (el.tagName === "INPUT" && !el.closest("[data-wkd-sub-add]") || el.classList.contains("wkd-title")) && !ev.shiftKey) { ev.preventDefault(); el.blur(); }
 });
 document.addEventListener("input", function (ev) { if (ev.target.classList && ev.target.classList.contains("wkd-title")) wkGrow(ev.target); });
@@ -4454,6 +4578,7 @@ document.addEventListener("click", function (ev) {
   if (WKPOP && WKPOP.anchor === b) { wkPopClose(); return; }
   var spec = b.getAttribute("data-wk-date");
   wkDateOpen(b, b.getAttribute("data-wk-val"), function (v) {
+    if (spec === "draft") { S.wk.draft.due = v; wkNewTaskRefresh(); return; }   // окно новой задачи
     if (spec === "form") {   // форма добавления задачи: дата — в скрытое поле, подпись — на кнопке
       var fm = b.closest("form"); fm.elements.due.value = v; b.setAttribute("data-wk-val", v);
       b.innerHTML = WKT_ICON.cal + (v ? wkDueInfo(v).text : "Срок"); b.classList.toggle("set", !!v); return;
@@ -4513,6 +4638,117 @@ document.addEventListener("submit", function (ev) {
     if (WKPOP && WKPOP.tid === tid) { WKPOP.el.innerHTML = wkTagPopHtml(tid); var i = WKPOP.el.querySelector("[data-wkp-new] input"); if (i) i.focus(); }
   }, function () { toast("Тег не сохранён: " + NO_APP); });
 });
+// ---------- Новая задача — полное окно (красный «+»): название, описание, срок, приоритет, теги, план, подзадачи; «Создать»
+function wkNewTaskHtml() {
+  var d = S.wk.draft;
+  return '<div class="wkd wknew">' +
+    '<textarea class="wk-in wkd-title" id="wkn-text" rows="1" maxlength="1000" placeholder="Что нужно сделать" aria-label="Название задачи">' + esc(d.text) + '</textarea>' +
+    '<div class="wkd-meta" style="margin-left:6px"><label>Срок ' + wkDateBtn("draft", d.due, { due: true, label: "Срок", icon: true }) + '</label>' +
+      '<label>План <input class="wk-in wkd-dur" id="wkn-est" value="' + esc(d.est || "") + '" placeholder="ч:мм" aria-label="План, ч:мм"></label></div>' +
+    '<section class="wkd-sec"><h3>Приоритет</h3><div class="wkd-prio">' + WK_PRIO.concat([["", "Без приоритета"]]).map(function (o) {
+        var on = d.prio === o[0]; return '<button type="button" class="wkd-prio-b p-' + (o[0] || "none") + (on ? ' on' : '') + '" data-wkn-prio="' + o[0] + '" aria-pressed="' + on + '">' + wkPrioIcon(o[0]) + o[1] + '</button>';
+      }).join("") + '</div></section>' +
+    '<section class="wkd-sec"><h3>Теги</h3><div class="wkd-tags">' + wkTagList().map(function (g) {
+        var on = d.tags.indexOf(g.id) >= 0; return '<button type="button" class="wk-tag tg-' + g.color + (on ? ' on' : '') + '" data-wkn-tag="' + g.id + '" aria-pressed="' + on + '">' + esc(g.name) + '</button>';
+      }).join("") + '</div></section>' +
+    '<section class="wkd-sec"><h3>Описание</h3><textarea class="wk-in wkd-desc" id="wkn-desc" rows="4" maxlength="20000" placeholder="Подробности, контакты, договорённости, ссылки…">' + esc(d.desc) + '</textarea></section>' +
+    '<section class="wkd-sec"><h3>Подзадачи' + (d.subs.length ? ' <span class="num">' + d.subs.length + '</span>' : '') + '</h3>' +
+      (d.subs.length ? '<ul class="wkd-subs">' + d.subs.map(function (s, i) { return '<li><span class="wkt-subdot"></span><span class="wkd-sub" style="padding:6px 0">' + esc(s.text) + '</span><button type="button" class="icon-btn wk-x" data-wkn-subdel="' + i + '" aria-label="Убрать подзадачу">' + PJ_ICON.close + '</button></li>'; }).join("") + '</ul>' : '') +
+      '<form class="wkd-subadd" data-wkn-subadd><input class="wk-in" name="sub" placeholder="+ Подзадача — впишите и Enter" maxlength="500" autocomplete="off" aria-label="Новая подзадача"></form></section>' +
+    '<div class="err" id="wkn-err" hidden></div>' +
+    '<div class="form-actions wkd-foot"><button class="btn-dark" data-wkn-create>Создать задачу</button><button class="btn-ghost" data-pj="close">Отмена</button></div></div>';
+}
+function wkNewTaskOpen() {
+  S.wk.draft = { text: "", desc: "", due: "", prio: "", tags: [], est: "", subs: [] };
+  pjDialog("pj-edit wkd-dlg", "Новая задача", wkNewTaskHtml());
+  var t = $("wkn-text"); if (t) t.focus();
+}
+function wkNewTaskRefresh(focusSel) {   // перерисовать окно, сохранив вписанное
+  var d = S.wk.draft, box = document.querySelector("#pjDlg .wknew"); if (!d || !box) return;
+  d.text = $("wkn-text").value; d.desc = $("wkn-desc").value; d.est = $("wkn-est").value;
+  box.outerHTML = wkNewTaskHtml(); wkGrow($("wkn-text"));
+  if (focusSel) { var f = document.querySelector(focusSel); if (f) f.focus(); }
+}
+document.addEventListener("click", function (ev) {
+  var b = ev.target.closest && ev.target.closest("#pjDlg .wknew [data-wkn-prio], #pjDlg .wknew [data-wkn-tag], #pjDlg .wknew [data-wkn-subdel], #pjDlg .wknew [data-wkn-create]");
+  if (!b || !S.wk.draft) return;
+  var d = S.wk.draft;
+  if (b.hasAttribute("data-wkn-prio")) { d.prio = b.getAttribute("data-wkn-prio"); wkNewTaskRefresh(); }
+  else if (b.hasAttribute("data-wkn-tag")) { var g = b.getAttribute("data-wkn-tag"), i = d.tags.indexOf(g); if (i >= 0) d.tags.splice(i, 1); else d.tags.push(g); wkNewTaskRefresh(); }
+  else if (b.hasAttribute("data-wkn-subdel")) { d.subs.splice(+b.getAttribute("data-wkn-subdel"), 1); wkNewTaskRefresh(); }
+  else {
+    var text = $("wkn-text").value.trim(), est = wkParseMin($("wkn-est").value), err = $("wkn-err");
+    if (!text) { err.hidden = false; err.textContent = "Впишите, что нужно сделать"; $("wkn-text").focus(); return; }
+    if (est == null) { err.hidden = false; err.textContent = "План — в виде 2:40, 2,5 или 1ч 30м"; $("wkn-est").focus(); return; }
+    $("pjDlg").close();
+    wkPut("tasks", wkId("t"), { text: text, desc: $("wkn-desc").value, due: d.due, prio: d.prio, tags: d.tags, est: est, subs: d.subs, project: S.wk.proj, done: false, created: wkDay(0) }, "Задача создана");
+    S.wk.draft = null;
+  }
+});
+document.addEventListener("submit", function (ev) {
+  var fm = ev.target.closest && ev.target.closest("#pjDlg [data-wkn-subadd]"); if (!fm || !S.wk.draft) return;
+  ev.preventDefault();
+  var v = fm.elements.sub.value.trim(); if (!v) return;
+  S.wk.draft.subs.push({ id: wkId("s"), text: v, done: false }); wkNewTaskRefresh("#pjDlg [data-wkn-subadd] input");
+});
+document.addEventListener("keydown", function (ev) {   // Enter в названии новой задачи — не перенос строки
+  if (ev.target.id === "wkn-text" && ev.key === "Enter" && !ev.shiftKey) { ev.preventDefault(); $("wkn-desc").focus(); }
+});
+// ---------- Документы проекта: загрузка (окно «Редактировать») и просмотр — PDF и картинки прямо на странице
+function wkDocUpload(what, file) {
+  var pid = S.wk.proj; if (!file || !pid) return;
+  if (file.size > 15 * 1048576) { toast("Документ: не больше 15 МБ"); return; }
+  var fr = new FileReader();
+  fr.onload = function () {
+    toast("Загружаем…");
+    apiJson("POST", "/api/work", { op: "pfile", kind: "projects", id: pid, what: what, name: file.name, data: fr.result }).then(function (x) {
+      if (!x.ok) { toast("Не загружено: " + ((x.d && x.d.error) || "ошибка")); return; }
+      WK = x.d; toast(wkLabel(WKP_DOCS, what) + " — загружено"); wkProjDlgRefresh(); render();
+    }, function () { toast("Не загружено: " + NO_APP); });
+  };
+  fr.readAsDataURL(file);
+}
+function wkDocRemove(what) {
+  apiJson("POST", "/api/work", { op: "pfile", kind: "projects", id: S.wk.proj, what: what, data: "" }).then(function (x) {
+    if (!x.ok) { toast("Не убрано: " + ((x.d && x.d.error) || "ошибка")); return; }
+    WK = x.d; toast(wkLabel(WKP_DOCS, what) + " — убрано"); wkProjDlgRefresh(); render();
+  });
+}
+function wkDocView(what) {
+  var f = ((WK.projects[S.wk.proj] || {}).pfiles || {})[what]; if (!f) return;
+  var url = "/api/work/file/" + f.file + "?v=" + encodeURIComponent(f.at), ext = f.file.split(".").pop();
+  var body = ext === "pdf" ? '<iframe class="wkv-frame" src="' + url + '#view=FitH" title="' + esc(f.name) + '"></iframe>'
+    : /^(jpg|jpeg|png|webp)$/.test(ext) ? '<div class="wkv-img"><img src="' + url + '" alt="' + esc(f.name) + '"></div>'
+    : '<div class="note">Предпросмотр для этого вида файла браузер не показывает — скачайте и откройте у себя.</div>';
+  pjDialog("pj-edit wkv-dlg", wkLabel(WKP_DOCS, what) + " · " + f.name, body +
+    '<div class="form-actions wkd-foot"><a class="btn-dark" href="' + url + '&dl=1">Скачать</a><a class="btn-ghost" href="' + url + '" target="_blank" rel="noopener">Открыть в новой вкладке</a>' +
+    '<span class="sub2">' + vbSize(f.size) + ' · загружено ' + atText(f.at) + '</span></div>');
+}
+(function () {
+  var inp = document.createElement("input"); inp.type = "file"; inp.id = "wkpDocFile"; inp.hidden = true;
+  inp.accept = ".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.webp,.rtf,.odt,.ods,.txt,.zip";
+  inp.addEventListener("change", function () { var f = inp.files[0]; inp.value = ""; wkDocUpload(inp.getAttribute("data-what"), f); });
+  document.body.appendChild(inp);
+})();
+document.addEventListener("click", function (ev) {
+  if (S.view !== "work" || !S.wk.proj || !ev.target.closest) return;
+  var t = ev.target.closest("[data-wkp-docview],[data-wkp-docup],[data-wkp-docdel],[data-wkp-stage],.wk-menu [data-wkp-stage-set],[data-wkp-delete]"); if (!t) return;
+  if (t.hasAttribute("data-wkp-docview")) wkDocView(t.getAttribute("data-wkp-docview"));
+  else if (t.hasAttribute("data-wkp-docup")) { var i = $("wkpDocFile"); i.setAttribute("data-what", t.getAttribute("data-wkp-docup")); i.click(); }
+  else if (t.hasAttribute("data-wkp-docdel")) wkDocRemove(t.getAttribute("data-wkp-docdel"));
+  else if (t.hasAttribute("data-wkp-stage")) {   // пилюля стадии — выбор
+    if (WKPOP && WKPOP.anchor === t) { wkPopClose(); return; }
+    var cur = WK.projects[S.wk.proj].stage;
+    wkPopOpen(t, "wk-menu wk-stagemenu", '<div class="wkp-title">Стадия проекта</div>' + WK_STAGE.map(function (o) {
+      return '<button type="button" class="wk-menu-item' + (cur === o[0] ? ' on' : '') + '" data-wkp-stage-set="' + o[0] + '" role="menuitemradio" aria-checked="' + (cur === o[0]) + '"><span>' + o[1] + '</span>' + (cur === o[0] ? WKT_ICON.check : '') + '</button>';
+    }).join(""), {});
+  }
+  else if (t.hasAttribute("data-wkp-stage-set")) { var st = t.getAttribute("data-wkp-stage-set"); wkPopClose(); wkSetField("projects", S.wk.proj, "stage", st); toast("Стадия: " + wkLabel(WK_STAGE, st).toLowerCase()); }
+  else if (t.hasAttribute("data-wkp-delete")) {   // корзина в шапке — подтверждение
+    var pid0 = S.wk.proj, pr0 = WK.projects[pid0];
+    askConfirm("Вы точно хотите полностью удалить проект?", "«" + pr0.title + "» будет удалён. Его задачи и документы останутся — «без проекта». Вернуть можно в «Настройки → Журнал изменений».", "Удалить", function () { S.wk.proj = null; wkDel("projects", pid0, "Проект удалён"); });
+  }
+});
 function renderWork() {
   if (!CAN_SAVE) return head("Проекты", "") + '<div class="note">Раздел хранится на сервере — откройте сайт через приложение: python3 app.py → http://127.0.0.1:5050/proto/</div>';
   if (!WK_OK) { wkLoad(); return head("Проекты", "") + '<div class="sub">Загружаем…</div>'; }
@@ -4540,11 +4776,11 @@ function renderWork() {
 function wktFit() {
   S.wk.scrollT = S.wk.scrollT || {};
   document.querySelectorAll(".wkt-vp").forEach(function (vp) {
-    var key = vp.getAttribute("data-vp"), rows = vp.querySelectorAll("tr.wkt-row");
-    if (rows.length <= 10) { vp.classList.remove("wkt-scroll", "wkt-more"); vp.style.maxHeight = ""; return; }
+    var key = vp.getAttribute("data-vp"), rows = vp.querySelectorAll("tr.wkt-row"), lim = key === "done" ? 5 : 10;   // готовых — 5, остальные прокруткой
+    if (rows.length <= lim) { vp.classList.remove("wkt-scroll", "wkt-more"); vp.style.maxHeight = ""; return; }
     var top = vp.getBoundingClientRect().top - vp.scrollTop;
     vp.classList.add("wkt-scroll");
-    vp.style.maxHeight = Math.ceil(rows[9].getBoundingClientRect().bottom - top + 1) + "px";
+    vp.style.maxHeight = Math.ceil(rows[lim - 1].getBoundingClientRect().bottom - top + 1) + "px";
     if (S.wk.scrollT[key]) vp.scrollTop = S.wk.scrollT[key];
     var edge = function () { vp.classList.toggle("wkt-more", vp.scrollTop + vp.clientHeight < vp.scrollHeight - 2); S.wk.scrollT[key] = vp.scrollTop; };
     vp.onscroll = edge; edge();
@@ -4607,7 +4843,13 @@ $("view").addEventListener("change", function (ev) {
   var y = window.scrollY; wkPut(kind, rid, rec, "", quiet); window.scrollTo(0, y);
   if (fld === "amount") t.value = wkMoney(val === "" ? null : +val);
 });
+$("view").addEventListener("input", function (ev) {   // поиск задач — фильтрует таблицу по мере ввода
+  if (S.view !== "work" || !ev.target.hasAttribute || !ev.target.hasAttribute("data-wkt-q")) return;
+  S.wk.q = ev.target.value; var pos = ev.target.selectionStart; render();
+  var qi = document.querySelector("[data-wkt-q]"); if (qi) { qi.focus(); qi.setSelectionRange(pos, pos); }
+});
 $("view").addEventListener("keydown", function (ev) {
+  if (S.view === "work" && ev.key === "Escape" && ev.target.hasAttribute && ev.target.hasAttribute("data-wkt-q")) { ev.preventDefault(); ev.stopPropagation(); S.wk.qOpen = false; S.wk.q = ""; render(); return; }
   if (S.view !== "work" || !ev.target.classList || !ev.target.classList.contains("wk-in")) return;
   var t = ev.target;
   if (ev.key === "Enter" && t.tagName === "INPUT") { ev.preventDefault(); t.blur(); }
@@ -4615,8 +4857,10 @@ $("view").addEventListener("keydown", function (ev) {
 });
 $("view").addEventListener("click", function (ev) {
   if (S.view !== "work") return;
-  var t = ev.target.closest("[data-wk-tab],[data-wk-open],[data-wk-act],[data-wk-del],[data-wk-docf],[data-wkt-open],[data-wkt-timer],[data-wkt-fold],[data-wkt-tags],[data-wkt-subs],[data-wkt-group],[data-wkt-sub-del],[data-wk-ptab],[data-wkm-nav],[data-wkm-day],[data-wkn-open],[data-wkn-new],[data-wkt-groupmenu]"); if (!t) return;
+  var t = ev.target.closest("[data-wk-tab],[data-wk-open],[data-wk-act],[data-wk-del],[data-wk-docf],[data-wkt-open],[data-wkt-timer],[data-wkt-fold],[data-wkt-tags],[data-wkt-subs],[data-wkt-group],[data-wkt-sub-del],[data-wk-ptab],[data-wkm-nav],[data-wkm-day],[data-wkn-open],[data-wkn-new],[data-wkt-groupmenu],[data-wkt-qopen],[data-wkt-qclose]"); if (!t) return;
   if (t.hasAttribute("data-wk-ptab")) { S.wk.ptab = t.getAttribute("data-wk-ptab"); render(); return; }
+  if (t.hasAttribute("data-wkt-qopen")) { S.wk.qOpen = true; S.wk.qAt = t.getAttribute("data-wkt-qopen"); render(); var qi = document.querySelector("[data-wkt-q]"); if (qi) { qi.focus(); qi.setSelectionRange(qi.value.length, qi.value.length); } return; }
+  if (t.hasAttribute("data-wkt-qclose")) { S.wk.qOpen = false; S.wk.q = ""; render(); return; }
   if (t.hasAttribute("data-wkt-groupmenu")) {   // фильтры: группировка и приоритет — меню у вкладок
     if (WKPOP && WKPOP.anchor === t) { wkPopClose(); return; }
     var pfc = S.wk.prioF || "";
@@ -5128,7 +5372,7 @@ var JR_FIELD = { title: "Название", rows: "Строки тура", note:
   project: "Проект", month: "Месяц", status: "Статус", text: "Текст", limit: "Лимит, км", trips: "Выезд и возвращение", zones: "Пояса",
   seats: "Места", gross: "Вал", rent: "Аренда", fee: "Гонорар", region: "Регион", org: "Организационные", logistics: "Логистика", keys: "Названия",
   desc: "Описание", subs: "Подзадачи", time: "Затрачено", est: "План", run: "Таймер", tags: "Теги", name: "Название", color: "Цвет",
-  body: "Текст", paid: "Оплачено", date: "Дата", prio: "Приоритет",
+  body: "Текст", paid: "Оплачено", date: "Дата", prio: "Приоритет", deadline: "Дедлайн проекта", pfiles: "Документы проекта",
   text: "Задача", due: "Дедлайн", done: "Готово", done_at: "Сделано", stage: "Стадия", start: "Начало", end: "Окончание", kind: "Документ", party: "С кем",
   amount: "Сумма", pay: "Оплата", closing: "Закрывающие", created: "Создана" };
 function jrLabel(area, f) {
@@ -9659,6 +9903,7 @@ function mSplitTools(html) {
 // Разделы, которые на телефоне спрятаны в «Ещё»
 var MORE_VIEWS = ["archive", "overview", "niches", "calendar", "new", "venues", "operators", "sales", "dynamics", "settings", "planning", "route"];
 function render() {
+  var keepY = S.view === "work" ? window.scrollY : null;   // «Проекты»: правка не сдвигает страницу (переходы сами прокручивают наверх)
   archMode(S.view === "archive");
   syncMarketView(); S.city = S.m.city;  // раздел — по вкладке «Рынка», если её переключил код; город шапки один на все разделы
   var ip = $("infoPop"); if (ip) ip.hidden = true;  // элемент под курсором заменится — его подсказка не должна «висеть»
@@ -9681,7 +9926,7 @@ function render() {
   ddClose(false); enhanceSelects(document.querySelector(".top")); enhanceSelects($("view")); vdRestore();
   candApply();  // «Города, где его нет» — счётчик найденного после перерисовки
   if (S.view === "planning" || S.view === "route") plFitAll($("view"));   // «Планирование»: подчёркивание полей — по длине текста
-  if (S.view === "work") wktFit();   // «Проекты»: видно 10 задач, дальше — прокрутка внутри таблицы
+  if (S.view === "work") { wktFit(); if (keepY != null) window.scrollTo(0, keepY); }   // «Проекты»: видно 10 задач, дальше — прокрутка внутри таблицы; экран на месте
   var mt = document.querySelector('.mtabs [aria-selected="true"]');  // на телефоне полоса вкладок «Рынка» прокручивается к выбранной
   if (mt) { var mp = mt.parentNode; mp.scrollLeft += mt.getBoundingClientRect().left - mp.getBoundingClientRect().left - 16; }
   renderCal();

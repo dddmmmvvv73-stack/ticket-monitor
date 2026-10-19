@@ -9,7 +9,9 @@
 
 Хранится в config/work.json — вне git (деньги, контрагенты), в копиях config/ каждые 15 минут и снимках по дням и месяцам;
 каждая правка — в журнале изменений (competitors/journal.py, область «work»), её можно вернуть.
-    {"projects": {номер: {"title", "stage", "start", "end", "note", "upd", "media": {"avatar" | "cover": файл?v=метка}}},
+    {"projects": {номер: {"title", "stage", "start", "end", "deadline" — дедлайн готовности проекта, "note", "upd",
+                          "media": {"avatar" | "cover": файл?v=метка},
+                          "pfiles": {"rider" | "logistics" | "timing": {"file", "name", "size", "at"}}}},
      "tasks":    {номер: {"text", "due", "project", "done", "done_at", "note", "created", "upd",
                           "desc" — описание, "subs": [{"id", "text", "done"}] — подзадачи,
                           "time" — затрачено, секунд; "run" — таймер идёт с (ISO-время) или пусто; "est" — план, минут,
@@ -60,7 +62,10 @@ MEDIA_DIR = CONFIG_DIR / "work_media"   # фото проектов (миниа�
 MEDIA_KINDS = ("avatar", "cover")
 PHOTO_MAX = 3 * 1024 * 1024
 PHOTO_TYPES = {b"\xff\xd8\xff": "jpg", b"\x89PNG": "png", b"RIFF": "webp"}
-FILE_NAME = re.compile(r"^[a-z0-9]{3,40}-(avatar|cover)\.(jpg|png|webp)$")
+FILE_NAME = re.compile(r"^[a-z0-9]{3,40}-(avatar|cover|rider|logistics|timing)\.[a-z0-9]{2,5}$")
+DOC_KINDS = ("rider", "logistics", "timing")   # документы проекта: технический райдер, логистика, тайминг
+DOC_EXT = {"pdf", "doc", "docx", "xls", "xlsx", "jpg", "jpeg", "png", "webp", "rtf", "odt", "ods", "txt", "zip"}
+DOC_MAX = 15 * 1024 * 1024
 
 
 class WorkError(ValueError):
@@ -160,7 +165,8 @@ def _enum(v, allowed: list, what: str, default: str) -> str:
 def _validate(kind: str, d: dict, data: dict) -> dict:
     if kind == "projects":
         out = {"title": _text(d.get("title"), "название", 300), "stage": _enum(d.get("stage"), STAGES, "стадия", "idea"),
-               "start": _date(d.get("start"), "начало"), "end": _date(d.get("end"), "окончание"), "note": _text(d.get("note"), "заметка")}
+               "start": _date(d.get("start"), "начало"), "end": _date(d.get("end"), "окончание"),
+               "deadline": _date(d.get("deadline"), "дедлайн"), "note": _text(d.get("note"), "заметка")}
         if not out["title"]:
             raise WorkError("у проекта нужно название")
         return out
@@ -222,8 +228,9 @@ def apply_op(op: dict) -> dict:
         if op.get("op") == "put":
             rec = _validate(kind, op.get("data") or {}, data)
             rec["upd"] = datetime.now().isoformat(timespec="seconds")
-            if kind == "projects" and (data[kind].get(oid) or {}).get("media"):   # фото меняются отдельно (media) — правка полей их не трогает
-                rec["media"] = data[kind][oid]["media"]
+            for keep in ("media", "pfiles"):   # фото и документы проекта меняются отдельно — правка полей их не трогает
+                if kind == "projects" and (data[kind].get(oid) or {}).get(keep):
+                    rec[keep] = data[kind][oid][keep]
             data[kind][oid] = rec
         elif op.get("op") == "media":   # фото проекта: what — avatar | cover; data — data:image/…;base64 (пусто — убрать)
             p = data["projects"].get(oid)
@@ -249,6 +256,33 @@ def apply_op(op: dict) -> dict:
             if not media:
                 p.pop("media", None)
             p["upd"] = datetime.now().isoformat(timespec="seconds")
+        elif op.get("op") == "pfile":   # документ проекта: what — rider | logistics | timing; name — имя файла; data — base64 (пусто — убрать)
+            p = data["projects"].get(oid)
+            what = str(op.get("what") or "")
+            if kind != "projects" or not p or what not in DOC_KINDS:
+                raise WorkError("документ: нет такого проекта")
+            name = _text(op.get("name"), "имя файла", 200)
+            raw = ext = None
+            if op.get("data"):
+                m = re.match(r"^data:[\w.+/-]*;base64,([A-Za-z0-9+/=]+)$", str(op["data"]))
+                ext = name.rsplit(".", 1)[-1].lower() if "." in name else ""
+                if not m or ext not in DOC_EXT:
+                    raise WorkError("документ: PDF, Word, Excel, картинка или архив")
+                raw = base64.b64decode(m.group(1))
+                if len(raw) > DOC_MAX:
+                    raise WorkError("документ: не больше 15 МБ")
+            for old in MEDIA_DIR.glob(f"{oid}-{what}.*"):
+                old.unlink()
+            files = p.setdefault("pfiles", {})
+            if raw is None:
+                files.pop(what, None)
+            else:
+                MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+                (MEDIA_DIR / f"{oid}-{what}.{ext}").write_bytes(raw)
+                files[what] = {"file": f"{oid}-{what}.{ext}", "name": name, "size": len(raw), "at": datetime.now().isoformat(timespec="seconds")}
+            if not files:
+                p.pop("pfiles", None)
+            p["upd"] = datetime.now().isoformat(timespec="seconds")
         elif op.get("op") == "del":
             data[kind].pop(oid, None)
             if kind == "tags":   # убрали тег — снимается и с задач
@@ -264,6 +298,15 @@ def apply_op(op: dict) -> dict:
             raise WorkError("неизвестная операция")
         save_json(FILE, data)
         return data
+
+
+def doc_name(name: str) -> str:
+    """Под каким именем отдавать документ проекта при скачивании — как его загружали."""
+    for p in load()["projects"].values():
+        for f in (p.get("pfiles") or {}).values():
+            if f.get("file") == name:
+                return f.get("name") or name
+    return name
 
 
 def media_file(name: str):

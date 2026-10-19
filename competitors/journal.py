@@ -27,7 +27,7 @@ from competitors.storage import CONFIG_DIR, save_json
 
 DIR = CONFIG_DIR / "history"
 NOISE = {"upd", "edited", "at", "snap", "rating_hist"}   # служебное — не показываем и не возвращаем
-FILES = {"media", "rider"}                               # файлы: отмечаем, не возвращаем
+FILES = {"media", "rider", "pfiles"}                               # файлы: отмечаем, не возвращаем
 MONTHS_READ = 13                                         # сколько месячных файлов читать при показе
 
 
