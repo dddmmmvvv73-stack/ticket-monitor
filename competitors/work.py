@@ -19,7 +19,8 @@
      "docs":     {номер: {"project", "kind", "party", "status", "amount", "pay", "closing", "note", "upd"}},
      "tags":     {номер: {"name", "color"}},
      "costs":    {номер: {"project", "name" — статья, "party" — кому, "amount", "date", "paid", "note", "upd"}},
-     "notes":    {номер: {"project", "title", "body", "created", "upd"}}}   ← с чем связана задача; у задачи — "tags": [номера]; пока своих нет — DEFAULT_TAGS
+     "notes":    {номер: {"project", "title", "body", "created", "upd"}},
+     "shows":    {номер: {"project", "date", "venue" — номер в справочнике площадок, "name", "city", "upd"}}}   ← с чем связана задача; у задачи — "tags": [номера]; пока своих нет — DEFAULT_TAGS
 
     GET  /api/work                                   всё
     POST /api/work {"op": "put", "kind", "id", "data"}   запись целиком (проверяется)
@@ -38,7 +39,9 @@ from datetime import datetime
 from competitors.storage import CONFIG_DIR, load_json, save_json
 
 FILE = CONFIG_DIR / "work.json"
-KINDS = ("projects", "tasks", "docs", "tags", "costs", "notes")
+KINDS = ("projects", "tasks", "docs", "tags", "costs", "notes", "shows")
+# shows — гастроли проекта (решение пользователя 20.10): дата, площадка, город; площадка — из справочника «Площадки → Площадки»
+# (venue — номер записи config/venue_book.json); название и город хранятся копией — строка читается, даже если площадку убрали из справочника
 # Цвета тегов. Красный и оранжевый — только у приоритета (решение пользователя 19.10: полоса слева — по тегу, и красная
 # полоса не должна читаться как «срочно»); прежние теги этих цветов перекрашиваются при чтении (RECOLOR)
 COLORS = ("blue", "green", "violet", "teal", "pink", "amber", "indigo", "brown", "gray")
@@ -57,6 +60,7 @@ _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _STAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$")
 SUBS_MAX = 200
 _ID = re.compile(r"^[a-z0-9]{3,40}$")
+_VENUE = re.compile(r"^[a-z0-9]{1,40}$")
 _lock = threading.Lock()
 MEDIA_DIR = CONFIG_DIR / "work_media"   # фото проектов (миниатюра, фон шапки) — вне git, в копиях config/
 MEDIA_KINDS = ("avatar", "cover")
@@ -184,6 +188,18 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
         if not (out["name"] or out["party"]):
             raise WorkError("у расхода нужна статья или получатель")
         return out
+    if kind == "shows":
+        pid = str(d.get("project") or "")
+        if pid not in data["projects"]:
+            raise WorkError("гастроли: такого проекта нет")
+        venue = str(d.get("venue") or "")
+        if venue and not _VENUE.match(venue):
+            raise WorkError("гастроли: неверный номер площадки")
+        out = {"project": pid, "date": _date(d.get("date"), "дата"), "venue": venue,
+               "name": _text(d.get("name"), "площадка", 300), "city": _text(d.get("city"), "город", 120)}
+        if not (out["name"] or out["city"]):
+            raise WorkError("у гастролей нужна площадка или город")
+        return out
     if kind == "tags":
         out = {"name": _text(d.get("name"), "тег", 40), "color": _enum(d.get("color"), list(COLORS), "цвет", "gray")}
         if not out["name"]:
@@ -291,8 +307,8 @@ def apply_op(op: dict) -> dict:
                 for r in data["tasks"].values():
                     if oid in (r.get("tags") or []):
                         r["tags"] = [t for t in r["tags"] if t != oid]
-            if kind == "projects":   # задачи и документы проекта остаются — «без проекта»
-                for k in ("tasks", "docs", "costs", "notes"):
+            if kind == "projects":   # задачи и документы проекта остаются — «без проекта»; гастроли — тоже (вернётся проект — вернутся и они)
+                for k in ("tasks", "docs", "costs", "notes", "shows"):
                     for r in data[k].values():
                         if r.get("project") == oid:
                             r["project"] = ""

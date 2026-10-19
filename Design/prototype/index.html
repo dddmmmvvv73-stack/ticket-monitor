@@ -500,6 +500,47 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
 .wk-status-sent, .wk-stage-sales, .wk-stage-live { color: var(--data); }
 .wk-pay-part { color: #a16207; } .wk-pay-no, .wk-closing-no, .wk-status-draft { color: var(--ink-3); }
 .wk-sum { margin: 10px 0 0; } .wk-sum b { font-weight: 500; color: var(--ink); }
+/* Гастроли проекта: дата, площадка (из справочника — ссылкой на её страницу), город */
+.wks-add .wks-pick { position: relative; flex: 3 1 260px; min-width: 0; display: flex; }
+.wks-add .wks-pick input { flex: 1 1 auto !important; }
+.wks-add input[name=city] { flex: 1 1 140px !important; }
+.wks-sug { position: absolute; z-index: 30; top: calc(100% + 8px); left: -4px; right: -4px; max-height: 320px; overflow-y: auto; padding: 4px;
+  background: var(--card); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.12); }
+.wks-opt { display: flex; flex-direction: column; align-items: flex-start; gap: 1px; width: 100%; padding: 7px 10px; border: 0; border-radius: 8px;
+  background: transparent; font: inherit; text-align: left; cursor: pointer; color: var(--ink); }
+.wks-opt b { font-weight: 500; font-size: 14px; } .wks-opt span { font-size: 12px; color: var(--muted); }
+.wks-opt.on, .wks-opt:hover { background: var(--line-soft); }
+.wks-none { padding: 9px 10px; font-size: 13px; color: var(--muted); }
+.wks td { height: 44px; }
+.wks th.wks-n, .wks td.wks-n { width: 34px; color: var(--muted); font-variant-numeric: tabular-nums; padding-left: 14px; }
+.wks td.wks-date { white-space: nowrap; width: 1%; }
+.wks .wks-date .wk-datebtn { margin-left: 0; }
+.wks-wd { font-size: 12px; color: var(--muted); margin-left: 6px; }
+.wks-venue { border: 0; background: none; padding: 5px 7px; font: inherit; font-size: 14px; font-weight: 500; color: var(--ink); cursor: pointer; text-align: left; border-radius: 6px; }
+.wks-venue:hover { background: var(--line-soft); text-decoration: underline; text-underline-offset: 3px; }
+.wks-meta { display: block; padding: 0 7px; font-size: 12px; color: var(--muted); }
+.wks-meta.nolink { color: var(--amber, #b7791f); }
+.wks-ctext { display: block; padding: 0 8px; }   /* как текст в поле ввода: рамка 1 + отступ 7 */
+.wks-vh { margin: 0 0 14px !important; }
+.wks tr.wks-past td { color: var(--muted); } .wks tr.wks-past .wks-venue { color: var(--muted); font-weight: 400; }
+.wks-vlist { list-style: none; margin: 0 0 22px; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.wks-vlist li + li { border-top: 1px solid var(--line-soft); }
+.wks-vlist button { display: flex; gap: 14px; align-items: baseline; width: 100%; padding: 11px 14px; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; color: var(--ink); border-radius: 12px; }
+.wks-vlist button:hover { background: var(--line-soft); }
+.wks-vlist .d { min-width: 96px; font-variant-numeric: tabular-nums; } .wks-vlist .t { font-weight: 500; } .wks-vlist .past { color: var(--muted); }
+@media (max-width: 640px) {
+  .wks-add .wks-pick { flex-basis: 100%; }
+  /* телефон: строка — карточка: дата сверху, ниже площадка и город; крестик справа */
+  .wks thead { display: none; }
+  .wks tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; padding: 8px 4px; }
+  .wks tbody tr + tr { border-top: 1px solid var(--line-soft); }
+  .wks td { border: 0 !important; height: auto; padding: 1px 4px; }
+  .wks td.wks-n { display: none; }
+  .wks td.wks-date, .wks td:nth-child(3), .wks td.wks-city { grid-column: 1; }
+  .wks td:last-child { grid-column: 2; grid-row: 1 / span 3; align-self: center; }
+  .wks td .wk-in { min-width: 0 !important; }
+  .wks td.wks-city .wks-ctext, .wks td.wks-city .wk-in { color: var(--muted); }
+}
 .wk-red { color: var(--risk); }
 .wk-open { text-align: left; font-weight: 500; }
 .wk-pdone td { opacity: 0.6; }
@@ -3824,7 +3865,7 @@ function wkPut(kind, id, rec, msg, quiet) {   // quiet — без перерис
 }
 function wkDel(kind, id, msg) {
   var rec = WK[kind][id] && JSON.parse(JSON.stringify(WK[kind][id])), linked = [];
-  if (kind === "projects") ["tasks", "docs", "costs", "notes"].forEach(function (k) { Object.keys(WK[k] || {}).forEach(function (x) { if (WK[k][x].project === id) linked.push([k, x]); }); });
+  if (kind === "projects") ["tasks", "docs", "costs", "notes", "shows"].forEach(function (k) { Object.keys(WK[k] || {}).forEach(function (x) { if (WK[k][x].project === id) linked.push([k, x]); }); });
   delete WK[kind][id]; render();
   apiJson("POST", "/api/work", { op: "del", kind: kind, id: id }).then(function (x) {
     if (!x.ok) { toast("Не удалено: " + ((x.d && x.d.error) || "ошибка")); wkLoad(); return; }
@@ -3994,12 +4035,13 @@ function wkProjectPage(pid) {
       '</div></div></section>';
   var filtOn = S.wk.groupBy === "due" || !!S.wk.prioF;
   return hero +
-    '<div class="wk-ptabs-row"><div class="mtabs subtabs wk-ptabs" role="tablist" aria-label="Разделы проекта">' + [["tasks", "Задачи", s.open], ["docs", "Документы", wkDocsOf(pid).length], ["costs", "Расходы", wkCostsOf(pid).length]].map(function (t) {
+    '<div class="wk-ptabs-row"><div class="mtabs subtabs wk-ptabs" role="tablist" aria-label="Разделы проекта">' + [["tasks", "Задачи", s.open], ["shows", "Гастроли", wkShowsOf(pid).length], ["docs", "Документы", wkDocsOf(pid).length], ["costs", "Расходы", wkCostsOf(pid).length]].map(function (t) {
       return '<button role="tab" data-wk-ptab="' + t[0] + '" aria-selected="' + (S.wk.ptab === t[0]) + '">' + t[1] + (t[2] ? ' <span class="wk-tabn">' + t[2] + '</span>' : '') + '</button>'; }).join("") + '</div>' +
       (S.wk.ptab === "tasks" ? '<div class="wk-tabtools"><button type="button" class="wk-sq' + (filtOn ? ' on' : '') + '" data-wkt-groupmenu aria-haspopup="menu" aria-label="Фильтры и группировка задач" title="Фильтры и группировка">' + WKT_ICON.group + (filtOn ? '<i class="wk-sq-dot" aria-hidden="true"></i>' : '') + '</button>' +
         '<button type="button" class="wk-sq wk-sq-add" data-wkt-quickadd aria-haspopup="dialog" aria-label="Новая задача" title="Новая задача">' + WKT_ICON.plus + '</button></div>' : '') + '</div>' +
     (S.wk.ptab === "docs" ? '<div class="wk-pbody">' + wkDocsTable(wkDocsOf(pid), false, pid) + '</div>'
       : S.wk.ptab === "costs" ? '<div class="wk-pbody">' + wkCostsTable(wkCostsOf(pid), pid) + '</div>'
+      : S.wk.ptab === "shows" ? '<div class="wk-pbody">' + wkShowsTable(pid) + '</div>'
       : '<div class="wk-split"><div class="wk-split-main">' + wktTable(wkTasksOf(pid), pid) + '</div><aside class="wk-split-side" aria-label="Календарь сроков и фокус">' + wkCalBlock(pid) + wkFocusBlock(pid) + '</aside></div>') +
     '<h2 class="wk-h2">Заметки</h2>' + wkNotesGrid(pid);
 }
@@ -4018,7 +4060,7 @@ function wkDeadlineBadge(pid, dl) {
 }
 // Счётчик дней — от первого гастрольного дня: до гастролей · идут (день N из M) · прошли; нажатие — календарь начала
 function wkTourTile(pid, p) {
-  var st = p.start, en = p.end, t0 = wkDay(0), dd = function (a, b) { return Math.round((Date.parse(b + "T12:00:00") - Date.parse(a + "T12:00:00")) / 864e5); };
+  var sh = wkShowsOf(pid).filter(function (d) { return d.date; }), st = p.start || (sh[0] || {}).date, en = p.end || (p.start ? "" : (sh[sh.length - 1] || {}).date), t0 = wkDay(0), dd = function (a, b) { return Math.round((Date.parse(b + "T12:00:00") - Date.parse(a + "T12:00:00")) / 864e5); };
   var big, cap, cls = "";
   if (!st) { big = "—"; cap = "начало гастролей?"; cls = " none"; }
   else if (t0 < st) { var n = dd(t0, st); big = n + '<small>дн.</small>'; cap = "до гастролей"; cls = n <= 14 ? " soon" : ""; }
@@ -4226,6 +4268,108 @@ document.addEventListener("click", function (ev) {   // пункт меню гр
 document.addEventListener("click", function (ev) {   // задача в подсказке — открыть её окно
   var b = ev.target.closest && ev.target.closest(".wkm-tip [data-wkt-open]"); if (!b) return;
   wkPopClose(); wkOpenTask(b.getAttribute("data-wkt-open"));
+});
+// ---------- Гастроли проекта: дата, площадка, город (решение пользователя 20.10). Площадка — из справочника «Площадки → Площадки»:
+// название и город берутся оттуда (поменяли в справочнике — меняются и здесь), нажатие — страница площадки; на странице площадки — её гастроли.
+// Нет в справочнике — строка сохраняется как вписали (без связи).
+function wkShowsOf(pid) {
+  return Object.keys(WK.shows || {}).map(function (id) { return Object.assign({ id: id }, WK.shows[id]); }).filter(function (d) { return d.project === pid; })
+    .sort(function (a, b) { return (a.date || "9999").localeCompare(b.date || "9999") || (a.upd || "").localeCompare(b.upd || ""); });
+}
+function wkVenue(id) { return id ? VB_ROWS.filter(function (r) { return r.id === id; })[0] || null : null; }
+function wksNorm(v) { return String(v || "").toLowerCase().replace(/ё/g, "е"); }
+function wksSeats(v) { v = String(v || "").trim(); return /^\d[\d\s]*$/.test(v) ? v + " мест" : v; }
+function wksMatch(q) {   // площадки справочника: все слова запроса — в названии или городе; сначала совпадение с началом города / названия
+  var words = wksNorm(q).split(/[\s,.·«»"]+/).filter(Boolean); if (!words.length || q.trim().length < 2) return [];
+  return VB_ROWS.filter(function (r) { var h = wksNorm(r.name) + " " + wksNorm(r.city); return words.every(function (w) { return h.indexOf(w) >= 0; }); })
+    .map(function (r) { var w = words[0], rank = wksNorm(r.city).indexOf(w) === 0 ? 0 : wksNorm(r.name).indexOf(w) === 0 ? 1 : 2; return [rank, r]; })
+    .sort(function (a, b) { return a[0] - b[0] || String(a[1].city).localeCompare(String(b[1].city), "ru") || String(a[1].name).localeCompare(String(b[1].name), "ru"); })
+    .slice(0, 8).map(function (x) { return x[1]; });
+}
+function wkShowsTable(pid) {
+  var list = wkShowsOf(pid), t0 = wkDay(0);
+  var add = '<form class="wk-add wks-add" data-wk-add="shows" autocomplete="off"><input type="hidden" name="project" value="' + esc(pid) + '"><input type="hidden" name="date" value=""><input type="hidden" name="venue" value="">' +
+    '<button type="button" class="wk-datebtn wk-adddate" data-wk-date="sform" data-wk-val="" aria-haspopup="dialog" aria-label="Дата гастролей">' + WKT_ICON.cal + 'Дата</button>' +
+    '<div class="wks-pick"><input name="name" placeholder="Площадка — название или город из справочника" aria-label="Площадка из справочника" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="wksSug" maxlength="300">' +
+      '<div class="wks-sug" id="wksSug" role="listbox" aria-label="Площадки из справочника" hidden></div></div>' +
+    '<input name="city" placeholder="Город" aria-label="Город" maxlength="120">' +
+    '<button class="btn-dark wk-add-btn">Добавить</button></form>';
+  if (!list.length) return add + '<div class="note">Гастролей пока нет. Выберите дату и площадку строкой выше — площадки берутся из справочника «Площадки», город подставится сам.</div>';
+  var cities = {}, dates = list.filter(function (d) { return d.date; });
+  var rows = list.map(function (d, i) {
+    var v = wkVenue(d.venue), city = v ? v.city : d.city, past = d.date && d.date < t0;
+    if (city) cities[wksNorm(city)] = 1;
+    var wd = d.date ? WK_WD_SHORT[new Date(+d.date.slice(0, 4), +d.date.slice(5, 7) - 1, +d.date.slice(8)).getDay()] : "";
+    return '<tr class="' + (past ? 'wks-past' : '') + '"><td class="wks-n">' + ("0" + (i + 1)).slice(-2) + '</td>' +
+      '<td class="wks-date">' + wkDateBtn("shows|" + d.id + "|date", d.date, { label: "Дата гастролей", empty: "указать" }) + (wd ? '<span class="wks-wd">' + wd + '</span>' : '') + '</td>' +
+      '<td>' + (v ? '<button type="button" class="wks-venue" data-wks-venue="' + esc(v.id) + '" title="Открыть страницу площадки">' + esc(v.name || "Без названия") + '</button>' + (v.seats ? '<span class="wks-meta">' + esc(wksSeats(v.seats)) + '</span>' : '')
+        : '<input class="wk-in" data-wk-f="shows|' + d.id + '|name" value="' + esc(d.name || "") + '" placeholder="Площадка" aria-label="Площадка"><span class="wks-meta nolink">нет в справочнике</span>') + '</td>' +
+      '<td class="wks-city">' + (v ? '<span class="wks-ctext">' + esc(city || "—") + '</span>' : '<input class="wk-in" data-wk-f="shows|' + d.id + '|city" value="' + esc(d.city || "") + '" placeholder="Город" aria-label="Город">') + '</td>' +
+      '<td><button class="icon-btn wk-x" data-wk-del="shows|' + d.id + '" aria-label="Удалить гастроли" title="Удалить строку">' + PJ_ICON.close + '</button></td></tr>';
+  }).join("");
+  var n = Object.keys(cities).length;
+  return add + '<div class="card wk-docs-card"><table class="wk-docs wks"><thead><tr><th class="wks-n">№</th><th>Дата</th><th>Площадка</th><th>Город</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    '<p class="sub wk-sum">' + list.length + ' ' + plural(list.length, "дата", "даты", "дат") + (n ? ' · <b class="num">' + n + '</b> ' + plural(n, "город", "города", "городов") : '') +
+      (dates.length ? ' · с <b>' + wkShortDate(dates[0].date) + '</b>' + (dates.length > 1 ? ' по <b>' + wkShortDate(dates[dates.length - 1].date) + '</b>' : '') : '') + '</p>';
+}
+var WK_WD_SHORT = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
+function wksSugShow(inp) {   // подсказки площадок под полем
+  var box = inp.parentNode.querySelector(".wks-sug"), q = inp.value, l = wksMatch(q);
+  if (q.trim().length < 2) { box.hidden = true; inp.setAttribute("aria-expanded", "false"); return; }
+  box.innerHTML = l.length ? l.map(function (r, i) {
+    return '<button type="button" role="option" id="wksOpt' + i + '" class="wks-opt' + (i === 0 ? ' on' : '') + '" data-wks-pick="' + esc(r.id) + '" aria-selected="' + (i === 0) + '"><b>' + esc(r.name || "Без названия") + '</b><span>' + esc([r.city, wksSeats(r.seats)].filter(Boolean).join(" · ")) + '</span></button>';
+  }).join("") : '<div class="wks-none">В справочнике не нашли — строка сохранится как вписали, без связи с площадкой.</div>';
+  box.hidden = false; inp.setAttribute("aria-expanded", "true");
+}
+function wksPick(fm, id) {
+  var r = wkVenue(id); if (!r) return;
+  fm.elements.venue.value = r.id; fm.elements.name.value = r.name || ""; fm.elements.city.value = r.city || "";
+  var box = fm.querySelector(".wks-sug"); box.hidden = true; fm.elements.name.setAttribute("aria-expanded", "false");
+}
+document.addEventListener("input", function (ev) {
+  var inp = ev.target; if (!inp.closest || !inp.closest(".wks-pick")) return;
+  inp.form.elements.venue.value = "";   // вписывают своё — связь со справочником снимается, пока не выберут из списка
+  wksSugShow(inp);
+});
+document.addEventListener("keydown", function (ev) {
+  var inp = ev.target; if (!inp.closest || !inp.closest(".wks-pick")) return;
+  var box = inp.parentNode.querySelector(".wks-sug"), opts = [].slice.call(box.querySelectorAll(".wks-opt")), cur = opts.findIndex(function (o) { return o.classList.contains("on"); });
+  if (ev.key === "Escape" && !box.hidden) { ev.preventDefault(); ev.stopPropagation(); box.hidden = true; inp.setAttribute("aria-expanded", "false"); return; }
+  if (box.hidden || !opts.length) return;
+  if (ev.key === "ArrowDown" || ev.key === "ArrowUp") {
+    ev.preventDefault(); var nx = (cur + (ev.key === "ArrowDown" ? 1 : -1) + opts.length) % opts.length;
+    opts.forEach(function (o, i) { o.classList.toggle("on", i === nx); o.setAttribute("aria-selected", String(i === nx)); });
+    inp.setAttribute("aria-activedescendant", opts[nx].id); opts[nx].scrollIntoView({ block: "nearest" });
+  } else if (ev.key === "Enter" && cur >= 0) { ev.preventDefault(); wksPick(inp.form, opts[cur].getAttribute("data-wks-pick")); inp.form.elements.city.focus(); }
+});
+document.addEventListener("mousedown", function (ev) {   // выбор мышью — до того, как поле потеряет фокус
+  var o = ev.target.closest && ev.target.closest("[data-wks-pick]"); if (!o) return;
+  ev.preventDefault(); var fm = o.closest("form"); wksPick(fm, o.getAttribute("data-wks-pick")); fm.elements.city.focus();
+});
+document.addEventListener("focusout", function (ev) {
+  var inp = ev.target; if (!inp.closest || !inp.closest(".wks-pick")) return;
+  setTimeout(function () { var box = inp.parentNode && inp.parentNode.querySelector(".wks-sug"); if (box && document.activeElement !== inp) { box.hidden = true; inp.setAttribute("aria-expanded", "false"); } }, 150);
+});
+document.addEventListener("click", function (ev) {   // площадка в гастролях → её страница в справочнике; «Назад» вернёт в проект
+  var b = ev.target.closest && ev.target.closest("[data-wks-venue]"); if (!b || S.view !== "work") return;
+  S.wk.y = window.scrollY; S.vb.from = { proj: S.wk.proj };
+  S.view = "venues"; S.sub.venues = "book"; S.enter = true; location.hash = "venues"; S.vb.y = 0; S.vb.sel = b.getAttribute("data-wks-venue"); S.vb.all = false; S.colsOpen = false;
+  render(); window.scrollTo(0, 0);
+});
+function wksVenueBlock(r) {   // на странице площадки: наши гастроли на ней (из «Проектов»)
+  var l = Object.keys(WK.shows || {}).map(function (id) { return WK.shows[id]; }).filter(function (d) { return d.venue === r.id && WK.projects[d.project]; })
+    .sort(function (a, b) { return (a.date || "9999").localeCompare(b.date || "9999"); });
+  if (!l.length) return "";
+  var t0 = wkDay(0);
+  return '<h2 class="pj-h2 wks-vh">Наши гастроли</h2><ul class="wks-vlist">' + l.map(function (d) {
+    return '<li><button type="button" data-wks-proj="' + esc(d.project) + '" title="Открыть проект"><span class="d' + (d.date && d.date < t0 ? ' past' : '') + '">' + (d.date ? wkShortDate(d.date) : 'дата?') + '</span><span class="t">' + esc(WK.projects[d.project].title) + '</span></button></li>';
+  }).join("") + '</ul>';
+}
+document.addEventListener("click", function (ev) {   // гастроли на странице площадки → проект, вкладка «Гастроли»
+  var b = ev.target.closest && ev.target.closest("[data-wks-proj]"); if (!b) return;
+  S.vb.from = null; S.view = "work"; S.enter = true; location.hash = "work";
+  S.wk.proj = b.getAttribute("data-wks-proj"); S.wk.ptab = "shows"; S.wk.mcal = null; S.wk.scrollT = {}; S.wk.qs = { open: "", done: "" }; S.wk.qAt = {};
+  render(); window.scrollTo(0, 0);
 });
 // ---------- Расходы проекта: статья, кому, сумма, дата, оплачено, заметка
 var WK_COST_KINDS = ["Гонорар", "Аренда", "Логистика", "Проживание", "Суточные", "Реклама", "Техника", "Билетная система", "Прочее"];
@@ -4689,6 +4833,10 @@ document.addEventListener("click", function (ev) {
   var spec = b.getAttribute("data-wk-date");
   wkDateOpen(b, b.getAttribute("data-wk-val"), function (v) {
     if (spec === "draft") { S.wk.draft.due = v; wkNewTaskRefresh(); return; }   // окно новой задачи
+    if (spec === "sform") {   // форма добавления гастролей
+      var sf = b.closest("form"); sf.elements.date.value = v; b.setAttribute("data-wk-val", v);
+      b.innerHTML = WKT_ICON.cal + (v ? wkShortDate(v) : "Дата"); b.classList.toggle("set", !!v); return;
+    }
     if (spec === "form") {   // форма добавления задачи: дата — в скрытое поле, подпись — на кнопке
       var fm = b.closest("form"); fm.elements.due.value = v; b.setAttribute("data-wk-val", v);
       b.innerHTML = WKT_ICON.cal + (v ? wkDueInfo(v).text : "Срок"); b.classList.toggle("set", !!v); return;
@@ -4900,7 +5048,7 @@ function wktFit() {
   });
 }
 window.addEventListener("resize", function () { if (S.view === "work") wktFit(); });
-function wkFocusAdd(kind) { var i = document.querySelector('[data-wk-add="' + kind + '"] input[name=' + ({ tasks: "text", projects: "title", docs: "kind", costs: "name" }[kind]) + ']'); if (i) i.focus(); }
+function wkFocusAdd(kind) { var i = document.querySelector('[data-wk-add="' + kind + '"] input[name=' + ({ tasks: "text", projects: "title", docs: "kind", costs: "name", shows: "name" }[kind]) + ']'); if (i) i.focus(); }
 $("view").addEventListener("submit", function (ev) {
   var sf = ev.target.closest("[data-wkt-sub-add]");
   if (sf && S.view === "work") {
@@ -4914,6 +5062,11 @@ $("view").addEventListener("submit", function (ev) {
     if (!v("text")) { fm.elements.text.focus(); return; }
     S.wk.addProj = v("project");
     wkPut("tasks", wkId("t"), { text: v("text"), due: v("due"), project: v("project"), done: false, created: wkDay(0) }, "Задача добавлена");
+  } else if (kind === "shows") {
+    if (!v("name") && !v("city")) { fm.elements.name.focus(); return; }
+    var vr = wkVenue(v("venue"));
+    wkPut("shows", wkId("g"), { project: v("project"), date: v("date"), venue: vr ? vr.id : "", name: vr ? vr.name || "" : v("name"), city: vr ? vr.city || "" : v("city") },
+      vr ? "Гастроли добавлены" : "Добавлено без связи со справочником");
   } else if (kind === "costs") {
     if (!v("name") && !v("party")) { fm.elements.name.focus(); return; }
     wkPut("costs", wkId("c"), { project: v("project"), name: v("name"), party: v("party"), amount: v("amount"), date: "", paid: false, note: "" }, "Расход добавлен");
@@ -4952,6 +5105,7 @@ $("view").addEventListener("change", function (ev) {
   rec[fld] = val;
   if (kind === "docs" && !rec.kind && !rec.party) { toast("У документа нужно название или контрагент"); render(); return; }
   if (kind === "costs" && !rec.name && !rec.party) { toast("У расхода нужна статья или получатель"); render(); return; }
+  if (kind === "shows" && !rec.name && !rec.city) { toast("У гастролей нужна площадка или город"); render(); return; }
   var quiet = ["text", "title", "note", "kind", "party", "amount"].indexOf(fld) >= 0;   // порядок и группы от них не зависят
   var y = window.scrollY; wkPut(kind, rid, rec, "", quiet); window.scrollTo(0, y);
   if (fld === "amount") t.value = wkMoney(val === "" ? null : +val);
@@ -5281,7 +5435,7 @@ function vbPage(r) {
     '</dl></section>' +
     '<section><button class="pj-plain" data-vb="history">История изменений</button>' +
       (VBOOK.imported ? '<p class="sub" style="margin:8px 0 0">Из Google Таблицы «Площадки База данных с информацией» · загружено ' + atText(VBOOK.imported) + (r.upd ? ' · изменено на сайте ' + atText(r.upd) : '') + '</p>' : '') + '</section>';
-  return hero + '<div class="pj-grid"><div class="pj-main"><div class="pj-list-head"><div><h2 class="pj-h2">Мероприятия</h2>' + sum + '</div></div>' + body + '</div>' +
+  return hero + '<div class="pj-grid"><div class="pj-main">' + wksVenueBlock(r) + '<div class="pj-list-head"><div><h2 class="pj-h2">Мероприятия</h2>' + sum + '</div></div>' + body + '</div>' +
     '<aside class="pj-aside" aria-label="О площадке">' + aside + '</aside></div>';
 }
 // ---------- «Редактировать»: всё о площадке в одном окне (фото — сразу при загрузке, поля — кнопкой «Сохранить»)
@@ -5376,6 +5530,9 @@ function vbAfterFile(ok) {   // окно «Редактировать» откр
 })();
 function vbAction(t, ev) {
   var a = t.getAttribute("data-vb"), r = vbRec(S.vb.sel);
+  if (a === "back" && S.vb.from) {   // пришли из гастролей проекта — туда и возвращаемся
+    var fr = S.vb.from; S.vb.from = null; S.vb.sel = null; S.view = "work"; location.hash = "work"; S.wk.proj = fr.proj; S.wk.ptab = "shows"; render(); window.scrollTo(0, S.wk.y || 0); return;
+  }
   if (a === "back") { S.vb.sel = null; render(); window.scrollTo(0, S.vb.y || 0); }
   else if (a === "more") { S.vb.limit += 200; render(); }
   else if (a === "all") { S.vb.all = true; render(); }
@@ -5582,7 +5739,7 @@ function vbHistory() {
     pjDialog("pj-edit jr-dlg", "История изменений · " + (r.name || r.city), jrList(x.d.entries, x.d.areas, false));
   }, function () { toast("Журнал не загрузился: " + NO_APP); });
 }
-function vbOpen(id) { S.vb.y = window.scrollY; S.vb.sel = id; S.vb.all = false; S.colsOpen = false; render(); window.scrollTo(0, 0); }
+function vbOpen(id) { S.vb.y = window.scrollY; S.vb.from = null; S.vb.sel = id; S.vb.all = false; S.colsOpen = false; render(); window.scrollTo(0, 0); }
 
 function renderVenues() {
   var data = cityData();
