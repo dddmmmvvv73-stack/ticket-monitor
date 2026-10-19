@@ -11,6 +11,7 @@
     {"imported": ISO-время, "source": имя файла, "rows": [{"id", "city", "name", "legal", "inn", "site", "contact",
                                                           "phone", "email", "seats", "sale", "rent", "agent", "director",
                                                           "edo" — full | in | none, "stage", "admin_row",
+                                                          "light", "sound" — специалисты по свету и звуку,
                                                           "media": {"avatar" | "cover": файл?v=метка},
                                                           "rider": {"file", "name" — как назывался у вас, "size", "at"},
                                                           "edited": [поля, исправленные на сайте], "upd"}]}
@@ -46,7 +47,7 @@ HEAD = {"город": "city", "площадка": "name", "юр лицо": "lega
         "телефон": "phone", "почта": "email", "кол-во мест": "seats", "выход в продажу": "sale", "аренда": "rent",
         "агентский %": "agent", "директор": "director"}
 FIELDS = list(HEAD.values())
-EXTRA = ["edo", "stage", "admin_row"]   # поля, которых нет в таблице пользователя — только на сайте
+EXTRA = ["edo", "stage", "admin_row", "light", "sound"]   # поля, которых нет в таблице пользователя — только на сайте
 EDO = {"full": "полное", "in": "только входящий", "none": "не работают"}
 TEXT_MAX = 3000
 MEDIA_DIR = CONFIG_DIR / "venue_media"

@@ -3299,11 +3299,13 @@ var VB_COLS = [
   { id: "director", label: "Директор", w: 190, sort: "director" },
   { id: "admin_row", label: "Административный ряд", w: 180, sort: "admin_row" },   // поля сайта (19.10) — в таблице пользователя их нет
   { id: "stage", label: "Размер сцены", w: 150, sort: "stage" },
-  { id: "edo", label: "ЭДО", w: 150, sort: "edo" }
+  { id: "edo", label: "ЭДО", w: 150, sort: "edo" },
+  { id: "light", label: "Специалист по свету", w: 190, sort: "light" },
+  { id: "sound", label: "Специалист по звуку", w: 190, sort: "sound" }
 ];
 var VB_EDO = [["full", "Полное"], ["in", "Только входящий"], ["none", "Не работают"]];
 function vbEdoText(v) { var x = VB_EDO.filter(function (o) { return o[0] === v; })[0]; return x ? x[1] : ""; }
-var VB_MULTI = { contact: 1, phone: 1, email: 1, rent: 1, director: 1, sale: 1, admin_row: 1, stage: 1, seats: 1, agent: 1, legal: 1 };   // правка — в несколько строк
+var VB_MULTI = { contact: 1, phone: 1, email: 1, rent: 1, director: 1, sale: 1, admin_row: 1, stage: 1, seats: 1, agent: 1, legal: 1, light: 1, sound: 1 };   // правка — в несколько строк
 var VB_FIT = [["contact", 130], ["email", 160], ["director", 130], ["rent", 150], ["sale", 130], ["legal", 120], ["site", 110], ["name", 200], ["phone", 130]];   // «Город» не сжимаем — названия городов переносились посреди слова
 var VB_FILL = [["", "Все"], ["nophone", "Без телефона"], ["noseats", "Без числа мест"], ["norent", "Без аренды"], ["site", "Есть сайт"]];
 function vbLead(v) { var m = String(v || "").replace(/\s/g, "").match(/\d+(?:[.,]\d+)?/); return m ? parseFloat(m[0].replace(",", ".")) : null; }   // «664 ( 11 ряд не продаём )» → 664
@@ -3343,6 +3345,12 @@ function vbTel(s) {
   if (d.length !== 11 || !/^[78]/.test(d)) return null;
   d = "7" + d.slice(1);
   return { href: "tel:+" + d, text: "+7 " + d.slice(1, 4) + " " + d.slice(4, 7) + "-" + d.slice(7, 9) + "-" + d.slice(9) };
+}
+// Текст с телефонами внутри («Сергей, +7 900 111-22-33»): номер — ссылкой tel:, без переноса посередине
+function vbTextTel(v) {
+  return esc(v).replace(/(\+7|8)[\s(-]*\d{3}[\s)-]*\d{3}[\s-]*\d{2}[\s-]*\d{2}/g, function (m) {
+    var t = vbTel(m); return t ? '<a class="nowrap" href="' + t.href + '">' + t.text + '</a>' : m;
+  });
 }
 function vbPhones(v) {
   return String(v).split(/\n|[,;]|\s{2,}|\s(?=[78+]\s?\(?\d{3})/).map(function (p) { return p.trim(); }).filter(Boolean).map(function (p) {
@@ -3507,10 +3515,12 @@ function vbPage(r) {
       '<dt>Кол-во мест</dt>' + dd("seats") +
       '<dt>Административный ряд</dt>' + dd("admin_row", pre("admin_row")) +
       '<dt>Размер сцены</dt>' + dd("stage", pre("stage")) +
-      '<dt>Технический райдер</dt><dd>' + rider + '</dd>' +
       '<dt>Выход в продажу</dt>' + dd("sale") +
       '<dt>Аренда</dt>' + dd("rent", pre("rent")) +
       '<dt>Агентский %</dt>' + dd("agent") +
+      '<dt>Специалист по свету</dt>' + dd("light", '<span style="white-space:pre-line">' + vbTextTel(r.light) + '</span>') +
+      '<dt>Специалист по звуку</dt>' + dd("sound", '<span style="white-space:pre-line">' + vbTextTel(r.sound) + '</span>') +
+      '<dt>Технический райдер</dt><dd>' + rider + '</dd>' +   // райдер — всегда последней строкой (решение пользователя 19.10)
     '</dl></section>' +
     (VBOOK.imported ? '<section><p class="sub" style="margin:0">Из Google Таблицы «Площадки База данных с информацией» · загружено ' + atText(VBOOK.imported) + (r.upd ? ' · изменено на сайте ' + atText(r.upd) : '') + '</p></section>' : '');
   return hero + '<div class="pj-grid"><div class="pj-main"><div class="pj-list-head"><div><h2 class="pj-h2">Мероприятия</h2>' + sum + '</div></div>' + body + '</div>' +
@@ -3521,7 +3531,8 @@ var VB_FORM = [
   ["Основное", [["name", "Площадка"], ["city", "Город"], ["legal", "Юр лицо"], ["inn", "ИНН"], ["site", "Сайт", "https://…"], ["director", "Директор"]]],
   ["Контакты", [["contact", "Имя", "Имя, роль — по одному в строке"], ["phone", "Телефон", "Можно несколько — по одному в строке"], ["email", "Почта"]]],
   ["Зал и условия", [["seats", "Кол-во мест"], ["admin_row", "Административный ряд", "Например: 9 ряд, места 10–21"], ["stage", "Размер сцены", "Например: 12 × 8 м, высота 6 м"],
-    ["sale", "Выход в продажу"], ["rent", "Аренда"], ["agent", "Агентский %"]]]
+    ["sale", "Выход в продажу"], ["rent", "Аренда"], ["agent", "Агентский %"]]],
+  ["Технические специалисты", [["light", "Специалист по свету", "Имя, телефон"], ["sound", "Специалист по звуку", "Имя, телефон"]]]
 ];
 var VB_PH_LABEL = { avatar: "Миниатюра", cover: "Фон шапки" };
 function vbPh(r, kind) {
