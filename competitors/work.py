@@ -12,7 +12,8 @@
     {"projects": {номер: {"title", "stage", "start", "end", "note", "upd"}},
      "tasks":    {номер: {"text", "due", "project", "done", "done_at", "note", "created", "upd",
                           "desc" — описание, "subs": [{"id", "text", "done"}] — подзадачи,
-                          "time" — затрачено, секунд; "run" — таймер идёт с (ISO-время) или пусто; "est" — план, минут}},
+                          "time" — затрачено, секунд; "run" — таймер идёт с (ISO-время) или пусто; "est" — план, минут,
+                          "prio" — приоритет: high | mid | low | пусто}},
      "docs":     {номер: {"project", "kind", "party", "status", "amount", "pay", "closing", "note", "upd"}},
      "tags":     {номер: {"name", "color"}},
      "costs":    {номер: {"project", "name" — статья, "party" — кому, "amount", "date", "paid", "note", "upd"}},
@@ -41,6 +42,7 @@ DEFAULT_TAGS = {"tgcontract": {"name": "Договоры", "color": "blue"}, "tg
 STAGES = ["idea", "talks", "prep", "sales", "live", "closing", "done"]
 DOC_STATUS = ["draft", "sent", "signed"]
 PAY = ["no", "part", "paid"]
+PRIO = ["", "low", "mid", "high"]
 CLOSING = ["no", "got"]
 TEXT_MAX = 3000
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -177,7 +179,8 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
                "created": _date(d.get("created"), "создана") or datetime.now().strftime("%Y-%m-%d"),
                "desc": _text(d.get("desc"), "описание", 20000), "subs": _subs(d.get("subs")),
                "time": _int(d.get("time"), "время", 0, 10 ** 8), "run": _stamp(d.get("run")), "est": _int(d.get("est"), "план", 0, 10 ** 6),
-               "tags": [t for t in (d.get("tags") or []) if t in data["tags"]][:12]}
+               "tags": [t for t in (d.get("tags") or []) if t in data["tags"]][:12],
+               "prio": _enum(d.get("prio"), PRIO, "приоритет", "")}
         if not out["text"]:
             raise WorkError("у задачи нужен текст")
         if out["done"]:

@@ -130,6 +130,8 @@ def _diff(old: dict | None, new: dict | None):
     before, after = {}, {}
     for k in sorted(keys - NOISE):
         o, n = (old or {}).get(k), (new or {}).get(k)
+        if o is None and n in ("", 0, [], {}, False):   # поле появилось пустым (новая версия записи) — не правка
+            continue
         if o != n:
             before[k], after[k] = o, n
     return before, after
