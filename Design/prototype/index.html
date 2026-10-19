@@ -397,6 +397,27 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
 .confirm h2 { font-weight: 500; font-size: 18px; }
 .confirm .form-actions { border-top: 0; padding-top: 16px; }
 
+/* ---------- Справочник площадок (Площадки → Площадки): ячейки — текст как в таблице пользователя, до двух строк ---------- */
+.vb-t { font-size: 13px; line-height: 1.35; white-space: pre-line; overflow-wrap: break-word; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.vb-name { font-size: 14px; font-weight: 500; color: var(--ink); }
+.vb-mail { overflow-wrap: anywhere; }   /* длинная почта — переносится где угодно, слова — только целиком */
+.vb-table tbody tr:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.vb-table td a, .pj-aside .pj-dl a { color: inherit; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line-strong); }
+@media (hover: hover) { .vb-table td a:hover, .pj-aside .pj-dl a:hover { text-decoration-color: var(--ink); } }
+.vb-count { margin-left: auto !important; }
+/* Таблица — по высоте окна, прокрутка внутри карточки в обе стороны: шапка и «Город · Площадка» всегда на виду */
+.ev-card-table.vb-card { max-height: calc(100vh - var(--top-h, 64px) - 28px); overflow: auto; overscroll-behavior: contain; }
+.vb-card .ev-table thead th { top: 0; }
+.vb-table .vb-stick { position: sticky; z-index: 2; background: var(--card); }
+.vb-table thead th.vb-stick { z-index: 5; }
+.vb-table tbody tr:hover .vb-stick { background: #fbfaf9; }
+.vb-table .vb-edge { box-shadow: inset -1px 0 0 var(--line); }
+/* 821–1279 px: таблица «Мероприятий» уходит в карточки, справочник — остаётся таблицей с прокруткой внутри карточки */
+@media (max-width: 1279px) and (min-width: 821px) {
+  .ev-card-table.vb-card { display: block; }
+  .vb-tools .cols-anchor { display: inline-block; }
+  .m-list.vb-mlist { display: none; }
+}
 /* ---------- Страница проекта — вид как у Яндекс Афиши (Design/Reference/Project.png) ---------- */
 /* Шапка до самого верха — под основную панель сайта (убираем верхнее поле .view); «назад» — круглая кнопка поверх шапки */
 .view > .pj-hero:first-child { margin-top: -28px; }
@@ -1643,6 +1664,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <script src="route-plan.js"></script>
 <script src="market-pop.js"></script>
 <script src="venue-cap.js"></script>
+<script src="venue-book.js"></script>
 <script>
 // ---------------------------------------------------------------- данные конкурентов
 // competitors-data.js (CD): через приложение (/proto/) собирается из data/competitors при каждом открытии —
@@ -1851,7 +1873,7 @@ function venuesOf(list, limit) {
 // Разделы, у которых внутри две версии (вся РФ и площадки прямого сбора) — переключатель под заголовком
 var SUBS = {
   niches: [["market", "Города × ниши"], ["direct", "Площадки прямого сбора"]],
-  venues: [["market", "База площадок РФ"], ["direct", "Площадки и залы прямого сбора"]]
+  venues: [["market", "База площадок РФ"], ["direct", "Площадки и залы прямого сбора"], ["book", "Площадки"]]   // «Площадки» — справочник (контакты, условия), 19.10
 };
 // «Репертуар» в меню — три страницы одной вкладки рынка projects: страница ↔ S.sub.projects
 var REP_SUB = { projects: "all", touring: "tour", favorites: "fav" }, REP_VIEW = { all: "projects", tour: "touring", fav: "favorites" };
@@ -3220,6 +3242,243 @@ function hallSection(halls) {
       '</section>' +
     '</div>';
 }
+// ---------------------------------------------------------------- Справочник площадок — «Площадки → Площадки»
+// Решение пользователя 19.10.2026: новое пространство отдельно от «Базы площадок РФ» — потом соединить. Первая версия —
+// столбцы таблицы пользователя «Площадки База данных с информацией», значения как в ней (текст). Данные — с сервера
+// (competitors/venuebook.py → /proto/venue-book.js, VBOOK; config/venue_book.json вне git: контакты).
+// Таблица — как «Мероприятия»: сортировка по заголовку, «Столбцы», ширина перетаскиванием, шапка прилипает; строка →
+// страница площадки в виде страницы проекта (шапка, слева — её мероприятия в афише, справа — контакты и условия).
+var VB_PREFS_KEY = "ticketmonitor.prototype.venuebook";
+var vbPrefs = (function () { try { return JSON.parse(localStorage.getItem(VB_PREFS_KEY)) || {}; } catch (e) { return {}; } })();
+S.vb = { sort: "city", desc: false, city: "", fill: "", limit: 200, sel: null, all: false, y: 0,
+  hidden: vbPrefs.hidden || ["legal", "inn"], widths: vbPrefs.widths || {} };   // юрлицо и ИНН почти пусты (8 и 2 строки) — скрыты, включаются в «Столбцах»
+function vbSave() { try { localStorage.setItem(VB_PREFS_KEY, JSON.stringify({ hidden: S.vb.hidden, widths: S.vb.widths })); } catch (e) { /* хранилище недоступно */ } }
+function vbOn() { return S.view === "venues" && S.sub.venues === "book"; }
+var VB_ROWS = typeof VBOOK !== "undefined" && VBOOK.rows || [];
+var VB_COLS = [
+  { id: "city", label: "Город", w: 130, sort: "city", lock: true },
+  { id: "name", label: "Площадка", w: 240, sort: "name", lock: true },
+  { id: "legal", label: "Юр лицо", w: 170, sort: "legal" },
+  { id: "inn", label: "ИНН", w: 120, sort: "inn" },
+  { id: "site", label: "Сайт", w: 140, sort: "site" },
+  { id: "contact", label: "Имя", w: 180, sort: "contact" },
+  { id: "phone", label: "Телефон", w: 150, sort: "phone" },
+  { id: "email", label: "Почта", w: 200, sort: "email" },
+  { id: "seats", label: "Кол-во мест", w: 130, sort: "seats", r: true },
+  { id: "sale", label: "Выход в продажу", w: 170, sort: "sale" },
+  { id: "rent", label: "Аренда", w: 190, sort: "rent" },
+  { id: "agent", label: "Агентский %", w: 120, sort: "agent" },
+  { id: "director", label: "Директор", w: 190, sort: "director" }
+];
+var VB_FIT = [["contact", 130], ["email", 160], ["director", 130], ["rent", 150], ["sale", 130], ["legal", 120], ["site", 110], ["name", 200], ["phone", 130]];   // «Город» не сжимаем — названия городов переносились посреди слова
+var VB_FILL = [["", "Все"], ["nophone", "Без телефона"], ["noseats", "Без числа мест"], ["norent", "Без аренды"], ["site", "Есть сайт"]];
+function vbLead(v) { var m = String(v || "").replace(/\s/g, "").match(/\d+(?:[.,]\d+)?/); return m ? parseFloat(m[0].replace(",", ".")) : null; }   // «664 ( 11 ряд не продаём )» → 664
+function vbKey(r, k) {
+  var v = r[k] || "";
+  if (k === "seats" || k === "agent") return vbLead(v);
+  return v ? v.toLowerCase().replace(/ё/g, "е").replace(/^[^a-zа-я0-9]+/, "") : null;
+}
+function vbList() {
+  var q = S.q.trim().toLowerCase().replace(/ё/g, "е"), f = S.vb.fill;
+  var list = VB_ROWS.filter(function (r) {
+    if (S.vb.city && r.city !== S.vb.city) return false;
+    if (f === "nophone" && r.phone) return false;
+    if (f === "noseats" && r.seats) return false;
+    if (f === "norent" && r.rent) return false;
+    if (f === "site" && !r.site) return false;
+    return !q || VB_COLS.some(function (c) { return String(r[c.id] || "").toLowerCase().replace(/ё/g, "е").indexOf(q) >= 0; });
+  });
+  var k = S.vb.sort, dir = S.vb.desc ? -1 : 1;
+  return list.sort(function (a, b) {
+    var x = vbKey(a, k), y = vbKey(b, k);
+    if (x == null || y == null) return x == null && y == null ? 0 : x == null ? 1 : -1;   // пустые — всегда в конце
+    return (x < y ? -1 : x > y ? 1 : 0) * dir || (a.city < b.city ? -1 : a.city > b.city ? 1 : 0) || (a.name < b.name ? -1 : 1);
+  });
+}
+function vbMails(v) { return esc(v).replace(/[\w.+-]+@[\w-]+(\.[\w-]+)+/g, function (m) { return '<a href="mailto:' + m + '">' + m + '</a>'; }); }
+function vbHost(u) { return String(u).replace(/^https?:\/\/(www\.)?/, "").replace(/[/?#].*$/, ""); }
+function vbSite(v, full) {
+  if (!/^https?:\/\//.test(v)) return esc(v);
+  return '<a href="' + esc(v) + '" target="_blank" rel="noopener" title="' + esc(v) + '">' + esc(full ? vbHost(v) : vbHost(v).replace(/^xn--.*$/, "сайт")) + ' ↗</a>';
+}
+// Телефон для ссылки tel: — 11 цифр с 7 или 8 впереди (или 10 без них) → +7…; иначе — как написан, без ссылки
+function vbTel(s) {
+  var d = s.replace(/\D/g, "");
+  if (d.length === 10) d = "7" + d;
+  if (d.length !== 11 || !/^[78]/.test(d)) return null;
+  d = "7" + d.slice(1);
+  return { href: "tel:+" + d, text: "+7 " + d.slice(1, 4) + " " + d.slice(4, 7) + "-" + d.slice(7, 9) + "-" + d.slice(9) };
+}
+function vbPhones(v) {
+  return String(v).split(/\n|[,;]|\s{2,}|\s(?=[78+]\s?\(?\d{3})/).map(function (p) { return p.trim(); }).filter(Boolean).map(function (p) {
+    var t = vbTel(p); return t ? '<a href="' + t.href + '">' + t.text + '</a>' : esc(p);
+  }).join("<br>");
+}
+var VB_CELL = {
+  city: function (r) { return '<div class="vb-t" style="font-weight:500">' + esc(r.city) + '</div>'; },
+  name: function (r) { return '<div class="vb-t vb-name">' + esc(r.name || "без названия") + '</div>'; },
+  site: function (r) { return '<div class="vb-t">' + vbSite(r.site) + '</div>'; },
+  email: function (r) { return '<div class="vb-t vb-mail">' + vbMails(r.email) + '</div>'; }
+};
+function vbCell(c, r) {
+  var v = r[c.id];
+  if (!v) return '<span class="muted">—</span>';
+  return VB_CELL[c.id] ? VB_CELL[c.id](r) : '<div class="vb-t" title="' + esc(v) + '">' + esc(v) + '</div>';
+}
+function vbColsControl() {
+  var hidden = S.vb.hidden;
+  var pop = S.colsOpen ? '<div class="popover right cols-pop' + (S.colsAnim ? ' anim' : '') + '" role="dialog" aria-label="Столбцы таблицы"><div style="font-weight:500;margin-bottom:6px">Показывать столбцы</div>' +
+    VB_COLS.map(function (c) {
+      var off = hidden.indexOf(c.id) >= 0;
+      return '<label class="' + (c.lock ? "locked" : "") + '"><input type="checkbox" data-vbcolvis="' + c.id + '"' + (off ? "" : " checked") + (c.lock ? " disabled" : "") + '>' + c.label + (c.lock ? '<span class="muted" style="margin-left:auto;font-size:12px">всегда</span>' : '') + '</label>';
+    }).join("") +
+    '<button class="btn-ghost" data-vb="reset-cols" style="margin-top:10px;width:100%">Вернуть столбцы и ширину как было</button></div>' : '';
+  return '<div class="pop-anchor cols-anchor mright"><button class="ficon' + (hidden.length ? ' on' : '') + '" data-action="cols" aria-expanded="' + S.colsOpen + '" aria-haspopup="dialog" aria-label="Столбцы таблицы' + (hidden.length ? ', скрыто ' + hidden.length : '') + '" title="Столбцы таблицы' + (hidden.length ? ' · скрыто ' + hidden.length : '') + '">' +
+    '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2.5" y="3" width="13" height="12" rx="1.8"/><path d="M2.5 7h13M7 7v8M11.5 7v8"/></svg></button>' + pop + '</div>';
+}
+function renderVenueBook() {
+  if (!VB_ROWS.length) return head("Площадки", "Справочник площадок: контакты и условия") +
+    '<div class="empty"><h2>Справочник площадок не загружен</h2><p style="margin:0 auto;max-width:560px">' + (ON_APP
+      ? 'Загрузите таблицу «Площадки База данных с информацией» (Google Таблица → Файл → Скачать → xlsx): python3 -m competitors.venuebook import файл.xlsx'
+      : 'Справочник хранится на сервере — в нём контакты, в файлы прототипа он не попадает. Откройте прототип через приложение: python3 app.py → http://127.0.0.1:5050/proto/') + '</p></div>';
+  if (S.vb.sel) {
+    var rec = VB_ROWS.filter(function (r) { return r.id === S.vb.sel; })[0];
+    if (rec) return vbPage(rec);
+    S.vb.sel = null;
+  }
+  var list = vbList(), shown = list.slice(0, S.vb.limit);
+  var cols = VB_COLS.filter(function (c) { return S.vb.hidden.indexOf(c.id) < 0; }), fitW = mFitted(cols, S.vb.widths, VB_FIT), totalW = cols.reduce(function (s, c) { return s + fitW[c.id]; }, 0);
+  var cities = {}; VB_ROWS.forEach(function (r) { if (r.city) cities[r.city] = (cities[r.city] || 0) + 1; });
+  var nCity = Object.keys(cities).length;
+  var cityOpts = '<option value="">Все</option>' + Object.keys(cities).sort(function (a, b) { return a.localeCompare(b, "ru"); }).map(function (c) {
+    return '<option value="' + esc(c) + '"' + (S.vb.city === c ? " selected" : "") + '>' + esc(c) + ' · ' + cities[c] + '</option>'; }).join("");
+  // «Город» и «Площадка» закреплены слева: при прокрутке вбок строка не теряется
+  var stick = {}, left = 0;
+  cols.forEach(function (c) { if (c.lock) { stick[c.id] = left; left += fitW[c.id]; } });
+  var stickAttr = function (c) { return c.id in stick ? ' style="left:' + stick[c.id] + 'px"' : ''; };
+  var stickCls = function (c) { return c.id in stick ? " vb-stick" + (c.id === "name" ? " vb-edge" : "") : ""; };
+  var rows = shown.map(function (r) {
+    return '<tr data-vbrow="' + esc(r.id) + '" tabindex="0" aria-label="' + esc(r.name + ", " + r.city) + '">' + cols.map(function (c) { return '<td class="' + mAlign(c) + stickCls(c) + '"' + stickAttr(c) + '>' + vbCell(c, r) + '</td>'; }).join("") + '</tr>';
+  }).join("");
+  var mobile = shown.map(function (r) {
+    return '<button class="m-item" data-vbrow="' + esc(r.id) + '"><div class="d-sub">' + esc(r.city) + (r.seats ? ' · ' + esc(String(vbLead(r.seats) || r.seats)) + ' мест' : '') + '</div>' +
+      '<div style="font-weight:500;margin:2px 0 4px">' + esc(r.name || "без названия") + '</div><div class="sub2">' + esc([r.contact, r.phone].filter(Boolean).join(" · ").replace(/\n/g, ", ")) + '</div></button>';
+  }).join("");
+  var empty = !list.length ? '<div class="empty" style="border:0"><h2>Ничего не найдено</h2><p style="margin:0">Измените город, фильтр или поиск.</p></div>' : '';
+  var src = VBOOK.imported ? 'из Google Таблицы «Площадки База данных с информацией» · загружено ' + atText(VBOOK.imported) : '';
+  return head("Площадки", "Справочник площадок: контакты и условия · " + num(VB_ROWS.length) + " " + plural(VB_ROWS.length, "площадка", "площадки", "площадок") + " в " + nCity + " " + plural(nCity, "городе", "городах", "городах")) +
+    '<div class="toolbar mtools vb-tools">' +
+      '<select class="flat-select" data-flat-label="Город" data-vbsel="city" aria-label="Город">' + cityOpts + '</select>' +
+      '<select class="flat-select" data-flat-label="Заполнено" data-vbsel="fill" aria-label="Что заполнено">' + VB_FILL.map(function (o) { return '<option value="' + o[0] + '"' + (S.vb.fill === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
+      (S.q.trim() ? '<button class="chip-btn chip-active" data-vb="q-clear" aria-label="Убрать поиск">Поиск: ' + esc(S.q.trim()) + ' ✕</button>' : '') +
+      '<span class="sub vb-count" style="margin:0">' + num(list.length) + ' ' + plural(list.length, "площадка", "площадки", "площадок") + '</span>' +
+      vbColsControl() +
+    '</div>' +
+    '<section class="card ev-card-table vb-card"><table class="ev-table vb-table" id="evTable" style="width:' + totalW + 'px"><colgroup>' + cols.map(function (c) { return '<col data-col="' + c.id + '" style="width:' + fitW[c.id] + 'px">'; }).join("") + '</colgroup>' +
+      '<thead><tr>' + cols.map(function (c) { return mTh(c, S.vb.sort === c.sort, S.vb.desc, "data-vbsort").replace('<th scope="col" class="', '<th scope="col"' + stickAttr(c) + ' class="' + stickCls(c) + ' '); }).join("") + '</tr></thead><tbody>' + rows + '</tbody></table>' + empty + '</section>' +
+    '<div class="m-list vb-mlist">' + mobile + (list.length ? "" : empty) + '</div>' +
+    (list.length > shown.length ? '<div style="display:flex;justify-content:center;align-items:center;gap:12px"><span class="sub" style="margin:0">Показано ' + num(shown.length) + ' из ' + num(list.length) + '</span><button class="btn-ghost" data-vb="more">Показать ещё ' + Math.min(200, list.length - shown.length) + '</button></div>' : '') +
+    (src ? '<p class="sub" style="margin:0">Нажмите на строку — откроется страница площадки. Данные ' + esc(src) + '. Поиск — строкой вверху страницы, по всем столбцам.</p>' : '');
+}
+// Площадка ↔ её мероприятия в афише рынка: тот же город и похожее название. Слова — без форм собственности (МБУК, МАУ…) и
+// без названия города («Рязанский», «г. Подольск»); «дворец/дом культуры» = «ДК», «концертный зал» = «КЗ». Родовые слова
+// (ДК, театр, филармония, центр…) сами по себе не совпадение: «ГДК» ≠ «ГДК (Мелеуз)», «ДК Балашиха» ≠ «ДК Саввино (г. Балашиха)».
+// Есть отличительные слова у обоих — общих ≥ половины или одно название целиком внутри другого; нет — названия равны
+var VB_LEGAL = /^(мбук|мбу|мук|мау|маук|гбук|гаук|мкук|гбу|гау|ау|бу|муп|ооо|ао|пао|врио|огаук|гук|мку|мбоу|гауки|оау|тогаук|гоаук|умбук|мбуk|мауk)$/;
+var VB_GENERIC = /^(дк|гдк|цдк|рдк|кз|гкз|бкз|кдц|цкд|цкр|цкио|цк|кц|ккз|театр|драмтеатр|драм|филармония|дворец|дом|центр|культуры|культурный|культурно|досуговый|молодежи|молодежный|концертный|концертно|зал|городской|областной|районный|республики|республиканский|государственный|академический|центральный|клуб|и|им|на|г|город|города|ex|дкит|дкио)$/;
+function vbCityKey(c) { return String(c || "").toLowerCase().replace(/ё/g, "е").replace(/\(.*?\)/g, "").replace(/\s+/g, " ").trim(); }
+function vbWords(v, city) {
+  var stem = vbCityKey(city).replace(/[^а-яa-z]/g, "").slice(0, 5);
+  var s = " " + String(v || "").toLowerCase().replace(/ё/g, "е").replace(/[«»"“”„'`.,()\-–—:;!?/\\]/g, " ").split(/\s+/).filter(function (w) { return w && !VB_LEGAL.test(w); }).join(" ") + " ";
+  [[/ (дворец|дом|дворца) культуры /g, " дк "], [/ концертный зал /g, " кз "], [/ имени /g, " им "], [/ драматический театр /g, " драмтеатр "], [/ театр драмы /g, " драмтеатр "]].forEach(function (x) { s = s.replace(x[0], x[1]); });
+  return s.split(" ").filter(function (w) { return w.length > 1 && !(stem.length >= 3 && w.indexOf(stem) === 0); });
+}
+function vbSame(a, b, city) {
+  var A = vbWords(a, city), B = vbWords(b, city); if (!A.length || !B.length) return false;
+  var dist = function (l) { return l.filter(function (w) { return !VB_GENERIC.test(w); }); }, DA = dist(A), DB = dist(B);
+  if (!DA.length || !DB.length) return A.slice().sort().join(" ") === B.slice().sort().join(" ");
+  var both = DA.filter(function (w) { return DB.indexOf(w) >= 0; }).length;
+  return both > 0 && (both / (DA.length + DB.length - both) >= 0.5 || both === Math.min(DA.length, DB.length));
+}
+function vbEvents(r) {
+  var ck = vbCityKey(r.city), names = {}, l = MR.filter(function (e) {
+    if (vbCityKey(e.city) !== ck || !e.venue) return false;
+    if (!(e.venue in names)) names[e.venue] = vbSame(r.name, e.venue, r.city);
+    return names[e.venue];
+  }).sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+  return { l: l, names: Object.keys(names).filter(function (n) { return names[n]; }) };
+}
+var VB_MAIL_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="3.5" width="12" height="9" rx="1.5"/><path d="M2.5 4.5L8 9l5.5-4.5"/></svg>';
+function vbPage(r) {
+  var ev = vbEvents(r), l = ev.l, all = S.vb.all, rows = all ? l : l.slice(0, PJ_ROWS);
+  var phone = String(r.phone || "").split(/\n|[,;]/).map(vbTel).filter(Boolean)[0], mail = (String(r.email || "").match(/[\w.+-]+@[\w-]+(\.[\w-]+)+/) || [])[0];
+  var seats = vbLead(r.seats), tags = [seats ? num(seats) + " мест" : "", r.sale].filter(Boolean);
+  var hero = '<section class="pj-hero">' +
+    '<button class="pj-back-btn" data-vb="back" aria-label="Назад: Площадки" title="Назад: Площадки">' + PJ_ICON.back + '</button>' +
+    '<div class="pj-hero-in">' +
+      '<div class="pj-ava" aria-hidden="true" style="display:grid;place-items:center"><span class="pj-ini">' + esc(pjInitials(r.name)) + '</span></div>' +
+      '<div class="pj-hero-text"><h1 class="pj-name">' + esc(r.name || "Без названия") + '</h1>' +
+        '<p class="pj-sub">' + esc([r.city, r.legal].filter(Boolean).join(" · ")) + '</p>' +
+        (tags.length ? '<div class="pj-tags">' + tags.map(function (t) { return '<span class="pj-tag">' + esc(t) + '</span>'; }).join("") + '</div>' : '') +
+        '<div class="pj-actions">' +
+          (phone ? '<a class="pj-btn primary" href="' + phone.href + '">' + PJ_ICON.phone + phone.text + '</a>' : '') +
+          (mail ? '<a class="pj-btn pj-icon" href="mailto:' + esc(mail) + '" aria-label="Написать: ' + esc(mail) + '" title="' + esc(mail) + '">' + VB_MAIL_ICON + '</a>' : '') +
+          (/^https?:\/\//.test(r.site) ? '<a class="pj-btn pj-icon" href="' + esc(r.site) + '" target="_blank" rel="noopener" aria-label="Сайт площадки" title="' + esc(vbHost(r.site)) + '">' + PJ_ICON.site + '</a>' : '') +
+        '</div></div></div></section>';
+  var sum = ev.names.length ? '<div class="pj-sum"><span>в афише рынка как ' + ev.names.map(function (n) { return '<b style="font:inherit;color:var(--ink)">«' + esc(n) + '»</b>'; }).join(", ") + '</span></div>' : '';
+  var body = l.length ? '<ul class="pj-dates">' + rows.map(function (e) { return pjRow(e, false, e.title); }).join("") + '</ul>' +
+      (!all && l.length > PJ_ROWS ? '<div class="pj-all"><button class="btn-ghost" data-vb="all">Показать все · ' + l.length + ' ' + plural(l.length, "дата", "даты", "дат") + '</button></div>' : '')
+    : '<div class="note">В афише рынка мероприятий этой площадки не нашли. Сопоставление — по городу и названию: если в афише площадка записана иначе, её даты здесь пока не видны.</div>';
+  var dd = function (v, html) { return '<dd>' + (v ? html || esc(v) : '<span class="muted">не указано</span>') + '</dd>'; };
+  var aside = '<section><h2 class="pj-h3">Контакты</h2><dl class="pj-dl">' +
+      '<dt>Контакт</dt>' + dd(r.contact, '<span style="white-space:pre-line">' + esc(r.contact) + '</span>') +
+      '<dt>Телефон</dt>' + dd(r.phone, vbPhones(r.phone)) +
+      '<dt>Почта</dt>' + dd(r.email, '<span style="white-space:pre-line">' + vbMails(r.email) + '</span>') +
+      '<dt>Директор</dt>' + dd(r.director) +
+    '</dl></section>' +
+    '<section><h3 class="pj-h4">О площадке</h3><dl class="pj-dl">' +
+      '<dt>Город</dt>' + dd(r.city) +
+      '<dt>Юр лицо</dt>' + dd(r.legal) +
+      '<dt>ИНН</dt>' + dd(r.inn) +
+      '<dt>Сайт</dt>' + dd(r.site, vbSite(r.site, true)) +
+      '<dt>Кол-во мест</dt>' + dd(r.seats) +
+      '<dt>Выход в продажу</dt>' + dd(r.sale) +
+      '<dt>Аренда</dt>' + dd(r.rent, '<span style="white-space:pre-line">' + esc(r.rent) + '</span>') +
+      '<dt>Агентский %</dt>' + dd(r.agent) +
+    '</dl></section>' +
+    (VBOOK.imported ? '<section><p class="sub" style="margin:0">Из Google Таблицы «Площадки База данных с информацией» · загружено ' + atText(VBOOK.imported) + '</p></section>' : '');
+  return hero + '<div class="pj-grid"><div class="pj-main"><div class="pj-list-head"><div><h2 class="pj-h2">Мероприятия</h2>' + sum + '</div></div>' + body + '</div>' +
+    '<aside class="pj-aside" aria-label="О площадке">' + aside + '</aside></div>';
+}
+function vbOpen(id) { S.vb.y = window.scrollY; S.vb.sel = id; S.vb.all = false; S.colsOpen = false; render(); window.scrollTo(0, 0); }
+$("view").addEventListener("click", function (ev) {
+  if (!vbOn() || ev.target.closest(".resizer")) return;
+  var t = ev.target.closest("[data-vb],[data-vbsort],[data-vbrow]");
+  if (!t) return;
+  if (t.hasAttribute("data-vbsort")) { var k = t.getAttribute("data-vbsort"); S.vb.desc = S.vb.sort === k ? !S.vb.desc : k === "seats"; S.vb.sort = k; render(); return; }
+  if (t.hasAttribute("data-vbrow")) { if (!ev.target.closest("a")) vbOpen(t.getAttribute("data-vbrow")); return; }   // ссылка в ячейке (сайт, почта) — сама по себе
+  var a = t.getAttribute("data-vb");
+  if (a === "back") { S.vb.sel = null; render(); window.scrollTo(0, S.vb.y || 0); }
+  else if (a === "more") { S.vb.limit += 200; render(); }
+  else if (a === "all") { S.vb.all = true; render(); }
+  else if (a === "q-clear") { S.q = ""; $("q").value = ""; render(); }
+  else if (a === "reset-cols") { S.vb.hidden = ["legal", "inn"]; S.vb.widths = {}; vbSave(); render(); }
+});
+$("view").addEventListener("keydown", function (ev) {
+  if (!vbOn() || ev.key !== "Enter" || !ev.target.hasAttribute || !ev.target.hasAttribute("data-vbrow") || ev.target.tagName !== "TR") return;
+  vbOpen(ev.target.getAttribute("data-vbrow"));
+});
+$("view").addEventListener("change", function (ev) {
+  if (!vbOn()) return;
+  var sel = ev.target.getAttribute("data-vbsel"), vis = ev.target.getAttribute("data-vbcolvis");
+  if (sel) { S.vb[sel] = ev.target.value; S.vb.limit = 200; render(); }
+  if (vis) {
+    var h = S.vb.hidden, i = h.indexOf(vis);
+    if (ev.target.checked && i >= 0) h.splice(i, 1); else if (!ev.target.checked && i < 0) h.push(vis);
+    vbSave(); S.colsAnim = false; render();
+  }
+});
+
 function renderVenues() {
   var data = cityData();
   if (!data.length) return head("Площадки и залы", cityLabel()) + cityEmpty();
@@ -3936,8 +4195,8 @@ function mTbl() {
   if (sub === "tour") return S.m.project ? null : { h: "phidden", w: "pwidths" };
   return S.m.vproj ? null : sub === "all" ? { h: "vhidden", w: "vwidths" } : { h: "fhidden", w: "fwidths" };
 }
-function tblWidths() { return !isM() ? S.widths : S.m[(mTbl() || { w: "widths" }).w]; }
-function tblSave() { if (isM()) saveMPrefs(); else savePrefs(); }
+function tblWidths() { return vbOn() ? S.vb.widths : !isM() ? S.widths : S.m[(mTbl() || { w: "widths" }).w]; }
+function tblSave() { if (vbOn()) vbSave(); else if (isM()) saveMPrefs(); else savePrefs(); }
 
 var FO_ORDER = ["Центральный", "Северо-Западный", "Южный", "Северо-Кавказский", "Приволжский", "Уральский", "Сибирский", "Дальневосточный"];
 function mCityOptions() {
@@ -7673,7 +7932,7 @@ function render() {
   $("dateBtn").style.borderColor = ARCH_ON || S.period === "custom" ? "var(--soot)" : "";
   $("period").style.display = ARCH_ON ? "none" : "";  // «30 дней / 90 дней / Сезон» — про будущее; в архиве период — кнопкой «Даты»
   HEAD_SUB = !isM() && SUBS[S.view] ? subSwitch(S.view) : "";
-  $("view").innerHTML = S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? renderVenues() : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : S.view === "planning" ? renderPlanning() : S.view === "route" ? renderRoute() : renderEvents();
+  $("view").innerHTML = S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? (vbOn() ? renderVenueBook() : renderVenues()) : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : S.view === "planning" ? renderPlanning() : S.view === "route" ? renderRoute() : renderEvents();
   $("view").classList.toggle("enter", !!S.enter); S.enter = false; S.colsAnim = false;
   ddClose(false); enhanceSelects(document.querySelector(".top")); enhanceSelects($("view")); vdRestore();
   candApply();  // «Города, где его нет» — счётчик найденного после перерисовки
@@ -7705,7 +7964,7 @@ document.querySelector(".pill-city").addEventListener("click", function (ev) {
 $("city").addEventListener("change", function () { S.m.city = S.city = this.value; S.m.venue = ""; S.m.limit = 200; S.m.day = null; closeDrawer(); render(); });
 $("period").addEventListener("click", function (ev) { var b = ev.target.closest("button"); if (b) { S.period = b.getAttribute("data-p"); S.from = S.to = null; render(); } });
 $("dateBtn").addEventListener("click", function (ev) { ev.stopPropagation(); if (S.calOpen) { S.calOpen = false; renderCal(); } else openCal(); });
-$("q").addEventListener("input", function () { S.q = this.value; if (["events", "archive"].indexOf(S.view) < 0 && !isM()) S.view = "events"; render(); });
+$("q").addEventListener("input", function () { S.q = this.value; if (["events", "archive"].indexOf(S.view) < 0 && !isM() && !vbOn()) S.view = "events"; render(); });
 function repReset() { S.m.project = S.m.vproj = null; S.m.myEdit = false; S.m.limit = 200; S.colsOpen = false; }
 document.querySelectorAll("[data-view]").forEach(function (b) { b.addEventListener("click", function () { if (S.view !== b.getAttribute("data-view")) S.enter = true; S.view = b.getAttribute("data-view"); if (REP_SUB[S.view]) { repReset(); S.repOpen = true; } location.hash = S.view; render(); window.scrollTo(0, 0); }); });
 $("repBtn").addEventListener("click", function () { S.repOpen = !S.repOpen; repMenu(); });

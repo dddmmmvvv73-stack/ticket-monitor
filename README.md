@@ -62,6 +62,12 @@ python3 -m competitors.officialsite            # проверить сайты, 
 python3 -m competitors.officialsite --all      # все сейчас (страница → GigaChat → проверка)
 ```
 
+**Справочник площадок** («Площадки → Площадки»: контакты и условия; `config/venue_book.json` — вне git):
+
+```bash
+python3 -m competitors.venuebook import площадки.xlsx   # Google Таблица → Файл → Скачать → xlsx (в csv теряются ссылки «Сайт»)
+```
+
 Площадки подключаются на странице «Конкуренты» (`/competitors`): билетный
 сайт → площадка → город. Список сохраняется в `config/competitors.json` и
 сам уходит на GitHub, сбор подхватывает его со следующего запуска.

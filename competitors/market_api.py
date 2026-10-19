@@ -13,6 +13,7 @@
     GET  /proto/site-data.js      даты с официальных сайтов проектов (competitors/officialsite.py)
     POST /api/market/site/check   {"key"} — разобрать сайт проекта сейчас (кнопка «Проверить», ~10–40 с)
     GET  /proto/venue-cap.js      вместимость площадок по схемам касс (competitors/venuecap.py)
+    GET  /proto/venue-book.js     справочник площадок: контакты и условия (competitors/venuebook.py; config/venue_book.json вне git)
     GET  /api/sales/feed?days=14  продажи по кассам для «Истории» и «Динамики продаж» (sales/feed.py) — из базы
     GET  /api/planning            «Планирование»: справочники и туры (competitors/planning.py; config/planning.json вне git)
     POST /api/planning            {"op": "put" | "del", "kind", "id", "data"}
@@ -34,7 +35,7 @@ from datetime import datetime
 
 from flask import Blueprint, Response, jsonify, redirect, request, send_file, send_from_directory
 
-from competitors import collector, curation, edits, market, myprojects, officialsite, planning, protodata, sync, venuecap
+from competitors import collector, curation, edits, market, myprojects, officialsite, planning, protodata, sync, venuebook, venuecap
 from competitors.classifier import FORMATS, GENRES, SPHERES
 from competitors.storage import BASE_DIR, ON_SERVER, load_json
 
@@ -94,6 +95,11 @@ def proto_site_data():
 @bp.get("/proto/venue-cap.js")
 def proto_venue_cap():
     return Response(venuecap.export_js(), mimetype="application/javascript", headers={"Cache-Control": "no-store"})
+
+
+@bp.get("/proto/venue-book.js")
+def proto_venue_book():
+    return Response(venuebook.export_js(), mimetype="application/javascript", headers={"Cache-Control": "no-store"})
 
 
 @bp.post("/api/market/site/check")
