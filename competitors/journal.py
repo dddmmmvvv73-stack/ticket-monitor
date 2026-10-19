@@ -1,7 +1,8 @@
 """
 Журнал изменений (решение пользователя 19.10.2026: «чтобы данные были всегда актуальными и не пропадали»).
 
-Каждая правка с сайта в справочнике площадок (venuebook), «Планировании» (planning) и карточках проектов (myprojects)
+Каждая правка с сайта в справочнике площадок (venuebook), «Планировании» (planning), карточках проектов (myprojects) и
+разделе «Проекты» — задачи, проекты, документы (work)
 записывается строкой «когда · где · какая запись · поля: было → стало». Любую правку можно вернуть — записи
 возвращаются значения до неё (сам возврат — тоже строка журнала, его можно отменить так же).
 
@@ -21,7 +22,7 @@ import json
 import secrets
 from datetime import datetime
 
-from competitors import myprojects, planning, venuebook
+from competitors import myprojects, planning, venuebook, work
 from competitors.storage import CONFIG_DIR, save_json
 
 DIR = CONFIG_DIR / "history"
@@ -85,6 +86,19 @@ def _proj_set(d, key, rec):
         d.setdefault("projects", {})[key] = rec
 
 
+def _work_map(d):
+    return {f"{kind}/{k}": r for kind in work.KINDS for k, r in (d.get(kind) or {}).items()}
+
+
+def _work_set(d, key, rec):
+    kind, oid = key.split("/", 1)
+    if rec is None:
+        d.setdefault(kind, {}).pop(oid, None)
+    else:
+        d.setdefault(kind, {})[oid] = rec
+
+
+WORK_KIND = {"projects": "Проект", "tasks": "Задача", "docs": "Документ"}
 PLAN_KIND = {"params": "Параметры", "projects": "Проект (финмодель)", "regions": "Регион", "cities": "Город",
              "venues": "Площадка (финмодель)", "tours": "Тур", "lists": "Список гастролей", "routes": "Маршрут"}
 
@@ -98,6 +112,10 @@ AREAS = {
                                                                                     or k.split("/", 1)[1])},
     "projects": {"label": "Карточки проектов", "load": myprojects.load, "file": myprojects.FILE, "lock": None,
                  "map": _proj_map, "set": _proj_set, "title": lambda k, r: str(r.get("title") or k)},
+    "work": {"label": "Проекты: задачи и документы", "load": work.load, "file": work.FILE, "lock": work._lock,
+             "map": _work_map, "set": _work_set,
+             "title": lambda k, r: WORK_KIND.get(k.split("/")[0], "") + " · " + str(r.get("title") or r.get("text") or
+                                                                              " — ".join(x for x in (r.get("kind"), r.get("party")) if x) or k)},
 }
 
 

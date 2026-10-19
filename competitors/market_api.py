@@ -14,6 +14,7 @@
     POST /api/market/site/check   {"key"} — разобрать сайт проекта сейчас (кнопка «Проверить», ~10–40 с)
     GET  /proto/venue-cap.js      вместимость площадок по схемам касс (competitors/venuecap.py)
     GET  /proto/venue-book.js     справочник площадок: контакты и условия (competitors/venuebook.py; config/venue_book.json вне git)
+    GET  /api/work                раздел «Проекты»: задачи, проекты, документы (competitors/work.py); POST — правка записи
     GET  /api/journal             журнал изменений (competitors/journal.py); POST /api/journal/restore {"id"} — вернуть правку
     POST /api/venuebook           правка площадки: поля, фото, технический райдер; GET /api/venuebook/file/<файл> — фото и райдер
     GET  /api/sales/feed?days=14  продажи по кассам для «Истории» и «Динамики продаж» (sales/feed.py) — из базы
@@ -37,7 +38,7 @@ from datetime import datetime
 
 from flask import Blueprint, Response, jsonify, redirect, request, send_file, send_from_directory
 
-from competitors import collector, curation, edits, journal, market, myprojects, officialsite, planning, protodata, sync, venuebook, venuecap
+from competitors import collector, curation, edits, journal, market, myprojects, officialsite, planning, protodata, sync, venuebook, venuecap, work
 from competitors.classifier import FORMATS, GENRES, SPHERES
 from competitors.storage import BASE_DIR, ON_SERVER, load_json
 
@@ -113,6 +114,23 @@ def venuebook_post():
         return jsonify({"error": str(e)}), 400
     journal.record("venues", before)
     return jsonify({"row": row})
+
+
+@bp.get("/api/work")
+def work_get():
+    return jsonify(work.load())
+
+
+@bp.post("/api/work")
+def work_post():
+    """Раздел «Проекты»: задачи, проекты, документы (competitors/work.py; config/work.json вне git)."""
+    before = journal.snapshot("work")
+    try:
+        data = work.apply_op(request.get_json(silent=True) or {})
+    except work.WorkError as e:
+        return jsonify({"error": str(e)}), 400
+    journal.record("work", before)
+    return jsonify(data)
 
 
 @bp.get("/api/journal")

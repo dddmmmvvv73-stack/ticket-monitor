@@ -11,6 +11,8 @@ config/venue_media/
 config/telegram.json
 # Журнал изменений: «было → стало» по площадкам, финмодели, проектам — там контакты и деньги (competitors/journal.py)
 config/history/
+# Раздел «Проекты»: задачи, проекты, документы и суммы (competitors/work.py)
+config/work.json
 config/project_media/
 # Адрес сервера в Яндекс Облаке и путь к SSH-ключу — только на этом компьютере (репозиторий публичный)
 config/server.json
