@@ -10,7 +10,9 @@
 Хранится в config/work.json — вне git (деньги, контрагенты), в копиях config/ каждые 15 минут и снимках по дням и месяцам;
 каждая правка — в журнале изменений (competitors/journal.py, область «work»), её можно вернуть.
     {"projects": {номер: {"title", "stage", "start", "end", "note", "upd"}},
-     "tasks":    {номер: {"text", "due", "project", "done", "done_at", "note", "created", "upd"}},
+     "tasks":    {номер: {"text", "due", "project", "done", "done_at", "note", "created", "upd",
+                          "desc" — описание, "subs": [{"id", "text", "done"}] — подзадачи,
+                          "time" — затрачено, секунд; "run" — таймер идёт с (ISO-время) или пусто; "est" — план, минут}},
      "docs":     {номер: {"project", "kind", "party", "status", "amount", "pay", "closing", "note", "upd"}}}
 
     GET  /api/work                                   всё
@@ -34,6 +36,8 @@ PAY = ["no", "part", "paid"]
 CLOSING = ["no", "got"]
 TEXT_MAX = 3000
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_STAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$")
+SUBS_MAX = 200
 _ID = re.compile(r"^[a-z0-9]{3,40}$")
 _lock = threading.Lock()
 
@@ -69,6 +73,45 @@ def _valid_date(v: str) -> bool:
         return False
 
 
+def _int(v, what: str, lo: int, hi: int) -> int:
+    if v in (None, ""):
+        return 0
+    try:
+        v = int(round(float(v)))
+    except (TypeError, ValueError):
+        raise WorkError(f"{what}: нужно число") from None
+    if not lo <= v <= hi:
+        raise WorkError(f"{what}: вне допустимого")
+    return v
+
+
+def _stamp(v) -> str:
+    v = str(v or "").strip()
+    if v and not _STAMP.match(v):
+        raise WorkError("таймер: неверное время")
+    return v
+
+
+def _subs(v) -> list:
+    """Подзадачи: [{"id", "text", "done"}] — пустые строки отбрасываются."""
+    if not v:
+        return []
+    if not isinstance(v, list) or len(v) > SUBS_MAX:
+        raise WorkError(f"подзадачи: не больше {SUBS_MAX}")
+    out = []
+    for s in v:
+        if not isinstance(s, dict):
+            raise WorkError("подзадачи: неверный формат")
+        text = _text(s.get("text"), "подзадача", 500)
+        sid = str(s.get("id") or "")
+        if not text:
+            continue
+        if not _ID.match(sid):
+            raise WorkError("подзадачи: неверный номер")
+        out.append({"id": sid, "text": text, "done": bool(s.get("done"))})
+    return out
+
+
 def _enum(v, allowed: list, what: str, default: str) -> str:
     v = str(v or default)
     if v not in allowed:
@@ -89,7 +132,9 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
             raise WorkError("такого проекта нет")
         out = {"text": _text(d.get("text"), "задача", 1000), "due": _date(d.get("due"), "дедлайн"), "project": pid,
                "done": bool(d.get("done")), "note": _text(d.get("note"), "заметка"),
-               "created": _date(d.get("created"), "создана") or datetime.now().strftime("%Y-%m-%d")}
+               "created": _date(d.get("created"), "создана") or datetime.now().strftime("%Y-%m-%d"),
+               "desc": _text(d.get("desc"), "описание", 20000), "subs": _subs(d.get("subs")),
+               "time": _int(d.get("time"), "время", 0, 10 ** 8), "run": _stamp(d.get("run")), "est": _int(d.get("est"), "план", 0, 10 ** 6)}
         if not out["text"]:
             raise WorkError("у задачи нужен текст")
         if out["done"]:
