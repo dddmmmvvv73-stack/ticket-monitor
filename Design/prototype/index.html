@@ -432,6 +432,19 @@ select.vb-in { height: 34px; padding: 0 6px; }
 .pj-dl .vb-add { font-size: 14px; color: var(--muted); }
 .vb-rider-up { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; font-size: 13px; }
 .vb-rider-btns { display: flex; gap: 14px; margin-top: 4px; } .vb-rider-btns .pj-plain { font-size: 13px; color: var(--ink-3); }
+/* Журнал изменений: строка — время, раздел, запись; ниже поля «было → стало»; «Вернуть как было» */
+.jr-list { list-style: none; margin: 0; padding: 0; }
+.jr-item { padding: 14px 0; border-top: 1px solid var(--line); }
+.jr-item:first-child { border-top: 0; padding-top: 4px; }
+.jr-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+.jr-head b { font-weight: 500; color: var(--ink); font-size: 14px; }
+.jr-area { font-size: 12px; padding: 2px 8px; border-radius: 9999px; background: var(--wash-2); color: var(--data-dark); }
+.jr-tag { font-size: 12px; padding: 2px 8px; border-radius: 9999px; background: var(--line-soft); color: var(--ink-3); }
+.jr-line { display: grid; grid-template-columns: minmax(120px, 190px) minmax(0, 1fr) 16px minmax(0, 1fr); gap: 8px; font-size: 13px; line-height: 1.4; padding: 2px 0; overflow-wrap: anywhere; }
+.jr-f { color: var(--ink-3); } .jr-old { color: var(--muted); text-decoration: line-through; text-decoration-color: var(--line-strong); } .jr-arr { color: var(--muted); }
+.jr-undo { height: 30px; padding: 0 12px; font-size: 12px; margin-top: 8px; }
+.jr-dlg { width: min(760px, calc(100vw - 32px)); }
+@media (max-width: 560px) { .jr-line { grid-template-columns: minmax(0, 1fr); gap: 0; } .jr-arr { display: none; } .jr-old::after { content: " →"; } }
 /* Окно «Редактировать» площадки: группы полей в две колонки */
 .vb-edit { width: min(720px, calc(100vw - 32px)); }
 .vb-fgroup { font: 500 13px/1.3 var(--ui); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; }
@@ -3522,7 +3535,8 @@ function vbPage(r) {
       '<dt>Специалист по звуку</dt>' + dd("sound", '<span style="white-space:pre-line">' + vbTextTel(r.sound) + '</span>') +
       '<dt>Технический райдер</dt><dd>' + rider + '</dd>' +   // райдер — всегда последней строкой (решение пользователя 19.10)
     '</dl></section>' +
-    (VBOOK.imported ? '<section><p class="sub" style="margin:0">Из Google Таблицы «Площадки База данных с информацией» · загружено ' + atText(VBOOK.imported) + (r.upd ? ' · изменено на сайте ' + atText(r.upd) : '') + '</p></section>' : '');
+    '<section><button class="pj-plain" data-vb="history">История изменений</button>' +
+      (VBOOK.imported ? '<p class="sub" style="margin:8px 0 0">Из Google Таблицы «Площадки База данных с информацией» · загружено ' + atText(VBOOK.imported) + (r.upd ? ' · изменено на сайте ' + atText(r.upd) : '') + '</p>' : '') + '</section>';
   return hero + '<div class="pj-grid"><div class="pj-main"><div class="pj-list-head"><div><h2 class="pj-h2">Мероприятия</h2>' + sum + '</div></div>' + body + '</div>' +
     '<aside class="pj-aside" aria-label="О площадке">' + aside + '</aside></div>';
 }
@@ -3629,6 +3643,7 @@ function vbAction(t, ev) {
   else if (a === "photo") { var inp = $("vbFile"); inp.setAttribute("data-kind", t.getAttribute("data-kind")); inp.click(); }
   else if (a === "unphoto" && r) vbSave2({ op: "media", id: r.id, kind: t.getAttribute("data-kind"), data: "" }, "Фото убрано", vbAfterFile);
   else if (a === "rider") $("vbRiderFile").click();
+  else if (a === "history") vbHistory();
   else if (a === "unrider" && r) vbSave2({ op: "rider", id: r.id, data: "" }, "Райдер убран", vbAfterFile);
 }
 // ---------- Правка прямо в таблице (режим «Править в таблице»): ячейка → поле ввода; Enter — вниз, Tab — вправо, Esc — отмена.
@@ -3723,6 +3738,97 @@ $("view").addEventListener("change", function (ev) {
     vbSave(); S.colsAnim = false; render();
   }
 });
+// ---------------------------------------------------------------- Журнал изменений (competitors/journal.py, 19.10.2026)
+// Каждая правка площадок, «Планирования» и карточек проектов — «было → стало» с кнопкой «Вернуть»: записи возвращаются
+// значения до этой правки (сам возврат — тоже строка журнала). Общий — «Настройки → Журнал изменений»; у площадки — её история.
+var JR_FIELD = { title: "Название", rows: "Строки тура", note: "Заметка", profile: "Страница проекта", contacts: "Контакты", links: "Ссылки",
+  fav: "Избранное", rating: "Оценка", cover_y: "Положение фона", site: "Официальный сайт", media: "Фото", rider: "Технический райдер",
+  project: "Проект", month: "Месяц", status: "Статус", text: "Текст", limit: "Лимит, км", trips: "Выезд и возвращение", zones: "Пояса",
+  seats: "Места", gross: "Вал", rent: "Аренда", fee: "Гонорар", region: "Регион", org: "Организационные", logistics: "Логистика", keys: "Названия" };
+function jrLabel(area, f) {
+  if (area === "venues") { var c = VB_COLS.filter(function (x) { return x.id === f; })[0]; if (c) return c.label; }
+  return JR_FIELD[f] || f;
+}
+function jrVal(area, f, v) {
+  if (v == null || v === "") return '<span class="muted">пусто</span>';
+  if (area === "venues" && f === "edo") v = vbEdoText(v) || v;
+  if (f === "rider" && v.name) return esc(v.name);
+  if (f === "media") return esc(Object.keys(v).map(function (k) { return k === "avatar" ? "миниатюра" : "фон"; }).join(", ") || "—");
+  if (Array.isArray(v)) return f === "rows" ? v.length + " " + plural(v.length, "строка", "строки", "строк") : v.length + " шт.";
+  if (typeof v === "object") return '<span class="muted">изменено</span>';
+  if (typeof v === "boolean") return v ? "да" : "нет";
+  v = String(v); return esc(v.length > 90 ? v.slice(0, 88) + "…" : v);
+}
+function jrEntry(e, areas, showTitle) {
+  var head = '<div class="jr-head"><span class="num">' + atText(e.at) + '</span>' + (showTitle ? '<span class="jr-area">' + esc(areas[e.area] || e.area) + '</span><b>' + esc(e.title) + '</b>' : '') +
+    (e.note === "возврат" ? '<span class="jr-tag">возврат</span>' : '') + '</div>';
+  var body;
+  if (e.kind === "new") body = '<div class="jr-line">Запись создана</div>';
+  else if (e.kind === "del") body = '<div class="jr-line">Запись удалена</div>';
+  else body = Object.keys(e.after || {}).map(function (f) {
+    return '<div class="jr-line"><span class="jr-f">' + esc(jrLabel(e.area, f)) + '</span><span class="jr-old">' + jrVal(e.area, f, (e.before || {})[f]) + '</span><span class="jr-arr" aria-hidden="true">→</span><span>' + jrVal(e.area, f, e.after[f]) + '</span></div>';
+  }).join("");
+  var onlyFiles = e.kind === "edit" && Object.keys(e.after || {}).every(function (f) { return f === "media" || f === "rider"; });
+  return '<li class="jr-item">' + head + body + (onlyFiles ? '<div class="sub2" style="margin-top:4px">Файлы не возвращаются: прежний файл при замене удаляется</div>'
+    : '<button class="btn-ghost jr-undo" data-jr-restore="' + esc(e.id) + '" title="Вернуть значения, которые были до этой правки">' + (e.kind === "new" ? "Убрать запись" : e.kind === "del" ? "Вернуть запись" : "Вернуть как было") + '</button>') + '</li>';
+}
+function jrList(list, areas, showTitle) {
+  return list.length ? '<ul class="jr-list">' + list.map(function (e) { return jrEntry(e, areas, showTitle); }).join("") + '</ul>'
+    : '<div class="note">Правок пока нет. Журнал ведётся с 19 октября 2026: всё, что меняется на сайте в площадках, «Планировании» и карточках проектов.</div>';
+}
+// Вернуть правку → обновить данные раздела на экране
+function jrRestore(id, after) {
+  if (!ON_APP) return;
+  apiJson("POST", "/api/journal/restore", { id: id }).then(function (x) {
+    if (!x.ok) { toast("Не вернулось: " + ((x.d && x.d.error) || "ошибка")); return; }
+    var d = x.d;
+    if (d.area === "venues") {
+      var r = vbRec(d.key);
+      if (r && d.record) { Object.keys(r).forEach(function (k) { delete r[k]; }); Object.assign(r, d.record); }
+      else if (!r && d.record) VB_ROWS.push(d.record);
+      else if (r && !d.record) VB_ROWS.splice(VB_ROWS.indexOf(r), 1);
+    } else if (d.area === "planning") plLoad(); else myLoad();
+    toast("Возвращено как было — это тоже записано в журнал");
+    if (after) after();
+  }, function () { toast("Не вернулось: " + NO_APP); });
+}
+var JR = { area: "", list: null, areas: {}, loading: false };
+function jrLoad() {
+  if (!ON_APP || JR.loading) return;
+  JR.loading = true;
+  apiJson("GET", "/api/journal?limit=300" + (JR.area ? "&area=" + JR.area : "")).then(function (x) {
+    JR.loading = false; if (!x.ok) return;
+    JR.list = x.d.entries; JR.areas = x.d.areas;
+    if (S.view === "settings" && S.setTab === "changes") render();
+  }, function () { JR.loading = false; });
+}
+function setChanges() {
+  if (!ON_APP) return '<div class="note">Журнал изменений хранится на сервере — откройте сайт через приложение.</div>';
+  if (!JR.list) { jrLoad(); return '<div class="sub">Загружаем журнал…</div>'; }
+  var areas = [["", "Все"]].concat(Object.keys(JR.areas).map(function (k) { return [k, JR.areas[k]]; }));
+  return '<div class="seg" role="group" aria-label="Раздел журнала" style="margin-bottom:14px">' + areas.map(function (a) {
+      return '<button data-jr-area="' + a[0] + '" aria-pressed="' + (JR.area === a[0]) + '">' + esc(a[1]) + '</button>'; }).join("") + '</div>' +
+    '<p class="sub" style="margin:0 0 12px">Каждая правка на сайте — «было → стало». «Вернуть как было» — запись получает значения до этой правки; сам возврат тоже попадает в журнал, его можно отменить так же. Показаны последние 300.</p>' +
+    jrList(JR.list, JR.areas, true);
+}
+document.addEventListener("click", function (ev) {
+  var t = ev.target.closest && ev.target.closest("[data-jr-restore],[data-jr-area]");
+  if (!t) return;
+  if (t.hasAttribute("data-jr-area")) { JR.area = t.getAttribute("data-jr-area"); JR.list = null; render(); return; }
+  var inDlg = !!t.closest("#pjDlg");
+  jrRestore(t.getAttribute("data-jr-restore"), function () {
+    if (inDlg) vbHistory(); else { JR.list = null; render(); }
+    if (vbOn()) { var y = window.scrollY; render(); window.scrollTo(0, y); }
+  });
+});
+// История одной площадки — окно со страницы площадки
+function vbHistory() {
+  var r = vbRec(S.vb.sel); if (!r || !ON_APP) return;
+  apiJson("GET", "/api/journal?area=venues&key=" + encodeURIComponent(r.id) + "&limit=200").then(function (x) {
+    if (!x.ok) { toast("Журнал не загрузился"); return; }
+    pjDialog("pj-edit jr-dlg", "История изменений · " + (r.name || r.city), jrList(x.d.entries, x.d.areas, false));
+  }, function () { toast("Журнал не загрузился: " + NO_APP); });
+}
 function vbOpen(id) { S.vb.y = window.scrollY; S.vb.sel = id; S.vb.all = false; S.colsOpen = false; render(); window.scrollTo(0, 0); }
 
 function renderVenues() {
@@ -4122,8 +4228,9 @@ function setExport() {
 }
 
 function renderSettings() {
-  var tabs = [["collect", "Сбор и журнал"], ["sources", "Площадки"], ["ai", "Нейросеть"], ["export", "Выгрузка"]];
-  var body = S.setTab === "sources" ? setSources() : S.setTab === "ai" ? setAi() : S.setTab === "export" ? setExport() : setCollect();
+  var tabs = [["collect", "Сбор и журнал"], ["sources", "Площадки"], ["ai", "Нейросеть"], ["export", "Выгрузка"], ["changes", "Журнал изменений"]];
+  if (S.setTab === "changes" && S.enter) JR.list = null;   // зашли во вкладку — свежий журнал
+  var body = S.setTab === "sources" ? setSources() : S.setTab === "ai" ? setAi() : S.setTab === "export" ? setExport() : S.setTab === "changes" ? setChanges() : setCollect();
   return head("Настройки", "Откуда берутся данные, как часто их собирать и куда выгружать") +
     '<div class="seg seg-scroll" role="group" aria-label="Раздел настроек">' + tabs.map(function (t) { return '<button data-st="' + t[0] + '" aria-pressed="' + (S.setTab === t[0]) + '">' + t[1] + '</button>'; }).join("") + '</div>' +
     '<div class="set-wrap">' + body + '</div>';

@@ -14,6 +14,7 @@
     POST /api/market/site/check   {"key"} — разобрать сайт проекта сейчас (кнопка «Проверить», ~10–40 с)
     GET  /proto/venue-cap.js      вместимость площадок по схемам касс (competitors/venuecap.py)
     GET  /proto/venue-book.js     справочник площадок: контакты и условия (competitors/venuebook.py; config/venue_book.json вне git)
+    GET  /api/journal             журнал изменений (competitors/journal.py); POST /api/journal/restore {"id"} — вернуть правку
     POST /api/venuebook           правка площадки: поля, фото, технический райдер; GET /api/venuebook/file/<файл> — фото и райдер
     GET  /api/sales/feed?days=14  продажи по кассам для «Истории» и «Динамики продаж» (sales/feed.py) — из базы
     GET  /api/planning            «Планирование»: справочники и туры (competitors/planning.py; config/planning.json вне git)
@@ -36,7 +37,7 @@ from datetime import datetime
 
 from flask import Blueprint, Response, jsonify, redirect, request, send_file, send_from_directory
 
-from competitors import collector, curation, edits, market, myprojects, officialsite, planning, protodata, sync, venuebook, venuecap
+from competitors import collector, curation, edits, journal, market, myprojects, officialsite, planning, protodata, sync, venuebook, venuecap
 from competitors.classifier import FORMATS, GENRES, SPHERES
 from competitors.storage import BASE_DIR, ON_SERVER, load_json
 
@@ -105,9 +106,31 @@ def proto_venue_book():
 
 @bp.post("/api/venuebook")
 def venuebook_post():
+    before = journal.snapshot("venues")
     try:
-        return jsonify({"row": venuebook.apply_op(request.get_json(silent=True) or {})})   # не на GitHub: там контакты
+        row = venuebook.apply_op(request.get_json(silent=True) or {})   # не на GitHub: там контакты
     except venuebook.VenueBookError as e:
+        return jsonify({"error": str(e)}), 400
+    journal.record("venues", before)
+    return jsonify({"row": row})
+
+
+@bp.get("/api/journal")
+def journal_get():
+    """Журнал изменений (competitors/journal.py): последние правки, новые сверху; area / key — фильтр."""
+    try:
+        limit = max(1, min(1000, int(request.args.get("limit") or 200)))
+    except ValueError:
+        limit = 200
+    return jsonify({"entries": journal.read(request.args.get("area") or "", request.args.get("key") or "", limit),
+                    "areas": {k: a["label"] for k, a in journal.AREAS.items()}})
+
+
+@bp.post("/api/journal/restore")
+def journal_restore():
+    try:
+        return jsonify(journal.restore(str((request.get_json(silent=True) or {}).get("id") or "")))
+    except journal.JournalError as e:
         return jsonify({"error": str(e)}), 400
 
 
@@ -140,10 +163,12 @@ def planning_get():
 
 @bp.post("/api/planning")
 def planning_post():
+    before = journal.snapshot("planning")
     try:
         data = planning.apply_op(request.get_json(silent=True) or {})
     except planning.PlanningError as e:
         return jsonify({"error": str(e)}), 400
+    journal.record("planning", before)
     return jsonify(data)   # не отправляется на GitHub — репозиторий публичный, здесь гонорары и аренда
 
 
@@ -298,8 +323,10 @@ def myprojects_media(name):
 @bp.post("/api/market/myprojects")
 def myprojects_post():
     op = request.get_json(silent=True) or {}
+    before = journal.snapshot("projects")
     try:
         data, _note = myprojects.apply_op(op)
     except myprojects.MyProjectsError as e:
         return jsonify({"error": str(e)}), 400
+    journal.record("projects", before, note=_note)
     return jsonify(data)  # не отправляется на GitHub — репозиторий публичный

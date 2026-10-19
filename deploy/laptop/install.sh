@@ -4,13 +4,14 @@
 #   deploy/laptop/install.sh remove     убрать (когда сервер снова главный)
 # Дела: web — сайт http://127.0.0.1:5050/proto/ (всегда); collect — :25 каждый час; sales — :05 каждый час;
 # sync — :58 каждый час; market — 21:00; backup — 03:30 (зашифрованная копия в закрытый репозиторий GitHub);
-# backupcfg — :40 каждый час (только config/: карточки проектов, фото, разметка — если изменились);
+# backupcfg — каждые 15 минут (только config/: площадки, финмодель, карточки проектов, фото, журнал изменений — если
+# изменились); check — 1-го числа в 04:30 (пробное восстановление копии с GitHub, сверка с живыми данными);
 # awake — не засыпать, пока ноутбук на питании (caffeinate -s; с крышкой закрытой без внешнего экрана Mac всё равно уснёт).
 set -euo pipefail
 APP="$(cd "$(dirname "$0")/../.." && pwd)"
 AG="$HOME/Library/LaunchAgents"
 UIDN=$(id -u)
-JOBS="web collect sales sync market backup backupcfg awake"
+JOBS="web collect sales sync market backup backupcfg check awake"
 mkdir -p "$AG" "$APP/data/logs"
 
 # Идущий сбор не прерываем (12.10 переустановка убила сбор афиши на 12-й минуте): такое дело оставляем как есть
@@ -53,6 +54,7 @@ plist sales   "$(run sales)"   "$(cal 5)"
 plist sync    "$(run sync)"    "$(cal 58)"
 plist market  "$(run market)"  "$(cal 0 21)"
 plist backup  "$(run backup)"  "$(cal 30 3)"
-plist backupcfg "$(run backupcfg)" "$(cal 40)"   # настройки (карточки проектов, фото) — каждый час, если изменились
+plist backupcfg "$(run backupcfg)" "<key>StartInterval</key><integer>900</integer>"   # настройки — каждые 15 минут, если изменились
+plist check   "$(run check)"   "<key>StartCalendarInterval</key><dict><key>Day</key><integer>1</integer><key>Hour</key><integer>4</integer><key>Minute</key><integer>30</integer></dict>"
 plist awake   "<string>/usr/bin/caffeinate</string><string>-s</string>" "<key>RunAtLoad</key><true/><key>KeepAlive</key><true/>"
 echo "Расписание ноутбука поставлено: $(launchctl list | grep -c ru.ticketmonitor) дел. Сайт — http://127.0.0.1:5050/proto/"
