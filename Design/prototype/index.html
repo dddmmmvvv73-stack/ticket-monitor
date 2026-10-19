@@ -713,10 +713,12 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .rp-grid th[scope="row"] .sub2 { display: block; font-weight: 400; max-width: 220px; overflow: hidden; text-overflow: ellipsis; } .rp-grid thead th { font-weight: 500; color: var(--muted); min-width: 24px; text-align: center; }
 .rp-grid td { width: 24px; height: 26px; text-align: center; border-radius: 5px; background: #fafaf9; } .rp-grid td.rp-we, .rp-grid th.rp-we { background: #f5f5f4; }
 .rp-grid td.rp-free { background: #cfe1f2; } .rp-grid td.rp-on { background: #1d6fae; color: #fff; font-weight: 600; }
-.rp-vars { margin-top: 16px; } .rp-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: stretch; }
+.rp-vars { margin-top: 16px; } .rp-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
 @media (max-width: 1100px) { .rp-split { grid-template-columns: 1fr; } }
-.rp-mapcol { display: flex; flex-direction: column; min-width: 0; } .rp-map { flex: 1; min-height: 460px; height: auto; }
-.rp-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; align-content: start; min-width: 0; }
+.rp-mapcol { min-width: 0; } .rp-map { height: 600px; }
+.rp-list { list-style: none; margin: 0; padding: 0 2px 0 0; display: grid; gap: 6px; align-content: start; min-width: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.rp-list::-webkit-scrollbar { display: none; }
+.rp-list.rp-more-below { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 48px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 48px), transparent); }
 .rp-sep { padding: 8px 2px 2px; }
 .rp-var { border: 1px solid var(--line); border-radius: 12px; background: var(--card); overflow: hidden; } .rp-var:hover { border-color: var(--line-strong); }
 .rp-var.sel { border-color: #1d6fae; box-shadow: 0 0 0 1px #1d6fae inset; }
@@ -8269,7 +8271,7 @@ function rpResults(R) {
   var vsec = '<section class="rp-vars"><div class="tb-tools pl-flat">' + seg + info + '</div>' +
     (vlist ? '<div class="rp-split"><ol class="rp-list">' + vlist + '</ol><div class="rp-mapcol"><div id="rpMap" class="an-map rp-map"><div class="sub" style="padding:16px">Загружаем карту…</div></div>' +
       '<div class="an-legend"><span><i style="background:#1d6fae"></i>город варианта — номер дня по порядку</span><span><i style="background:#0c0a09"></i>' + RP_BASE + '</span><span><i style="background:#a8a29e"></i>другие города списка</span>' + (C.bridges.length ? '<span><i class="sq" style="background:none;border-top:2px dashed #b91c1c;height:0;width:16px"></i>подряд не поставить</span>' : '') + '</div></div></div>' : '') + '</section>';
-  if (vlist) setTimeout(rpMapInit, 0);
+  if (vlist) setTimeout(function () { rpListFit(); rpMapInit(); }, 0);
   return chk + grid + vsec + rpBridgesHtml(C);
 }
 function rpBridgesHtml(C) {
@@ -8284,6 +8286,19 @@ function rpBridgesHtml(C) {
             return '<tr><th scope="row">' + esc(c.city) + '</th><td class="r num">' + (c.pop ? plShort(c.pop) : '—') + '</td><td class="r">' + (mc ? '<span class="num">' + num(mc.cap) + '</span> <span class="sub2">' + esc(mc.name) + '</span>' : '<span class="muted">—</span>') + '</td>' +
               '<td class="r num">' + num(c.a) + ' км</td><td class="r num">' + num(c.b) + ' км</td><td class="r num">' + num(c.detour) + ' км</td><td class="r"><button class="pj-plain" data-pl="rp-addcity" data-city="' + esc(c.city) + '">Добавить в список</button></td></tr>'; }).join("") + '</tbody></table>' : plNote('Городов, от которых до обоих не больше ' + num(C.limit) + ' км, нет.')) + '</div>';
     }).join("") + '</section>';
+}
+// Список — 10 туров, ниже — прокруткой внутри (решение 19.10: карта была слишком длинной); полосы прокрутки нет (решение
+// 19.10), низ затухает, пока не долистали; карта — высотой с эти 10 туров; прокрутка не сбрасывается при перерисовке
+var RP_VISIBLE = 10;
+function rpListFit() {
+  var list = document.querySelector(".rp-list"), map = $("rpMap"); if (!list || !map) return;
+  var cards = [].slice.call(list.querySelectorAll(".rp-var:not(.open)")), h = cards.length ? cards[0].offsetHeight : 54, gap = 6;
+  var seps = [].slice.call(list.children).slice(0, RP_VISIBLE).filter(function (x) { return x.classList.contains("rp-sep"); }).reduce(function (a, x) { return a + x.offsetHeight + gap; }, 0);
+  var maxH = Math.max(420, RP_VISIBLE * h + (RP_VISIBLE - 1) * gap + seps);
+  list.style.maxHeight = maxH + "px"; map.style.height = maxH + "px";
+  list.scrollTop = S.pl.rpScroll || 0;
+  var edge = function () { list.classList.toggle("rp-more-below", list.scrollTop + list.clientHeight < list.scrollHeight - 4); };
+  edge(); list.addEventListener("scroll", function () { S.pl.rpScroll = list.scrollTop; edge(); }, { passive: true });
 }
 function rpMapInit() {
   var el = $("rpMap"), R = rpCur(); if (!el || !R) return;
@@ -8343,7 +8358,7 @@ function rpAction(a, b) {
     plPut("routes", id, { title: d.title, month: d.month, limit: d.limit, project: d.project, text: d.text, trips: d.trips || {} }, "Маршрут «" + d.title + "» сохранён");
   }
   else if (a === "rp-del") { if (!confirm("Удалить маршрут «" + PLAN.routes[st.id].title + "»?")) return; var did = st.id; st.id = null; plDel("routes", did, "Маршрут удалён"); }
-  else if (a === "rp-mode") { st.mode = b.getAttribute("data-v"); st.sel = 0; st.open = {}; tbRe(); }
+  else if (a === "rp-mode") { st.mode = b.getAttribute("data-v"); st.sel = 0; st.open = {}; S.pl.rpScroll = 0; tbRe(); }
   else if (a === "rp-sel") { st.sel = +b.getAttribute("data-i"); tbRe(); }
   else if (a === "rp-more") { var oi = +b.getAttribute("data-i"); st.open = st.open || {}; if (st.open[oi]) delete st.open[oi]; else { st.open[oi] = 1; st.sel = oi; } tbRe(); }
   else if (a === "rp-addcity") {   // город-связка → новая строка списка; площадку и даты вписывает пользователь
@@ -9266,7 +9281,7 @@ function plChange(el) {
   var sig = el.getAttribute("data-plf"), p = sig.split("|"), kind = p[0];
   if (kind === "new") return;
   if (kind === "gm") { var gp = plGmPrefs(); gp[p[1]] = el.value; if (p[1] === "tour") S.pl.gmView = null; plGmSave(gp); var ygm = window.scrollY; render(); window.scrollTo(0, ygm); return; }
-  if (kind === "rp") { S.pl.rp.id = el.value || null; S.pl.rp.draft = null; S.pl.rp.sel = 0; tbRe(); return; }   // выбор маршрута
+  if (kind === "rp") { S.pl.rp.id = el.value || null; S.pl.rp.draft = null; S.pl.rp.sel = 0; S.pl.rp.open = {}; S.pl.rpScroll = 0; tbRe(); return; }   // выбор маршрута
   if (kind === "ana") { S.pl.anaCity = el.value; tbRe(); return; }   // аналитика тура: весь тур или город
   if (kind === "sens") { var sp = plSens(), sv = planNum(el.value); if (isFinite(sv) && sv >= 0) sp[p[1]] = sv; PL_PREFS.sens = sp; plPrefsSave(); tbRe(); return; }
   if (kind === "tb") {   // «Построение гастролей»: список, фильтры
