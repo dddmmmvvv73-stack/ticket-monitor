@@ -804,6 +804,11 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
   .wkt td.wkt-prio .wk-tag, .wkt td.wkt-tagcell .wk-tag { padding: 0 6px; font-size: 11px; }
   .wkt .wkt-playpill { padding: 0 9px 0 8px; }
 }
+/* Приоритет, теги, время, срок — по центру столбца: и заголовок, и значение (решение пользователя 20.10) */
+.wkt th.wkt-prio, .wkt td.wkt-prio, .wkt th.wkt-tagcell, .wkt td.wkt-tagcell, .wkt th.wkt-time, .wkt td.wkt-time, .wkt th.wkt-due, .wkt td.wkt-due { text-align: center; }
+.wk-split .wkt th.wkt-prio, .wk-split .wkt td.wkt-prio, .wk-split .wkt th.wkt-due, .wk-split .wkt td.wkt-due { padding-left: 6px; padding-right: 6px; }
+.wkt td.wkt-prio .wkt-tags, .wkt td.wkt-tagcell .wkt-tags { margin-left: 0; justify-content: center; }
+.wkt td.wkt-due .wk-datebtn { margin-left: 0; }
 /* «Сегодня» — не как ссылка: тёмный жирный */
 .wk-datebtn.today { color: var(--ink); font-weight: 600; }
 /* Пустая галочка — только круг; бледная галочка — при наведении */
