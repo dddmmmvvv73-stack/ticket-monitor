@@ -706,6 +706,25 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pl-ct-l { display: flex; flex-direction: column; } .pl-ct-track { position: relative; display: flex; height: 14px; } .pl-ct-track i { display: block; height: 100%; }
 .pl-ct-sales { position: absolute; top: -3px; width: 2px; height: 20px; background: var(--ink); } .pl-cities li > .num { text-align: right; }
 .pl-hot { color: #b45309; } @media (max-width: 1100px) { .pl-cities li { grid-template-columns: 140px 1fr 70px 50px; } .pl-ct-why { grid-column: 1 / -1; } }
+.rp-check { padding: 12px 16px; margin-top: 12px; } .rp-check-h { display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+.rp-issues { margin: 8px 0 0; padding-left: 18px; font-size: 13px; color: #b45309; } .rp-fix { color: var(--ink-2); }
+.rp-grid-card { margin-top: 12px; padding: 12px 16px; overflow-x: auto; }
+.rp-grid { border-collapse: separate; border-spacing: 2px; font-size: 12px; } .rp-grid th[scope="row"] { text-align: left; padding-right: 10px; white-space: nowrap; min-width: 170px; }
+.rp-grid th[scope="row"] .sub2 { display: block; font-weight: 400; max-width: 220px; overflow: hidden; text-overflow: ellipsis; } .rp-grid thead th { font-weight: 500; color: var(--muted); min-width: 24px; text-align: center; }
+.rp-grid td { width: 24px; height: 26px; text-align: center; border-radius: 5px; background: #fafaf9; } .rp-grid td.rp-we, .rp-grid th.rp-we { background: #f5f5f4; }
+.rp-grid td.rp-free { background: #cfe1f2; } .rp-grid td.rp-on { background: #1d6fae; color: #fff; font-weight: 600; }
+.rp-vars { margin-top: 16px; } .rp-split { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+@media (max-width: 1100px) { .rp-split { grid-template-columns: 1fr; } }
+.rp-mapcol { position: sticky; top: 8px; } .rp-map { height: 560px; }
+.rp-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 720px; overflow: auto; }
+.rp-sep { padding: 8px 2px 2px; } .rp-var-btn { all: unset; box-sizing: border-box; cursor: pointer; display: grid; grid-template-columns: 28px 1fr 170px; gap: 10px; align-items: center; width: 100%; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
+.rp-var-btn:hover { border-color: var(--line-strong); } .rp-var.sel .rp-var-btn { border-color: #1d6fae; box-shadow: 0 0 0 1px #1d6fae inset; background: #f4f8fc; } .rp-var-btn:focus-visible { outline: 2px solid #1d6fae; outline-offset: 2px; }
+.rp-num { width: 24px; height: 24px; border-radius: 50%; background: var(--soot); color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+.rp-chain { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; font-size: 13px; } .rp-stop { padding: 2px 8px; border-radius: 9999px; background: #eaf2fa; white-space: nowrap; } .rp-stop b { color: #1d6fae; }
+.rp-hop { font-size: 11px; color: var(--muted); } .rp-off { font-size: 11px; padding: 1px 6px; border-radius: 9999px; background: #fef3c7; color: #92400e; }
+.rp-meta { display: flex; flex-direction: column; gap: 1px; font-size: 12px; text-align: right; }
+.rp-bridges { margin-top: 22px; } .rp-bridges h3 { margin: 0 0 4px; font-size: 18px; } .rp-bridge { padding: 12px 16px; margin-bottom: 10px; }
+.rp-bridge-h { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: baseline; margin-bottom: 8px; } .rp-cands td, .rp-cands th { padding-top: 6px; padding-bottom: 6px; }
 .tb-head, .tb-tools { display: flex; gap: 10px 16px; flex-wrap: wrap; align-items: center; margin-bottom: 12px; }
 .tb-tools .pl-sm { width: 76px; } .tb-tools .pl-lab { white-space: nowrap; }
 .tb-editor { padding: 16px; display: grid; gap: 12px; }
@@ -1598,6 +1617,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <script src="project-rating.js"></script>
 <script src="plan-model.js"></script>
 <script src="tour-parse.js"></script>
+<script src="route-plan.js"></script>
 <script src="market-pop.js"></script>
 <script src="venue-cap.js"></script>
 <script>
@@ -7716,10 +7736,10 @@ $("view").addEventListener("change", function (ev) {
 // можно переписать в строке (правка видна и сбрасывается). Формулы — plan-model.js (planCalc), тест — tests/plan-model.test.js.
 // Хранение — config/planning.json на сервере (competitors/planning.py, вне git); прототип файлом — в браузере.
 var PL_KEY = "ticketmonitor.prototype.planning";
-var PLAN = { params: {}, projects: {}, regions: {}, cities: {}, venues: {}, tours: {}, lists: {} };
+var PLAN = { params: {}, projects: {}, regions: {}, cities: {}, venues: {}, tours: {}, lists: {}, routes: {} };
 if (!CAN_SAVE) { try { var plSaved = JSON.parse(localStorage.getItem(PL_KEY)); if (plSaved) PLAN = Object.assign(PLAN, plSaved); } catch (e) { /* записей ещё нет */ } }
 S.pl = { tab: "tours", tour: null, row: null, scen: "", adding: false };
-var PL_TABS = [["tours", "Туры"], ["build", "Построение гастролей"], ["map", "Карта"], ["projects", "Проекты"], ["cities", "Города"], ["regions", "Регионы"], ["params", "Параметры"]];
+var PL_TABS = [["tours", "Туры"], ["build", "Построение гастролей"], ["route", "Построение гастрольного маршрута"], ["map", "Карта"], ["projects", "Проекты"], ["cities", "Города"], ["regions", "Регионы"], ["params", "Параметры"]];
 var PL_STATUS = ["Черновик", "Планируется", "В процессе", "Подтверждён", "Отменён"];
 var PL_DECISION = ["", "В работу", "Отмена", "Замена города", "Перенос месяца", "Замена площадки"];
 function plLoad() {
@@ -7816,13 +7836,14 @@ function renderPlanning() {
   if (tab === "projects") body = plProjects();
   else if (tab === "map") body = plMapTab();
   else if (tab === "build") body = plBuild();
+  else if (tab === "route") body = plRoute();
   else if (tab === "cities") body = plCities();
   else if (tab === "regions") body = plRegions();
   else if (tab === "params") body = plParams();
   else body = S.pl.tour && PLAN.tours[S.pl.tour] ? plTour(S.pl.tour) : plTours();
   return head("Планирование", "Финансовая модель туров — ручной ввод. Места в продаже, вал и аренда площадок — в разделе «Площадки».") +
     '<div class="mtabs subtabs" role="tablist" aria-label="Разделы планирования">' + PL_TABS.map(function (t) {
-      return '<button role="tab" data-pl="tab" data-tab="' + t[0] + '" aria-selected="' + (tab === t[0]) + '">' + t[1] + (t[0] !== "tours" && t[0] !== "params" && t[0] !== "map" ? ' <span class="sub2">' + Object.keys(PLAN[t[0] === "build" ? "lists" : t[0]] || {}).length + '</span>' : '') + '</button>';
+      return '<button role="tab" data-pl="tab" data-tab="' + t[0] + '" aria-selected="' + (tab === t[0]) + '">' + t[1] + (t[0] !== "tours" && t[0] !== "params" && t[0] !== "map" ? ' <span class="sub2">' + Object.keys(PLAN[t[0] === "build" ? "lists" : t[0] === "route" ? "routes" : t[0]] || {}).length + '</span>' : '') + '</button>';
     }).join("") + '</div>' + body;
 }
 function plNote(html) { return '<div class="note" style="margin-top:0">' + html + '</div>'; }
@@ -8110,6 +8131,181 @@ function plTourAnalytics(t, rows, calcs, cfg) {
     }).join("") + '</ul><p class="sub2" style="margin:6px 0 0">Полоса — расходы по группам (цвета — как в «Долях»), чёрная черта — сборы: правее полосы — прибыль, левее — убыток. Справа — прибыль, маржа и статья, которая в этом городе заметно выше средней по туру.</p></div>';
   }
   return '<section class="pl-ana" id="plAna">' + head + kpis + '<div class="pl-ana-grid">' + shares + unit + itemsCard + sensCard + cityCard + '</div></section>';
+}
+
+// ---------- «Планирование → Построение гастрольного маршрута» (решения пользователя 16–19.10): свободные даты площадок на
+// месяц («Город — Площадка — числа», месяц — выбором) → 20 вариантов маршрута день за днём: даты подряд, город — один раз,
+// переезд ≤ лимита (600 км, по прямой × 1,3), выезд из Москвы и возвращение (без лимита, в км входят); полные — первыми.
+// «С выходными» — отдельно: варианты, где без выходного не склеить. Пары дальше лимита — «нужен город-связка» с кандидатами.
+// Логика — route-plan.js (тест tests/route-plan.test.js); здесь — страница: сетка дат, варианты, карта, связки.
+var RP_BASE = "Москва";
+S.pl.rp = { id: null, draft: null, mode: "nogap", sel: 0 };
+function rpKm(a, b) { var d = plKm(a, b); return d == null ? null : Math.round(d * 1.3); }
+function rpCur() { var r = S.pl.rp; return r.draft || (r.id && PLAN.routes && PLAN.routes[r.id]) || null; }
+function rpDefMonth() { var d = new Date(TODAY + "T12:00:00Z"); d.setUTCMonth(d.getUTCMonth() + 1); return d.toISOString().slice(0, 7); }
+function rpMonthLabel(ym) { return ym ? MONTHS_FULL[+ym.slice(5, 7) - 1] + " " + ym.slice(0, 4) : "—"; }
+function rpCalc(R) {   // разбор и варианты; кэш — по тексту, месяцу, лимиту и режиму
+  var key = [R.text, R.month, R.limit, S.pl.rp.mode].join("§");
+  if (S.pl.rpCache && S.pl.rpCache.key === key) return S.pl.rpCache.v;
+  var P = rpParse(R.text || "", { cities: tbCities(), today: TODAY }), month = R.month || P.month || rpDefMonth(), limit = planNum(R.limit) || 600;
+  var opts = { km: rpKm, limit: limit, base: RP_BASE, month: month, top: 20 };
+  var v = { P: P, month: month, limit: limit,
+    routes: rpRoutes(P.rows, Object.assign({}, opts, S.pl.rp.mode === "gap" ? { gaps: 1, onlyOff: true } : {})),
+    bridges: rpBridges(P.rows, Object.assign({}, opts, { candidates: tbCities(), pop: function (c) { return typeof MPOP !== "undefined" && MPOP[c] ? MPOP[c][0] : null; } })) };
+  S.pl.rpCache = { key: key, v: v };
+  return v;
+}
+function plRoute() {
+  var st = S.pl.rp, all = PLAN.routes || {}, ids = Object.keys(all).sort(function (a, b) { return (all[b].upd || "") < (all[a].upd || "") ? -1 : 1; });
+  if (!st.draft && st.id && !all[st.id]) st.id = null;
+  if (!st.draft && !st.id && ids.length) st.id = ids[0];
+  var head = '<div class="tb-head pl-flat">' +
+    (ids.length ? '<label class="pl-lab">Маршрут ' + plSelect("rp|id", st.draft ? "" : st.id, (st.draft ? [["", "— новый —"]] : []).concat(ids.map(function (id) { return [id, all[id].title + " · " + rpMonthLabel(all[id].month)]; })), "Маршрут") + '</label>' : '') +
+    (st.draft ? '' : '<button class="btn-dark" data-pl="rp-new">+ Новый маршрут</button>' + (st.id ? '<button class="btn-ghost" data-pl="rp-edit">Изменить даты</button><button class="btn-ghost" data-pl="rp-del">Удалить</button>' : '')) + '</div>';
+  var R = rpCur();
+  if (!R) return head + '<div class="empty" style="margin-top:16px"><h2>Маршрутов пока нет</h2><p style="margin:0 0 12px">Вставьте свободные даты площадок на месяц — «Город — Площадка — числа». Программа соберёт варианты гастролей день за днём: даты подряд, переезд не больше 600 км, выезд из Москвы и возвращение.</p><button class="btn-dark" data-pl="rp-new">+ Новый маршрут</button></div>';
+  return head + (st.draft ? rpEditor(st.draft) : '') + (R.text ? rpResults(R) : '');
+}
+function rpEditor(d) {
+  var projOpts = [["", "— без проекта —"]].concat(Object.keys(PLAN.projects).map(function (id) { return [id, PLAN.projects[id].title]; }));
+  return '<section class="card pl-card tb-editor"><div class="tb-meta pl-flat">' +
+      '<label class="pl-lab">Название <input class="pl-in pl-text" id="rpTitle" value="' + esc(d.title || "") + '" placeholder="например, «Призрак Оперы — февраль»" style="min-width:260px"></label>' +
+      '<label class="pl-lab">Месяц <input class="pl-in pl-text" id="rpMonth" type="month" value="' + esc(d.month || "") + '" title="К какому месяцу относятся числа. Пусто — из строки «Даты по …» или следующий месяц"></label>' +
+      '<label class="pl-lab">Переезд не больше <input class="pl-in pl-sm" id="rpLimit" inputmode="numeric" value="' + esc(plFmt(d.limit || 600)) + '"> км</label>' +
+      '<label class="pl-lab">Проект ' + '<select class="pl-sel" id="rpProject" aria-label="Проект">' + projOpts.map(function (o) { return '<option value="' + esc(o[0]) + '"' + ((d.project || "") === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>'; }).join("") + '</select></label></div>' +
+    '<textarea id="rpText" class="tb-text" rows="8" placeholder="Даты по февралю:&#10;Воронеж - ГДК - 2,3,9&#10;Кострома - КВЦ Губернский - 6,14&#10;Подольск - ДК им. Лепсе - 1,2,3,4,5,8,9">' + esc(d.text || "") + '</textarea>' +
+    '<div class="tb-actions"><button class="btn-dark" data-pl="rp-parse">Разобрать и построить</button>' + (d.text ? '<button class="btn-dark" data-pl="rp-save">Сохранить маршрут</button>' : '') + '<button class="btn-ghost" data-pl="rp-cancel">Отмена</button>' +
+      '<span class="sub2">Числа без запятой («58», «910») разбираются как 5, 8 и 9, 10 — с пометкой. Лимит не касается выезда из Москвы и возвращения.</span></div></section>';
+}
+function rpResults(R) {
+  var C = rpCalc(R), P = C.P, rt = C.routes, st = S.pl.rp, D = new Date(Date.UTC(+C.month.slice(0, 4), +C.month.slice(5, 7), 0)).getUTCDate();
+  if (st.sel >= rt.list.length) st.sel = 0;
+  var v = rt.list[st.sel], mon = MONTHS_FULL[+C.month.slice(5, 7) - 1];
+  var dshort = function (d) { return d + " " + dparts(C.month + "-" + (d < 10 ? "0" : "") + d).mon; };
+  // проверка разбора
+  var chk = '<section class="card pl-card rp-check"><div class="rp-check-h"><b>' + rpMonthLabel(C.month) + '</b><span class="sub2">' + P.rows.length + ' ' + plural(P.rows.length, "город", "города", "городов") + ' · переезд ≤ ' + num(C.limit) + ' км · выезд и возвращение — ' + RP_BASE + '</span></div>' +
+    (P.issues.length ? '<ul class="rp-issues">' + P.issues.map(function (x) { return '<li>' + esc(x) + '</li>'; }).join("") + '</ul>' : '') +
+    (P.rows.some(function (r) { return r.fixes.length || r.bad.length; }) ? '<ul class="rp-issues rp-fix">' + P.rows.filter(function (r) { return r.fixes.length || r.bad.length; }).map(function (r) {
+      return '<li>' + esc(r.city) + ': ' + esc(r.fixes.concat(r.bad.map(function (b) { return "«" + b + "» — не дата, пропущено"; })).join("; ")) + '</li>'; }).join("") + '</ul>' : '') + '</section>';
+  // сетка свободных дат; выбранный вариант — номера по порядку
+  var inV = {}; if (v) v.stops.forEach(function (s, i) { inV[s.city + "|" + s.day] = i + 1; });
+  var wd = function (d) { return new Date(Date.UTC(+C.month.slice(0, 4), +C.month.slice(5, 7) - 1, d)).getUTCDay(); };
+  var grid = '<section class="card pl-card rp-grid-card"><table class="rp-grid"><thead><tr><th scope="col">Город · площадка</th>' + Array.from({ length: D }, function (_, i) { var d = i + 1; return '<th scope="col" class="' + (wd(d) === 0 || wd(d) === 6 ? 'rp-we' : '') + '">' + d + '</th>'; }).join("") + '</tr></thead><tbody>' +
+    P.rows.map(function (r) {
+      var days = {}; r.days.forEach(function (d) { days[d] = 1; });
+      return '<tr><th scope="row"><b>' + esc(r.city) + '</b>' + (r.found ? '' : ' <span class="pl-neg" title="Нет в справочнике городов">?</span>') + '<span class="sub2">' + esc(r.venue || "—") + (r.dupVenue ? ' <span class="pl-hot" title="Та же площадка у другого города — проверьте">⚠</span>' : '') + '</span></th>' +
+        Array.from({ length: D }, function (_, i) { var d = i + 1, n = inV[r.city + "|" + d]; return '<td class="' + (n ? 'rp-on' : days[d] ? 'rp-free' : '') + (wd(d) === 0 || wd(d) === 6 ? ' rp-we' : '') + '"' + (days[d] ? ' title="' + esc(r.city) + ', ' + dshort(d) + (n ? ' — день ' + n + ' варианта' : ' — свободно') + '"' : '') + '>' + (n || '') + '</td>'; }).join("") + '</tr>';
+    }).join("") + '</tbody></table><div class="an-legend"><span><i class="sq" style="background:#cfe1f2"></i>свободна площадка</span><span><i class="sq" style="background:#1d6fae"></i>выбранный вариант — номер дня</span><span><i class="sq" style="background:#f5f5f4"></i>выходные дни недели</span></div></section>';
+  // варианты
+  var seg = '<div class="seg" role="group">' + [["nogap", "Без выходных"], ["gap", "С выходными"]].map(function (o) { return '<button data-pl="rp-mode" data-v="' + o[0] + '" aria-pressed="' + (st.mode === o[0]) + '">' + o[1] + '</button>'; }).join("") + '</div>';
+  var info = '<span class="sub2">' + (rt.total ? 'найдено ' + num(rt.total) + ' ' + plural(rt.total, "вариант", "варианта", "вариантов") + (rt.full ? ', полных (все ' + rt.cities + ' ' + plural(rt.cities, "город", "города", "городов") + ') — ' + rt.full : ', полных нет') + (rt.total > rt.list.length ? ' · показаны первые ' + rt.list.length : '') : (st.mode === "gap" ? 'вариантов с выходными нет — все склеиваются без них' : 'вариантов нет')) + (rt.cut ? ' · перебор остановлен — слишком много сочетаний' : '') + '</span>';
+  var vlist = rt.list.map(function (x, i) {
+    var parts = [];
+    x.stops.forEach(function (s, k) {
+      if (k) { var gap = s.day - x.stops[k - 1].day - 1; parts.push('<span class="rp-hop" title="Переезд ' + esc(x.stops[k - 1].city) + ' → ' + esc(s.city) + '">' + num(x.hops[k - 1]) + ' км</span>'); if (gap > 0) parts.push('<span class="rp-off">выходной' + (gap > 1 ? ' × ' + gap : '') + '</span>'); }
+      parts.push('<span class="rp-stop"><b>' + s.day + '</b> ' + esc(s.city) + '</span>');
+    });
+    var firstPartial = !x.full && (i === 0 || rt.list[i - 1].full);
+    return (firstPartial ? '<li class="rp-sep sub2">Неполные — не все города подряд</li>' : '') +
+      '<li class="rp-var' + (i === st.sel ? ' sel' : '') + '"><button class="rp-var-btn" data-pl="rp-sel" data-i="' + i + '" aria-pressed="' + (i === st.sel) + '"><span class="rp-num">' + (i + 1) + '</span>' +
+        '<span class="rp-chain">' + parts.join("") + '</span>' +
+        '<span class="rp-meta"><b>' + x.n + ' из ' + rt.cities + '</b><span>' + num(x.km) + ' км всего</span><span class="sub2">макс. переезд ' + num(x.maxHop) + ' км' + (x.off ? ' · выходных ' + x.off : '') + '</span>' +
+          '<span class="sub2">' + RP_BASE + ' → ' + (x.fromBase != null ? num(x.fromBase) : '—') + ' км · обратно ' + (x.toBase != null ? num(x.toBase) : '—') + ' км</span></span></button></li>';
+  }).join("");
+  var vsec = '<section class="rp-vars"><div class="tb-tools pl-flat">' + seg + info + '<span style="flex-grow:1"></span>' + (v ? '<button class="btn-dark" data-pl="rp-tour">Создать тур из варианта ' + (st.sel + 1) + '</button>' : '') + '</div>' +
+    (vlist ? '<div class="rp-split"><ol class="rp-list">' + vlist + '</ol><div class="rp-mapcol"><div id="rpMap" class="an-map rp-map"><div class="sub" style="padding:16px">Загружаем карту…</div></div>' +
+      '<div class="an-legend"><span><i style="background:#1d6fae"></i>город варианта — номер дня по порядку</span><span><i style="background:#0c0a09"></i>' + RP_BASE + '</span><span><i style="background:#a8a29e"></i>другие города списка</span>' + (C.bridges.length ? '<span><i class="sq" style="background:none;border-top:2px dashed #b91c1c;height:0;width:16px"></i>подряд не поставить</span>' : '') + '</div></div></div>' : '') + '</section>';
+  if (vlist) setTimeout(rpMapInit, 0);
+  return chk + grid + vsec + rpBridgesHtml(C);
+}
+function rpBridgesHtml(C) {
+  if (!C.bridges.length) return '';
+  var mon = function (d) { return d + " " + dparts(C.month + "-" + (d < 10 ? "0" : "") + d).mon; };
+  return '<section class="rp-bridges"><h3>Нужен город-связка</h3><p class="sub2" style="margin:0 0 10px">Эти города подряд не поставить — дальше ' + num(C.limit) + ' км. Город посередине (до обоих не больше ' + num(C.limit) + ' км) соединит их: добавьте его в список и впишите площадку и свободные даты — варианты пересчитаются.</p>' +
+    C.bridges.map(function (b) {
+      return '<div class="card pl-card rp-bridge"><div class="rp-bridge-h"><b>' + esc(b.a) + ' — ' + esc(b.b) + '</b><span class="sub2">' + num(b.km) + ' км' + (b.oneCity ? '' : ' · одного города посередине мало') + '</span>' +
+          (b.combos.length ? '<span class="sub2">даты: ' + b.combos.map(function (c) { return esc(c.from) + ' ' + mon(c.d1) + ' → ' + esc(c.to) + ' ' + mon(c.d2) + ' (' + (c.between === 1 ? 'день' : c.between + ' ' + plural(c.between, "день", "дня", "дней")) + ' между)'; }).join("; ") + '</span>' : '<span class="sub2">близких дат нет (между ними больше 3 дней)</span>') + '</div>' +
+        (b.cands.length ? '<table class="vtable rp-cands"><thead><tr><th scope="col">Город посередине</th><th scope="col" class="r">Жителей</th><th scope="col" class="r">Самый большой зал</th><th scope="col" class="r">от ' + esc(b.a) + '</th><th scope="col" class="r">до ' + esc(b.b) + '</th><th scope="col" class="r">Крюк</th><th scope="col"></th></tr></thead><tbody>' +
+          b.cands.map(function (c) { var vs = plCityVenues(c.city), mc = vs.length && vs[0].cap ? vs[0] : null;
+            return '<tr><th scope="row">' + esc(c.city) + '</th><td class="r num">' + (c.pop ? plShort(c.pop) : '—') + '</td><td class="r">' + (mc ? '<span class="num">' + num(mc.cap) + '</span> <span class="sub2">' + esc(mc.name) + '</span>' : '<span class="muted">—</span>') + '</td>' +
+              '<td class="r num">' + num(c.a) + ' км</td><td class="r num">' + num(c.b) + ' км</td><td class="r num">' + num(c.detour) + ' км</td><td class="r"><button class="pj-plain" data-pl="rp-addcity" data-city="' + esc(c.city) + '">Добавить в список</button></td></tr>'; }).join("") + '</tbody></table>' : plNote('Городов, от которых до обоих не больше ' + num(C.limit) + ' км, нет.')) + '</div>';
+    }).join("") + '</section>';
+}
+function rpMapInit() {
+  var el = $("rpMap"), R = rpCur(); if (!el || !R) return;
+  var C = rpCalc(R), v = C.routes.list[S.pl.rp.sel];
+  anLoad(function (err) {
+    if (!$("rpMap")) return;
+    if (err || !window.L) { el.innerHTML = '<div class="note" style="margin:16px">Карта не загрузилась: нет связи с OpenStreetMap или cdnjs.</div>'; return; }
+    el.innerHTML = "";
+    if (S.pl.rpObj) { try { S.pl.rpObj.remove(); } catch (e) { /* ушла вместе со страницей */ } S.pl.rpObj = null; }
+    var map = L.map(el, { scrollWheelZoom: true, zoomControl: false, zoomSnap: 0.25, zoomDelta: 0.5, wheelPxPerZoomLevel: 90 }), pts = [];
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 18, attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>' }).addTo(map);
+    var base = plLL(RP_BASE), inV = {}; if (v) v.stops.forEach(function (s) { inV[s.city] = 1; });
+    C.bridges.forEach(function (b) { var a = plLL(b.a), c = plLL(b.b); if (a && c) L.polyline([a, c], { color: "#b91c1c", weight: 1.5, opacity: 0.6, dashArray: "5 6" }).bindTooltip(esc(b.a) + " — " + esc(b.b) + ": " + num(b.km) + " км — нужен город-связка", { sticky: true }).addTo(map); });
+    C.P.rows.forEach(function (r) { var ll = plLL(r.city); if (!ll || inV[r.city]) return; pts.push(ll); L.circleMarker(ll, { radius: 6, color: "#fff", weight: 1, fillColor: "#a8a29e", fillOpacity: 0.95 }).bindTooltip(esc(r.city) + " · свободно: " + r.days.join(", "), { direction: "top" }).addTo(map); });
+    if (base) { pts.push(base); L.marker(base, { icon: L.divIcon({ className: "", html: '<span class="an-pin" style="background:#0c0a09;min-width:24px;height:24px">М</span>', iconSize: [24, 24], iconAnchor: [12, 12] }), title: RP_BASE, zIndexOffset: 400 }).bindTooltip(RP_BASE + " — выезд и возвращение", { direction: "top" }).addTo(map); }
+    if (v) {
+      var ll = v.stops.map(function (s) { return plLL(s.city); });
+      var line = function (a, b, txt, dashed) {
+        if (!a || !b) return;
+        L.polyline([a, b], { color: dashed ? "#78716c" : "#1d6fae", weight: dashed ? 2 : 3, opacity: dashed ? 0.6 : 0.85, dashArray: dashed ? "4 6" : null }).bindTooltip(txt, { sticky: true }).addTo(map);
+        var ang = Math.atan2(b[0] - a[0], (b[1] - a[1]) * Math.cos(a[0] * Math.PI / 180)) * 180 / Math.PI;
+        L.marker([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2], { icon: L.divIcon({ className: "an-arrow", html: '<span style="transform:rotate(' + (-ang).toFixed(0) + 'deg)">➤</span>', iconSize: [14, 14], iconAnchor: [7, 7] }), interactive: false, keyboard: false }).addTo(map);
+      };
+      if (base) line(base, ll[0], RP_BASE + " → " + esc(v.stops[0].city) + ": " + num(v.fromBase) + " км", true);
+      for (var i = 1; i < ll.length; i++) line(ll[i - 1], ll[i], esc(v.stops[i - 1].city) + " " + v.stops[i - 1].day + " → " + esc(v.stops[i].city) + " " + v.stops[i].day + ": " + num(v.hops[i - 1]) + " км", false);
+      if (base) line(ll[ll.length - 1], base, esc(v.stops[v.stops.length - 1].city) + " → " + RP_BASE + ": " + num(v.toBase) + " км", true);
+      v.stops.forEach(function (s, i) { if (!ll[i]) return; pts.push(ll[i]);
+        L.marker(ll[i], { icon: L.divIcon({ className: "", html: '<span class="an-pin pl-pin" style="background:#1d6fae;min-width:26px;height:26px">' + (i + 1) + '</span>', iconSize: [26, 26], iconAnchor: [13, 13] }), title: s.city, riseOnHover: true, zIndexOffset: 500 })
+          .bindTooltip((i + 1) + ". " + esc(s.city) + " · " + dayLabel(s.date) + (s.venue ? " · " + esc(s.venue) : ""), { direction: "top", offset: [0, -13] }).addTo(map); });
+    }
+    if (pts.length > 1) map.fitBounds(pts, { padding: [40, 40], maxZoom: 7 }); else map.setView([56, 40], 5);
+    S.pl.rpObj = map;
+  });
+}
+function rpAction(a, b) {
+  var st = S.pl.rp;
+  var grab = function (d) { d.title = $("rpTitle").value.trim(); d.month = $("rpMonth").value; d.limit = planNum($("rpLimit").value) || 600; d.project = $("rpProject").value; d.text = $("rpText").value; };
+  if (a === "rp-new") { st.draft = { title: "", month: "", limit: 600, project: "", text: "" }; st.editId = null; st.sel = 0; render(); if ($("rpText")) $("rpText").focus(); }
+  else if (a === "rp-edit") { st.draft = JSON.parse(JSON.stringify(PLAN.routes[st.id])); st.editId = st.id; render(); }
+  else if (a === "rp-cancel") { st.draft = null; render(); }
+  else if (a === "rp-parse") {
+    grab(st.draft);
+    var P = rpParse(st.draft.text, { cities: tbCities(), today: TODAY });
+    if (!st.draft.month && P.month) st.draft.month = P.month;   // месяц из «Даты по февралю» — в поле, можно поменять
+    if (!st.draft.title) st.draft.title = (PLAN.projects[st.draft.project] ? PLAN.projects[st.draft.project].title + " — " : "Маршрут — ") + rpMonthLabel(st.draft.month || P.month || rpDefMonth());
+    st.sel = 0; tbRe();
+    if (!P.rows.length) toast("Не нашли ни одной строки «Город — Площадка — числа»");
+  }
+  else if (a === "rp-save") {
+    var d = st.draft; grab(d);
+    if (!d.month) d.month = rpParse(d.text, { cities: tbCities(), today: TODAY }).month || rpDefMonth();
+    if (!d.title) d.title = "Маршрут — " + rpMonthLabel(d.month);
+    var id = st.editId || plId("m"); PLAN.routes = PLAN.routes || {};
+    st.draft = null; st.id = id;
+    plPut("routes", id, { title: d.title, month: d.month, limit: d.limit, project: d.project, text: d.text }, "Маршрут «" + d.title + "» сохранён");
+  }
+  else if (a === "rp-del") { if (!confirm("Удалить маршрут «" + PLAN.routes[st.id].title + "»?")) return; var did = st.id; st.id = null; plDel("routes", did, "Маршрут удалён"); }
+  else if (a === "rp-mode") { st.mode = b.getAttribute("data-v"); st.sel = 0; tbRe(); }
+  else if (a === "rp-sel") { st.sel = +b.getAttribute("data-i"); tbRe(); }
+  else if (a === "rp-addcity") {   // город-связка → новая строка списка; площадку и даты вписывает пользователь
+    var c = b.getAttribute("data-city"), R = rpCur();
+    if (!st.draft) { st.draft = JSON.parse(JSON.stringify(R)); st.editId = st.id; }
+    st.draft.text = (st.draft.text || "").replace(/\s+$/, "") + "\n" + c + " - площадка - ";
+    render();
+    var ta = $("rpText"); if (ta) { ta.scrollIntoView({ block: "center" }); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }
+    toast("«" + c + "» добавлен в конец списка — впишите площадку и свободные даты, затем «Разобрать и построить»");
+  }
+  else if (a === "rp-tour") {
+    var R2 = rpCur(), C = rpCalc(R2), v = C.routes.list[st.sel]; if (!v) return;
+    var tid = plId("t"), tour = { title: R2.title + " — вариант " + (st.sel + 1), month: C.month, status: "Черновик",
+      rows: v.stops.map(function (s) { return { id: plId("r"), city: s.city, venue: s.venue ? plVenueKey(s.city, s.venue) : undefined, date: s.date }; }) };
+    tour.rows.forEach(function (r) { if (!r.venue) delete r.venue; });
+    if (R2.project && PLAN.projects[R2.project]) tour.project = R2.project;
+    S.pl.tab = "tours"; S.pl.tour = tid;
+    plPut("tours", tid, tour, "Тур создан: " + v.n + " " + plural(v.n, "город", "города", "городов") + (tour.project ? "" : " — выберите проект тура"));
+  }
 }
 
 // ---------- Вместимость площадки: вписанная в «Площадках» — в первую очередь, иначе — по схемам касс (venuecap.py, MVCAP)
@@ -8999,6 +9195,7 @@ function plChange(el) {
   var sig = el.getAttribute("data-plf"), p = sig.split("|"), kind = p[0];
   if (kind === "new") return;
   if (kind === "gm") { var gp = plGmPrefs(); gp[p[1]] = el.value; if (p[1] === "tour") S.pl.gmView = null; plGmSave(gp); var ygm = window.scrollY; render(); window.scrollTo(0, ygm); return; }
+  if (kind === "rp") { S.pl.rp.id = el.value || null; S.pl.rp.draft = null; S.pl.rp.sel = 0; tbRe(); return; }   // выбор маршрута
   if (kind === "ana") { S.pl.anaCity = el.value; tbRe(); return; }   // аналитика тура: весь тур или город
   if (kind === "sens") { var sp = plSens(), sv = planNum(el.value); if (isFinite(sv) && sv >= 0) sp[p[1]] = sv; PL_PREFS.sens = sp; plPrefsSave(); tbRe(); return; }
   if (kind === "tb") {   // «Построение гастролей»: список, фильтры
@@ -9057,6 +9254,7 @@ function plAction(b) {
   var a = b.getAttribute("data-pl"), id = b.getAttribute("data-id"), copy = function (o) { return JSON.parse(JSON.stringify(o || {})); };
   if (a === "tab") { S.pl.tab = b.getAttribute("data-tab"); S.pl.tour = null; closeDrawer(); render(); }
   else if (a.indexOf("tb-") === 0) tbAction(a, b);
+  else if (a.indexOf("rp-") === 0) rpAction(a, b);
   else if (a === "ana-toggle") { PL_PREFS.ana = PL_PREFS.ana === false; plPrefsSave(); tbRe(); }
   else if (a === "cols") { S.pl.cols = !S.pl.cols; render(); }
   else if (a === "gross-reset") { var tg = copy(PLAN.tours[S.pl.tour]), rg = (tg.rows || []).filter(function (x) { return x.id === S.pl.row; })[0]; if (!rg) return; delete rg.avg; if (rg.ovr) { delete rg.ovr.gross; if (!Object.keys(rg.ovr).length) delete rg.ovr; } plPut("tours", S.pl.tour, tg, "Вал — снова из площадки"); }

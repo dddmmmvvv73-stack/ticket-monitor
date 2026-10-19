@@ -152,7 +152,15 @@
     return { title: title || opts.title || "", rows: rows };
   }
 
+  // Город в строке по справочнику (для «Построения гастрольного маршрута», route-plan.js): {city, raw, fix} или null
+  var DICT_CACHE = { names: null, dict: null };
+  function tpFindCity(text, cities) {
+    if (DICT_CACHE.names !== cities) DICT_CACHE = { names: cities, dict: makeDict(cities) };
+    return findCity(text, DICT_CACHE.dict, {});
+  }
+
   root.tpParse = tpParse;
+  root.tpFindCity = tpFindCity;
   root.TP_ALIAS = TP_ALIAS;
-  if (typeof module !== "undefined" && module.exports) module.exports = { tpParse: tpParse, TP_ALIAS: TP_ALIAS };
+  if (typeof module !== "undefined" && module.exports) module.exports = { tpParse: tpParse, tpFindCity: tpFindCity, TP_ALIAS: TP_ALIAS };
 })(typeof window !== "undefined" ? window : this);

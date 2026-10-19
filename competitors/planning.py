@@ -16,6 +16,8 @@
      "lists":    {номер: {"title", "project" — название проекта в афише, "text" — список продюсера как прислан,
                   "rows": [{"city", "date", "date2", "time", "status", "other", "note", "line", "fix", "raw"}]}}}
                  ← «Построение гастролей»: где проект уже работает по словам продюсера (разбор — tour-parse.js)
+     "routes":   {номер: {"title", "month" — ГГГГ-ММ, "text" — «Город — Площадка — числа» как прислано, "limit" — км переезда,
+                  "project" — номер проекта}}   ← «Построение гастрольного маршрута» (route-plan.js)
     строка тура: {"id", "city", "venue", "date", "days", "fill", "ads", "agent",
                   "ovr": {поле справочника: значение — правка в этой строке},
                   "scores": {"comp", "ads", "attract", "market", "prep"}, "cannibal", "region_ban", "last_show", "decision", "note",
@@ -35,7 +37,7 @@ from datetime import datetime
 from competitors.storage import CONFIG_DIR, load_json, save_json
 
 FILE = CONFIG_DIR / "planning.json"
-KINDS = ("params", "projects", "regions", "cities", "venues", "tours", "lists")
+KINDS = ("params", "projects", "regions", "cities", "venues", "tours", "lists", "routes")
 ORG = ("transfer", "hotel", "tech", "catering", "loaders", "security", "services", "other")
 SCORES = ("comp", "ads", "attract", "market", "prep")
 STATUSES = ("Черновик", "Планируется", "В процессе", "Подтверждён", "Отменён")
@@ -134,6 +136,7 @@ def _zones(v, fields: dict, what: str) -> list:
     return [z for z in (_clean(x or {}, fields, what) for x in v) if z]
 TOUR = {"title": 200, "project": 24, "month": "date", "status": STATUSES, "note": 2000}
 LIST = {"title": 200, "project": 300, "text": 30000}
+ROUTE = {"title": 200, "month": "date", "text": 30000, "limit": "int", "project": 24}
 LIST_ROW = {"city": 100, "date": "date", "date2": "date", "time": 5, "status": ("ok", "maybe", "nodate", "transit", "other", "note", "title"),
             "other": 200, "note": 300, "line": 500, "fix": 20, "raw": 100}
 
@@ -195,6 +198,11 @@ def _validate(kind: str, data: dict) -> dict:
             raise PlanningError("площадка: нужны город и название")
         if data.get("zones"):
             out["zones"] = _zones(data["zones"], ZONE_T, "пояса площадки")
+        return out
+    if kind == "routes":
+        out = _clean(data, ROUTE, "маршрут")
+        if not out.get("title"):
+            raise PlanningError("маршрут: нужно название")
         return out
     if kind == "lists":
         out = _clean(data, LIST, "список гастролей")
