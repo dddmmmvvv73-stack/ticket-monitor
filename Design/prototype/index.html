@@ -422,6 +422,9 @@ details.how summary { cursor: pointer; font-size: 13px; color: var(--data); widt
 .vb-in { width: 100%; box-sizing: border-box; font: 13px/1.35 var(--ui); color: var(--ink); background: #fff; border: 1px solid var(--cta); border-radius: 6px; padding: 6px 7px; resize: vertical; outline: none; box-shadow: 0 0 0 3px rgba(59, 168, 245, 0.18); }
 select.vb-in { height: 34px; padding: 0 6px; }
 .vb-cell-saving { opacity: 0.55; }
+.vb-undone { animation: vb-undone 1.2s var(--ease); }   /* ячейка, правку в которой отменили, — короткая подсветка */
+@keyframes vb-undone { from { background: rgba(59, 168, 245, 0.22); } to { background: transparent; } }
+@media (prefers-reduced-motion: reduce) { .vb-undone { animation: none; } }
 /* Страница площадки: ЭДО — выбор прямо в «О площадке», райдер — файл, «вписать» у пустых строк */
 .vb-edo { font: inherit; font-size: 14px; color: var(--ink); border: 0; border-bottom: 1px solid var(--line-strong); border-radius: 0; padding: 0 18px 1px 0; cursor: pointer;
   -webkit-appearance: none; appearance: none; background: transparent var(--chevron) no-repeat right 0 center; background-size: 10px; }
@@ -3408,7 +3411,7 @@ function renderVenueBook() {
       '<button class="chip-btn vb-editbtn' + (S.vb.edit ? ' chip-active' : '') + '" data-vb="table-edit" aria-pressed="' + !!S.vb.edit + '" title="Вписывать данные прямо в ячейки таблицы">' + PJ_ICON.edit + (S.vb.edit ? 'Правка включена' : 'Править в таблице') + '</button>' +
       vbColsControl() +
     '</div>' +
-    (S.vb.edit ? '<div class="note vb-editnote">Режим правки: нажмите на ячейку и впишите. Enter — сохранить и вниз, Tab — вправо, Shift+Enter — новая строка в ячейке, Esc — отменить. Страница площадки в этом режиме не открывается.</div>' : '') +
+    (S.vb.edit ? '<div class="note vb-editnote">Режим правки: нажмите на ячейку и впишите. Enter — сохранить и вниз, Tab — вправо, Shift+Enter — новая строка в ячейке, Esc — отменить ввод, ⌘Z / Ctrl+Z — отменить последнюю сохранённую правку. Страница площадки в этом режиме не открывается.</div>' : '') +
     '<section class="card ev-card-table vb-card"><table class="ev-table vb-table' + (S.vb.edit ? ' vb-editing' : '') + '" id="evTable" style="width:' + totalW + 'px"><colgroup>' + cols.map(function (c) { return '<col data-col="' + c.id + '" style="width:' + fitW[c.id] + 'px">'; }).join("") + '</colgroup>' +
       '<thead><tr>' + cols.map(function (c) { return mTh(c, S.vb.sort === c.sort, S.vb.desc, "data-vbsort").replace('<th scope="col" class="', '<th scope="col"' + stickAttr(c) + ' class="' + stickCls(c) + ' '); }).join("") + '</tr></thead><tbody>' + rows + '</tbody></table>' + empty + '</section>' +
     '<div class="m-list vb-mlist">' + mobile + (list.length ? "" : empty) + '</div>' +
@@ -3617,8 +3620,9 @@ function vbAction(t, ev) {
   else if (a === "rider") $("vbRiderFile").click();
   else if (a === "unrider" && r) vbSave2({ op: "rider", id: r.id, data: "" }, "Райдер убран", vbAfterFile);
 }
-// ---------- Правка прямо в таблице (режим «Править в таблице»): ячейка → поле ввода; Enter — вниз, Tab — вправо, Esc — отмена
-var VB_CELL_ED = null;
+// ---------- Правка прямо в таблице (режим «Править в таблице»): ячейка → поле ввода; Enter — вниз, Tab — вправо, Esc — отмена.
+// ⌘Z (Mac) / Ctrl+Z (Windows) вне поля ввода — отменить последнюю сохранённую правку ячейки, ещё раз — предыдущую (VB_UNDO)
+var VB_CELL_ED = null, VB_UNDO = [];
 function vbCellEdit(td) {
   if (VB_CELL_ED && VB_CELL_ED.td === td) return;
   if (VB_CELL_ED) vbCellDone(true);   // перешли в другую ячейку мышью — прежняя сохраняется
@@ -3650,6 +3654,7 @@ function vbCellDone(save, move) {
   }
   if (save && nv !== (e.r[e.f] || "")) {
     if ((e.f === "city" || e.f === "name") && !nv) { toast("Город и название площадки не могут быть пустыми"); paint(); return; }
+    VB_UNDO.push({ id: e.r.id, f: e.f, old: e.r[e.f] || "" }); if (VB_UNDO.length > 200) VB_UNDO.shift();
     td.classList.add("vb-cell-saving");
     vbSave2({ op: "set", id: e.r.id, data: (function () { var o = {}; o[e.f] = nv; return o; })() }, "", function () { td.classList.remove("vb-cell-saving"); paint(); });
     e.r[e.f] = nv;   // сразу показываем вписанное; ответ сервера поправит
@@ -3668,6 +3673,26 @@ $("view").addEventListener("click", function (ev) {
   if (t.hasAttribute("data-vbsort")) { var k = t.getAttribute("data-vbsort"); S.vb.desc = S.vb.sort === k ? !S.vb.desc : k === "seats"; S.vb.sort = k; render(); return; }
   if (t.hasAttribute("data-vbrow")) { if (!ev.target.closest("a") && !S.vb.edit) vbOpen(t.getAttribute("data-vbrow")); return; }   // ссылка в ячейке (сайт, почта) — сама по себе
   vbAction(t, ev);
+});
+function vbUndo() {
+  var u = VB_UNDO.pop();
+  if (!u) { toast("Отменять больше нечего"); return; }
+  var r = vbRec(u.id), c = VB_COLS.filter(function (x) { return x.id === u.f; })[0]; if (!r || !c) return;
+  r[u.f] = u.old;   // сразу на экране; ответ сервера поправит
+  var td = document.querySelector('.vb-table tr[data-vbrow="' + u.id + '"] td[data-f="' + u.f + '"]');
+  if (td) { td.innerHTML = vbCell(c, r); td.scrollIntoView({ block: "nearest", inline: "nearest" }); td.classList.remove("vb-undone"); void td.offsetWidth; td.classList.add("vb-undone"); }
+  var o = {}; o[u.f] = u.old;
+  vbSave2({ op: "set", id: u.id, data: o, undo: true }, "Отменено: " + c.label + " · " + (r.name || r.city) + (VB_UNDO.length ? " · ещё правок: " + VB_UNDO.length : ""), function (ok) {
+    if (!ok) VB_UNDO.push(u);
+    var t2 = document.querySelector('.vb-table tr[data-vbrow="' + u.id + '"] td[data-f="' + u.f + '"]'); if (t2 && !t2.classList.contains("vb-cell-on")) t2.innerHTML = vbCell(c, vbRec(u.id));
+  });
+}
+document.addEventListener("keydown", function (ev) {
+  if (ev.code !== "KeyZ" || !(ev.metaKey || ev.ctrlKey) || ev.shiftKey || ev.altKey) return;   // по клавише, не по букве: в русской раскладке — «я»
+  if (!vbOn() || S.vb.sel || ($("pjDlg") && $("pjDlg").open)) return;
+  var el = document.activeElement;
+  if (el && (/^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName) || el.isContentEditable)) return;   // в поле ввода — обычная отмена набранного
+  ev.preventDefault(); vbUndo();
 });
 document.addEventListener("click", function (ev) {   // кнопки в окне «Редактировать» (окно — вне #view)
   var t = ev.target.closest && ev.target.closest("#pjDlg [data-vb]"); if (t && vbOn()) { ev.preventDefault(); vbAction(t, ev); }

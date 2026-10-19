@@ -20,7 +20,7 @@
                                                          xlsx, а не csv — в csv теряются ссылки за словом «Сайт»
                                                          повторная загрузка не затирает исправленное на сайте
     GET  /proto/venue-book.js                             справочник для прототипа (competitors/market_api.py)
-    POST /api/venuebook  {"op": "set", "id", "data": {поле: значение}}   правка полей
+    POST /api/venuebook  {"op": "set", "id", "data": {поле: значение}, "undo"?}   правка полей (undo — отмена ⌘Z / Ctrl+Z)
                          {"op": "media", "id", "kind": "avatar" | "cover", "data": data:image/…;base64 | ""}
                          {"op": "rider", "id", "name", "data": data:…;base64 | ""}
     GET  /api/venuebook/file/<файл>                       фото или райдер
@@ -224,7 +224,7 @@ def apply_op(op: dict) -> dict:
                     raise VenueBookError(f"слишком длинно: не больше {TEXT_MAX} знаков")
                 if f == "edo" and v not in ("", *EDO):
                     raise VenueBookError("ЭДО: полное, только входящий или не работают")
-                if f in ("city", "name") and not v:
+                if f in ("city", "name") and not v and not op.get("undo"):   # отмена (⌘Z) возвращает и пустое, как было
                     raise VenueBookError("город и название площадки не могут быть пустыми")
                 rec[f] = v
                 if f in FIELDS and f not in rec.setdefault("edited", []):
