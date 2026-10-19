@@ -678,20 +678,18 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wk-split-side { position: sticky; top: calc(var(--top-h, 64px) + 16px); }
 /* Столбцы ровнее: задача — остаток (уже, чем раньше), остальные — близкой ширины; приоритет, время, срок — по центру */
 .wkt th.wkt-prio, .wkt td.wkt-prio { width: 116px; }
-.wk-split .wkt .wkt-n { width: 34px; } .wk-split .wkt th.wkt-prio, .wk-split .wkt td.wkt-prio { width: 108px; } .wk-split .wkt .wkt-tagcell { width: 146px; }
-.wk-split .wkt th.wkt-time, .wk-split .wkt td.wkt-time { width: 94px; } .wk-split .wkt th.wkt-due, .wk-split .wkt td.wkt-due { width: 104px; }
-.wkt th.wkt-prio, .wkt td.wkt-prio, .wkt th.wkt-time, .wkt td.wkt-time, .wkt th.wkt-due, .wkt td.wkt-due { text-align: center; }
+
+.wkt th.wkt-time, .wkt td.wkt-time { text-align: center; }
 .wkt td.wkt-due .wk-datebtn { margin-left: 0; }
-.wkt td.wkt-prio .wkt-tags { margin-left: 0; } .wkt td.wkt-prio { overflow: hidden; }
-.wk-split .wkt th.wkt-prio, .wk-split .wkt td.wkt-prio, .wk-split .wkt th.wkt-due, .wk-split .wkt td.wkt-due, .wk-split .wkt th.wkt-time, .wk-split .wkt td.wkt-time { padding-left: 4px; padding-right: 4px; }
-.wkt td.wkt-prio .wk-tag { padding: 0 8px; font-size: 11.5px; } .wkt td.wkt-prio .wk-tag svg { margin-right: 4px; width: 12px; height: 12px; }
+.wkt td.wkt-prio .wkt-tags { margin-left: -4px; } .wkt td.wkt-prio { overflow: hidden; }
+.wk-split .wkt th.wkt-time, .wk-split .wkt td.wkt-time { padding-left: 4px; padding-right: 4px; }
 .pr-high { --tg: #b42318; --tg-bg: #fde8e6; } .pr-mid { --tg: #b45309; --tg-bg: #fdeedd; } .pr-low { --tg: #1d5fa8; --tg-bg: #e3eefb; }
 .wk-tag svg { margin-right: 5px; }
 .wkt-playpill { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px 0 10px; border-radius: 9999px; border: 1.5px solid var(--line-strong); background: var(--card); color: var(--ink-2); font: inherit; font-size: 13px; cursor: pointer; }
 .wkt-playpill svg { color: var(--good-bar); } .wkt-playpill:hover { border-color: var(--good-bar); background: #eef8f0; }
 .wkt-playpill.wkt-red .num { color: var(--risk); }
 .wkt-nm { gap: 8px !important; }
-@media (max-width: 1180px) { .wk-split { grid-template-columns: minmax(0, 1fr); } .wk-split-side { position: static; max-width: 420px; } }
+@media (max-width: 1360px) { .wk-split { grid-template-columns: minmax(0, 1fr); } .wk-split-side { position: static; max-width: 420px; } }   /* рядом — тесно: календарь под таблицей */
 /* Календарь сроков — по образцу: крупные числа, сегодня — синий круг с тенью */
 .wkm { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 22px 20px 16px; }
 .wkm-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
@@ -776,6 +774,46 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wkd-prio-b:hover { border-color: var(--line-strong); }
 .wkd-prio-b.on { border-color: currentColor; background: color-mix(in srgb, currentColor 9%, white); font-weight: 600; }
 .wkd-prio-b.p-none.on { color: var(--ink-2); }
+/* ---------- Задачи проекта, правки 19.10 (разбор дизайна): таймер в строку, одна форма кнопки, ширины, выравнивание,
+   палитра тегов без красного и оранжевого, пустая галочка, 10 задач и прокрутка без полосы ---------- */
+.tg-indigo { --tg: #3730a3; --tg-bg: #e6e7fb; --tg-bar: #6366f1; } .tg-brown { --tg: #7c4a1e; --tg-bg: #f3e9df; --tg-bar: #a16207; }
+/* Идущий таймер — точка и цифры в одну строку, одна тонкая рамка */
+.wkt-running { display: inline-flex; align-items: center; gap: 7px; height: 32px; padding: 0 12px; border: 1.5px solid #22a04b; border-radius: 9999px; background: #eef8f0; color: var(--ink); font: inherit; font-size: 13px; white-space: nowrap; cursor: pointer; }
+.wkt-running:hover { border-color: var(--risk-bar); background: #fdeceb; }
+.wkt-running.wkt-red .num { color: var(--risk); }
+.wkt-dot { width: 7px; height: 7px; border-radius: 50%; background: #22a04b; flex-shrink: 0; animation: wk-blink 1.2s ease-in-out infinite; }
+.wkt-running:hover .wkt-dot { background: var(--risk-bar); animation: none; }
+@media (prefers-reduced-motion: reduce) { .wkt-dot { animation: none; } }
+.wkt-play, .wkt-playpill { height: 32px; box-sizing: border-box; }
+.wkt-playpill { white-space: nowrap; }
+/* Ширины: «Задача» на широком экране — не больше 45 %, остальное — столбцам справа */
+.wkt-card { container-type: inline-size; }
+@container (min-width: 900px) { .wkt th.wkt-name-h { width: 45%; } }
+.wk-split .wkt .wkt-n { width: 34px; } .wk-split .wkt th.wkt-prio, .wk-split .wkt td.wkt-prio { width: 112px; } .wk-split .wkt .wkt-tagcell { width: 138px; }
+.wk-split .wkt th.wkt-time, .wk-split .wkt td.wkt-time { width: 112px; } .wk-split .wkt th.wkt-due, .wk-split .wkt td.wkt-due { width: 100px; }
+/* Выравнивание: приоритет, теги, срок — по левому краю вместе с заголовком; время — по центру */
+.wkt th.wkt-prio, .wkt td.wkt-prio, .wkt th.wkt-due, .wkt td.wkt-due { text-align: left; }
+.wk-split .wkt th.wkt-prio, .wk-split .wkt td.wkt-prio, .wk-split .wkt th.wkt-due, .wk-split .wkt td.wkt-due { padding-left: 10px; padding-right: 4px; }
+.wkt td.wkt-due .wk-datebtn { margin-left: -7px; }
+.wkt td.wkt-prio .wk-tag, .wkt td.wkt-tagcell .wk-tag { height: 24px; padding: 0 8px; font-size: 12px; }
+.wkt td.wkt-prio .wk-tag svg { width: 12px; height: 12px; margin-right: 4px; }
+/* узкая таблица (экран около 1280 px): служебные столбцы сжимаются, названию — больше места */
+@container (max-width: 700px) {
+  .wk-split .wkt th.wkt-prio, .wk-split .wkt td.wkt-prio { width: 100px; } .wk-split .wkt .wkt-tagcell { width: 112px; }
+  .wk-split .wkt th.wkt-time, .wk-split .wkt td.wkt-time { width: 96px; } .wk-split .wkt th.wkt-due, .wk-split .wkt td.wkt-due { width: 92px; }
+  .wkt td.wkt-prio .wk-tag, .wkt td.wkt-tagcell .wk-tag { padding: 0 6px; font-size: 11px; }
+  .wkt .wkt-playpill { padding: 0 9px 0 8px; }
+}
+/* «Сегодня» — не как ссылка: тёмный жирный */
+.wk-datebtn.today { color: var(--ink); font-weight: 600; }
+/* Пустая галочка — только круг; бледная галочка — при наведении */
+.wk-check:not(:checked) { background-image: none; }
+.wk-check:not(:checked):hover { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 6.2l2 2 4-4.4' fill='none' stroke='%2322a04b' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' opacity='.55'/%3E%3C/svg%3E"); }
+/* Видно 10 задач, дальше — прокрутка внутри; полосы нет, низ затухает, шапка столбцов на месте */
+.wkt-card.wkt-scroll { overflow-y: auto; scrollbar-width: none; }   /* долистали до конца — колесо дальше листает страницу */
+.wkt-card.wkt-scroll::-webkit-scrollbar { display: none; }
+.wkt-card.wkt-scroll thead th { position: sticky; top: 0; z-index: 3; background: var(--card); }
+.wkt-card.wkt-more { -webkit-mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to bottom, #000 calc(100% - 36px), transparent); }
 /* ---------- Страница проекта — вид как у Яндекс Афиши (Design/Reference/Project.png) ---------- */
 /* Шапка до самого верха — под основную панель сайта (убираем верхнее поле .view); «назад» — круглая кнопка поверх шапки */
 .view > .pj-hero:first-child { margin-top: -28px; }
@@ -3959,10 +3997,10 @@ function wkDueInfo(d) {   // «Вчера», «Сегодня», «Завтра�
 function wkTimeCell(t) {
   var spent = wkSpent(t), est = (t.est || 0) * 60, over = est && spent > est;
   if (t.done) return (spent || est) ? '<span class="wkt-plain' + (over ? ' wkt-overtime' : est ? ' wkt-intime' : '') + '"><span class="num">' + wkDur(spent) + '</span>' + (est ? ' <span class="wkt-est">/ ' + wkDur(est) + '</span>' : '') + '</span>' : '<span class="muted">—</span>';
-  if (t.run) return '<button type="button" class="wkt-pill run' + (over ? ' wkt-overtime' : '') + '" data-wkt-timer="' + t.id + '" aria-label="Остановить таймер: ' + esc(t.text) + '" title="Нажмите, чтобы остановить">' + WKT_ICON.watch +
-    '<span class="wkt-clock num" data-wk-tick="' + t.id + '">' + wkDur(spent, true) + '</span>' + (est ? '<span class="wkt-est num">/ ' + wkDur(est) + '</span>' : '') + '</button>';
+  if (t.run) return '<button type="button" class="wkt-running' + (over ? ' wkt-red' : '') + '" data-wkt-timer="' + t.id + '" aria-label="Остановить таймер: ' + esc(t.text) + '" title="Идёт' + (est ? ' · план ' + wkDur(est) : '') + ' — нажмите, чтобы остановить">' +
+    '<i class="wkt-dot" aria-hidden="true"></i><span class="num" data-wk-tick="' + t.id + '">' + wkDur(spent, true) + '</span></button>';
   // время уже есть — таблетка «▶ 0:30» (план — в подсказке); нет — круглая ▶; всё по центру столбца
-  if (spent || est) return '<button type="button" class="wkt-playpill' + (over ? ' wkt-red' : '') + '" data-wkt-timer="' + t.id + '" aria-label="Запустить таймер: ' + esc(t.text) + '" title="Затрачено ' + wkDur(spent) + (est ? ' из плана ' + wkDur(est) : '') + ' · засечь ещё">' + WKT_ICON.play + '<span class="num">' + wkDur(spent) + '</span></button>';
+  if (spent >= 60) return '<button type="button" class="wkt-playpill' + (over ? ' wkt-red' : '') + '" data-wkt-timer="' + t.id + '" aria-label="Запустить таймер: ' + esc(t.text) + '" title="Затрачено ' + wkDur(spent) + (est ? ' из плана ' + wkDur(est) : '') + ' · засечь ещё">' + WKT_ICON.play + '<span class="num">' + wkDur(spent) + '</span></button>';
   return '<button type="button" class="wkt-play" data-wkt-timer="' + t.id + '" aria-label="Запустить таймер: ' + esc(t.text) + '" title="Засечь время">' + WKT_ICON.play + '</button>';
 }
 function wkIcons(t) {
@@ -4060,7 +4098,7 @@ function wktTable(list, pid) {
     body = group("over", "Просрочено", g.over, false, "wkt-g-over") + group("week", "На этой неделе", g.week) + group("next", "На следующей неделе", g.next) +
       group("later", "Позже", g.later) + group("nodate", "Без срока", g.nodate) + addRow;
   } else body = group("open", "К выполнению", open, true);
-  return '<div class="card wkt-card"><table class="wkt"><thead><tr><th class="wkt-n">№</th><th>Задача</th><th class="wkt-prio">Приоритет</th><th class="wkt-tagcell">Теги</th><th class="wkt-time">Время</th><th class="wkt-due">Срок</th></tr></thead><tbody>' +
+  return '<div class="card wkt-card"><table class="wkt"><thead><tr><th class="wkt-n">№</th><th class="wkt-name-h">Задача</th><th class="wkt-prio">Приоритет</th><th class="wkt-tagcell">Теги</th><th class="wkt-time">Время</th><th class="wkt-due">Срок</th></tr></thead><tbody>' +
     body + (done.length ? group("done", "Готово", done) : '') + '</tbody></table></div>';
 }
 // ---------- Таймер: одна задача за раз — запуск другой останавливает прежнюю
@@ -4332,7 +4370,7 @@ document.addEventListener("submit", function (ev) {
   var fm = ev.target.closest && ev.target.closest("[data-wkp-new]"); if (!fm || !WKPOP) return;
   ev.preventDefault();
   var name = fm.elements.name.value.trim(); if (!name) return;
-  var used = wkTagList().map(function (g) { return g.color; }), colors = ["blue", "green", "violet", "orange", "teal", "pink", "amber", "red", "gray"];
+  var used = wkTagList().map(function (g) { return g.color; }), colors = ["blue", "green", "violet", "teal", "pink", "amber", "indigo", "brown", "gray"];   // красный и оранжевый — у приоритета
   var color = colors.filter(function (c) { return used.indexOf(c) < 0; })[0] || colors[wkTagList().length % colors.length];
   var gid = wkId("tg"), tid = WKPOP.tid;
   WK.tags[gid] = { name: name, color: color };
@@ -4365,6 +4403,20 @@ function renderWork() {
   return head("Проекты", sub) + '<div class="mtabs subtabs" role="tablist" aria-label="Раздел «Проекты»">' + tabs.map(function (t) {
       return '<button role="tab" data-wk-tab="' + t[0] + '" aria-selected="' + (S.wk.tab === t[0]) + '">' + t[1] + '</button>'; }).join("") + '</div>' + '<div class="wk-body">' + body + '</div>';
 }
+// Видно первые 10 задач: высота таблицы — до низа 10-й строки задачи, дальше прокрутка внутри (полосы нет, низ затухает)
+function wktFit() {
+  document.querySelectorAll(".wkt-card").forEach(function (card) {
+    var rows = card.querySelectorAll("tr.wkt-row");
+    if (rows.length <= 10) { card.classList.remove("wkt-scroll", "wkt-more"); card.style.maxHeight = ""; return; }
+    var top = card.getBoundingClientRect().top - card.scrollTop;
+    card.classList.add("wkt-scroll");
+    card.style.maxHeight = Math.ceil(rows[9].getBoundingClientRect().bottom - top + 1) + "px";
+    if (S.wk.scrollT) card.scrollTop = S.wk.scrollT;
+    var edge = function () { card.classList.toggle("wkt-more", card.scrollTop + card.clientHeight < card.scrollHeight - 2); S.wk.scrollT = card.scrollTop; };
+    card.onscroll = edge; edge();
+  });
+}
+window.addEventListener("resize", function () { if (S.view === "work") wktFit(); });
 function wkFocusAdd(kind) { var i = document.querySelector('[data-wk-add="' + kind + '"] input[name=' + ({ tasks: "text", projects: "title", docs: "kind", costs: "name" }[kind]) + ']'); if (i) i.focus(); }
 $("view").addEventListener("submit", function (ev) {
   var sf = ev.target.closest("[data-wkt-sub-add]");
@@ -4463,7 +4515,7 @@ $("view").addEventListener("click", function (ev) {
   if (t.hasAttribute("data-wkt-group")) { S.wk.groupBy = t.getAttribute("data-wkt-group"); try { localStorage.setItem("ticketmonitor.work.groupBy", S.wk.groupBy); } catch (e) { /* нет хранилища */ } render(); return; }
   if (t.hasAttribute("data-wkt-sub-del")) { var sd = t.getAttribute("data-wkt-sub-del").split("|"); wkSubChange(sd[0], function (l) { return l.filter(function (x) { return x.id !== sd[1]; }); }); return; }
   if (t.hasAttribute("data-wk-tab")) { S.wk.tab = t.getAttribute("data-wk-tab"); S.enter = true; render(); }
-  else if (t.hasAttribute("data-wk-open")) { S.wk.y = window.scrollY; S.wk.proj = t.getAttribute("data-wk-open"); S.wk.ptab = "tasks"; S.wk.mcal = null; render(); window.scrollTo(0, 0); }
+  else if (t.hasAttribute("data-wk-open")) { S.wk.y = window.scrollY; S.wk.proj = t.getAttribute("data-wk-open"); S.wk.ptab = "tasks"; S.wk.mcal = null; S.wk.scrollT = 0; render(); window.scrollTo(0, 0); }
   else if (t.hasAttribute("data-wk-docf")) { S.wk.docF = t.getAttribute("data-wk-docf"); render(); }
   else if (t.getAttribute("data-wk-act") === "back") { S.wk.proj = null; render(); window.scrollTo(0, S.wk.y || 0); }
   else if (t.getAttribute("data-wk-act") === "toggle-done") { S.wk.showDone = !S.wk.showDone; render(); }
@@ -9490,6 +9542,7 @@ function render() {
   ddClose(false); enhanceSelects(document.querySelector(".top")); enhanceSelects($("view")); vdRestore();
   candApply();  // «Города, где его нет» — счётчик найденного после перерисовки
   if (S.view === "planning" || S.view === "route") plFitAll($("view"));   // «Планирование»: подчёркивание полей — по длине текста
+  if (S.view === "work") wktFit();   // «Проекты»: видно 10 задач, дальше — прокрутка внутри таблицы
   var mt = document.querySelector('.mtabs [aria-selected="true"]');  // на телефоне полоса вкладок «Рынка» прокручивается к выбранной
   if (mt) { var mp = mt.parentNode; mp.scrollLeft += mt.getBoundingClientRect().left - mp.getBoundingClientRect().left - 16; }
   renderCal();

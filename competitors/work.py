@@ -34,11 +34,14 @@ from competitors.storage import CONFIG_DIR, load_json, save_json
 
 FILE = CONFIG_DIR / "work.json"
 KINDS = ("projects", "tasks", "docs", "tags", "costs", "notes")
-COLORS = ("blue", "green", "violet", "orange", "teal", "pink", "amber", "red", "gray")
+# Цвета тегов. Красный и оранжевый — только у приоритета (решение пользователя 19.10: полоса слева — по тегу, и красная
+# полоса не должна читаться как «срочно»); прежние теги этих цветов перекрашиваются при чтении (RECOLOR)
+COLORS = ("blue", "green", "violet", "teal", "pink", "amber", "indigo", "brown", "gray")
+RECOLOR = {"red": "indigo", "orange": "brown"}
 DEFAULT_TAGS = {"tgcontract": {"name": "Договоры", "color": "blue"}, "tgmoney": {"name": "Финансы", "color": "green"},
-                "tgvenue": {"name": "Площадка", "color": "violet"}, "tglogist": {"name": "Логистика", "color": "orange"},
+                "tgvenue": {"name": "Площадка", "color": "violet"}, "tglogist": {"name": "Логистика", "color": "brown"},
                 "tgtech": {"name": "Техника", "color": "teal"}, "tgpromo": {"name": "Реклама", "color": "pink"},
-                "tgtickets": {"name": "Билеты", "color": "amber"}, "tgartist": {"name": "Артист", "color": "red"}}
+                "tgtickets": {"name": "Билеты", "color": "amber"}, "tgartist": {"name": "Артист", "color": "indigo"}}
 STAGES = ["idea", "talks", "prep", "sales", "live", "closing", "done"]
 DOC_STATUS = ["draft", "sent", "signed"]
 PAY = ["no", "part", "paid"]
@@ -61,6 +64,8 @@ def load() -> dict:
     out = {k: d.get(k) or {} for k in KINDS}
     if "tags" not in d:   # своих тегов ещё не заводили — стандартные (с первой правкой тегов сохраняются в файл)
         out["tags"] = {k: dict(v) for k, v in DEFAULT_TAGS.items()}
+    for t in out["tags"].values():
+        t["color"] = RECOLOR.get(t.get("color"), t.get("color"))
     return out
 
 
