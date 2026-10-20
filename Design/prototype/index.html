@@ -633,6 +633,72 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
   .wkp-tile-v b { font-size: 26px; } .wkp-tiles { gap: 8px; margin-bottom: 16px; }
   .wkp-kb { grid-auto-columns: minmax(250px, 82vw); }
 }
+/* «Задачи» (20.10, референс пользователя) */
+.wts-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 0 0 14px; }
+.wts-search { display: flex; align-items: center; gap: 7px; height: 36px; width: 170px; box-sizing: border-box; padding: 0 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); }
+.wts-search input { border: 0; outline: none; background: transparent; font: inherit; font-size: 13px; width: 100%; min-width: 0; }
+.wts-search:focus-within { border-color: #8b5cf6; box-shadow: 0 0 0 3px rgba(139, 92, 246, .14); }
+.wts-views { display: inline-flex; padding: 3px; gap: 2px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); }
+.wts-views button { width: 30px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; }
+.wts-views button[aria-pressed="true"] { background: #efeeec; color: var(--ink); }
+.wts-tabs { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); flex-wrap: wrap; }
+.wts-tabs button { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 7px; border: 0; border-radius: 6px; background: none; font: inherit; font-size: 13px; color: var(--ink-3); cursor: pointer; white-space: nowrap; }
+.wts-tabs button i { font-style: normal; font-size: 11px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 5px; background: #efeeec; color: var(--ink-3); display: inline-grid; place-items: center; }
+.wts-tabs button[aria-pressed="true"] { color: var(--ink); font-weight: 600; box-shadow: 0 0 0 1px var(--line-strong); background: var(--card); }
+.wts-tabs button[aria-pressed="true"] i { background: #f59e0b; color: #fff; }
+.wts-sp { flex: 1; }
+.wts-dd { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; white-space: nowrap; max-width: 220px; }
+.wts-dd span { overflow: hidden; text-overflow: ellipsis; } .wts-dd svg { flex-shrink: 0; opacity: .7; }
+.wts-dd.on { border-color: #8b5cf6; color: #6d28d9; }
+.wts-create { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 14px; border: 0; border-radius: 9px; background: #7c3aed; color: #fff; font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.wts-create:hover { background: #6d28d9; }
+.wts-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 0 18px; }
+.wts-sc { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--line); border-radius: 12px; background: var(--card); padding: 14px 0; }
+.wts-sc > div { padding: 0 18px; } .wts-sc > div + div { border-left: 1px solid var(--line-soft); }
+.wts-sc span { display: flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--ink-2); }
+.wts-sc b { display: block; margin-top: 8px; font: 500 20px/1 var(--ui); font-variant-numeric: tabular-nums; }
+.wts-fl-low { color: #16a34a; } .wts-fl-mid { color: #f59e0b; } .wts-fl-high { color: #dc2626; } .wts-ic-all { color: #2563eb; } .wts-ic-done { color: #16a34a; } .wts-ic-over { color: #dc2626; }
+.wts-tw { overflow-x: auto; }
+.wts-t { width: 100%; min-width: 860px; border-collapse: collapse; font-size: 13px; }
+.wts-t th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12.5px; padding: 10px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.wts-t th button { border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+.wts-t th button:hover, .wts-t th button.on { color: var(--ink); }
+.wts-t td { padding: 7px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; height: 32px; }
+.wts-t tr.wts-r:hover td { background: #fafaf9; }
+.wts-t tr.wts-done .wts-name b { color: var(--muted); text-decoration: line-through; text-decoration-color: #c8c5c0; }
+.wts-cb { width: 16px; height: 16px; margin: 0; accent-color: #16a34a; cursor: pointer; }
+.wts-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.wts-name b { font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; border: 0; background: none; padding: 0; font: inherit; font-weight: 500; text-align: left; }
+.wts-name b:hover { text-decoration: underline; text-underline-offset: 3px; }
+.wts-ics { margin-left: auto; display: inline-flex; gap: 10px; color: var(--muted); font-size: 12px; white-space: nowrap; }
+.wts-ics span { display: inline-flex; align-items: center; gap: 3px; }
+.wts-pj { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 220px; }
+.wts-pj span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wts-av { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; object-fit: cover; display: inline-grid; place-items: center; font-size: 10px; font-weight: 600; color: #fff; background: #f97316; }
+.wts-pill { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 6px; border: 0; font: inherit; font-size: 12px; font-weight: 500; white-space: nowrap; cursor: pointer; background: #f4f4f3; color: var(--ink-2); }
+.wts-pill:hover { filter: brightness(.96); }
+.wts-p-low { color: #15803d; } .wts-p-mid { color: #b45309; } .wts-p-high { color: #b91c1c; } .wts-p-none { color: var(--muted); }
+.wts-p-none { background: transparent; } .wts-r:hover .wts-p-none { background: #f4f4f3; }
+.wts-s-new { background: #f1f0ee; color: #57534e; } .wts-s-work { background: #e0ebfd; color: #1d5fa8; } .wts-s-wait { background: #fbf1d3; color: #8a6200; }
+.wts-s-over { background: #fde3e1; color: #b42318; } .wts-s-done { background: #dcf3e3; color: #15803d; }
+.wts-pill .wts-car { opacity: .6; }
+.wts-t td.wts-due .wk-datebtn { margin-left: 0; font-size: 13px; color: var(--ink); }
+.wts-more { width: 28px; height: 28px; border: 0; border-radius: 7px; background: none; cursor: pointer; color: var(--ink-2); font: 700 13px/1 var(--ui); letter-spacing: 1px; }
+.wts-more:hover { background: var(--line-soft); color: var(--ink); }
+.wts-none { color: var(--muted); padding: 22px 10px; }
+.wts-kb { display: grid; grid-template-columns: repeat(3, minmax(240px, 1fr)); gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+.wts-kc { background: var(--card); border-radius: 12px; padding: 12px 12px 10px 14px; box-shadow: 0 1px 2px rgba(17, 12, 46, .05); cursor: grab; display: flex; flex-direction: column; gap: 9px; }
+.wts-kc:hover { box-shadow: 0 6px 18px rgba(17, 12, 46, .08); } .wts-kc.dragging { opacity: .45; }
+.wts-kc-top { display: flex; align-items: flex-start; gap: 8px; } .wts-kc-top b { font-weight: 500; font-size: 14px; line-height: 1.35; flex: 1; min-width: 0; overflow-wrap: anywhere; cursor: pointer; }
+.wts-kc-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12.5px; color: var(--ink-2); }
+.wts-kc-row .wts-ics { margin-left: auto; }
+.wts-kc .wts-done-b b { color: var(--muted); text-decoration: line-through; }
+@media (max-width: 980px) { .wts-stats { grid-template-columns: minmax(0, 1fr); } .wts-sp { display: none; } }
+@media (max-width: 640px) {
+  .wts-search { width: auto; flex: 1 1 150px; } .wts-tabs { width: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .wts-sc > div { padding: 0 12px; } .wts-sc b { font-size: 18px; }
+  .wts-kb { grid-template-columns: repeat(3, minmax(250px, 82vw)); }
+}
 .wk-sum { margin: 10px 0 0; } .wk-sum b { font-weight: 500; color: var(--ink); }
 /* Гастроли проекта: дата, площадка (из справочника — ссылкой на её страницу), город */
 .wks-add .wks-pick { position: relative; flex: 3 1 260px; min-width: 0; display: flex; }
@@ -5604,7 +5670,8 @@ function wkNewTaskHtml() {
   var d = S.wk.draft;
   return '<div class="wkd wknew">' +
     '<textarea class="wk-in wkd-title" id="wkn-text" rows="1" maxlength="1000" placeholder="Что нужно сделать" aria-label="Название задачи">' + esc(d.text) + '</textarea>' +
-    '<div class="wkd-meta" style="margin-left:6px"><label>Срок ' + wkDateBtn("draft", d.due, { due: true, label: "Срок", icon: true }) + '</label>' +
+    '<div class="wkd-meta" style="margin-left:6px">' + (S.view === "work" && S.wk.proj ? '' : '<label>Проект <select class="wk-in wk-sel" id="wkn-proj" data-native aria-label="Проект задачи">' + wkProjOpts(d.project || "") + '</select></label>') +
+      '<label>Срок ' + wkDateBtn("draft", d.due, { due: true, label: "Срок", icon: true }) + '</label>' +
       '<label>План <input class="wk-in wkd-dur" id="wkn-est" value="' + esc(d.est || "") + '" placeholder="ч:мм" aria-label="План, ч:мм"></label></div>' +
     '<section class="wkd-sec"><h3>Приоритет</h3><div class="wkd-prio">' + WK_PRIO.concat([["", "Без приоритета"]]).map(function (o) {
         var on = d.prio === o[0]; return '<button type="button" class="wkd-prio-b p-' + (o[0] || "none") + (on ? ' on' : '') + '" data-wkn-prio="' + o[0] + '" aria-pressed="' + on + '">' + wkPrioIcon(o[0]) + o[1] + '</button>';
@@ -5620,13 +5687,13 @@ function wkNewTaskHtml() {
     '<div class="form-actions wkd-foot"><button class="btn-dark" data-wkn-create>Создать задачу</button><button class="btn-ghost" data-pj="close">Отмена</button></div></div>';
 }
 function wkNewTaskOpen() {
-  S.wk.draft = { text: "", desc: "", due: "", prio: "", tags: [], est: "", subs: [] };
+  S.wk.draft = { text: "", desc: "", due: "", prio: "", tags: [], est: "", subs: [], project: S.wk.fproj && S.wk.fproj !== "none" ? S.wk.fproj : "" };
   pjDialog("pj-edit wkd-dlg", "Новая задача", wkNewTaskHtml());
   var t = $("wkn-text"); if (t) t.focus();
 }
 function wkNewTaskRefresh(focusSel) {   // перерисовать окно, сохранив вписанное
   var d = S.wk.draft, box = document.querySelector("#pjDlg .wknew"); if (!d || !box) return;
-  d.text = $("wkn-text").value; d.desc = $("wkn-desc").value; d.est = $("wkn-est").value;
+  d.text = $("wkn-text").value; d.desc = $("wkn-desc").value; d.est = $("wkn-est").value; if ($("wkn-proj")) d.project = $("wkn-proj").value;
   box.outerHTML = wkNewTaskHtml(); wkGrow($("wkn-text"));
   if (focusSel) { var f = document.querySelector(focusSel); if (f) f.focus(); }
 }
@@ -5642,7 +5709,7 @@ document.addEventListener("click", function (ev) {
     if (!text) { err.hidden = false; err.textContent = "Впишите, что нужно сделать"; $("wkn-text").focus(); return; }
     if (est == null) { err.hidden = false; err.textContent = "План — в виде 2:40, 2,5 или 1ч 30м"; $("wkn-est").focus(); return; }
     $("pjDlg").close();
-    wkPut("tasks", wkId("t"), { text: text, desc: $("wkn-desc").value, due: d.due, prio: d.prio, tags: d.tags, est: est, subs: d.subs, project: S.wk.proj, done: false, created: wkDay(0) }, "Задача создана");
+    wkPut("tasks", wkId("t"), { text: text, desc: $("wkn-desc").value, due: d.due, prio: d.prio, tags: d.tags, est: est, subs: d.subs, project: S.view === "work" && S.wk.proj ? S.wk.proj : ($("wkn-proj") ? $("wkn-proj").value : ""), done: false, created: wkDay(0) }, "Задача создана");
     S.wk.draft = null;
   }
 });
@@ -5730,16 +5797,171 @@ function renderWkEmpty(v) {
   var e = WK_EMPTY[v], g = wkGate(e[0]); if (g) return g;
   return head(e[0], "") + '<div class="wk-empty"><b>Пока пусто</b><p>' + e[1] + '</p></div>';
 }
-// «Задачи» — все задачи по срокам (переехали из вкладки «Проекты → Задачи», 20.10): фильтр по проекту, строка добавления
+// «Задачи» — по референсу пользователя (20.10): поиск · Список / Канбан · статусы с числами · Проект · Приоритет · «Создать задачу»;
+// сводка: по приоритетам (открытые) и итоги; таблица — Задача · Проект · Приоритет · Статус · Срок · •••, сортировка по столбцам;
+// канбан — Начало · В работе · Готово (перетаскивание меняет статус). Функции — прежние: галочка, статус, приоритет, срок, окно задачи.
+var WTS_IC = {
+  search: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#78716c" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>',
+  list: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M2.5 6.2h11M2.5 9.8h11"/></svg>',
+  kanban: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2.5" width="3.4" height="11" rx="1"/><rect x="6.3" y="2.5" width="3.4" height="7.5" rx="1"/><rect x="10.6" y="2.5" width="3.4" height="9.2" rx="1"/></svg>',
+  dd: '<svg width="10" height="10" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  sort: '<svg width="9" height="11" viewBox="0 0 9 12" aria-hidden="true" fill="currentColor"><path d="M4.5 1L8 5H1zM4.5 11L1 7h7z" opacity=".55"/></svg>',
+  up: '<svg width="9" height="11" viewBox="0 0 9 12" aria-hidden="true" fill="currentColor"><path d="M4.5 1L8 5H1z"/><path d="M4.5 11L1 7h7z" opacity=".25"/></svg>',
+  down: '<svg width="9" height="11" viewBox="0 0 9 12" aria-hidden="true" fill="currentColor"><path d="M4.5 1L8 5H1z" opacity=".25"/><path d="M4.5 11L1 7h7z"/></svg>',
+  flag: '<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 14.5V2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3.5 2.4h9.2l-2 3.4 2 3.4H3.5z" fill="currentColor"/></svg>',
+  warn: '<svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5l7 12.5H1z" fill="currentColor"/><path d="M8 6v3.6M8 11.6v.4" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/></svg>',
+  dot: '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4" fill="currentColor"/></svg>',
+  ring: '<svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>',
+  ok: '<svg width="11" height="11" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="currentColor"/><path d="M4.8 8.2l2.2 2.2 4.2-4.6" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+  sub: '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 2.5v6.5a2 2 0 002 2h6.5M10 8.5l2.5 2.5L10 13.5"/></svg>',
+  desc: '<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 4h10M3 8h10M3 12h6"/></svg>',
+  clip: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="2.8" width="10" height="11.4" rx="1.6"/><path d="M6 2.8V2h4v.8"/></svg>',
+  done: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M5.3 8.2l1.9 1.9 3.6-4"/></svg>',
+  clock: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.8V8l2.2 1.4"/></svg>',
+  plus: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+};
+var WTS_ST = [["new", "Не начата"], ["work", "В работе"], ["wait", "Ждёт ответа"], ["over", "Просрочено"], ["done", "Готово"], ["all", "Все"]];
+var WTS_PR = { high: ["Высокий", "high"], mid: ["Средний", "mid"], low: ["Низкий", "low"] };
+S.wk.tv = (function () { try { return localStorage.getItem("ticketmonitor.work.tview") || "list"; } catch (e) { return "list"; } })();
+S.wk.tq = ""; S.wk.tst = "all"; S.wk.tprio = ""; S.wk.tsort = { k: "due", dir: 1 };
+function wtsKey(t) { return t.done ? "done" : t.due && t.due < wkDay(0) ? "over" : t.status === "work" ? "work" : t.status === "wait" ? "wait" : "new"; }
+function wtsAv(pid) {
+  var p = WK.projects[pid]; if (!p) return "";
+  var ava = wkMedia(p, "avatar"), cols = ["#f97316", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#14b8a6", "#eab308"], h = 0;
+  for (var i = 0; i < pid.length; i++) h = (h * 31 + pid.charCodeAt(i)) % 997;
+  return ava ? '<img class="wts-av" src="' + esc(ava) + '" alt="">' : '<span class="wts-av" style="background:' + cols[h % cols.length] + '">' + esc(pjInitials(p.title.replace(/[^\p{L}\d\s]+/gu, " ")).slice(0, 1)) + '</span>';
+}
+function wtsPrio(t) {
+  var p = WTS_PR[t.prio];
+  return '<button type="button" class="wts-pill wts-p-' + (p ? p[1] : 'none') + '" data-wk-prio="' + t.id + '" aria-haspopup="menu" aria-label="Приоритет: ' + (p ? p[0] : 'не задан') + ' — изменить">' + (p ? WTS_IC.flag + p[0] : '+ приоритет') + '</button>';
+}
+function wtsStatus(t) {
+  var k = wtsKey(t), label = k === "over" ? "Просрочено" : wkLabel(WK_TSTATUS, k === "new" ? "" : k), ic = k === "over" ? WTS_IC.warn : k === "done" ? WTS_IC.ok : k === "new" ? WTS_IC.ring : WTS_IC.dot;
+  return '<button type="button" class="wts-pill wts-s-' + k + '" data-wk-status="' + t.id + '" aria-haspopup="menu" aria-label="Статус: ' + label + ' — изменить">' + ic + label + '<span class="wts-car">' + WTS_IC.dd + '</span></button>';
+}
+function wtsIcons(t) {
+  var subs = t.subs || [], nd = subs.filter(function (x) { return x.done; }).length;
+  return '<span class="wts-ics">' + ((t.desc || "").trim() ? '<span title="Есть описание">' + WTS_IC.desc + '</span>' : '') +
+    (subs.length ? '<span title="Подзадачи: сделано ' + nd + ' из ' + subs.length + '">' + WTS_IC.sub + nd + '/' + subs.length + '</span>' : '') + '</span>';
+}
+function wtsFiltered(ignoreSt) {
+  var q = S.wk.tq.trim().toLowerCase().replace(/ё/g, "е"), fp = S.wk.fproj, pr = S.wk.tprio;
+  return wkTasksOf(null).filter(function (t) {
+    if (fp && (fp === "none" ? t.project && WK.projects[t.project] : t.project !== fp)) return false;
+    if (pr && (pr === "none" ? t.prio : t.prio !== pr)) return false;
+    if (q && [t.text, t.desc].concat((t.subs || []).map(function (x) { return x.text; })).join(" ").toLowerCase().replace(/ё/g, "е").indexOf(q) < 0) return false;
+    return ignoreSt || S.wk.tst === "all" || wtsKey(t) === S.wk.tst;
+  });
+}
+function wtsSorted(l) {
+  var k = S.wk.tsort.k, dir = S.wk.tsort.dir, rank = { high: 0, mid: 1, low: 2 }, srank = { over: 0, work: 1, wait: 2, new: 3, done: 4 };
+  var val = function (t) {
+    return k === "text" ? t.text.toLowerCase() : k === "proj" ? wkPname(t.project).toLowerCase() || "яяя" : k === "prio" ? (t.prio in rank ? rank[t.prio] : 3) : k === "status" ? srank[wtsKey(t)] : (t.due || "9999");
+  };
+  return l.slice().sort(function (a, b) {
+    if (k === "due" && !!a.done !== !!b.done) return a.done ? 1 : -1;   // по сроку: готовые — внизу
+    var x = val(a), y = val(b);
+    return (x < y ? -1 : x > y ? 1 : 0) * dir || (a.due || "9999").localeCompare(b.due || "9999");
+  });
+}
+function wtsBar() {
+  var base = wtsFiltered(true), cnt = {}; WTS_ST.forEach(function (o) { cnt[o[0]] = 0; });
+  base.forEach(function (t) { cnt[wtsKey(t)]++; }); cnt.all = base.length;
+  var fp = S.wk.fproj, pl = fp === "none" ? "Без проекта" : fp && WK.projects[fp] ? WK.projects[fp].title : "Проект";
+  var prl = S.wk.tprio === "none" ? "Без приоритета" : WTS_PR[S.wk.tprio] ? WTS_PR[S.wk.tprio][0] : "Приоритет";
+  return '<div class="wts-bar"><label class="wts-search">' + WTS_IC.search + '<input type="search" data-wts-q value="' + esc(S.wk.tq) + '" placeholder="Поиск…" aria-label="Поиск задач"></label>' +
+    '<div class="wts-views" role="group" aria-label="Вид">' + [["list", "Список"], ["kanban", "Канбан"]].map(function (v) {
+      return '<button type="button" data-wts-view="' + v[0] + '" aria-pressed="' + (S.wk.tv === v[0]) + '" title="' + v[1] + '" aria-label="' + v[1] + '">' + WTS_IC[v[0]] + '</button>'; }).join("") + '</div>' +
+    '<div class="wts-tabs" role="group" aria-label="Статус">' + WTS_ST.map(function (o) {
+      return '<button type="button" data-wts-st="' + o[0] + '" aria-pressed="' + (S.wk.tst === o[0]) + '">' + o[1] + '<i>' + cnt[o[0]] + '</i></button>'; }).join("") + '</div>' +
+    '<span class="wts-sp"></span>' +
+    '<button type="button" class="wts-dd' + (fp ? ' on' : '') + '" data-wts-dd="proj" aria-haspopup="menu"><span>' + esc(pl) + '</span>' + WTS_IC.dd + '</button>' +
+    '<button type="button" class="wts-dd' + (S.wk.tprio ? ' on' : '') + '" data-wts-dd="prio" aria-haspopup="menu"><span>' + prl + '</span>' + WTS_IC.dd + '</button></div>';
+}
+function wtsStats() {
+  var l = wtsFiltered(true), open = l.filter(function (t) { return !t.done; }), n = function (p) { return open.filter(function (t) { return t.prio === p; }).length; };
+  var c = function (cls, ic, label, v) { return '<div><span><em class="' + cls + '" style="display:inline-flex">' + ic + '</em>' + label + '</span><b>' + v + '</b></div>'; };
+  return '<div class="wts-stats"><div class="wts-sc">' + c("wts-fl-low", WTS_IC.flag, "Низкий приоритет", n("low")) + c("wts-fl-mid", WTS_IC.flag, "Средний приоритет", n("mid")) + c("wts-fl-high", WTS_IC.flag, "Высокий приоритет", n("high")) + '</div>' +
+    '<div class="wts-sc">' + c("wts-ic-all", WTS_IC.clip, "Всего задач", l.length) + c("wts-ic-done", WTS_IC.done, "Сделано", l.filter(function (t) { return t.done; }).length) +
+      c("wts-ic-over", WTS_IC.clock, "Просрочено", open.filter(function (t) { return t.due && t.due < wkDay(0); }).length) + '</div></div>';
+}
+function wtsMore(t) { return '<button type="button" class="wts-more" data-wkt-open="' + t.id + '" aria-label="Открыть задачу: ' + esc(t.text) + '" title="Открыть задачу">•••</button>'; }
+function wtsProjCell(t) { return t.project && WK.projects[t.project] ? '<span class="wts-pj">' + wtsAv(t.project) + '<span>' + esc(WK.projects[t.project].title) + '</span></span>' : '<span class="muted">—</span>'; }
+function wtsTable(l) {
+  var sk = S.wk.tsort, th = function (k, label) { var on = sk.k === k; return '<th><button type="button" data-wts-sort="' + k + '" class="' + (on ? 'on' : '') + '">' + label + (on ? (sk.dir > 0 ? WTS_IC.up : WTS_IC.down) : WTS_IC.sort) + '</button></th>'; };
+  if (!l.length) return '<p class="wts-none">' + (wkTasksOf(null).length ? "Ничего не нашлось — измените поиск или фильтры." : "Задач пока нет — нажмите «Создать задачу».") + '</p>';
+  return '<div class="wts-tw"><table class="wts-t"><thead><tr><th style="width:26px"></th>' + th("text", "Задача") + th("proj", "Проект") + th("prio", "Приоритет") + th("status", "Статус") + th("due", "Срок") + '<th style="width:36px"></th></tr></thead><tbody>' +
+    l.map(function (t) {
+      return '<tr class="wts-r' + (t.done ? ' wts-done' : '') + '"><td><input type="checkbox" class="wts-cb" data-wk-done="' + t.id + '"' + (t.done ? ' checked' : '') + ' aria-label="Готово: ' + esc(t.text) + '"></td>' +
+        '<td style="max-width:380px"><div class="wts-name"><b role="button" tabindex="0" data-wkt-open="' + t.id + '" title="' + esc(t.text) + '">' + esc(t.text) + '</b>' + wtsIcons(t) + '</div></td>' +
+        '<td>' + wtsProjCell(t) + '</td><td>' + wtsPrio(t) + '</td><td>' + wtsStatus(t) + '</td>' +
+        '<td class="wts-due">' + wkDateBtn("tasks|" + t.id + "|due", t.due, { label: "Срок", empty: "—" }) + '</td><td>' + wtsMore(t) + '</td></tr>';
+    }).join("") + '</tbody></table></div>';
+}
+var WTS_COLS = [["new", "Начало", "gray"], ["work", "В работе", "blue"], ["done", "Готово", "green"]];
+function wtsCol(t) { return t.done ? "done" : t.status === "work" || t.status === "wait" ? "work" : "new"; }   // «Ждёт ответа» — в «В работе»
+function wtsKanban(l) {
+  return '<div class="wts-kb">' + WTS_COLS.map(function (c) {
+    var cl = l.filter(function (t) { return wtsCol(t) === c[0]; });
+    return '<div class="wkp-col" data-wts-col="' + c[0] + '"><div class="wkp-gh"><span class="wkp-tag ps-' + c[2] + '"><i aria-hidden="true"></i>' + c[1] + ' <span>' + cl.length + '</span></span></div>' +
+      (cl.length ? cl.map(function (t) {
+        return '<div class="wts-kc' + (t.done ? ' wts-done-b' : '') + '" draggable="true" data-wts-drag="' + t.id + '">' +
+          '<div class="wts-kc-top"><b data-wkt-open="' + t.id + '" role="button" tabindex="0">' + esc(t.text) + '</b>' + wtsMore(t) + '</div>' +
+          (t.project && WK.projects[t.project] ? '<div class="wts-kc-row">' + wtsProjCell(t) + '</div>' : '') +
+          '<div class="wts-kc-row">' + wtsPrio(t) + (wtsKey(t) === "over" || t.status === "wait" ? wtsStatus(t) : '') + '<span class="wts-due">' + wkDateBtn("tasks|" + t.id + "|due", t.due, { label: "Срок", empty: "без срока" }) + '</span>' + wtsIcons(t) + '</div></div>';
+      }).join("") : '<div class="wkp-kc-empty">Перетащите сюда задачу</div>') + '</div>';
+  }).join("") + '</div>';
+}
 function renderWkTasks() {
   var g = wkGate("Задачи"); if (g) return g;
   S.wk.proj = null;
-  var all = wkTasksOf(null).filter(function (t) { return !t.done; }), over = all.filter(function (t) { return t.due && t.due < wkDay(0); }).length, today = all.filter(function (t) { return t.due === wkDay(0); }).length;
-  var sub = (over ? over + " " + plural(over, "задача просрочена", "задачи просрочены", "задач просрочено") + " · " : "") + (today ? "на сегодня " + today + " · " : "") + "открытых задач " + all.length;
-  var tasks = wkTasksOf(null).filter(function (t) { return !S.wk.fproj || t.project === S.wk.fproj; });
-  return head("Задачи", sub) + '<div class="wk-body"><div class="toolbar wk-tools"><select class="flat-select" data-flat-label="Проект" data-wk-fproj aria-label="Проект">' + wkProjOpts(S.wk.fproj, "Все") + '</select></div>' +
-    wkTaskAdd(S.wk.fproj || null) + wkTaskList(tasks, !S.wk.fproj) + '</div>';
+  var l = wtsSorted(wtsFiltered(S.wk.tv === "kanban"));
+  return head("Задачи", "", '<button type="button" class="wts-create" data-wts-new>' + WTS_IC.plus + 'Создать задачу</button>') + wtsBar() + wtsStats() + (S.wk.tv === "kanban" ? wtsKanban(l) : wtsTable(l));
 }
+document.addEventListener("click", function (ev) {
+  if (S.view !== "wktasks" || !ev.target.closest) return;
+  var b = ev.target.closest("[data-wts-view],[data-wts-st],[data-wts-dd],[data-wts-new],[data-wts-sort],.wts-menu [data-wts-set]"); if (!b) return;
+  ev.preventDefault();
+  if (b.hasAttribute("data-wts-view")) { S.wk.tv = b.getAttribute("data-wts-view"); try { localStorage.setItem("ticketmonitor.work.tview", S.wk.tv); } catch (e) { /* нет хранилища */ } render(); }
+  else if (b.hasAttribute("data-wts-st")) { S.wk.tst = b.getAttribute("data-wts-st"); render(); }
+  else if (b.hasAttribute("data-wts-sort")) { var k = b.getAttribute("data-wts-sort"); S.wk.tsort = { k: k, dir: S.wk.tsort.k === k ? -S.wk.tsort.dir : 1 }; render(); }
+  else if (b.hasAttribute("data-wts-new")) wkNewTaskOpen();
+  else if (b.hasAttribute("data-wts-dd")) {
+    if (WKPOP && WKPOP.anchor === b) { wkPopClose(); return; }
+    var w = b.getAttribute("data-wts-dd"), cur = w === "proj" ? S.wk.fproj || "" : S.wk.tprio || "";
+    var opts = w === "proj" ? [["", "Все проекты"], ["none", "Без проекта"]].concat(wkProjects().map(function (p) { return [p.id, p.title]; }))
+      : [["", "Любой приоритет"], ["high", "Высокий"], ["mid", "Средний"], ["low", "Низкий"], ["none", "Без приоритета"]];
+    wkPopOpen(b, "wk-menu wts-menu", opts.map(function (o) {
+      return '<button type="button" class="wk-menu-item' + (cur === o[0] ? ' on' : '') + '" data-wts-set="' + w + '|' + o[0] + '" role="menuitemradio" aria-checked="' + (cur === o[0]) + '">' + esc(o[1]) + (cur === o[0] ? WKT_ICON.check : '') + '</button>';
+    }).join(""), {});
+  } else {
+    var p = b.getAttribute("data-wts-set").split("|"); wkPopClose();
+    if (p[0] === "proj") S.wk.fproj = p[1]; else S.wk.tprio = p[1];
+    render();
+  }
+}, true);
+document.addEventListener("keydown", function (ev) {   // название задачи — с клавиатуры (Enter) открывает окно
+  if (ev.key === "Enter" && S.view === "wktasks" && ev.target.hasAttribute && ev.target.hasAttribute("data-wkt-open") && ev.target.tagName === "B") { ev.preventDefault(); wkOpenTask(ev.target.getAttribute("data-wkt-open")); }
+});
+document.addEventListener("input", function (ev) {
+  if (S.view !== "wktasks" || !ev.target.hasAttribute || !ev.target.hasAttribute("data-wts-q")) return;
+  S.wk.tq = ev.target.value; var pos = ev.target.selectionStart; render();
+  var qi = document.querySelector("[data-wts-q]"); if (qi) { qi.focus({ preventScroll: true }); qi.setSelectionRange(pos, pos); }
+});
+// Канбан задач: перетащили в колонку — статус: «Начало» — не начата, «В работе» — в работе (ждущая ответа остаётся ждущей), «Готово» — сделано
+var WTS_DRAG = null;
+document.addEventListener("dragstart", function (ev) { var c = ev.target.closest && ev.target.closest("[data-wts-drag]"); if (!c) return; WTS_DRAG = c.getAttribute("data-wts-drag"); c.classList.add("dragging"); try { ev.dataTransfer.setData("text/plain", WTS_DRAG); ev.dataTransfer.effectAllowed = "move"; } catch (e) { /* старый браузер */ } });
+document.addEventListener("dragend", function (ev) { var c = ev.target.closest && ev.target.closest("[data-wts-drag]"); if (c) c.classList.remove("dragging"); document.querySelectorAll("[data-wts-col].drop").forEach(function (x) { x.classList.remove("drop"); }); WTS_DRAG = null; });
+document.addEventListener("dragover", function (ev) {
+  var col = WTS_DRAG && ev.target.closest && ev.target.closest("[data-wts-col]"); if (!col) return;
+  ev.preventDefault(); document.querySelectorAll("[data-wts-col].drop").forEach(function (x) { if (x !== col) x.classList.remove("drop"); }); col.classList.add("drop");
+});
+document.addEventListener("drop", function (ev) {
+  var col = WTS_DRAG && ev.target.closest && ev.target.closest("[data-wts-col]"); if (!col) return;
+  ev.preventDefault();
+  var id = WTS_DRAG, to = col.getAttribute("data-wts-col"), t = WK.tasks[id]; WTS_DRAG = null; if (!t || wtsCol(t) === to) return;
+  wkStatusSet(id, to === "done" ? "done" : to === "work" ? "work" : "");
+});
 function renderWork() {
   var g = wkGate("Проекты"); if (g) return g;
   if (S.wk.proj && WK.projects[S.wk.proj]) return wkProjectPage(S.wk.proj);
