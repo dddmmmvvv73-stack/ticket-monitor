@@ -172,7 +172,7 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
     if kind == "projects":
         out = {"title": _text(d.get("title"), "название", 300), "stage": _enum(d.get("stage"), STAGES, "стадия", "idea"),
                "start": _date(d.get("start"), "начало"), "end": _date(d.get("end"), "окончание"),
-               "deadline": _date(d.get("deadline"), "дедлайн"), "note": _text(d.get("note"), "заметка")}
+               "deadline": _date(d.get("deadline"), "дедлайн"), "note": _text(d.get("note"), "заметка"), "fav": bool(d.get("fav"))}   # fav — избранный (звезда в карточках, 20.10)
         if not out["title"]:
             raise WorkError("у проекта нужно название")
         return out
