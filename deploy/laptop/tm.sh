@@ -33,6 +33,9 @@ fi
 # Адрес меняется при каждом запуске — текущий: deploy/laptop/tm.sh url. Снаружи сайт пускает только по паролю (competitors/siteauth.py).
 if [ "$JOB" = "tunnel" ]; then
   [ -f config/site_auth.json ] || { log "нет пароля сайта (python3 -m competitors.siteauth new) — туннель не запускаю"; exit 1; }
+  # VPN (Happ) забирает DNS себе — cloudflared без пересыльщика не находит свои серверы (deploy/laptop/dnsfwd.py; уже идёт — выйдет сам)
+  nohup "$PY" deploy/laptop/dnsfwd.py >> data/logs/dnsfwd.log 2>&1 &
+  sleep 1
   exec cloudflared tunnel --no-autoupdate --url http://127.0.0.1:5050 >> "$LOG" 2>&1
 fi
 if [ "$JOB" = "url" ]; then
