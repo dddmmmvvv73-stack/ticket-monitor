@@ -1,7 +1,7 @@
 #!/bin/bash
 # Ноутбук как временный сервер (с 12.10.2026 — авария Yandex Cloud): те же сборы, что systemd на сервере (deploy/systemd),
 # по расписанию launchd (deploy/laptop/install.sh). Запуск одного дела вручную:
-#   deploy/laptop/tm.sh web | collect | market | sales | sync | backup | backupcfg | check | tunnel | url
+#   deploy/laptop/tm.sh web | collect | market | sales | sync | backup | backupcfg | check
 # Копия или пробное восстановление не прошли — сообщение в Telegram (competitors/telegram.py, если настроен).
 # Журналы — data/logs/<дело>.log. Одновременно одно и то же дело не запускается (замок в data/locks).
 set -uo pipefail
@@ -28,19 +28,6 @@ log() { echo "$(date '+%d.%m %H:%M:%S')  $*" >> "$LOG"; }
 
 if [ "$JOB" = "web" ]; then
   exec "$PY" app.py >> "$LOG" 2>&1
-fi
-# Ссылка для телефона (решение пользователя 20.10): Cloudflare Quick Tunnel → https://….trycloudflare.com, без регистрации.
-# Адрес меняется при каждом запуске — текущий: deploy/laptop/tm.sh url. Снаружи сайт пускает только по паролю (competitors/siteauth.py).
-if [ "$JOB" = "tunnel" ]; then
-  [ -f config/site_auth.json ] || { log "нет пароля сайта (python3 -m competitors.siteauth new) — туннель не запускаю"; exit 1; }
-  # VPN (Happ) забирает DNS себе — cloudflared без пересыльщика не находит свои серверы (deploy/laptop/dnsfwd.py; уже идёт — выйдет сам)
-  nohup "$PY" deploy/laptop/dnsfwd.py >> data/logs/dnsfwd.log 2>&1 &
-  sleep 1
-  exec cloudflared tunnel --no-autoupdate --protocol http2 --url http://127.0.0.1:5050 >> "$LOG" 2>&1   # http2: VPN не пропускает QUIC (UDP)
-fi
-if [ "$JOB" = "url" ]; then
-  grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' data/logs/tunnel.log 2>/dev/null | tail -1 | sed 's|$|/proto/|'
-  exit 0
 fi
 
 LOCK="data/locks/$JOB"

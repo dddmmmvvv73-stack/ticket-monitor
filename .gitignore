@@ -9,7 +9,6 @@ config/venue_book.json
 config/venue_media/
 # Telegram-бот: токен — секрет (competitors/telegram.py)
 config/telegram.json
-config/site_auth.json
 # Журнал изменений: «было → стало» по площадкам, финмодели, проектам — там контакты и деньги (competitors/journal.py)
 config/history/
 # Раздел «Проекты»: задачи, проекты, документы и суммы (competitors/work.py)
