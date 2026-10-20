@@ -35,6 +35,7 @@ YouGile) — **связь с тем, что уже есть в инструме�
 | 20.10 | В таблице задач **«Статус» вместо «Тегов»**; теги — только в окне задачи; **цвет тега — настраивает сам**. |
 | 20.10 | **Сделанные подзадачи — всегда внизу** списка. Внутри проекта у задачи **проект не выбирают**. |
 | 20.10 | Строка вкладок проекта — **неподвижная**, без прокрутки вбок. |
+| 20.10 | В меню слева — группа **«Работа»** (подпись серым): **Обзор** (важное + простая аналитика) · **Проекты** · **Календарь** · **Задачи** · **Заметки**. Пустые разделы наполняем постепенно; список задач — из «Проектов» в **«Задачи»**. |
 | 20.10 | Доступ с телефона через **Cloudflare — отказались** (не подключился, всё убрано); **ждём Tailscale**, когда пользователь будет у ноутбука. Посредника localhost.run пользователь тоже отклонил. |
 
 ## 3. Что сделано
@@ -200,6 +201,25 @@ YouGile) — **связь с тем, что уже есть в инструме�
   изолированный iframe). «Открыть в новой вкладке» — тот же просмотр, «Скачать» — оригинал. На Linux-сервере для Word
   понадобится LibreOffice; .xls / .ods / .zip — только скачать.
 
+### 3.1л. Меню «Работа» (20.10)
+- В меню слева сверху — серая подпись **«Работа»**, под ней пять разделов (все — на одних данных `work.json`):
+
+  | Раздел | Адрес | Сейчас |
+  |---|---|---|
+  | **Обзор** | `#wkhome` | пусто — будет «важное + простая аналитика» |
+  | **Проекты** | `#work` | вкладки «Проекты · Документы»; страница проекта — как была |
+  | **Календарь** | `#wkcal` | пусто |
+  | **Задачи** | `#wktasks` | все задачи по срокам (бывшая вкладка «Проекты → Задачи»): фильтр по проекту, строка добавления, окно задачи с выбором проекта |
+  | **Заметки** | `#wknotes` | пусто (заметки проектов пока — внизу страницы проекта) |
+
+- Значки: Обзор — домик, Проекты — папка, Календарь — календарь, Задачи — квадрат с галочкой (был у «Проектов»), Заметки — лист.
+- В «Анализе» тоже есть «Обзор» и «Календарь событий» — это рынок, не работа. Если названия путают — переименовать.
+- **Телефон**: «Проекты» — в нижней панели, как раньше; «Обзор работы», «Задачи», «Календарь», «Заметки» — первыми в «Ещё».
+- Устройство: `WK_VIEWS` и `wkOn()` — все обработчики раздела работают в любом из пяти; `wkGate` — заглушка без приложения /
+  пока грузится; `renderWkTasks`, `renderWkEmpty` (тексты — `WK_EMPTY`), `renderWork` — «Проекты».
+- Исправлено попутно: статусы задач (`WK_TSTATUS`) перезаписали статусы документов (`WK_STATUS`) — в «Документах» показывались
+  «Не начата / В работе…»; данные не пострадали.
+
 ### 3.2. Сохранность данных (19.10, коммиты b1543f8, d946140 и следующие)
 - **Журнал изменений** (`competitors/journal.py`):
   - каждая правка — «было → стало»;
@@ -275,7 +295,7 @@ YouGile) — **связь с тем, что уже есть в инструме�
 | Хранение и проверка ввода | `competitors/work.py` → `config/work.json` (вне git): `projects`, `tasks`, `docs`, `tags`, `costs`, `notes`, `shows`; фото и документы проектов — `config/work_media/` |
 | API | `GET /api/work`, `POST /api/work {"op": "put" \| "del" \| "media" \| "pfile", "kind", "id", "data"}`, `GET /api/work/file/<файл>` (`?dl=1` — скачать), `GET /api/work/preview/<файл>` — `competitors/market_api.py`; просмотр Word / Excel — `competitors/docpreview.py` |
 | Журнал изменений | `competitors/journal.py`, область `work`; `config/history/changes-ГГГГ-ММ.jsonl` |
-| Экран | `Design/prototype/index.html`: блок «Раздел «Проекты»» — `renderWork`, `wkTaskList`, `wkDocsTable`, `wkProjectPage`, `wkPut` / `wkDel`; задачи проекта — `wktTable`, `wktRow`, `wktSubRows`, `wkTimer`, окно `wkOpenTask` / `wkTaskDlgHtml`; календарь — `wkDateOpen`, `wkParseDate`, `wkDateBtn`; статус — `wkStatusChip`, `wkStatusSet`; теги — `wkTagList`, `wkTagManHtml` («Настроить»), `wkTagColorSet`, `wkTagToggle`; подзадачи — `wkSubsOrdered`; гастроли — `wkShowsTable`, `wksMatch`, `wksVenueBlock` (на странице площадки); просмотр документов — `wkDocView`; всплывающее окошко — `wkPopOpen`; страница проекта — `wkProjectPage`, календарь сроков `wkCalBlock` / `wkCalTipHtml`, расходы `wkCostsTable`, заметки `wkNotesGrid` / `wkNoteOpen`; стили `.wkm-*`, `.wkn-*`, `.wk-*`, `.wkt-*`, `.wkd-*`, `.wkc-*`, `.tg-*` |
+| Экран | `Design/prototype/index.html`: меню «Работа» — `WK_VIEWS`, `wkOn`, `renderWkTasks`, `renderWkEmpty`; блок «Раздел «Проекты»» — `renderWork`, `wkTaskList`, `wkDocsTable`, `wkProjectPage`, `wkPut` / `wkDel`; задачи проекта — `wktTable`, `wktRow`, `wktSubRows`, `wkTimer`, окно `wkOpenTask` / `wkTaskDlgHtml`; календарь — `wkDateOpen`, `wkParseDate`, `wkDateBtn`; статус задачи — `WK_TSTATUS`, `wkStatusChip`, `wkStatusSet` (статусы документов — `WK_STATUS`); теги — `wkTagList`, `wkTagManHtml` («Настроить»), `wkTagColorSet`, `wkTagToggle`; подзадачи — `wkSubsOrdered`; гастроли — `wkShowsTable`, `wksMatch`, `wksVenueBlock` (на странице площадки); просмотр документов — `wkDocView`; всплывающее окошко — `wkPopOpen`; страница проекта — `wkProjectPage`, календарь сроков `wkCalBlock` / `wkCalTipHtml`, расходы `wkCostsTable`, заметки `wkNotesGrid` / `wkNoteOpen`; стили `.wkm-*`, `.wkn-*`, `.wk-*`, `.wkt-*`, `.wkd-*`, `.wkc-*`, `.tg-*` |
 | Копии | `db/offsite.py` (`--config` каждые 15 минут, ночная копия, `--check`); расписание — `deploy/laptop/install.sh`, `deploy/laptop/tm.sh` |
 | Уведомления | `competitors/telegram.py`, токен — `config/telegram.json` (вне git) |
 
