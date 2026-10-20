@@ -588,7 +588,9 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
 .wkp-kc-top .wkp-more { margin: -6px -6px 0 0; }
 .wkp-kc .wkp-nm b { white-space: normal; font-size: 15px; }
 .wkp-kc-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
-.wkp-kcs { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding: 1px; }
+.wkp-kcs { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: none; padding: 1px; }
+.wkp-kcs::-webkit-scrollbar { display: none; }   /* полосы прокрутки нет (решение пользователя 20.10) — ниже есть ещё: низ затухает */
+.wkp-kcs.more { -webkit-mask-image: linear-gradient(#000 calc(100% - 36px), transparent); mask-image: linear-gradient(#000 calc(100% - 36px), transparent); }
 .wkp-kc { gap: 8px; padding: 12px 12px 10px 14px; }
 .wkp-kc .wkp-chips { margin-left: auto; } .wkp-kc .wkp-chip { height: 22px; padding: 0 6px; font-size: 11.5px; }
 .wkp-kdl { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
@@ -4321,8 +4323,11 @@ function wkpKbFit() {
   document.querySelectorAll(".wkp-kcs").forEach(function (box) {
     var cards = box.querySelectorAll(".wkp-kc"); box.style.maxHeight = "";
     if (cards.length > 4) box.style.maxHeight = (cards[3].offsetTop + cards[3].offsetHeight - box.offsetTop + 2) + "px";
+    wkpKbMore(box);
   });
 }
+function wkpKbMore(box) { box.classList.toggle("more", box.scrollHeight - box.scrollTop - box.clientHeight > 4); }   // долистали до конца — затухания нет
+document.addEventListener("scroll", function (ev) { if (ev.target.classList && ev.target.classList.contains("wkp-kcs")) wkpKbMore(ev.target); }, true);
 function wkpAgo(stamp) {
   if (!stamp) return "";
   var n = wkpDays(stamp.slice(0, 10), wkDay(0));
