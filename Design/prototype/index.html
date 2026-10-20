@@ -594,7 +594,7 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
 .wkp-kdl { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--ink-2); white-space: nowrap; }
 .wkp-kdl.soon { color: #b45309; font-weight: 500; } .wkp-kdl.over { color: #b42318; font-weight: 500; }
 .wkp-stbtn { border: 0; cursor: pointer; gap: 4px; font: inherit; font-size: 12px; font-weight: 500; }
-.wkp-stbtn svg { width: 9px; height: 9px; opacity: .6; } .wkp-stbtn:hover { filter: brightness(.96); } .wkp-stbtn[aria-expanded="true"] svg { transform: rotate(180deg); }
+.wkp-stbtn:hover, .wkp-stbtn[aria-expanded="true"] { filter: brightness(.95); }
 .wkp-kc-empty { font-size: 12.5px; color: var(--muted); padding: 10px 8px; text-align: center; }
 /* карточки (референс 4) */
 .wkp-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 18px; }
@@ -4354,7 +4354,7 @@ function wkpEditOpen(id) {
 function wkpOpenPage(id) { S.wk.y = window.scrollY; S.wk.proj = id; S.wk.ptab = "tasks"; S.wk.mcal = null; S.wk.scrollT = {}; S.wk.qs = { open: "", done: "" }; S.wk.qAt = {}; render(); window.scrollTo(0, 0); }
 // Статус проекта — кнопкой прямо в строке / карточке: окошко со всеми статусами
 function wkpStageBtn(p) {
-  return '<button type="button" class="wkp-pill wkp-stbtn ps-' + wkStageColor(p.stage) + '" data-wkp-stagepick="' + p.id + '" aria-haspopup="menu" aria-label="Статус: ' + esc(wkLabel(WK_STAGE, p.stage)) + ' — изменить">' + esc(wkLabel(WK_STAGE, p.stage)) + WKT_ICON.fold + '</button>';
+  return '<button type="button" class="wkp-pill wkp-stbtn ps-' + wkStageColor(p.stage) + '" data-wkp-stagepick="' + p.id + '" aria-haspopup="menu" aria-label="Статус: ' + esc(wkLabel(WK_STAGE, p.stage)) + ' — изменить" title="Нажмите, чтобы сменить статус">' + esc(wkLabel(WK_STAGE, p.stage)) + '</button>';
 }
 function wkpStagePick(b) {
   if (WKPOP && WKPOP.anchor === b) { wkPopClose(); return; }
