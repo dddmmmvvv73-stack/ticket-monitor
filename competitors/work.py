@@ -39,7 +39,7 @@ from datetime import datetime
 from competitors.storage import CONFIG_DIR, load_json, save_json
 
 FILE = CONFIG_DIR / "work.json"
-KINDS = ("projects", "tasks", "docs", "tags", "costs", "notes", "shows")
+KINDS = ("projects", "tasks", "docs", "tags", "costs", "notes", "shows", "stages")
 # shows — гастроли проекта (решение пользователя 20.10): дата, площадка, город; площадка — из справочника «Площадки → Площадки»
 # (venue — номер записи config/venue_book.json); название и город хранятся копией — строка читается, даже если площадку убрали из справочника
 # Цвета тегов. Красный и оранжевый — только у приоритета (решение пользователя 19.10: полоса слева — по тегу, и красная
@@ -50,7 +50,16 @@ DEFAULT_TAGS = {"tgcontract": {"name": "Договоры", "color": "blue"}, "tg
                 "tgvenue": {"name": "Площадка", "color": "violet"}, "tglogist": {"name": "Логистика", "color": "brown"},
                 "tgtech": {"name": "Техника", "color": "teal"}, "tgpromo": {"name": "Реклама", "color": "pink"},
                 "tgtickets": {"name": "Билеты", "color": "amber"}, "tgartist": {"name": "Артист", "color": "indigo"}}
-STAGES = ["idea", "talks", "prep", "sales", "live", "closing", "done"]
+# Статусы (стадии) проектов — свои у пользователя (решение 20.10: «сам делаю канбан и статусы»): {номер: {"name", "color", "order",
+# "done" — проекты в нём считаются завершёнными}}; пока не правили — стандартные. Удалить статус с проектами нельзя — сначала перенести.
+STAGE_COLORS = ["gray", "amber", "violet", "blue", "green", "peach", "mint", "pink", "teal"]
+DEFAULT_STAGES = {"idea": {"name": "Идея", "color": "gray", "order": 1, "done": False},
+                  "talks": {"name": "Переговоры", "color": "amber", "order": 2, "done": False},
+                  "prep": {"name": "Подготовка", "color": "violet", "order": 3, "done": False},
+                  "sales": {"name": "Продажи", "color": "blue", "order": 4, "done": False},
+                  "live": {"name": "Проведение", "color": "green", "order": 5, "done": False},
+                  "closing": {"name": "Закрытие", "color": "peach", "order": 6, "done": False},
+                  "done": {"name": "Завершён", "color": "mint", "order": 7, "done": True}}
 DOC_STATUS = ["draft", "sent", "signed"]
 PAY = ["no", "part", "paid"]
 PRIO = ["", "low", "mid", "high"]
@@ -83,6 +92,8 @@ def load() -> dict:
     out = {k: d.get(k) or {} for k in KINDS}
     if "tags" not in d:   # своих тегов ещё не заводили — стандартные (с первой правкой тегов сохраняются в файл)
         out["tags"] = {k: dict(v) for k, v in DEFAULT_TAGS.items()}
+    if not d.get("stages"):   # статусы проектов ещё не правили — стандартные
+        out["stages"] = {k: dict(v) for k, v in DEFAULT_STAGES.items()}
     for t in out["tags"].values():
         t["color"] = RECOLOR.get(t.get("color"), t.get("color"))
     return out
@@ -170,7 +181,8 @@ def _enum(v, allowed: list, what: str, default: str) -> str:
 
 def _validate(kind: str, d: dict, data: dict) -> dict:
     if kind == "projects":
-        out = {"title": _text(d.get("title"), "название", 300), "stage": _enum(d.get("stage"), STAGES, "стадия", "idea"),
+        stages = sorted(data["stages"], key=lambda k: data["stages"][k].get("order", 0))
+        out = {"title": _text(d.get("title"), "название", 300), "stage": _enum(d.get("stage"), stages, "статус", stages[0]),
                "start": _date(d.get("start"), "начало"), "end": _date(d.get("end"), "окончание"),
                "deadline": _date(d.get("deadline"), "дедлайн"), "note": _text(d.get("note"), "заметка"), "fav": bool(d.get("fav"))}   # fav — избранный (звезда в карточках, 20.10)
         if not out["title"]:
@@ -202,6 +214,12 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
                "name": _text(d.get("name"), "площадка", 300), "city": _text(d.get("city"), "город", 120)}
         if not (out["name"] or out["city"]):
             raise WorkError("у гастролей нужна площадка или город")
+        return out
+    if kind == "stages":
+        out = {"name": _text(d.get("name"), "статус", 40), "color": _enum(d.get("color"), STAGE_COLORS, "цвет", "gray"),
+               "order": _int(d.get("order"), "порядок", 0, 1000), "done": bool(d.get("done"))}
+        if not out["name"]:
+            raise WorkError("у статуса нужно название")
         return out
     if kind == "tags":
         out = {"name": _text(d.get("name"), "тег", 40), "color": _enum(d.get("color"), list(COLORS), "цвет", "gray")}
@@ -305,6 +323,12 @@ def apply_op(op: dict) -> dict:
                 p.pop("pfiles", None)
             p["upd"] = datetime.now().isoformat(timespec="seconds")
         elif op.get("op") == "del":
+            if kind == "stages" and oid in data["stages"]:
+                n = sum(1 for p in data["projects"].values() if p.get("stage") == oid)
+                if n:
+                    raise WorkError(f"в этом статусе проектов: {n} — сначала перенесите их в другой")
+                if len(data["stages"]) == 1:
+                    raise WorkError("нужен хотя бы один статус")
             data[kind].pop(oid, None)
             if kind == "tags":   # убрали тег — снимается и с задач
                 for r in data["tasks"].values():
