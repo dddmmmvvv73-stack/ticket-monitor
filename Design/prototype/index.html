@@ -763,6 +763,19 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 /* Группировка — значок справа от вкладок проекта, меню */
 .wk-ptabs-row { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); margin: 18px 0 18px; }
 .wk-ptabs-row .wk-ptabs { border-bottom: 0; margin: 0; flex: 1; }
+/* Вкладки проекта — неподвижная строка, без прокрутки вбок (решение пользователя 20.10); на телефоне — плотнее, чтобы влезали */
+.wk-ptabs-row .wk-ptabs { overflow: visible; min-width: 0; }
+@media (max-width: 640px) {   /* телефон: вкладки — на всю ширину; фильтр и «+» — под ними справа, как панель над таблицей */
+  .wk-ptabs-row { flex-wrap: wrap; gap: 0; border-bottom: 0; }
+  .wk-ptabs-row .wk-ptabs { flex: 1 1 100%; justify-content: space-between; gap: 0; border-bottom: 1px solid var(--line); }
+  .wk-ptabs-row .wk-ptabs button { padding: 10px 4px; font-size: 13px; }
+  .wk-ptabs-row .wk-tabn { margin-left: 2px; padding: 0 5px; min-width: 16px; }
+  .wk-ptabs-row .wk-tabtools { margin-left: auto; padding: 10px 0 0; gap: 6px; }
+}
+@media (max-width: 380px) {   /* узкие телефоны: мельче, чтобы четыре вкладки со счётчиками влезали без прокрутки */
+  .wk-ptabs-row .wk-ptabs button { padding: 10px 2px; font-size: 12px; letter-spacing: -0.01em; }
+  .wk-ptabs-row .wk-tabn { margin-left: 1px; padding: 0 4px; min-width: 14px; font-size: 11px; line-height: 16px; }
+}
 .wk-groupbtn { color: var(--ink-3); } .wk-groupbtn.on { color: #3b7ce8; }
 .wk-menu { width: 270px; padding: 8px; }
 .wk-menu .wkp-title { padding: 4px 8px; }
