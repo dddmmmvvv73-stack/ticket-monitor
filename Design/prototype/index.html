@@ -4535,10 +4535,10 @@ function wkIcons(t) {
 // Приоритет: три столбика — высокий (красный, 3), средний (оранжевый, 2), низкий (синий, 1); нажатие — меню
 var WK_PRIO = [["high", "Высокий"], ["mid", "Средний"], ["low", "Низкий"]], WK_PRIO_RANK = { high: 0, mid: 1, low: 2 };
 // Статус задачи (решение пользователя 20.10 — столбец вместо «Тегов»): «Готово» — то же, что галочка; остальные — поле status
-var WK_STATUS = [["", "Не начата"], ["work", "В работе"], ["wait", "Ждёт ответа"], ["done", "Готово"]];
+var WK_TSTATUS = [["", "Не начата"], ["work", "В работе"], ["wait", "Ждёт ответа"], ["done", "Готово"]];
 function wkStatusOf(t) { return t.done ? "done" : (t.status || ""); }
 function wkStatusChip(t) {
-  var st = wkStatusOf(t), label = wkLabel(WK_STATUS, st);
+  var st = wkStatusOf(t), label = wkLabel(WK_TSTATUS, st);
   return '<button type="button" class="wkt-tags wkt-stchip" data-wk-status="' + t.id + '" aria-haspopup="menu" aria-label="Статус: ' + label + ' — изменить">' +
     '<span class="wk-st ws-' + (st || "new") + '"><i aria-hidden="true"></i>' + label + '</span></button>';
 }
@@ -4547,7 +4547,7 @@ function wkStatusSet(id, st) {
   var r = Object.assign({}, t);
   if (st === "done") { r.done = true; r.done_at = wkDay(0); if (r.run) { r.time = wkSpent(t); r.run = ""; } }   // как галочка: таймер останавливается
   else { r.done = false; r.done_at = ""; r.status = st; }
-  wkPut("tasks", id, r, "Статус: " + wkLabel(WK_STATUS, st).toLowerCase());
+  wkPut("tasks", id, r, "Статус: " + wkLabel(WK_TSTATUS, st).toLowerCase());
   if (S.wk.dlg === id) wkDlgRefresh();
 }
 document.addEventListener("click", function (ev) {
@@ -4556,7 +4556,7 @@ document.addEventListener("click", function (ev) {
     ev.preventDefault();
     if (WKPOP && WKPOP.anchor === b) { wkPopClose(); return; }
     var id = b.getAttribute("data-wk-status"), cur = wkStatusOf(WK.tasks[id] || {});
-    wkPopOpen(b, "wk-menu wk-stmenu", '<div class="wkp-title">Статус</div>' + WK_STATUS.map(function (o) {
+    wkPopOpen(b, "wk-menu wk-stmenu", '<div class="wkp-title">Статус</div>' + WK_TSTATUS.map(function (o) {
       return '<button type="button" class="wk-menu-item' + (cur === o[0] ? ' on' : '') + '" data-wk-status-set="' + o[0] + '" role="menuitemradio" aria-checked="' + (cur === o[0]) + '">' +
         '<span class="wk-st ws-' + (o[0] || "new") + '"><i aria-hidden="true"></i>' + o[1] + '</span>' + (cur === o[0] ? WKT_ICON.check : '') + '</button>';
     }).join(""), { stId: id });
@@ -4694,7 +4694,7 @@ function wkTaskDlgHtml(id) {
     '<div class="wkd-meta">' + (S.wk.proj ? '' : '<label>Проект <select class="wk-in wk-sel" data-native data-wkd-f="project">' + wkProjOpts(t.project) + '</select></label>') +   // внутри проекта проект не выбирают (решение пользователя 20.10)
       '<label>Срок ' + wkDateBtn("tasks|" + id + "|due", t.due, { due: true, done: t.done, label: "Срок", icon: true }) + '</label>' +
       (due.cls === "over" && !t.done ? '<span class="wkd-over">просрочено на ' + -due.days + ' ' + plural(-due.days, "день", "дня", "дней") + '</span>' : due.cls === "today" && !t.done ? '<span class="wkd-today">срок сегодня</span>' : '') + '</div>' +
-    '<section class="wkd-sec"><h3>Статус</h3><div class="wkd-prio" role="group" aria-label="Статус">' + WK_STATUS.map(function (o) {
+    '<section class="wkd-sec"><h3>Статус</h3><div class="wkd-prio" role="group" aria-label="Статус">' + WK_TSTATUS.map(function (o) {
         var on = wkStatusOf(t) === o[0];
         return '<button type="button" class="wkd-prio-b wsb ws-' + (o[0] || "new") + (on ? ' on' : '') + '" data-wkd-status="' + o[0] + '" aria-pressed="' + on + '"><i class="wk-st-dot" aria-hidden="true"></i>' + o[1] + '</button>';
       }).join("") + '</div></section>' +
@@ -5735,7 +5735,7 @@ function jrVal(area, f, v) {
   if (area === "work" && f === "tags" && Array.isArray(v)) return esc(v.map(function (x) { return WK.tags[x] ? WK.tags[x].name : x; }).join(", ") || "—");
   if (area === "work" && f === "est") return wkDur(v * 60);
   if (area === "work" && f === "run") return v ? "запущен" : "остановлен";
-  if (area === "work") { var wl = { stage: WK_STAGE, status: WK_STATUS, pay: WK_PAY, closing: WK_CLOSE, prio: WK_PRIO }[f]; if (wl) v = wkLabel(wl, v) || v; if (f === "project") v = wkPname(v) || v; }
+  if (area === "work") { var wl = { stage: WK_STAGE, status: WK_STATUS.concat(WK_TSTATUS), pay: WK_PAY, closing: WK_CLOSE, prio: WK_PRIO }[f]; if (wl) v = wkLabel(wl, v) || v; if (f === "project") v = wkPname(v) || v; }
   if (f === "rider" && v.name) return esc(v.name);
   if (f === "media") return esc(Object.keys(v).map(function (k) { return k === "avatar" ? "миниатюра" : "фон"; }).join(", ") || "—");
   if (Array.isArray(v)) return f === "rows" ? v.length + " " + plural(v.length, "строка", "строки", "строк") : v.length + " шт.";
