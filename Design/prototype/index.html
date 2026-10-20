@@ -64,6 +64,7 @@ h1, h2, h3 { margin: 0; font-family: var(--display); }
 .nav-item.soon:hover { background: none; }
 .soon-tag { margin-left: auto; font-size: 11px; border: 1px solid var(--line); border-radius: 9999px; padding: 0 7px; }
 .main { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; }
+body.wk-mode .top { display: none !important; }   /* «Работа»: панель рынка не нужна */
 .top { height: 64px; flex-shrink: 0; padding: 0 32px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 12px; position: sticky; top: 0; background: var(--canvas); z-index: 10; }
 .pill { height: 40px; padding: 0 16px; border-radius: 9999px; border: 1px solid var(--line); background: var(--card); display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
 button.pill:hover { border-color: var(--line-strong); }
@@ -10451,6 +10452,7 @@ function render() {
   var keepY = wkOn() ? window.scrollY : null;   // «Проекты»: правка не сдвигает страницу (переходы сами прокручивают наверх)
   archMode(S.view === "archive");
   syncMarketView(); S.city = S.m.city;  // раздел — по вкладке «Рынка», если её переключил код; город шапки один на все разделы
+  document.body.classList.toggle("wk-mode", wkOn());   // разделы «Работы» — без верхней панели рынка (город, период, поиск, сбор; решение пользователя 20.10)
   var ip = $("infoPop"); if (ip) ip.hidden = true;  // элемент под курсором заменится — его подсказка не должна «висеть»
   document.querySelectorAll("[data-view]").forEach(function (b) { if (b.getAttribute("data-view") === S.view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
   if (MORE_VIEWS.indexOf(S.view) >= 0) $("moreBtn").setAttribute("aria-current", "page"); else $("moreBtn").removeAttribute("aria-current");
