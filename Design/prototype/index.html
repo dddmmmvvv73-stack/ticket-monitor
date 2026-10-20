@@ -2364,6 +2364,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
     <button class="nav-item" data-view="work"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.6a1 1 0 0 1 1-1h3.1l1.5 1.6H13a1 1 0 0 1 1 1v5.9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>Проекты</button>
     <button class="nav-item" data-view="wkcal"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/><circle cx="8" cy="10.2" r=".9" fill="currentColor" stroke="none"/></svg>Календарь</button>
     <button class="nav-item" data-view="wktasks"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M5.2 6.2l1.3 1.3 2.4-2.4M5.2 10.6h5.6"/></svg>Задачи</button>
+    <button class="nav-item" data-view="wkdocs"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.6 1.8H4.2a1 1 0 0 0-1 1v10.4a1 1 0 0 0 1 1h7.6a1 1 0 0 0 1-1V5z"/><path d="M9.6 1.8V5h3.2M5.8 8.6l1.5 1.5 2.9-2.9"/></svg>Документы</button>
     <button class="nav-item" data-view="wknotes"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 2h6.3l2.7 2.7V14h-9z"/><path d="M9.6 2v2.9h2.9M5.7 8h4.6M5.7 10.6h3"/></svg>Заметки</button>
     <div class="nav-group" aria-hidden="true">Анализ</div>
     <button class="nav-item" data-view="overview"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Обзор</button>
@@ -2420,7 +2421,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <nav class="bottom-nav" aria-label="Разделы">
   <button data-view="city">Город</button><button data-view="events">Мероприятия</button><button data-view="projects">Репертуар</button><button data-view="work">Проекты</button><button type="button" id="moreBtn" aria-expanded="false" aria-controls="moreSheet">Ещё</button>
 </nav>
-<div class="more-sheet" id="moreSheet" hidden><button data-view="wkhome">Обзор работы</button><button data-view="wktasks">Задачи</button><button data-view="wkcal">Календарь</button><button data-view="wknotes">Заметки</button><button data-view="archive">Архив</button><button data-view="overview">Обзор</button><button data-view="niches">Ниши</button><button data-view="calendar">Календарь событий</button><button data-view="new">Новые события</button><button data-view="venues">Площадки</button><button data-view="operators">Билетные операторы</button><button data-view="sales">История продаж</button><button data-view="dynamics">Динамика продаж</button><button data-view="planning">Финмодель туров</button><button data-view="route">Гастрольный маршрут</button><button data-view="settings">Настройки</button></div>
+<div class="more-sheet" id="moreSheet" hidden><button data-view="wkhome">Обзор работы</button><button data-view="wktasks">Задачи</button><button data-view="wkdocs">Документы</button><button data-view="wkcal">Календарь</button><button data-view="wknotes">Заметки</button><button data-view="archive">Архив</button><button data-view="overview">Обзор</button><button data-view="niches">Ниши</button><button data-view="calendar">Календарь событий</button><button data-view="new">Новые события</button><button data-view="venues">Площадки</button><button data-view="operators">Билетные операторы</button><button data-view="sales">История продаж</button><button data-view="dynamics">Динамика продаж</button><button data-view="planning">Финмодель туров</button><button data-view="route">Гастрольный маршрут</button><button data-view="settings">Настройки</button></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <dialog class="confirm" id="confirmDlg" aria-labelledby="cdTitle" aria-describedby="cdText">
   <h2 id="cdTitle"></h2><p id="cdText" class="sub"></p>
@@ -4024,7 +4025,7 @@ function hallSection(halls) {
 // Данные — competitors/work.py (/api/work, config/work.json вне git); каждая правка — в журнале изменений, её можно вернуть.
 // Правка — прямо в строке: поле сохраняется, когда из него выходят (Enter, Tab, клик мимо); Esc — вернуть как было.
 var WK = { projects: {}, tasks: {}, docs: {} }, WK_OK = false;
-S.wk = { tab: "projects", proj: null, fproj: "", showDone: false, docF: "", addProj: "" };
+S.wk = { proj: null, fproj: "", showDone: false, docF: "", addProj: "" };
 var WK_STAGE = [["idea", "Идея"], ["talks", "Переговоры"], ["prep", "Подготовка"], ["sales", "Продажи"], ["live", "Проведение"], ["closing", "Закрытие"], ["done", "Завершён"]];
 var WK_STATUS = [["draft", "Черновик"], ["sent", "Отправлен"], ["signed", "Подписан"]];
 var WK_PAY = [["no", "Не оплачено"], ["part", "Частично"], ["paid", "Оплачено"]];
@@ -5566,7 +5567,7 @@ document.addEventListener("click", function (ev) {
   }
 });
 // ---------- Группа «Работа» в меню (решение пользователя 20.10): Обзор · Проекты · Календарь · Задачи · Заметки — одни данные (WK)
-var WK_VIEWS = ["wkhome", "work", "wkcal", "wktasks", "wknotes"];
+var WK_VIEWS = ["wkhome", "work", "wkcal", "wktasks", "wkdocs", "wknotes"];
 function wkOn() { return WK_VIEWS.indexOf(S.view) >= 0; }
 function wkGate(title) {   // данные раздела — с сервера: без приложения или пока грузятся — заглушка
   if (!CAN_SAVE) return head(title, "") + '<div class="note">Раздел хранится на сервере — откройте сайт через приложение: python3 app.py → http://127.0.0.1:5050/proto/</div>';
@@ -5596,19 +5597,18 @@ function renderWork() {
   var g = wkGate("Проекты"); if (g) return g;
   if (S.wk.proj && WK.projects[S.wk.proj]) return wkProjectPage(S.wk.proj);
   S.wk.proj = null;
-  var tabs = [["projects", "Проекты"], ["docs", "Документы"]];
-  if (S.wk.tab !== "docs") S.wk.tab = "projects";
-  var nd = wkDocsOf(null).length, sub = "проектов " + Object.keys(WK.projects).length + (nd ? " · документов " + nd : "");
-  var body;
-  if (S.wk.tab === "projects") body = wkProjectsTab();
-  else {
-    var docs = wkDocsOf(null).filter(function (d) { return (!S.wk.fproj || d.project === S.wk.fproj) && (S.wk.docF === "uns" ? d.status !== "signed" : S.wk.docF === "unp" ? d.pay !== "paid" : S.wk.docF === "noclose" ? d.closing !== "got" : true); });
-    body = '<div class="toolbar wk-tools"><div class="seg" role="group" aria-label="Документы">' + [["", "Все"], ["uns", "Не подписано"], ["unp", "Не оплачено"], ["noclose", "Без закрывающих"]].map(function (o) {
-        return '<button data-wk-docf="' + o[0] + '" aria-pressed="' + (S.wk.docF === o[0]) + '">' + o[1] + '</button>'; }).join("") + '</div>' +
-      '<select class="flat-select" data-flat-label="Проект" data-wk-fproj aria-label="Проект">' + wkProjOpts(S.wk.fproj, "Все") + '</select></div>' + wkDocsTable(docs, true, null);
-  }
-  return head("Проекты", sub) + wkpTiles() + '<div class="mtabs subtabs" role="tablist" aria-label="Раздел «Проекты»">' + tabs.map(function (t) {
-      return '<button role="tab" data-wk-tab="' + t[0] + '" aria-selected="' + (S.wk.tab === t[0]) + '">' + t[1] + '</button>'; }).join("") + '</div>' + '<div class="wk-body">' + body + '</div>';
+  return head("Проекты", "проектов " + Object.keys(WK.projects).length) + wkpTiles() + '<div class="wk-body">' + wkProjectsTab() + '</div>';
+}
+// «Документы» — свой раздел меню «Работы» после «Задач» (решение пользователя 20.10; был вкладкой «Проектов»): только статусы
+function renderWkDocs() {
+  var g = wkGate("Документы"); if (g) return g;
+  S.wk.proj = null;
+  var all = wkDocsOf(null), uns = all.filter(function (d) { return d.status !== "signed"; }).length, unp = all.filter(function (d) { return d.pay !== "paid"; }).length;
+  var sub = all.length ? "документов " + all.length + (uns ? " · не подписано " + uns : "") + (unp ? " · не оплачено " + unp : "") : "";
+  var docs = all.filter(function (d) { return (!S.wk.fproj || d.project === S.wk.fproj) && (S.wk.docF === "uns" ? d.status !== "signed" : S.wk.docF === "unp" ? d.pay !== "paid" : S.wk.docF === "noclose" ? d.closing !== "got" : true); });
+  return head("Документы", sub) + '<div class="wk-body"><div class="toolbar wk-tools"><div class="seg" role="group" aria-label="Документы">' + [["", "Все"], ["uns", "Не подписано"], ["unp", "Не оплачено"], ["noclose", "Без закрывающих"]].map(function (o) {
+      return '<button data-wk-docf="' + o[0] + '" aria-pressed="' + (S.wk.docF === o[0]) + '">' + o[1] + '</button>'; }).join("") + '</div>' +
+    '<select class="flat-select" data-flat-label="Проект" data-wk-fproj aria-label="Проект">' + wkProjOpts(S.wk.fproj, "Все") + '</select></div>' + wkDocsTable(docs, true, null) + '</div>';
 }
 // Видно первые 10 задач: высота таблицы — до низа 10-й строки задачи, дальше прокрутка внутри (полосы нет, низ затухает)
 function wktFit() {
@@ -5701,7 +5701,7 @@ $("view").addEventListener("keydown", function (ev) {
 });
 $("view").addEventListener("click", function (ev) {
   if (!wkOn()) return;
-  var t = ev.target.closest("[data-wk-tab],[data-wk-open],[data-wk-act],[data-wk-del],[data-wk-docf],[data-wkt-open],[data-wkt-timer],[data-wkt-fold],[data-wkt-subs],[data-wkt-group],[data-wkt-sub-del],[data-wk-ptab],[data-wkm-nav],[data-wkm-day],[data-wkt-groupmenu],[data-wkt-qopen],[data-wkt-qclose]"); if (!t) return;
+  var t = ev.target.closest("[data-wk-open],[data-wk-act],[data-wk-del],[data-wk-docf],[data-wkt-open],[data-wkt-timer],[data-wkt-fold],[data-wkt-subs],[data-wkt-group],[data-wkt-sub-del],[data-wk-ptab],[data-wkm-nav],[data-wkm-day],[data-wkt-groupmenu],[data-wkt-qopen],[data-wkt-qclose]"); if (!t) return;
   if (t.hasAttribute("data-wk-ptab")) { S.wk.ptab = t.getAttribute("data-wk-ptab"); render(); return; }
   if (t.hasAttribute("data-wkt-qopen")) {
     var gk = t.getAttribute("data-wkt-qopen"), sq0 = gk === "done" ? "done" : "open"; S.wk.qAt = S.wk.qAt || {}; S.wk.qs = S.wk.qs || { open: "", done: "" };
@@ -5740,7 +5740,6 @@ $("view").addEventListener("click", function (ev) {
   }
   if (t.hasAttribute("data-wkt-group")) { S.wk.groupBy = t.getAttribute("data-wkt-group"); try { localStorage.setItem("ticketmonitor.work.groupBy", S.wk.groupBy); } catch (e) { /* нет хранилища */ } render(); return; }
   if (t.hasAttribute("data-wkt-sub-del")) { var sd = t.getAttribute("data-wkt-sub-del").split("|"); wkSubChange(sd[0], function (l) { return l.filter(function (x) { return x.id !== sd[1]; }); }); return; }
-  if (t.hasAttribute("data-wk-tab")) { S.wk.tab = t.getAttribute("data-wk-tab"); S.enter = true; render(); }
   else if (t.hasAttribute("data-wk-open")) { if (S.view !== "work") { S.view = "work"; location.hash = "work"; S.enter = true; }   // из «Задач» и др. — на страницу проекта
     S.wk.y = window.scrollY; S.wk.proj = t.getAttribute("data-wk-open"); S.wk.ptab = "tasks"; S.wk.mcal = null; S.wk.scrollT = {}; S.wk.qs = { open: "", done: "" }; S.wk.qAt = {}; render(); window.scrollTo(0, 0); }
   else if (t.hasAttribute("data-wk-docf")) { S.wk.docF = t.getAttribute("data-wk-docf"); render(); }
@@ -10748,7 +10747,7 @@ function mSplitTools(html) {
 
 // ---------------------------------------------------------------- рендер и события
 // Разделы, которые на телефоне спрятаны в «Ещё»
-var MORE_VIEWS = ["wkhome", "wktasks", "wkcal", "wknotes", "archive", "overview", "niches", "calendar", "new", "venues", "operators", "sales", "dynamics", "settings", "planning", "route"];
+var MORE_VIEWS = ["wkhome", "wktasks", "wkdocs", "wkcal", "wknotes", "archive", "overview", "niches", "calendar", "new", "venues", "operators", "sales", "dynamics", "settings", "planning", "route"];
 function render() {
   var keepY = wkOn() ? window.scrollY : null;   // «Проекты»: правка не сдвигает страницу (переходы сами прокручивают наверх)
   archMode(S.view === "archive");
@@ -10769,7 +10768,7 @@ function render() {
   $("dateBtn").style.borderColor = ARCH_ON || S.period === "custom" ? "var(--soot)" : "";
   $("period").style.display = ARCH_ON ? "none" : "";  // «30 дней / 90 дней / Сезон» — про будущее; в архиве период — кнопкой «Даты»
   HEAD_SUB = !isM() && SUBS[S.view] ? subSwitch(S.view) : "";
-  $("view").innerHTML = S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? (vbOn() ? renderVenueBook() : renderVenues()) : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : S.view === "planning" ? renderPlanning() : S.view === "route" ? renderRoute() : S.view === "work" ? renderWork() : S.view === "wktasks" ? renderWkTasks() : S.view === "wkhome" ? renderWkEmpty("wkhome") : S.view === "wkcal" ? renderWkEmpty("wkcal") : S.view === "wknotes" ? renderWkNotes() : renderEvents();
+  $("view").innerHTML = S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? (vbOn() ? renderVenueBook() : renderVenues()) : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : S.view === "planning" ? renderPlanning() : S.view === "route" ? renderRoute() : S.view === "work" ? renderWork() : S.view === "wktasks" ? renderWkTasks() : S.view === "wkdocs" ? renderWkDocs() : S.view === "wkhome" ? renderWkEmpty("wkhome") : S.view === "wkcal" ? renderWkEmpty("wkcal") : S.view === "wknotes" ? renderWkNotes() : renderEvents();
   $("view").classList.toggle("enter", !!S.enter); S.enter = false; S.colsAnim = false;
   ddClose(false); enhanceSelects(document.querySelector(".top")); enhanceSelects($("view")); vdRestore();
   candApply();  // «Города, где его нет» — счётчик найденного после перерисовки
@@ -12819,7 +12818,7 @@ function renderDynamics() {
   return head("Динамика продаж", "Как идут продажи по кассам · " + cityLabel()) + sfDynamicsBlock() +
     (old ? '<h2 class="sf-sub">Площадки прямого сбора — подробно</h2>' + old : '');
 }
-var VIEWS = ["wkhome", "work", "wkcal", "wktasks", "wknotes", "overview", "city", "niches", "calendar", "new", "events", "projects", "touring", "favorites", "venues", "operators", "suggest", "archive", "sales", "dynamics", "settings", "market", "planning", "route"];
+var VIEWS = ["wkhome", "work", "wkcal", "wktasks", "wkdocs", "wknotes", "overview", "city", "niches", "calendar", "new", "events", "projects", "touring", "favorites", "venues", "operators", "suggest", "archive", "sales", "dynamics", "settings", "market", "planning", "route"];
 if (VIEWS.indexOf(location.hash.slice(1)) >= 0) S.view = location.hash.slice(1);
 // Кнопки «назад/вперёд» браузера переключают разделы
 S.enter = true;  // первый показ страницы тоже с анимацией
