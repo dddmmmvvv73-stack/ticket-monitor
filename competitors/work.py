@@ -15,7 +15,7 @@
      "tasks":    {номер: {"text", "due", "project", "done", "done_at", "note", "created", "upd",
                           "desc" — описание, "subs": [{"id", "text", "done"}] — подзадачи,
                           "time" — затрачено, секунд; "run" — таймер идёт с (ISO-время) или пусто; "est" — план, минут,
-                          "prio" — приоритет: high | mid | low | пусто}},
+                          "prio" — приоритет: high | mid | low | пусто; "status" — work | wait | пусто (не начата)}},
      "docs":     {номер: {"project", "kind", "party", "status", "amount", "pay", "closing", "note", "upd"}},
      "tags":     {номер: {"name", "color"}},
      "costs":    {номер: {"project", "name" — статья, "party" — кому, "amount", "date", "paid", "note", "upd"}},
@@ -54,6 +54,7 @@ STAGES = ["idea", "talks", "prep", "sales", "live", "closing", "done"]
 DOC_STATUS = ["draft", "sent", "signed"]
 PAY = ["no", "part", "paid"]
 PRIO = ["", "low", "mid", "high"]
+STATUS = ["", "work", "wait"]   # статус задачи: не начата | в работе | ждёт ответа («готово» — это done; решение пользователя 20.10)
 CLOSING = ["no", "got"]
 TEXT_MAX = 3000
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -215,7 +216,7 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
                "desc": _text(d.get("desc"), "описание", 20000), "subs": _subs(d.get("subs")),
                "time": _int(d.get("time"), "время", 0, 10 ** 8), "run": _stamp(d.get("run")), "est": _int(d.get("est"), "план", 0, 10 ** 6),
                "tags": [t for t in (d.get("tags") or []) if t in data["tags"]][:12],
-               "prio": _enum(d.get("prio"), PRIO, "приоритет", "")}
+               "prio": _enum(d.get("prio"), PRIO, "приоритет", ""), "status": _enum(d.get("status"), STATUS, "статус", "")}
         if not out["text"]:
             raise WorkError("у задачи нужен текст")
         if out["done"]:
