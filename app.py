@@ -24,7 +24,7 @@ from threading import Timer
 from flask import Flask, jsonify, request, send_file, Response
 
 from alerts import check_alerts
-from competitors import collector, edits, sync
+from competitors import collector, edits, siteauth, sync
 from competitors.api import bp as app_api
 from competitors.market_api import bp as market_api
 from competitors.github_api import bp as github_api
@@ -49,9 +49,13 @@ ON_SERVER = os.environ.get("TM_ON_SERVER") == "1"
 
 @app.before_request
 def _same_site_only():
+    # Снаружи (через туннель с телефона, competitors/siteauth.py) — только с логином и паролем
+    outside = siteauth.from_outside(request)
+    if outside and not siteauth.check(request.authorization):
+        return Response("Нужен вход: логин и пароль", 401, {"WWW-Authenticate": 'Basic realm="ticket-monitor", charset="UTF-8"'})
     # На сервере браузер сам подставляет пароль входа к любому запросу на наш адрес — даже со страницы чужого сайта.
     # Поэтому изменения (POST) — только со своих страниц: чужой Origin отклоняется.
-    if ON_SERVER and request.method not in ("GET", "HEAD", "OPTIONS"):
+    if (ON_SERVER or outside) and request.method not in ("GET", "HEAD", "OPTIONS"):
         origin = request.headers.get("Origin")
         if origin and origin.split("://", 1)[-1] != request.host:
             return jsonify({"error": "запрос не с этого сайта"}), 403
