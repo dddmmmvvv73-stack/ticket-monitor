@@ -4374,7 +4374,7 @@ function wkpCreateOpen(stage) {
       '<span>Начало ' + wkDateBtn("pnew|start", "", { label: "Начало гастролей", empty: "указать", icon: true }) + '</span>' +
       '<span>Окончание ' + wkDateBtn("pnew|end", "", { label: "Окончание гастролей", empty: "указать", icon: true }) + '</span>' +
       '<span>Дедлайн ' + wkDateBtn("pnew|deadline", "", { label: "Дедлайн готовности", empty: "указать", icon: true }) + '</span></div></div>' +
-    '<p class="sub2" style="margin:4px 0 0">Фото, документы, гастроли и задачи — на странице проекта после создания.</p>' +
+    '<p class="sub2" style="margin:4px 0 0">Фото, документы, гастроли и задачи — потом в «•••» у проекта или на его странице.</p>' +
     '<div class="err" id="wkpn-err" hidden></div></form>' +
     '<div class="form-actions wkd-foot"><button class="btn-dark" data-wkp-create>Создать проект</button><button class="btn-ghost" data-pj="close">Отмена</button></div>');
   $("wkpn-title").focus();
@@ -4385,8 +4385,7 @@ function wkpCreate() {
   if (!title) { err.hidden = false; err.textContent = "У проекта нужно название"; f.elements.title.focus(); return; }
   var id = wkId("p"), d = S.wk.pnew || {};
   $("pjDlg").close();
-  wkPut("projects", id, { title: title, stage: f.elements.stage.value, start: d.start || "", end: d.end || "", deadline: d.deadline || "", note: "" }, "Проект «" + title + "» создан");
-  S.wk.y = window.scrollY; S.wk.proj = id; S.wk.ptab = "tasks"; S.wk.mcal = null; S.wk.scrollT = {}; S.wk.qs = { open: "", done: "" }; S.wk.qAt = {}; render(); window.scrollTo(0, 0);
+  wkPut("projects", id, { title: title, stage: f.elements.stage.value, start: d.start || "", end: d.end || "", deadline: d.deadline || "", note: "" }, "Проект «" + title + "» создан");   // остаёмся в списке (решение пользователя 20.10)
 }
 document.addEventListener("click", function (ev) { if (ev.target.closest && ev.target.closest("#pjDlg [data-wkp-create]")) { ev.preventDefault(); wkpCreate(); } });
 document.addEventListener("submit", function (ev) { if (ev.target.id === "wkpNewForm") { ev.preventDefault(); wkpCreate(); } });
