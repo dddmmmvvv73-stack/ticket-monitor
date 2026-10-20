@@ -36,7 +36,7 @@ if [ "$JOB" = "tunnel" ]; then
   # VPN (Happ) забирает DNS себе — cloudflared без пересыльщика не находит свои серверы (deploy/laptop/dnsfwd.py; уже идёт — выйдет сам)
   nohup "$PY" deploy/laptop/dnsfwd.py >> data/logs/dnsfwd.log 2>&1 &
   sleep 1
-  exec cloudflared tunnel --no-autoupdate --url http://127.0.0.1:5050 >> "$LOG" 2>&1
+  exec cloudflared tunnel --no-autoupdate --protocol http2 --url http://127.0.0.1:5050 >> "$LOG" 2>&1   # http2: VPN не пропускает QUIC (UDP)
 fi
 if [ "$JOB" = "url" ]; then
   grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' data/logs/tunnel.log 2>/dev/null | tail -1 | sed 's|$|/proto/|'
