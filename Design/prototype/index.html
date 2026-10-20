@@ -4296,7 +4296,7 @@ function wkpList(r) {   // группы по стадиям (референс 2)
     var folded = s[0] in S.wk.pFold ? S.wk.pFold[s[0]] : s[3];   // «завершённые» — свёрнуты, пока не раскрыли
     return '<section class="wkp-grp' + (folded ? ' folded' : '') + '"><div class="wkp-gh">' + wkpTag(s[0], l.length) +
       '<button type="button" class="wkp-fold" data-wkp-fold="' + s[0] + '" aria-expanded="' + !folded + '" aria-label="' + (folded ? 'Развернуть' : 'Свернуть') + ' «' + s[1] + '»">' + WKP_IC.fold + '</button>' +
-      '<span class="wkp-gr">' + wkpsMoreBtn(s) + '<button type="button" class="wkp-gadd" data-wkp-new="' + s[0] + '" aria-haspopup="dialog" aria-label="Новый проект в статусе «' + esc(s[1]) + '»" title="Новый проект">+</button></span></div>' +
+      '<span class="wkp-gr">' + wkpsMoreBtn(s) + '</span></div>' +
       '<div class="wkp-rows">' + l.map(function (p) { return wkpRow(p, r.info[p.id]); }).join("") + '</div></section>';
   }).join("");
   return html || '<p class="wkp-none">' + (Object.keys(WK.projects).length ? "Ничего не нашлось — измените поиск или фильтр." : "Проектов пока нет — нажмите «+», чтобы создать первый.") + '</p>';
@@ -4305,7 +4305,7 @@ function wkpKanban(r) {   // колонки — стадии; перетащил
   return '<div class="wkp-kb">' + WK_STAGE.map(function (s) {
     var l = r.l.filter(function (p) { return p.stage === s[0]; });
     return '<div class="wkp-col" data-wkp-col="' + s[0] + '"><div class="wkp-gh">' + wkpTag(s[0], l.length) +
-      '<span class="wkp-gr">' + wkpsMoreBtn(s) + '<button type="button" class="wkp-gadd" data-wkp-new="' + s[0] + '" aria-haspopup="dialog" aria-label="Новый проект в статусе «' + esc(s[1]) + '»" title="Новый проект">+</button></span></div>' +
+      '<span class="wkp-gr">' + wkpsMoreBtn(s) + '</span></div>' +
       '<div class="wkp-kcs">' + (l.length ? l.map(function (p) {
         var x = r.info[p.id];
         var dl = p.deadline, dlc = dl ? (dl < wkDay(0) ? " over" : dl <= wkDay(7) ? " soon" : "") : "";
