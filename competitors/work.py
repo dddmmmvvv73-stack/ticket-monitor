@@ -19,7 +19,7 @@
      "docs":     {номер: {"project", "kind", "party", "status", "amount", "pay", "closing", "note", "upd"}},
      "tags":     {номер: {"name", "color"}},
      "costs":    {номер: {"project", "name" — статья, "party" — кому, "amount", "date", "paid", "note", "upd"}},
-     "notes":    {номер: {"project", "title", "body", "created", "upd"}},
+     "notes":    {номер: {"project" — или пусто (общая), "title", "body", "created", "color" — NOTE_COLORS, "fav" — избранная, "upd"}},
      "shows":    {номер: {"project", "date", "venue" — номер в справочнике площадок, "name", "city", "upd"}}}   ← с чем связана задача; у задачи — "tags": [номера]; пока своих нет — DEFAULT_TAGS
 
     GET  /api/work                                   всё
@@ -54,7 +54,8 @@ STAGES = ["idea", "talks", "prep", "sales", "live", "closing", "done"]
 DOC_STATUS = ["draft", "sent", "signed"]
 PAY = ["no", "part", "paid"]
 PRIO = ["", "low", "mid", "high"]
-STATUS = ["", "work", "wait"]   # статус задачи: не начата | в работе | ждёт ответа («готово» — это done; решение пользователя 20.10)
+STATUS = ["", "work", "wait"]
+NOTE_COLORS = ["amber", "coral", "lime", "violet", "sky", "pink"]   # цвет карточки заметки (решение пользователя 20.10: 6 базовых)   # статус задачи: не начата | в работе | ждёт ответа («готово» — это done; решение пользователя 20.10)
 CLOSING = ["no", "got"]
 TEXT_MAX = 3000
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -181,7 +182,8 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
             raise WorkError("такого проекта нет")
         if kind == "notes":
             out = {"project": pid, "title": _text(d.get("title"), "название", 200), "body": _text(d.get("body"), "заметка", 50000),
-                   "created": _date(d.get("created"), "создана") or datetime.now().strftime("%Y-%m-%d")}
+                   "created": _date(d.get("created"), "создана") or datetime.now().strftime("%Y-%m-%d"),
+                   "color": _enum(d.get("color"), NOTE_COLORS, "цвет", "amber"), "fav": bool(d.get("fav"))}
             return out
         out = {"project": pid, "name": _text(d.get("name"), "статья", 300), "party": _text(d.get("party"), "кому", 300),
                "amount": _amount(d.get("amount")), "date": _date(d.get("date"), "дата"), "paid": bool(d.get("paid")),
