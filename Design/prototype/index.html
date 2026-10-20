@@ -807,8 +807,11 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wkn-card:focus-visible { box-shadow: 0 0 0 3px var(--card), 0 0 0 5px #1b1b1b; }
 .wkn-card:active, .wkn-card.press { transform: scale(.965); }
 .wkn-t { margin: 0; padding-right: 30px; font: 400 17px/1.32 var(--ui); letter-spacing: -0.005em; white-space: pre-line; overflow: hidden;
-  display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow-wrap: break-word; -webkit-hyphens: auto; hyphens: auto; }
+  display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow-wrap: break-word; }
 .wkn-t.muted { color: rgba(27, 27, 27, .55); }
+.wkn-t.has-pre { -webkit-line-clamp: 3; }
+.wkn-pre { margin: 10px 0 0; padding-right: 4px; font-size: 13.5px; line-height: 1.45; color: rgba(27, 27, 27, .66); overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow-wrap: break-word; }
 .wkn-d { margin-top: auto; font-size: 13.5px; color: rgba(27, 27, 27, .8); padding-right: 48px; }
 .wkn-fav, .wkn-pen { position: absolute; display: grid; place-items: center; border: 0; border-radius: 50%; background: #1b1b1b; color: #fff; cursor: pointer; padding: 0; transition: opacity .15s, transform .15s; }
 .wkn-fav { top: 18px; right: 18px; width: 32px; height: 32px; }
@@ -855,7 +858,7 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 @media (max-width: 720px) {
   .page-head .wkn-tools { width: 100%; } .wkn-search { flex: 1; width: auto; }
   .wkn-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  .wkn-card { padding: 16px 16px 14px; border-radius: 16px; } .wkn-t { font-size: 15px; -webkit-line-clamp: 5; padding-right: 26px; }
+  .wkn-card { padding: 16px 16px 14px; border-radius: 16px; } .wkn-t { -webkit-hyphens: auto; hyphens: auto; font-size: 15px; -webkit-line-clamp: 5; padding-right: 26px; } .wkn-t.has-pre { -webkit-line-clamp: 2; } .wkn-pre { font-size: 12.5px; margin-top: 6px; -webkit-line-clamp: 2; }
   .wkn-fav { top: 12px; right: 12px; width: 28px; height: 28px; } .wkn-pen { right: 12px; bottom: 12px; width: 34px; height: 34px; } .wkn-d { font-size: 12px; padding-right: 40px; }
 }
 /* Приоритет: три столбика; пусто — бледный значок, виден при наведении на строку */
@@ -4498,9 +4501,10 @@ function wknSorted(l, sort) {   // избранные — первыми; дал
   });
 }
 function wknCard(n) {
-  var c = wknColor(n), txt = n.title || (n.body || "").trim();
+  var c = wknColor(n), txt = n.title || (n.body || "").trim(), pre = n.title ? (n.body || "").replace(/\s+/g, " ").trim() : "";   // превью — начало текста под названием
   return '<article class="wkn-card nc-' + c + '" role="button" tabindex="0" data-wkn-open="' + n.id + '" aria-label="Заметка: ' + esc(n.title || "без названия") + '">' +
-    '<p class="wkn-t' + (txt ? '' : ' muted') + '">' + esc(txt ? txt.slice(0, 300) : "Без названия") + '</p>' +
+    '<p class="wkn-t' + (txt ? '' : ' muted') + (pre ? ' has-pre' : '') + '">' + esc(txt ? txt.slice(0, 300) : "Без названия") + '</p>' +
+    (pre ? '<p class="wkn-pre">' + esc(pre.slice(0, 240)) + '</p>' : '') +
     '<span class="wkn-d">' + esc(wknDate(n.created)) + '</span>' +
     '<button type="button" class="wkn-fav' + (n.fav ? ' on' : '') + '" data-wkn-fav="' + n.id + '" aria-pressed="' + !!n.fav + '" aria-label="' + (n.fav ? 'Убрать из избранного' : 'В избранное') + '" title="' + (n.fav ? 'Избранная — показывается первой' : 'В избранное') + '">' + (n.fav ? WKN_ICON.star : WKN_ICON.starO) + '</button>' +
     '<button type="button" class="wkn-pen" data-wkn-edit="' + n.id + '" aria-haspopup="dialog" aria-label="Изменить: название, цвет, проект" title="Название, цвет, проект">' + WKN_ICON.pen + '</button></article>';
