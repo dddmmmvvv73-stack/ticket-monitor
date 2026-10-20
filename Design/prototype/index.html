@@ -647,6 +647,22 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
 .wts-tabs button[aria-pressed="true"] { color: var(--ink); font-weight: 600; box-shadow: 0 0 0 1px var(--line-strong); background: var(--card); }
 .wts-tabs button[aria-pressed="true"] i { background: #f59e0b; color: #fff; }
 .wts-sp { flex: 1; }
+.wts-stbtn { display: inline-flex; align-items: center; gap: 7px; height: 36px; padding: 0 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; white-space: nowrap; }
+.wts-stbtn:hover { border-color: var(--line-strong); }
+.wts-stcur { display: inline-flex; align-items: center; gap: 5px; padding-left: 8px; border-left: 1px solid var(--line); color: var(--ink-3); transition: opacity .2s; }
+.wts-stcur i { font-style: normal; font-size: 11px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 5px; background: #f59e0b; color: #fff; display: inline-grid; place-items: center; }
+.wts-stbtn.open .wts-stcur { display: none; }
+.wts-chev { transition: transform .3s var(--ease); opacity: .6; } .wts-stbtn.open .wts-chev { transform: rotate(180deg); }
+.wts-tabsw { max-width: 0; opacity: 0; overflow: hidden; transition: max-width .38s var(--ease), opacity .25s ease; }
+.wts-tabsw.open { max-width: 640px; opacity: 1; }
+.wts-tabsw .wts-tabs { flex-wrap: nowrap; }
+.wts-sq { position: relative; width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 9px; background: var(--card); cursor: pointer; color: var(--ink-3); }
+.wts-sq:hover { border-color: var(--line-strong); } .wts-sq.on { border-color: #8b5cf6; }
+.wts-sq.on svg { color: var(--ink); }
+.wts-bar .wk-sq-add { width: 36px; height: 36px; }
+.wts-name .wts-ics { gap: 6px; } .wts-name .wkt-ic { font-size: 12px; }
+.wts-t td .wkt-tags { margin-left: -4px; }
+.wts-t .wkt-sub td { height: 38px; }
 .wts-dd { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; white-space: nowrap; max-width: 220px; }
 .wts-dd span { overflow: hidden; text-overflow: ellipsis; } .wts-dd svg { flex-shrink: 0; opacity: .7; }
 .wts-dd.on { border-color: #8b5cf6; color: #6d28d9; }
@@ -695,7 +711,7 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
 .wts-kc .wts-done-b b { color: var(--muted); text-decoration: line-through; }
 @media (max-width: 980px) { .wts-stats { grid-template-columns: minmax(0, 1fr); } .wts-sp { display: none; } }
 @media (max-width: 640px) {
-  .wts-search { width: auto; flex: 1 1 150px; } .wts-tabs { width: 100%; overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; }
+  .wts-search { width: auto; flex: 1 1 150px; } .wts-tabsw.open { max-width: 100%; } .wts-tabsw { flex-basis: 100%; } .wts-tabsw:not(.open) { flex-basis: 0; } .wts-tabsw .wts-tabs { overflow-x: auto; scrollbar-width: none; }
   .wts-sc > div { padding: 0 12px; } .wts-sc b { font-size: 18px; }
   .wts-kb { grid-template-columns: repeat(3, minmax(250px, 82vw)); }
 }
@@ -5223,8 +5239,8 @@ function wkIcons(t) {
 // Приоритет: три столбика — высокий (красный, 3), средний (оранжевый, 2), низкий (синий, 1); нажатие — меню
 var WK_PRIO = [["high", "Высокий"], ["mid", "Средний"], ["low", "Низкий"]], WK_PRIO_RANK = { high: 0, mid: 1, low: 2 };
 // Статус задачи (решение пользователя 20.10 — столбец вместо «Тегов»): «Готово» — то же, что галочка; остальные — поле status
-var WK_TSTATUS = [["", "Не начата"], ["work", "В работе"], ["wait", "Ждёт ответа"], ["done", "Готово"]];
-function wkStatusOf(t) { return t.done ? "done" : (t.status || ""); }
+var WK_TSTATUS = [["", "Не начата"], ["work", "В работе"], ["done", "Готово"]];   // «Ждёт ответа» убран 20.10 (пользователь работает один)
+function wkStatusOf(t) { return t.done ? "done" : t.status === "wait" ? "work" : (t.status || ""); }
 function wkStatusChip(t) {
   var st = wkStatusOf(t), label = wkLabel(WK_TSTATUS, st);
   return '<button type="button" class="wkt-tags wkt-stchip" data-wk-status="' + t.id + '" aria-haspopup="menu" aria-label="Статус: ' + label + ' — изменить">' +
@@ -5306,14 +5322,15 @@ function wktRow(t, n) {
   return row;
 }
 // Подзадачи под задачей — раскрываются значком: отметить, поправить, удалить, добавить
-function wktSubRows(t) {
+function wktSubRows(t, span) {   // span — сколько столбцов после первого (в проекте 5, в «Задачах» 6)
+  span = span || 5;
   return wkSubsOrdered(t.subs).map(function (s) {
-    return '<tr class="wkt-sub' + (s.done ? ' done' : '') + '"><td></td><td colspan="5"><div class="wkt-subin">' +
+    return '<tr class="wkt-sub' + (s.done ? ' done' : '') + '"><td></td><td colspan="' + span + '"><div class="wkt-subin">' +
       '<input type="checkbox" class="wk-check sm" data-wkt-sub-done="' + t.id + '|' + s.id + '"' + (s.done ? ' checked' : '') + ' aria-label="Подзадача готова">' +
       '<input class="wk-in wkt-subtext" data-wkt-sub-text="' + t.id + '|' + s.id + '" value="' + esc(s.text) + '" maxlength="500" aria-label="Подзадача">' +
       '<button type="button" class="icon-btn wk-x" data-wkt-sub-del="' + t.id + '|' + s.id + '" aria-label="Удалить подзадачу">' + PJ_ICON.close + '</button></div></td></tr>';
   }).join("") +
-    '<tr class="wkt-sub wkt-subadd"><td></td><td colspan="5"><form class="wkt-subin" data-wkt-sub-add="' + t.id + '"><span class="wkt-subdot" aria-hidden="true"></span>' +
+    '<tr class="wkt-sub wkt-subadd"><td></td><td colspan="' + span + '"><form class="wkt-subin" data-wkt-sub-add="' + t.id + '"><span class="wkt-subdot" aria-hidden="true"></span>' +
     '<input class="wkt-add-in" name="sub" placeholder="+ Подзадача — впишите и Enter" maxlength="500" autocomplete="off" aria-label="Новая подзадача"></form></td></tr>';
 }
 function wkSubChange(tid, fn, mode) {   // mode: "text" — без перерисовки (Tab ведёт дальше); "add" — курсор снова в строку добавления
@@ -5799,7 +5816,7 @@ function renderWkEmpty(v) {
 }
 // «Задачи» — по референсу пользователя (20.10): поиск · Список / Канбан · статусы с числами · Проект · Приоритет · «Создать задачу»;
 // сводка: по приоритетам (открытые) и итоги; таблица — Задача · Проект · Приоритет · Статус · Срок · •••, сортировка по столбцам;
-// канбан — Начало · В работе · Готово (перетаскивание меняет статус). Функции — прежние: галочка, статус, приоритет, срок, окно задачи.
+// канбан — Начало · В работе · Готово (перетаскивание меняет статус). Без «Ждёт ответа» (20.10). Функции — прежние: галочка, статус, приоритет, срок, окно задачи.
 var WTS_IC = {
   search: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#78716c" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>',
   list: '<svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M2.5 6.2h11M2.5 9.8h11"/></svg>',
@@ -5818,22 +5835,20 @@ var WTS_IC = {
   clip: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="2.8" width="10" height="11.4" rx="1.6"/><path d="M6 2.8V2h4v.8"/></svg>',
   done: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M5.3 8.2l1.9 1.9 3.6-4"/></svg>',
   clock: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="6"/><path d="M8 4.8V8l2.2 1.4"/></svg>',
-  plus: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>'
+  plus: '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M6 1.5v9M1.5 6h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>',
+  st: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="4" cy="4.5" r="1.6"/><circle cx="4" cy="11.5" r="1.6"/><path d="M7.5 4.5h6M7.5 11.5h6"/></svg>',
+  chev: '<svg class="wts-chev" width="10" height="10" viewBox="0 0 12 12" aria-hidden="true"><path d="M4.5 2.5L8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>'
 };
-var WTS_ST = [["new", "Не начата"], ["work", "В работе"], ["wait", "Ждёт ответа"], ["over", "Просрочено"], ["done", "Готово"], ["all", "Все"]];
+var WTS_ST = [["new", "Не начата"], ["work", "В работе"], ["over", "Просрочено"], ["done", "Готово"], ["all", "Все"]];
 var WTS_PR = { high: ["Высокий", "high"], mid: ["Средний", "mid"], low: ["Низкий", "low"] };
 S.wk.tv = (function () { try { return localStorage.getItem("ticketmonitor.work.tview") || "list"; } catch (e) { return "list"; } })();
-S.wk.tq = ""; S.wk.tst = "all"; S.wk.tprio = ""; S.wk.tsort = { k: "due", dir: 1 };
-function wtsKey(t) { return t.done ? "done" : t.due && t.due < wkDay(0) ? "over" : t.status === "work" ? "work" : t.status === "wait" ? "wait" : "new"; }
+S.wk.tq = ""; S.wk.tst = "all"; S.wk.tprio = ""; S.wk.tsort = { k: "due", dir: 1 }; S.wk.tstOpen = false;
+function wtsKey(t) { return t.done ? "done" : t.due && t.due < wkDay(0) ? "over" : t.status === "work" || t.status === "wait" ? "work" : "new"; }
 function wtsAv(pid) {
   var p = WK.projects[pid]; if (!p) return "";
   var ava = wkMedia(p, "avatar"), cols = ["#f97316", "#10b981", "#3b82f6", "#8b5cf6", "#ec4899", "#14b8a6", "#eab308"], h = 0;
   for (var i = 0; i < pid.length; i++) h = (h * 31 + pid.charCodeAt(i)) % 997;
   return ava ? '<img class="wts-av" src="' + esc(ava) + '" alt="">' : '<span class="wts-av" style="background:' + cols[h % cols.length] + '">' + esc(pjInitials(p.title.replace(/[^\p{L}\d\s]+/gu, " ")).slice(0, 1)) + '</span>';
-}
-function wtsPrio(t) {
-  var p = WTS_PR[t.prio];
-  return '<button type="button" class="wts-pill wts-p-' + (p ? p[1] : 'none') + '" data-wk-prio="' + t.id + '" aria-haspopup="menu" aria-label="Приоритет: ' + (p ? p[0] : 'не задан') + ' — изменить">' + (p ? WTS_IC.flag + p[0] : '+ приоритет') + '</button>';
 }
 function wtsStatus(t) {
   var k = wtsKey(t), label = k === "over" ? "Просрочено" : wkLabel(WK_TSTATUS, k === "new" ? "" : k), ic = k === "over" ? WTS_IC.warn : k === "done" ? WTS_IC.ok : k === "new" ? WTS_IC.ring : WTS_IC.dot;
@@ -5868,20 +5883,23 @@ function wtsBar() {
   var base = wtsFiltered(true), cnt = {}; WTS_ST.forEach(function (o) { cnt[o[0]] = 0; });
   base.forEach(function (t) { cnt[wtsKey(t)]++; }); cnt.all = base.length;
   var fp = S.wk.fproj, pl = fp === "none" ? "Без проекта" : fp && WK.projects[fp] ? WK.projects[fp].title : "Проект";
-  var prl = S.wk.tprio === "none" ? "Без приоритета" : WTS_PR[S.wk.tprio] ? WTS_PR[S.wk.tprio][0] : "Приоритет";
+  var pr = S.wk.tprio, prl = pr === "none" ? "Без приоритета" : WTS_PR[pr] ? WTS_PR[pr][0] : "любой", cur = WTS_ST.filter(function (o) { return o[0] === S.wk.tst; })[0];
   return '<div class="wts-bar"><label class="wts-search">' + WTS_IC.search + '<input type="search" data-wts-q value="' + esc(S.wk.tq) + '" placeholder="Поиск…" aria-label="Поиск задач"></label>' +
     '<div class="wts-views" role="group" aria-label="Вид">' + [["list", "Список"], ["kanban", "Канбан"]].map(function (v) {
       return '<button type="button" data-wts-view="' + v[0] + '" aria-pressed="' + (S.wk.tv === v[0]) + '" title="' + v[1] + '" aria-label="' + v[1] + '">' + WTS_IC[v[0]] + '</button>'; }).join("") + '</div>' +
-    '<div class="wts-tabs" role="group" aria-label="Статус">' + WTS_ST.map(function (o) {
-      return '<button type="button" data-wts-st="' + o[0] + '" aria-pressed="' + (S.wk.tst === o[0]) + '">' + o[1] + '<i>' + cnt[o[0]] + '</i></button>'; }).join("") + '</div>' +
+    '<button type="button" class="wts-stbtn' + (S.wk.tstOpen ? ' open' : '') + '" data-wts-sttoggle aria-expanded="' + !!S.wk.tstOpen + '" aria-controls="wtsTabs">' + WTS_IC.st + 'Статусы' +
+      '<span class="wts-stcur">' + cur[1] + '<i>' + cnt[cur[0]] + '</i></span>' + WTS_IC.chev + '</button>' +
+    '<div class="wts-tabsw' + (S.wk.tstOpen ? ' open' : '') + '" id="wtsTabs"><div class="wts-tabs" role="group" aria-label="Статус">' + WTS_ST.map(function (o) {
+      return '<button type="button" data-wts-st="' + o[0] + '" aria-pressed="' + (S.wk.tst === o[0]) + '"' + (S.wk.tstOpen ? '' : ' tabindex="-1"') + '>' + o[1] + '<i>' + cnt[o[0]] + '</i></button>'; }).join("") + '</div></div>' +
     '<span class="wts-sp"></span>' +
+    '<button type="button" class="wts-sq' + (pr ? ' on' : '') + '" data-wts-dd="prio" aria-haspopup="menu" aria-label="Приоритет: ' + prl + '" title="Приоритет: ' + prl + '">' + wkPrioIcon(pr && pr !== "none" ? pr : "high") + (pr ? '<i class="wk-sq-dot" aria-hidden="true"></i>' : '') + '</button>' +
     '<button type="button" class="wts-dd' + (fp ? ' on' : '') + '" data-wts-dd="proj" aria-haspopup="menu"><span>' + esc(pl) + '</span>' + WTS_IC.dd + '</button>' +
-    '<button type="button" class="wts-dd' + (S.wk.tprio ? ' on' : '') + '" data-wts-dd="prio" aria-haspopup="menu"><span>' + prl + '</span>' + WTS_IC.dd + '</button></div>';
+    '<button type="button" class="wk-sq wk-sq-add" data-wts-new aria-haspopup="dialog" aria-label="Создать задачу" title="Создать задачу">' + WKT_ICON.plus + '</button></div>';
 }
 function wtsStats() {
   var l = wtsFiltered(true), open = l.filter(function (t) { return !t.done; }), n = function (p) { return open.filter(function (t) { return t.prio === p; }).length; };
   var c = function (cls, ic, label, v) { return '<div><span><em class="' + cls + '" style="display:inline-flex">' + ic + '</em>' + label + '</span><b>' + v + '</b></div>'; };
-  return '<div class="wts-stats"><div class="wts-sc">' + c("wts-fl-low", WTS_IC.flag, "Низкий приоритет", n("low")) + c("wts-fl-mid", WTS_IC.flag, "Средний приоритет", n("mid")) + c("wts-fl-high", WTS_IC.flag, "Высокий приоритет", n("high")) + '</div>' +
+  return '<div class="wts-stats"><div class="wts-sc">' + c("wk-prio-i p-low", wkPrioIcon("low"), "Низкий приоритет", n("low")) + c("wk-prio-i p-mid", wkPrioIcon("mid"), "Средний приоритет", n("mid")) + c("wk-prio-i p-high", wkPrioIcon("high"), "Высокий приоритет", n("high")) + '</div>' +
     '<div class="wts-sc">' + c("wts-ic-all", WTS_IC.clip, "Всего задач", l.length) + c("wts-ic-done", WTS_IC.done, "Сделано", l.filter(function (t) { return t.done; }).length) +
       c("wts-ic-over", WTS_IC.clock, "Просрочено", open.filter(function (t) { return t.due && t.due < wkDay(0); }).length) + '</div></div>';
 }
@@ -5892,14 +5910,15 @@ function wtsTable(l) {
   if (!l.length) return '<p class="wts-none">' + (wkTasksOf(null).length ? "Ничего не нашлось — измените поиск или фильтры." : "Задач пока нет — нажмите «Создать задачу».") + '</p>';
   return '<div class="wts-tw"><table class="wts-t"><thead><tr><th style="width:26px"></th>' + th("text", "Задача") + th("proj", "Проект") + th("prio", "Приоритет") + th("status", "Статус") + th("due", "Срок") + '<th style="width:36px"></th></tr></thead><tbody>' +
     l.map(function (t) {
-      return '<tr class="wts-r' + (t.done ? ' wts-done' : '') + '"><td><input type="checkbox" class="wts-cb" data-wk-done="' + t.id + '"' + (t.done ? ' checked' : '') + ' aria-label="Готово: ' + esc(t.text) + '"></td>' +
-        '<td style="max-width:380px"><div class="wts-name"><b role="button" tabindex="0" data-wkt-open="' + t.id + '" title="' + esc(t.text) + '">' + esc(t.text) + '</b>' + wtsIcons(t) + '</div></td>' +
-        '<td>' + wtsProjCell(t) + '</td><td>' + wtsPrio(t) + '</td><td>' + wtsStatus(t) + '</td>' +
-        '<td class="wts-due">' + wkDateBtn("tasks|" + t.id + "|due", t.due, { label: "Срок", empty: "—" }) + '</td><td>' + wtsMore(t) + '</td></tr>';
+      return '<tr class="wts-r wkt-row' + (t.done ? ' wts-done' : '') + '"><td><input type="checkbox" class="wts-cb" data-wk-done="' + t.id + '"' + (t.done ? ' checked' : '') + ' aria-label="Готово: ' + esc(t.text) + '"></td>' +
+        '<td style="max-width:380px"><div class="wts-name"><b role="button" tabindex="0" data-wkt-open="' + t.id + '" title="' + esc(t.text) + '">' + esc(t.text) + '</b><span class="wts-ics">' + wkIcons(t) + '</span></div></td>' +
+        '<td>' + wtsProjCell(t) + '</td><td>' + wkPrioChip(t) + '</td><td>' + wtsStatus(t) + '</td>' +
+        '<td class="wts-due">' + wkDateBtn("tasks|" + t.id + "|due", t.due, { due: true, done: t.done, label: "Срок" }) + '</td><td>' + wtsMore(t) + '</td></tr>' +
+        (S.wk.subOpen[t.id] ? wktSubRows(t, 6) : '');   // подзадачи — как в проекте: отметить, поправить, удалить, добавить
     }).join("") + '</tbody></table></div>';
 }
 var WTS_COLS = [["new", "Начало", "gray"], ["work", "В работе", "blue"], ["done", "Готово", "green"]];
-function wtsCol(t) { return t.done ? "done" : t.status === "work" || t.status === "wait" ? "work" : "new"; }   // «Ждёт ответа» — в «В работе»
+function wtsCol(t) { return t.done ? "done" : t.status === "work" || t.status === "wait" ? "work" : "new"; }
 function wtsKanban(l) {
   return '<div class="wts-kb">' + WTS_COLS.map(function (c) {
     var cl = l.filter(function (t) { return wtsCol(t) === c[0]; });
@@ -5908,7 +5927,7 @@ function wtsKanban(l) {
         return '<div class="wts-kc' + (t.done ? ' wts-done-b' : '') + '" draggable="true" data-wts-drag="' + t.id + '">' +
           '<div class="wts-kc-top"><b data-wkt-open="' + t.id + '" role="button" tabindex="0">' + esc(t.text) + '</b>' + wtsMore(t) + '</div>' +
           (t.project && WK.projects[t.project] ? '<div class="wts-kc-row">' + wtsProjCell(t) + '</div>' : '') +
-          '<div class="wts-kc-row">' + wtsPrio(t) + (wtsKey(t) === "over" || t.status === "wait" ? wtsStatus(t) : '') + '<span class="wts-due">' + wkDateBtn("tasks|" + t.id + "|due", t.due, { label: "Срок", empty: "без срока" }) + '</span>' + wtsIcons(t) + '</div></div>';
+          '<div class="wts-kc-row">' + wkPrioChip(t) + (wtsKey(t) === "over" ? wtsStatus(t) : '') + '<span class="wts-due">' + wkDateBtn("tasks|" + t.id + "|due", t.due, { due: true, done: t.done, label: "Срок" }) + '</span>' + wtsIcons(t) + '</div></div>';
       }).join("") : '<div class="wkp-kc-empty">Перетащите сюда задачу</div>') + '</div>';
   }).join("") + '</div>';
 }
@@ -5916,12 +5935,18 @@ function renderWkTasks() {
   var g = wkGate("Задачи"); if (g) return g;
   S.wk.proj = null;
   var l = wtsSorted(wtsFiltered(S.wk.tv === "kanban"));
-  return head("Задачи", "", '<button type="button" class="wts-create" data-wts-new>' + WTS_IC.plus + 'Создать задачу</button>') + wtsBar() + wtsStats() + (S.wk.tv === "kanban" ? wtsKanban(l) : wtsTable(l));
+  return head("Задачи", "") + wtsBar() + wtsStats() + (S.wk.tv === "kanban" ? wtsKanban(l) : wtsTable(l));
 }
 document.addEventListener("click", function (ev) {
   if (S.view !== "wktasks" || !ev.target.closest) return;
-  var b = ev.target.closest("[data-wts-view],[data-wts-st],[data-wts-dd],[data-wts-new],[data-wts-sort],.wts-menu [data-wts-set]"); if (!b) return;
+  var b = ev.target.closest("[data-wts-view],[data-wts-st],[data-wts-dd],[data-wts-new],[data-wts-sort],[data-wts-sttoggle],.wts-menu [data-wts-set]"); if (!b) return;
   ev.preventDefault();
+  if (b.hasAttribute("data-wts-sttoggle")) {
+    S.wk.tstOpen = !S.wk.tstOpen; var w = $("wtsTabs");
+    b.classList.toggle("open", S.wk.tstOpen); b.setAttribute("aria-expanded", String(S.wk.tstOpen));
+    if (w) { w.classList.toggle("open", S.wk.tstOpen); w.querySelectorAll("button").forEach(function (x) { if (S.wk.tstOpen) x.removeAttribute("tabindex"); else x.setAttribute("tabindex", "-1"); }); }
+    return;
+  }
   if (b.hasAttribute("data-wts-view")) { S.wk.tv = b.getAttribute("data-wts-view"); try { localStorage.setItem("ticketmonitor.work.tview", S.wk.tv); } catch (e) { /* нет хранилища */ } render(); }
   else if (b.hasAttribute("data-wts-st")) { S.wk.tst = b.getAttribute("data-wts-st"); render(); }
   else if (b.hasAttribute("data-wts-sort")) { var k = b.getAttribute("data-wts-sort"); S.wk.tsort = { k: k, dir: S.wk.tsort.k === k ? -S.wk.tsort.dir : 1 }; render(); }
@@ -5948,7 +5973,7 @@ document.addEventListener("input", function (ev) {
   S.wk.tq = ev.target.value; var pos = ev.target.selectionStart; render();
   var qi = document.querySelector("[data-wts-q]"); if (qi) { qi.focus({ preventScroll: true }); qi.setSelectionRange(pos, pos); }
 });
-// Канбан задач: перетащили в колонку — статус: «Начало» — не начата, «В работе» — в работе (ждущая ответа остаётся ждущей), «Готово» — сделано
+// Канбан задач: перетащили в колонку — статус: «Начало» — не начата, «В работе» — в работе, «Готово» — сделано
 var WTS_DRAG = null;
 document.addEventListener("dragstart", function (ev) { var c = ev.target.closest && ev.target.closest("[data-wts-drag]"); if (!c) return; WTS_DRAG = c.getAttribute("data-wts-drag"); c.classList.add("dragging"); try { ev.dataTransfer.setData("text/plain", WTS_DRAG); ev.dataTransfer.effectAllowed = "move"; } catch (e) { /* старый браузер */ } });
 document.addEventListener("dragend", function (ev) { var c = ev.target.closest && ev.target.closest("[data-wts-drag]"); if (c) c.classList.remove("dragging"); document.querySelectorAll("[data-wts-col].drop").forEach(function (x) { x.classList.remove("drop"); }); WTS_DRAG = null; });
