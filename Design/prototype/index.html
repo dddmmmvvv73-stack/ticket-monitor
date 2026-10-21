@@ -688,7 +688,8 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
 .wts-name b:hover { text-decoration: underline; text-underline-offset: 3px; }
 .wts-ics { margin-left: auto; display: inline-flex; gap: 10px; color: var(--muted); font-size: 12px; white-space: nowrap; }
 .wts-ics span { display: inline-flex; align-items: center; gap: 3px; }
-.wts-pj { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 220px; }
+.wts-pj { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 220px; border: 0; background: none; padding: 3px 6px 3px 3px; margin-left: -3px; border-radius: 999px; font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; text-align: left; }
+.wts-pj:hover { background: var(--line-soft); } .wts-pj:hover span { text-decoration: underline; text-underline-offset: 3px; }
 .wts-pj span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wts-av { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; object-fit: cover; display: inline-grid; place-items: center; font-size: 10px; font-weight: 600; color: #fff; background: #f97316; }
 .wts-pill { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 6px; border: 0; font: inherit; font-size: 12px; font-weight: 500; white-space: nowrap; cursor: pointer; background: #f4f4f3; color: var(--ink-2); }
@@ -697,7 +698,6 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
 .wts-p-none { background: transparent; } .wts-r:hover .wts-p-none { background: #f4f4f3; }
 .wts-s-new { background: #f1f0ee; color: #57534e; } .wts-s-work { background: #e0ebfd; color: #1d5fa8; } .wts-s-wait { background: #fbf1d3; color: #8a6200; }
 .wts-s-over { background: #fde3e1; color: #b42318; } .wts-s-done { background: #dcf3e3; color: #15803d; }
-.wts-pill .wts-car { opacity: .6; }
 .wts-t td.wts-due .wk-datebtn { margin-left: 0; font-size: 13px; color: var(--ink); }
 .wts-more { width: 28px; height: 28px; border: 0; border-radius: 7px; background: none; cursor: pointer; color: var(--ink-2); font: 700 13px/1 var(--ui); letter-spacing: 1px; }
 .wts-more:hover { background: var(--line-soft); color: var(--ink); }
@@ -5852,7 +5852,7 @@ function wtsAv(pid) {
 }
 function wtsStatus(t) {
   var k = wtsKey(t), label = k === "over" ? "Просрочено" : wkLabel(WK_TSTATUS, k === "new" ? "" : k), ic = k === "over" ? WTS_IC.warn : k === "done" ? WTS_IC.ok : k === "new" ? WTS_IC.ring : WTS_IC.dot;
-  return '<button type="button" class="wts-pill wts-s-' + k + '" data-wk-status="' + t.id + '" aria-haspopup="menu" aria-label="Статус: ' + label + ' — изменить">' + ic + label + '<span class="wts-car">' + WTS_IC.dd + '</span></button>';
+  return '<button type="button" class="wts-pill wts-s-' + k + '" data-wk-status="' + t.id + '" aria-haspopup="menu" aria-label="Статус: ' + label + ' — изменить" title="Нажмите, чтобы сменить статус">' + ic + label + '</button>';
 }
 function wtsIcons(t) {
   var subs = t.subs || [], nd = subs.filter(function (x) { return x.done; }).length;
@@ -5904,7 +5904,9 @@ function wtsStats() {
       c("wts-ic-over", WTS_IC.clock, "Просрочено", open.filter(function (t) { return t.due && t.due < wkDay(0); }).length) + '</div></div>';
 }
 function wtsMore(t) { return '<button type="button" class="wts-more" data-wkt-open="' + t.id + '" aria-label="Открыть задачу: ' + esc(t.text) + '" title="Открыть задачу">•••</button>'; }
-function wtsProjCell(t) { return t.project && WK.projects[t.project] ? '<span class="wts-pj">' + wtsAv(t.project) + '<span>' + esc(WK.projects[t.project].title) + '</span></span>' : '<span class="muted">—</span>'; }
+function wtsProjCell(t) {   // проект — ссылкой: нажатие открывает страницу проекта
+  return t.project && WK.projects[t.project] ? '<button type="button" class="wts-pj" data-wk-open="' + t.project + '" title="Открыть проект">' + wtsAv(t.project) + '<span>' + esc(WK.projects[t.project].title) + '</span></button>' : '<span class="muted">—</span>';
+}
 function wtsTable(l) {
   var sk = S.wk.tsort, th = function (k, label) { var on = sk.k === k; return '<th><button type="button" data-wts-sort="' + k + '" class="' + (on ? 'on' : '') + '">' + label + (on ? (sk.dir > 0 ? WTS_IC.up : WTS_IC.down) : WTS_IC.sort) + '</button></th>'; };
   if (!l.length) return '<p class="wts-none">' + (wkTasksOf(null).length ? "Ничего не нашлось — измените поиск или фильтры." : "Задач пока нет — нажмите «Создать задачу».") + '</p>';
