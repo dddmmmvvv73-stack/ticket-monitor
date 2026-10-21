@@ -689,7 +689,7 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
 .wts-ics { margin-left: auto; display: inline-flex; gap: 10px; color: var(--muted); font-size: 12px; white-space: nowrap; }
 .wts-ics span { display: inline-flex; align-items: center; gap: 3px; }
 .wts-pj { display: inline-flex; align-items: center; gap: 8px; min-width: 0; max-width: 220px; border: 0; background: none; padding: 3px 6px 3px 3px; margin-left: -3px; border-radius: 999px; font: inherit; font-size: 13px; color: var(--ink); cursor: pointer; text-align: left; }
-.wts-pj:hover { background: var(--line-soft); } .wts-pj:hover span { text-decoration: underline; text-underline-offset: 3px; }
+.wts-pj:hover { background: var(--line-soft); }
 .wts-pj span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .wts-av { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; object-fit: cover; display: inline-grid; place-items: center; font-size: 10px; font-weight: 600; color: #fff; background: #f97316; }
 .wts-pill { display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border-radius: 6px; border: 0; font: inherit; font-size: 12px; font-weight: 500; white-space: nowrap; cursor: pointer; background: #f4f4f3; color: var(--ink-2); }
@@ -4438,7 +4438,7 @@ function wkpEditOpen(id) {
   if (!d.wkpEditBound) { d.wkpEditBound = true; d.addEventListener("close", function () { if (S.wk.editPid) { S.wk.editPid = null; if (wkOn()) render(); } }); }
   var ti = $("wkp-title"); if (ti) ti.focus();
 }
-function wkpOpenPage(id) { S.wk.y = window.scrollY; S.wk.proj = id; S.wk.ptab = "tasks"; S.wk.mcal = null; S.wk.scrollT = {}; S.wk.qs = { open: "", done: "" }; S.wk.qAt = {}; render(); window.scrollTo(0, 0); }
+function wkpOpenPage(id) { S.wk.from = null; S.wk.y = window.scrollY; S.wk.proj = id; S.wk.ptab = "tasks"; S.wk.mcal = null; S.wk.scrollT = {}; S.wk.qs = { open: "", done: "" }; S.wk.qAt = {}; render(); window.scrollTo(0, 0); }
 // Статус проекта — кнопкой прямо в строке / карточке: окошко со всеми статусами
 function wkpStageBtn(p) {
   return '<button type="button" class="wkp-pill wkp-stbtn ps-' + wkStageColor(p.stage) + '" data-wkp-stagepick="' + p.id + '" aria-haspopup="menu" aria-label="Статус: ' + esc(wkLabel(WK_STAGE, p.stage)) + ' — изменить" title="Нажмите, чтобы сменить статус">' + esc(wkLabel(WK_STAGE, p.stage)) + '</button>';
@@ -5865,7 +5865,7 @@ function wtsFiltered(ignoreSt) {
     if (fp && (fp === "none" ? t.project && WK.projects[t.project] : t.project !== fp)) return false;
     if (pr && (pr === "none" ? t.prio : t.prio !== pr)) return false;
     if (q && [t.text, t.desc].concat((t.subs || []).map(function (x) { return x.text; })).join(" ").toLowerCase().replace(/ё/g, "е").indexOf(q) < 0) return false;
-    return ignoreSt || S.wk.tst === "all" || wtsKey(t) === S.wk.tst;
+    return ignoreSt || (S.wk.tst === "all" ? !t.done : wtsKey(t) === S.wk.tst);   // «Все» — без готовых (решение пользователя 21.10)
   });
 }
 function wtsSorted(l) {
@@ -5881,7 +5881,7 @@ function wtsSorted(l) {
 }
 function wtsBar() {
   var base = wtsFiltered(true), cnt = {}; WTS_ST.forEach(function (o) { cnt[o[0]] = 0; });
-  base.forEach(function (t) { cnt[wtsKey(t)]++; }); cnt.all = base.length;
+  base.forEach(function (t) { cnt[wtsKey(t)]++; }); cnt.all = base.length - cnt.done;
   var fp = S.wk.fproj, pl = fp === "none" ? "Без проекта" : fp && WK.projects[fp] ? WK.projects[fp].title : "Проект";
   var pr = S.wk.tprio, prl = pr === "none" ? "Без приоритета" : WTS_PR[pr] ? WTS_PR[pr][0] : "любой", cur = WTS_ST.filter(function (o) { return o[0] === S.wk.tst; })[0];
   return '<div class="wts-bar"><label class="wts-search">' + WTS_IC.search + '<input type="search" data-wts-q value="' + esc(S.wk.tq) + '" placeholder="Поиск…" aria-label="Поиск задач"></label>' +
@@ -5992,7 +5992,7 @@ document.addEventListener("drop", function (ev) {
 function renderWork() {
   var g = wkGate("Проекты"); if (g) return g;
   if (S.wk.proj && WK.projects[S.wk.proj]) return wkProjectPage(S.wk.proj);
-  S.wk.proj = null;
+  S.wk.proj = null; S.wk.from = null;   // список проектов открыт — «откуда пришли» больше не нужно
   return head("Проекты", "") + wkpTiles() + '<div class="wk-body">' + wkProjectsTab() + '</div>';
 }
 // «Документы» — свой раздел меню «Работы» после «Задач» (решение пользователя 20.10; был вкладкой «Проектов»): только статусы
@@ -6136,10 +6136,16 @@ $("view").addEventListener("click", function (ev) {
   }
   if (t.hasAttribute("data-wkt-group")) { S.wk.groupBy = t.getAttribute("data-wkt-group"); try { localStorage.setItem("ticketmonitor.work.groupBy", S.wk.groupBy); } catch (e) { /* нет хранилища */ } render(); return; }
   if (t.hasAttribute("data-wkt-sub-del")) { var sd = t.getAttribute("data-wkt-sub-del").split("|"); wkSubChange(sd[0], function (l) { return l.filter(function (x) { return x.id !== sd[1]; }); }); return; }
-  else if (t.hasAttribute("data-wk-open")) { if (S.view !== "work") { S.view = "work"; location.hash = "work"; S.enter = true; }   // из «Задач» и др. — на страницу проекта
+  else if (t.hasAttribute("data-wk-open")) {   // из «Задач» и др. — на страницу проекта; «Назад» вернёт туда, откуда пришли
+    S.wk.from = S.view !== "work" ? S.view : null;
+    if (S.view !== "work") { S.view = "work"; location.hash = "work"; S.enter = true; }
     S.wk.y = window.scrollY; S.wk.proj = t.getAttribute("data-wk-open"); S.wk.ptab = "tasks"; S.wk.mcal = null; S.wk.scrollT = {}; S.wk.qs = { open: "", done: "" }; S.wk.qAt = {}; render(); window.scrollTo(0, 0); }
   else if (t.hasAttribute("data-wk-docf")) { S.wk.docF = t.getAttribute("data-wk-docf"); render(); }
-  else if (t.getAttribute("data-wk-act") === "back") { S.wk.proj = null; render(); window.scrollTo(0, S.wk.y || 0); }
+  else if (t.getAttribute("data-wk-act") === "back") {
+    S.wk.proj = null;
+    if (S.wk.from) { S.view = S.wk.from; location.hash = S.wk.from; S.wk.from = null; }   // пришли из «Задач» — туда и обратно
+    render(); window.scrollTo(0, S.wk.y || 0);
+  }
   else if (t.getAttribute("data-wk-act") === "toggle-done") { S.wk.showDone = !S.wk.showDone; render(); }
   else if (t.hasAttribute("data-wk-del")) {
     var p = t.getAttribute("data-wk-del").split("|"), kind = p[0], id = p[1], r = WK[kind][id]; if (!r) return;
