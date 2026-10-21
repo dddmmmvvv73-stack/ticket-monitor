@@ -28,7 +28,7 @@ test('неделя не теряет дни на границе года и пр
 const work = {
   projects: { p1: { title: 'Первый проект', deadline: '2026-10-25' }, p2: { title: 'Второй проект' } },
   tasks: {
-    t1: { text: 'Договор', due: '2026-10-21', project: 'p1', tags: ['tag1'], desc: 'Проверить реквизиты' },
+    t1: { text: 'Договор', due: '2026-10-21', project: 'p1', tags: ['tag1'], prio: 'high', status: 'work' },
     t2: { text: 'Афиша', due: '2026-10-21', project: 'p2', done: true },
     t3: { text: 'Без срока', project: 'p1' },
     t4: { text: 'Общая задача', due: '2026-10-22', tags: ['deleted'] }
@@ -47,10 +47,29 @@ test('календарь соединяет задачи, дедлайны и г
   assert.equal(JSON.stringify(work), before);
 });
 
-test('фильтр проекта охватывает все типы; поиск находит описание, проект и город', () => {
-  assert.deepEqual(items(work, 'p1').map(e => e.key), ['task:t1', 'deadline:p1', 'show:s1']);
-  assert.deepEqual(items(work, '', 'РЕКВИЗИТЫ').map(e => e.key), ['task:t1']);
-  assert.deepEqual(items(work, '', 'Тверь').map(e => e.key), ['show:s1']);
-  assert.equal(items(work, '', 'Первый проект').length, 3);
-  assert.equal(items({}, '', '').length, 0);
+test('проект охватывает все типы записей; «без проекта» включает потерянную привязку', () => {
+  assert.deepEqual(items(work, { project: 'p1' }).map(e => e.key), ['task:t1', 'deadline:p1', 'show:s1']);
+  assert.deepEqual(items(work, { project: 'none' }).map(e => e.key), ['task:t4']);
+  const orphan = { ...work, tasks: { lost: { text: 'Задача', due: '2026-10-21', project: 'deleted' } } };
+  assert.deepEqual(items(orphan, { project: 'none' }).map(e => e.key), ['task:lost']);
+  assert.deepEqual(items(work, { kind: 'show' }).map(e => e.key), ['show:s1']);
+  assert.equal(items({}).length, 0);
+});
+
+test('статус, приоритет и теги отбирают задачи и работают вместе', () => {
+  const keys = f => items(work, f, '2026-10-23').map(e => e.key);
+  assert.deepEqual(keys({ project: 'p1', status: 'work', priority: 'high', tag: 'tag1' }), ['task:t1']);
+  assert.deepEqual(keys({ status: 'done' }), ['task:t2']);
+  assert.deepEqual(keys({ status: 'new' }), ['task:t4']);
+  assert.deepEqual(keys({ priority: 'none' }), ['task:t2', 'task:t4']);
+  assert.deepEqual(keys({ tag: 'none' }), ['task:t2']);
+  assert.deepEqual(keys({ project: 'p1', status: 'done' }), []);
+  assert.deepEqual(keys({ kind: 'deadline', status: 'work' }), []);
+});
+
+test('просроченные: только незавершённые до сегодняшнего дня; прежний wait соответствует «В работе»', () => {
+  assert.deepEqual(items(work, { status: 'over' }, '2026-10-22').map(e => e.key), ['task:t1']);
+  assert.deepEqual(items(work, { status: 'over' }, '2026-10-23').map(e => e.key), ['task:t1', 'task:t4']);
+  const old = { tasks: { old: { text: 'Ранее ждала ответа', due: '2026-10-21', status: 'wait' } } };
+  assert.deepEqual(items(old, { status: 'work' }).map(e => e.key), ['task:old']);
 });
