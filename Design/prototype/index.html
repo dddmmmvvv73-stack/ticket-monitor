@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Анализ рынка — прототип</title>
+<link rel="stylesheet" href="work-calendar.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Onest:wght@400;500&display=swap" rel="stylesheet">
 <!--
@@ -2547,6 +2548,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <script src="plan-model.js"></script>
 <script src="tour-parse.js"></script>
 <script src="route-plan.js"></script>
+<script src="work-calendar.js"></script>
 <script src="market-pop.js"></script>
 <script src="venue-cap.js"></script>
 <script src="venue-book.js"></script>
@@ -5807,8 +5809,7 @@ function wkGate(title) {   // данные раздела — с сервера:
 }
 // Пустые разделы — наполняем постепенно
 var WK_EMPTY = {
-  wkhome: ["Обзор", "Главное по работе и простая аналитика — раздел создан, наполним постепенно."],
-  wkcal: ["Календарь", "Раздел создан — наполним постепенно."]
+  wkhome: ["Обзор", "Главное по работе и простая аналитика — раздел создан, наполним постепенно."]
 };
 function renderWkEmpty(v) {
   var e = WK_EMPTY[v], g = wkGate(e[0]); if (g) return g;
@@ -11155,6 +11156,7 @@ function render() {
   archMode(S.view === "archive");
   syncMarketView(); S.city = S.m.city;  // раздел — по вкладке «Рынка», если её переключил код; город шапки один на все разделы
   document.body.classList.toggle("wk-mode", wkOn());
+  document.body.classList.toggle("wkc-mode", S.view === "wkcal");
   if (WK_OK) wkStagesSync();   // статусы проектов — свои у пользователя   // разделы «Работы» — без верхней панели рынка (город, период, поиск, сбор; решение пользователя 20.10)
   var ip = $("infoPop"); if (ip) ip.hidden = true;  // элемент под курсором заменится — его подсказка не должна «висеть»
   document.querySelectorAll("[data-view]").forEach(function (b) { if (b.getAttribute("data-view") === S.view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
@@ -11171,7 +11173,7 @@ function render() {
   $("dateBtn").style.borderColor = ARCH_ON || S.period === "custom" ? "var(--soot)" : "";
   $("period").style.display = ARCH_ON ? "none" : "";  // «30 дней / 90 дней / Сезон» — про будущее; в архиве период — кнопкой «Даты»
   HEAD_SUB = !isM() && SUBS[S.view] ? subSwitch(S.view) : "";
-  $("view").innerHTML = S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? (vbOn() ? renderVenueBook() : renderVenues()) : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : S.view === "planning" ? renderPlanning() : S.view === "route" ? renderRoute() : S.view === "work" ? renderWork() : S.view === "wktasks" ? renderWkTasks() : S.view === "wkdocs" ? renderWkDocs() : S.view === "wkhome" ? renderWkEmpty("wkhome") : S.view === "wkcal" ? renderWkEmpty("wkcal") : S.view === "wknotes" ? renderWkNotes() : renderEvents();
+  $("view").innerHTML = S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? (vbOn() ? renderVenueBook() : renderVenues()) : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : S.view === "planning" ? renderPlanning() : S.view === "route" ? renderRoute() : S.view === "work" ? renderWork() : S.view === "wktasks" ? renderWkTasks() : S.view === "wkdocs" ? renderWkDocs() : S.view === "wkhome" ? renderWkEmpty("wkhome") : S.view === "wkcal" ? renderWkCalendar() : S.view === "wknotes" ? renderWkNotes() : renderEvents();
   $("view").classList.toggle("enter", !!S.enter); S.enter = false; S.colsAnim = false;
   ddClose(false); enhanceSelects(document.querySelector(".top")); enhanceSelects($("view")); vdRestore();
   candApply();  // «Города, где его нет» — счётчик найденного после перерисовки
