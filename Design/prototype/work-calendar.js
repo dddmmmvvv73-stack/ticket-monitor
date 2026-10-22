@@ -110,7 +110,7 @@
       '<div class="wkc-toolbar"><h2 class="wkc-month">' + esc(month) + '</h2><div class="wkc-controls">' +
       '<div class="wkc-nav"><button type="button" data-wkc-nav="-1" aria-label="Предыдущий период">' + icon('prev') + '</button><button type="button" data-wkc-today>Сегодня</button><button type="button" data-wkc-nav="1" aria-label="Следующий период">' + icon('next') + '</button></div>' +
       '<button type="button" class="wkc-button" data-wkc-view aria-label="Вид календаря" aria-haspopup="dialog" aria-expanded="false">' + (s.view === 'week' ? 'Неделя' : 'Месяц') + icon('down') + '</button>' +
-      '<button type="button" class="wkc-button wkc-filter' + (count ? ' on' : '') + '" data-wkc-filter aria-haspopup="dialog" aria-expanded="false">' + icon('filter') + 'Фильтр' + (count ? '<span class="wkc-filter-count">' + count + '</span>' : '') + '</button>' +
+      '<button type="button" class="wk-sq wkc-sqf' + (count ? ' on' : '') + '" data-wkc-filter aria-haspopup="dialog" aria-expanded="false" aria-label="Фильтр' + (count ? ': условий — ' + count : '') + '" title="Фильтр">' + WKT_ICON.group + (count ? '<i class="wk-sq-dot" aria-hidden="true"></i>' : '') + '</button>' +   // как в «Заметках» (22.10)
       '<button type="button" class="wkc-button primary" data-wkc-new>' + icon('plus') + 'Добавить</button></div></div>' +
       grid(s, list, days) + '</section>' + sidebar(s, list) + '</div>';
   }
@@ -134,13 +134,13 @@
   function filterOpen(anchor) {
     if (WKPOP && WKPOP.anchor === anchor) { wkPopClose(); return; }
     var f = state().filters;
-    function field(name, title, options) {
-      return '<div class="wkc-filter-field"><span>' + title + '</span><select name="' + name + '" aria-label="' + esc(title) + '">' + options.map(function (o) {
+    function field(name, title, options, search) {
+      return '<div class="wkc-filter-field"><span>' + title + '</span><select name="' + name + '" aria-label="' + esc(title) + '"' + (search ? ' data-dd-search' : '') + '>' + options.map(function (o) {
         return '<option value="' + esc(o[0]) + '"' + (f[name] === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
       }).join('') + '</select></div>';
     }
     var el = wkPopOpen(anchor, 'wkc-filterpop', '<form data-wkc-filter-form><div class="wkp-title">Фильтр календаря</div>' +
-      field('project', 'Проект', [['', 'Все проекты'], ['none', 'Без проекта']].concat(wkProjects().map(function (p) { return [p.id, p.title]; }))) +
+      field('project', 'Проект', [['', 'Все проекты'], ['none', 'Без проекта']].concat(wkProjects().map(function (p) { return [p.id, p.title]; })), true) +   // проект — с поиском (22.10)
       field('kind', 'Записи', [['', 'Все записи'], ['task', 'Задачи'], ['deadline', 'Дедлайны проектов'], ['show', 'Гастроли']]) +
       field('status', 'Статус задачи', [['', 'Все статусы'], ['new', 'Не начата'], ['work', 'В работе'], ['done', 'Готово'], ['over', 'Просрочено']]) +
       field('priority', 'Приоритет', [['', 'Любой приоритет'], ['high', 'Высокий'], ['mid', 'Средний'], ['low', 'Низкий'], ['none', 'Без приоритета']]) +

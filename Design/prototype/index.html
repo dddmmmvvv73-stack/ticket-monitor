@@ -5357,7 +5357,7 @@ document.addEventListener("click", function (ev) {
   if (ev.target.closest(".wkn-edpop [data-wkn-ed-create]")) { wknCreate(); return; }
   if (ev.target.closest(".wkn-edpop [data-wkn-ed-del]") && WKPOP) { var did = WKPOP.wkn; wkPopClose(); wkDel("notes", did, "Заметка удалена"); return; }
   if (ev.target.closest("[data-wkn-filter]")) { wknFilterOpen(ev.target.closest("[data-wkn-filter]")); return; }
-  if ((b = ev.target.closest(".wkn-fmenu [data-wkn-f]")) && WKPOP) { var p = b.getAttribute("data-wkn-f").split("|"); S.wk.nf[p[0]] = S.wk.nf[p[0]] === p[1] && p[0] !== "sort" ? "" : p[1]; render(); wknFilterOpen(document.querySelector("[data-wkn-filter]"), true); return; }
+  if (ev.target.closest("[data-wkn-freset]")) { S.wk.nf = { type: "", per: "", proj: "", sort: "new" }; wkPopClose(); render(); return; }
   if ((b = ev.target.closest("[data-wkn-open]")) && !ev.target.closest("button")) {   // нажатие на карточку — «нажалась», потом окно
     var oid = b.getAttribute("data-wkn-open"); b.classList.add("press");
     setTimeout(function () { b.classList.remove("press"); wkNoteOpen(oid); }, 130);
@@ -5383,19 +5383,28 @@ document.addEventListener("input", function (ev) {   // поиск — по ме
   S.wk.nq = ev.target.value; var pos = ev.target.selectionStart; render();
   var qi = document.querySelector("[data-wkn-q]"); if (qi) { qi.focus({ preventScroll: true }); qi.setSelectionRange(pos, pos); }
 });
-function wknFilterOpen(anchor, keep) {   // фильтр: тип (быстрые / рабочие — решение 22.10), дата создания, порядок, проект
+function wknFilterOpen(anchor) {   // фильтр — как в «Календаре» (решение 22.10): списки в стиле сайта, «Применить» / «Сбросить»; проект — с поиском
   if (!anchor) return;
-  if (!keep && WKPOP && WKPOP.anchor === anchor) { wkPopClose(); return; }
-  var f = S.wk.nf, item = function (key, val, label) {
-    var on = (f[key] || "") === val;
-    return '<button type="button" class="wk-menu-item' + (on ? ' on' : '') + '" data-wkn-f="' + key + '|' + val + '" role="menuitemradio" aria-checked="' + on + '">' + esc(label) + (on ? WKT_ICON.check : '') + '</button>';
+  if (WKPOP && WKPOP.anchor === anchor) { wkPopClose(); return; }
+  var f = S.wk.nf, field = function (name, title, opts, search) {
+    return '<div class="wkc-filter-field"><span>' + title + '</span><select name="' + name + '" aria-label="' + title + '"' + (search ? ' data-dd-search' : '') + '>' + opts.map(function (o) {
+      return '<option value="' + esc(o[0]) + '"' + ((f[name] || "") === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
+    }).join("") + '</select></div>';
   };
-  wkPopOpen(anchor, "wk-menu wkn-fmenu", '<div class="wkp-title">Тип</div>' + item("type", "", "Все заметки") + item("type", "quick", "Быстрые заметки") + item("type", "work", "Рабочие заметки") +
-    '<div class="wkp-title" style="margin-top:8px">Дата создания</div>' + item("per", "", "За всё время") + item("per", "today", "Сегодня") + item("per", "d7", "За 7 дней") + item("per", "d30", "За 30 дней") +
-    '<div class="wkp-title" style="margin-top:8px">Порядок</div>' + item("sort", "new", "Сначала новые") + item("sort", "old", "Сначала старые") +
-    '<div class="wkp-title" style="margin-top:8px">Проект</div>' + item("proj", "", "Все проекты") + item("proj", "none", "Без проекта") +
-    wkProjects().map(function (p) { return item("proj", p.id, p.title); }).join(""), { wknF: true });
+  var el = wkPopOpen(anchor, "wkc-filterpop", '<form data-wkn-filter-form><div class="wkp-title">Фильтр заметок</div>' +
+    field("type", "Тип", [["", "Все заметки"], ["quick", "Быстрые заметки"], ["work", "Рабочие заметки"]]) +
+    field("per", "Дата создания", [["", "За всё время"], ["today", "Сегодня"], ["d7", "За 7 дней"], ["d30", "За 30 дней"]]) +
+    field("sort", "Порядок", [["new", "Сначала новые"], ["old", "Сначала старые"]]) +
+    field("proj", "Проект", [["", "Все проекты"], ["none", "Без проекта"]].concat(wkProjects().map(function (p) { return [p.id, p.title]; })), true) +
+    '<div class="wkc-filter-actions"><button type="button" class="btn-ghost" data-wkn-freset>Сбросить</button><button type="submit" class="btn-dark">Применить</button></div></form>', {});
+  enhanceSelects(el); el.querySelector(".dd-btn").focus({ preventScroll: true });
 }
+document.addEventListener("submit", function (ev) {
+  if (!ev.target.matches || !ev.target.matches("[data-wkn-filter-form]")) return;
+  ev.preventDefault(); var fm = ev.target;
+  S.wk.nf = { type: fm.elements.type.value, per: fm.elements.per.value, sort: fm.elements.sort.value || "new", proj: fm.elements.proj.value };
+  wkPopClose(); render(); var fb = document.querySelector("[data-wkn-filter]"); if (fb) fb.focus({ preventScroll: true });
+});
 
 // ---------- Рабочие заметки (решение пользователя 22.10): белые карточки на той же доске; страница на весь экран с редактором
 // (work-notes.js, TipTap): заголовки, списки, чек-листы, выноски, разделители, таблицы, ссылки, картинки, файлы. Привязка —
@@ -11359,7 +11368,7 @@ function enhanceSelects(root) {
   });
 }
 function ddOpen(btn) {
-  var sel = btn._sel, items = [], n = 0, many = sel.options.length > 12;
+  var sel = btn._sel, items = [], n = 0, many = sel.options.length > 12 || sel.hasAttribute("data-dd-search");   // data-dd-search — поиск всегда (проекты в фильтрах)
   var opt = function (o) { var id = "dd-o-" + (n++); items.push(o); return '<div class="dd-opt" role="option" id="' + id + '" data-i="' + (items.length - 1) + '" aria-selected="' + (o.selected) + '">' + esc(o.text) + (o.selected ? '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>' : '') + '</div>'; };
   var html = "";
   Array.prototype.forEach.call(sel.children, function (ch) {
