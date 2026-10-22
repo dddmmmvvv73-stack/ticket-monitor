@@ -1191,7 +1191,9 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 /* Настройка тегов: цвет — кружками, новый тег — строкой внизу */
 .wkd-sec h3 .wkd-h3btn { margin-left: 8px; border: 0; background: none; padding: 2px 6px; border-radius: 6px; font: inherit; font-size: 12px; font-weight: 500; color: var(--muted); cursor: pointer; text-transform: none; letter-spacing: 0; }
 .wkd-sec h3 .wkd-h3btn:hover { background: var(--line-soft); color: var(--ink); }
-.wk-tagman { width: 330px; }
+.wk-tagman { width: 360px; }
+.wkp-tagman .wkp-tdel { width: 24px; height: 24px; flex: none; margin-left: -4px; }
+.wkp-tagman .wkp-tdel svg { width: 12px; height: 12px; }
 .wkp-tagman { list-style: none; margin: 0; padding: 0 4px 0 0; max-height: 320px; overflow-x: hidden; overflow-y: auto; scrollbar-width: none; }   /* прокрутка без полосы — полоса закрывала кружки цвета (22.10) */
 .wkp-tagman::-webkit-scrollbar { display: none; }
 .wkp-tagman li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 2px; }
@@ -4278,7 +4280,8 @@ function wkRestore(kind, id, rec, linked) {
 var WK_SNACK_T = null;
 function wkSnack(msg, onUndo) {
   var el = $("wkSnack");
-  if (!el) { el = document.createElement("div"); el.id = "wkSnack"; el.className = "wk-snack"; el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite"); document.body.appendChild(el); }
+  if (!el) { el = document.createElement("div"); el.id = "wkSnack"; el.className = "wk-snack"; el.setAttribute("role", "status"); el.setAttribute("aria-live", "polite"); }
+  var host = document.querySelector("dialog[open]") || document.body; if (el.parentNode !== host) host.appendChild(el);   // открыто окно — всё вне его не нажимается: плашка внутри окна
   el.innerHTML = '<span>' + esc(msg) + '</span><button type="button" class="wk-snack-undo">Вернуть</button><i class="wk-snack-bar"></i>';
   el.classList.remove("show"); void el.offsetWidth; el.classList.add("show");
   el.querySelector(".wk-snack-undo").onclick = function () { clearTimeout(WK_SNACK_T); el.classList.remove("show"); onUndo(); };
@@ -6086,14 +6089,40 @@ function wkTagList() { return Object.keys(WK.tags || {}).map(function (id) { ret
 function wkTagChip(id) { var t = WK.tags[id]; return t ? '<span class="wk-tag tg-' + t.color + '">' + esc(t.name) + '</span>' : ''; }
 var WK_TAG_COLORS = [["blue", "синий"], ["indigo", "индиго"], ["violet", "фиолетовый"], ["pink", "розовый"], ["teal", "бирюзовый"], ["green", "зелёный"], ["amber", "жёлтый"], ["brown", "коричневый"], ["gray", "серый"]];   // красный и оранжевый — у приоритета
 var WK_TAGMAN_BTN = '<button type="button" class="wkd-h3btn" data-wk-tagman aria-haspopup="dialog">Настроить</button>';
-function wkTagManHtml() {   // «Настроить»: цвет каждого тега — нажатием на кружок; новый тег — строкой внизу
-  return '<div class="wkp-title">Цвет тега — нажмите кружок</div><ul class="wkp-tagman">' + wkTagList().map(function (g) {
+function wkTagManHtml() {   // «Настроить»: цвет каждого тега — нажатием на кружок, «×» — удалить; новый тег — строкой внизу (подсказки убраны 22.10)
+  return '<ul class="wkp-tagman">' + wkTagList().map(function (g) {
       return '<li>' + wkTagChip(g.id) + '<span class="wkp-sw" role="group" aria-label="Цвет тега ' + esc(g.name) + '">' + WK_TAG_COLORS.map(function (c) {
           return '<button type="button" class="wkp-c tg-' + c[0] + (g.color === c[0] ? ' on' : '') + '" data-wkp-color="' + g.id + '|' + c[0] + '" aria-pressed="' + (g.color === c[0]) + '" aria-label="' + esc(g.name) + ': ' + c[1] + '" title="' + c[1] + '"></button>';
-        }).join("") + '</span></li>';
+        }).join("") + '</span><button type="button" class="icon-btn wk-x wkp-tdel" data-wkp-tdel="' + g.id + '" aria-label="Удалить тег ' + esc(g.name) + '" title="Удалить тег">' + PJ_ICON.close + '</button></li>';
     }).join("") + '</ul>' +
-    '<form class="wkp-new" data-wkp-new><input name="name" placeholder="+ Новый тег — название и Enter" maxlength="40" autocomplete="off" aria-label="Новый тег"></form>' +
-    '<p class="sub2" style="margin:6px 0 0">Полоса слева у задачи — цвета первого отмеченного тега.</p>';
+    '<form class="wkp-new" data-wkp-new><input name="name" placeholder="+ Новый тег — название и Enter" maxlength="40" autocomplete="off" aria-label="Новый тег"></form>';
+}
+function wkTagDelete(gid) {   // удалить тег (решение 22.10): снимается со всех задач; «Вернуть» — тег и его задачи обратно
+  var g = WK.tags[gid]; if (!g) return;
+  var rec = { name: g.name, color: g.color }, had = Object.keys(WK.tasks).filter(function (t) { return (WK.tasks[t].tags || []).indexOf(gid) >= 0; });
+  delete WK.tags[gid];
+  had.forEach(function (t) { WK.tasks[t] = Object.assign({}, WK.tasks[t], { tags: WK.tasks[t].tags.filter(function (x) { return x !== gid; }) }); });
+  if (S.wk.draft && S.wk.draft.tags) S.wk.draft.tags = S.wk.draft.tags.filter(function (x) { return x !== gid; });
+  wkTagManRefresh();
+  apiJson("POST", "/api/work", { op: "del", kind: "tags", id: gid }).then(function (x) {
+    if (!x.ok) { toast("Тег не удалён: " + ((x.d && x.d.error) || "ошибка")); wkLoad(); return; }
+    WK = x.d; wkTagManRefresh();
+    wkSnack("Тег «" + rec.name + "» удалён" + (had.length ? " — снят с задач: " + had.length : ""), function () {
+      apiJson("POST", "/api/work", { op: "put", kind: "tags", id: gid, data: rec }).then(function (y) {
+        if (!y.ok) { toast("Не вернулось: " + ((y.d && y.d.error) || "ошибка")); return; }
+        WK = y.d;
+        var chain = Promise.resolve();
+        had.forEach(function (t) {
+          chain = chain.then(function () {
+            var r = WK.tasks[t]; if (!r || (r.tags || []).indexOf(gid) >= 0) return;
+            r = Object.assign({}, r, { tags: (r.tags || []).concat([gid]) }); delete r.upd;
+            return apiJson("POST", "/api/work", { op: "put", kind: "tasks", id: t, data: r }).then(function (z) { if (z.ok) WK = z.d; });
+          });
+        });
+        chain.then(function () { wkTagManRefresh(); toast("Возвращено"); });
+      }, function () { toast("Не вернулось: " + NO_APP); });
+    });
+  }, function () { toast("Тег не удалён: " + NO_APP); wkLoad(); });
 }
 function wkTagManRefresh() {   // окно задачи перерисовано — окошко настройки остаётся у своей кнопки
   if (S.wk.dlg && WK.tasks[S.wk.dlg] && document.querySelector("#pjDlg .wkd[data-wkd]")) wkDlgRefresh();
@@ -6115,7 +6144,9 @@ document.addEventListener("click", function (ev) {
   var b = ev.target.closest && ev.target.closest("[data-wk-tagman]");
   if (b) { ev.preventDefault(); if (WKPOP && WKPOP.anchor === b) { wkPopClose(); return; } wkPopOpen(b, "wk-tagman", wkTagManHtml(), { tagman: true }); return; }
   var c = ev.target.closest && ev.target.closest(".wk-tagman [data-wkp-color]");
-  if (c) { var p = c.getAttribute("data-wkp-color").split("|"); wkTagColorSet(p[0], p[1]); }
+  if (c) { var p = c.getAttribute("data-wkp-color").split("|"); wkTagColorSet(p[0], p[1]); return; }
+  var d = ev.target.closest && ev.target.closest(".wk-tagman [data-wkp-tdel]");
+  if (d) wkTagDelete(d.getAttribute("data-wkp-tdel"));
 });
 function wkTagToggle(tid, gid, on) {
   var t = WK.tasks[tid]; if (!t) return;
