@@ -780,6 +780,8 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
 .wks-sdate { display: inline-flex; align-items: center; margin-left: 4px; font-size: 12px; color: var(--muted); }
 .wks-sdate .wk-datebtn { font-size: 12px; padding: 2px 5px; margin-left: 2px; color: var(--ink-3); }
 .wks-salemenu { width: 230px; }
+.wks-fmenu { width: 240px; }
+.wks-fn { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .wks tr.wks-past td { color: var(--muted); } .wks tr.wks-past .wks-venue { color: var(--muted); font-weight: 400; }
 .wks-vlist { list-style: none; margin: 0 0 22px; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
 .wks-vlist li + li { border-top: 1px solid var(--line-soft); }
@@ -4731,7 +4733,8 @@ function wkProjectPage(pid) {
       return '<button role="tab" data-wk-ptab="' + t[0] + '" aria-selected="' + (S.wk.ptab === t[0]) + '">' + t[1] + (t[2] ? ' <span class="wk-tabn">' + t[2] + '</span>' : '') + '</button>'; }).join("") + '</div>' +
       (S.wk.ptab === "tasks" ? '<div class="wk-tabtools"><button type="button" class="wk-sq' + (filtOn ? ' on' : '') + '" data-wkt-groupmenu aria-haspopup="menu" aria-label="Фильтры и группировка задач" title="Фильтры и группировка">' + WKT_ICON.group + (filtOn ? '<i class="wk-sq-dot" aria-hidden="true"></i>' : '') + '</button>' +
         '<button type="button" class="wk-sq wk-sq-add" data-wkt-quickadd aria-haspopup="dialog" aria-label="Новая задача" title="Новая задача">' + WKT_ICON.plus + '</button></div>'
-        : S.wk.ptab === "shows" ? '<div class="wk-tabtools"><button type="button" class="wk-sq wk-sq-add" data-wks-new aria-haspopup="dialog" aria-label="Добавить гастроли" title="Добавить гастроли — сразу несколько городов">' + WKT_ICON.plus + '</button></div>' : '') + '</div>' +
+        : S.wk.ptab === "shows" ? '<div class="wk-tabtools"><button type="button" class="wk-sq' + (wksSaleF() ? ' on' : '') + '" data-wks-filter aria-haspopup="menu" aria-label="Фильтр: выход в продажу" title="Фильтр: выход в продажу">' + WKT_ICON.group + (wksSaleF() ? '<i class="wk-sq-dot" aria-hidden="true"></i>' : '') + '</button>' +
+          '<button type="button" class="wk-sq wk-sq-add" data-wks-new aria-haspopup="dialog" aria-label="Добавить гастроли" title="Добавить гастроли — сразу несколько городов">' + WKT_ICON.plus + '</button></div>' : '') + '</div>' +
     (S.wk.ptab === "docs" ? '<div class="wk-pbody">' + wkDocsTable(wkDocsOf(pid), false, pid) + '</div>'
       : S.wk.ptab === "costs" ? '<div class="wk-pbody">' + wkCostsTable(wkCostsOf(pid), pid) + '</div>'
       : S.wk.ptab === "shows" ? '<div class="wk-pbody">' + wkShowsTable(pid) + '</div>'
@@ -4991,8 +4994,8 @@ function wkShowsTable(pid) {   // правки пользователя 22.10: �
   // день недели — отдельным столбцом (выходные — красным), площадка — в одну строку, без числа мест; подписи под таблицей нет
   var list = wkShowsOf(pid), t0 = wkDay(0);
   if (!list.length) return '<div class="note">Гастролей пока нет. Нажмите красный «+» справа — впишите сразу несколько городов: дата и площадка из справочника «Площадки», город подставится сам.</div>';
-  var rows = list.map(function (d, i) {
-    var v = wkVenue(d.venue), city = v ? v.city : d.city, past = d.date && d.date < t0;
+  var rows = list.map(function (d, i) { return [d, i]; }).filter(function (x) { var sf = wksSaleF(); return !sf || (x[0].sale || "none") === sf; }).map(function (x) {   // фильтр «выход в продажу» (22.10); № — как в полном списке
+    var d = x[0], i = x[1], v = wkVenue(d.venue), city = v ? v.city : d.city, past = d.date && d.date < t0;
     var wn = d.date ? new Date(+d.date.slice(0, 4), +d.date.slice(5, 7) - 1, +d.date.slice(8)).getDay() : -1;
     return '<tr class="' + (past ? 'wks-past' : '') + '"><td class="wks-n">' + ("0" + (i + 1)).slice(-2) + '</td>' +
       '<td class="wks-date">' + wkDateBtn("shows|" + d.id + "|date", d.date, { label: "Дата гастролей", empty: "указать", noYear: true }) + '</td>' +
@@ -5003,6 +5006,7 @@ function wkShowsTable(pid) {   // правки пользователя 22.10: �
       '<td class="wks-sale">' + wksSaleCell(d) + '</td>' +
       '<td><button class="icon-btn wk-x" data-wk-del="shows|' + d.id + '" aria-label="Удалить гастроли" title="Удалить строку">' + PJ_ICON.close + '</button></td></tr>';
   }).join("");
+  if (!rows) return '<div class="note">Нет дат со статусом «' + wkLabel(WKS_SALE, wksSaleF() === "none" ? "" : wksSaleF()) + '» — <button type="button" class="pj-plain" data-wks-salef="">показать все</button></div>';
   return '<div class="card wk-docs-card"><table class="wk-docs wks"><thead><tr><th class="wks-n">№</th><th>Дата</th><th>День</th><th>Площадка</th><th>Город</th><th>Продажи</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>';
 }
 // Окно «Добавить гастроли» (красный «+», решение 22.10): строка на город — дата, площадка из справочника (город подставится сам)
@@ -5076,6 +5080,25 @@ document.addEventListener("submit", function (ev) {   // Enter в строке �
   var i = +f.getAttribute("data-wks-nrow"), rows = S.wk.snew.rows;
   if (i === rows.length - 1) { rows.push(wksNewRow(rows[i])); wksNewRefresh(i + 1); }
   else { var n = document.querySelector('#pjDlg [data-wks-nrow="' + (i + 1) + '"] input[name=name]'); if (n) n.focus(); }
+});
+// Фильтр вкладки «Гастроли» — по выходу в продажу (решение 22.10): кнопка как у задач проекта; «none» — ждём площадку
+S.wk.saleF = ""; S.wk.saleFP = "";
+function wksSaleF() { return S.wk.saleFP === S.wk.proj ? S.wk.saleF : ""; }   // фильтр — только у проекта, где его выбрали
+document.addEventListener("click", function (ev) {
+  if (!wkOn() || !ev.target.closest) return;
+  var b = ev.target.closest("[data-wks-filter]");
+  if (b) {
+    if (WKPOP && WKPOP.anchor === b) { wkPopClose(); return; }
+    var l = wkShowsOf(S.wk.proj), n = function (v) { return l.filter(function (d) { return (d.sale || "none") === v; }).length; };
+    wkPopOpen(b, "wk-menu wks-fmenu", '<div class="wkp-title">Выход в продажу</div>' + [["", '<span>Все даты</span>', l.length]].concat(WKS_SALE.map(function (o) { return [o[0] || "none", wksSaleChip(o[0]), n(o[0] || "none")]; })).map(function (o) {
+      var on = wksSaleF() === o[0];
+      return '<button type="button" class="wk-menu-item' + (on ? ' on' : '') + '" data-wks-salef="' + o[0] + '" role="menuitemradio" aria-checked="' + on + '">' + o[1] + '<span class="wks-fn">' + o[2] + (on ? WKT_ICON.check : '') + '</span></button>';
+    }).join(""), {});
+    var r1 = b.getBoundingClientRect(); WKPOP.el.style.left = (r1.right - WKPOP.el.offsetWidth + window.scrollX) + "px";   // по правому краю кнопки
+    return;
+  }
+  var f = ev.target.closest("[data-wks-salef]");
+  if (f) { S.wk.saleF = f.getAttribute("data-wks-salef"); S.wk.saleFP = S.wk.proj; wkPopClose(); render(); }
 });
 // Выход в продажу по каждой дате (решение пользователя 22.10): ждём площадку → площадка разрешила (агентство запускает своё) →
 // в продаже у билетных операторов. Дата перехода ставится сама (сегодня), её можно поправить; видно ещё только в шапке проекта.
