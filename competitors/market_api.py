@@ -34,6 +34,7 @@ import re
 import shlex
 import subprocess
 import sys
+import time
 from datetime import datetime
 
 from flask import Blueprint, Response, jsonify, redirect, request, send_file, send_from_directory
@@ -148,16 +149,42 @@ def work_preview(name):
     return r
 
 
+# Рабочая заметка сохраняется сама через пару секунд после ввода ("autosave": true). В журнал изменений она попадает одной
+# правкой «было → стало» — при выходе со страницы заметки (сохранение без autosave) или раз в NOTE_JOURNAL_SEC, если её
+# долго правят; иначе журнал рос бы на каждую паузу в наборе. Перезапуск сервера сбрасывает ожидание (данные — в work.json).
+NOTE_JOURNAL_SEC = 300
+_note_held = {}   # "notes/<номер>" → (запись до первой правки, ещё не попавшей в журнал; когда)
+
+
 @bp.post("/api/work")
 def work_post():
     """Раздел «Проекты»: задачи, проекты, документы (competitors/work.py; config/work.json вне git)."""
+    op = request.get_json(silent=True) or {}
     before = journal.snapshot("work")
     try:
-        data = work.apply_op(request.get_json(silent=True) or {})
+        data = work.apply_op(op)
     except work.WorkError as e:
         return jsonify({"error": str(e)}), 400
+    key = f"notes/{op.get('id')}"
+    held = _note_held.pop(key, None) if op.get("kind") == "notes" else None
+    if held and op.get("op") == "put":
+        before[key] = held[0]
+    if op.get("kind") == "notes" and op.get("op") == "put" and op.get("autosave"):
+        held = held or (before.get(key), time.monotonic())
+        if time.monotonic() - held[1] < NOTE_JOURNAL_SEC:
+            _note_held[key] = held
+            return jsonify(data)
     journal.record("work", before)
     return jsonify(data)
+
+
+@bp.post("/api/work/nfile")
+def work_note_file():
+    """Картинка или файл рабочей заметки (competitors/work.py, note_file) → {"file", "name", "size"}."""
+    try:
+        return jsonify(work.note_file(request.get_json(silent=True) or {}))
+    except work.WorkError as e:
+        return jsonify({"error": str(e)}), 400
 
 
 @bp.get("/api/journal")

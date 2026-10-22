@@ -15,24 +15,30 @@
      "tasks":    {номер: {"text", "due", "project", "done", "done_at", "note", "created", "upd",
                           "desc" — описание, "subs": [{"id", "text", "done"}] — подзадачи,
                           "time" — затрачено, секунд; "run" — таймер идёт с (ISO-время) или пусто; "est" — план, минут,
-                          "prio" — приоритет: high | mid | low | пусто; "status" — work | wait | пусто (не начата)}},
+                          "prio" — приоритет: high | mid | low | пусто; "status" — work | wait | пусто (не начата),
+                          "log": [{"id", "at" — ГГГГ-ММ-ДДTЧЧ:ММ, "text"}] — журнал задачи (решение 22.10)}},
      "docs":     {номер: {"project", "kind", "party", "status", "amount", "pay", "closing", "note", "upd"}},
      "tags":     {номер: {"name", "color"}},
      "costs":    {номер: {"project", "name" — статья, "party" — кому, "amount", "date", "paid", "note", "upd"}},
-     "notes":    {номер: {"project" — или пусто (общая), "title", "body", "created", "color" — NOTE_COLORS, "fav" — избранная, "upd"}},
+     "notes":    {номер: {"project" — или пусто (общая), "title", "created", "fav" — избранная, "upd";
+                          быстрая (цветная): "body", "color" — NOTE_COLORS;
+                          рабочая (решение 22.10): "type": "work", "task" — или пусто, "doc" — документ редактора (TipTap JSON)}},
      "shows":    {номер: {"project", "date", "venue" — номер в справочнике площадок, "name", "city", "upd"}}}   ← с чем связана задача; у задачи — "tags": [номера]; пока своих нет — DEFAULT_TAGS
 
     GET  /api/work                                   всё
     POST /api/work {"op": "put", "kind", "id", "data"}   запись целиком (проверяется)
                    {"op": "del", "kind", "id"}
                    {"op": "media", "kind": "projects", "id", "what": "avatar" | "cover", "data"}   фото проекта
-    GET  /api/work/file/<файл>                     фото проекта (config/work_media/, вне git)
+    POST /api/work/nfile {"id" — номер заметки, "name", "data"}   картинка или файл рабочей заметки → {"file", "name", "size"}
+    GET  /api/work/file/<файл>                     фото проекта, файлы заметок (config/work_media/, вне git)
 """
 
 from __future__ import annotations
 
 import base64
+import json
 import re
+import secrets
 import threading
 from datetime import datetime
 
@@ -64,7 +70,10 @@ DOC_STATUS = ["draft", "sent", "signed"]
 PAY = ["no", "part", "paid"]
 PRIO = ["", "low", "mid", "high"]
 STATUS = ["", "work", "wait"]
-NOTE_COLORS = ["amber", "coral", "lime", "violet", "sky", "pink"]   # цвет карточки заметки (решение пользователя 20.10: 6 базовых)   # статус задачи: не начата | в работе | ждёт ответа («готово» — это done; решение пользователя 20.10)
+NOTE_COLORS = ["amber", "coral", "lime", "violet", "sky", "pink"]
+NOTE_TYPES = ["quick", "work"]   # быстрая (цветная карточка) | рабочая (редактор, привязка к задаче) — решение пользователя 22.10
+NOTE_DOC_MAX = 2_000_000         # документ рабочей заметки, знаков JSON (картинки и файлы — отдельно, в work_media)
+LOG_MAX = 2000                   # записей в журнале задачи   # цвет карточки заметки (решение пользователя 20.10: 6 базовых)   # статус задачи: не начата | в работе | ждёт ответа («готово» — это done; решение пользователя 20.10)
 CLOSING = ["no", "got"]
 TEXT_MAX = 3000
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -77,10 +86,11 @@ MEDIA_DIR = CONFIG_DIR / "work_media"   # фото проектов (миниа�
 MEDIA_KINDS = ("avatar", "cover")
 PHOTO_MAX = 3 * 1024 * 1024
 PHOTO_TYPES = {b"\xff\xd8\xff": "jpg", b"\x89PNG": "png", b"RIFF": "webp"}
-FILE_NAME = re.compile(r"^[a-z0-9]{3,40}-(avatar|cover|rider|logistics|timing)\.[a-z0-9]{2,5}$")
+FILE_NAME = re.compile(r"^[a-z0-9]{3,40}-(avatar|cover|rider|logistics|timing|f[0-9a-f]{8})\.[a-z0-9]{2,5}$")   # f… — файл рабочей заметки
 DOC_KINDS = ("rider", "logistics", "timing")   # документы проекта: технический райдер, логистика, тайминг
 DOC_EXT = {"pdf", "doc", "docx", "xls", "xlsx", "jpg", "jpeg", "png", "webp", "rtf", "odt", "ods", "txt", "zip"}
 DOC_MAX = 15 * 1024 * 1024
+NOTE_EXT = DOC_EXT | {"gif", "csv", "ppt", "pptx"}
 
 
 class WorkError(ValueError):
@@ -172,6 +182,36 @@ def _subs(v) -> list:
     return out
 
 
+def _log(v) -> list:
+    """Журнал задачи: [{"id", "at", "text"}] — пустые записи отбрасываются."""
+    if not v:
+        return []
+    if not isinstance(v, list) or len(v) > LOG_MAX:
+        raise WorkError(f"журнал: не больше {LOG_MAX} записей")
+    out = []
+    for e in v:
+        if not isinstance(e, dict):
+            raise WorkError("журнал: неверный формат")
+        text, eid, at = _text(e.get("text"), "запись журнала", 2000), str(e.get("id") or ""), str(e.get("at") or "")
+        if not text:
+            continue
+        if not _ID.match(eid) or not _STAMP.match(at):
+            raise WorkError("журнал: неверная запись")
+        out.append({"id": eid, "at": at, "text": text})
+    return out
+
+
+def _doc(v) -> dict:
+    """Текст рабочей заметки — документ редактора; сервер проверяет только вид и размер (показывает его редактор по своей схеме)."""
+    if not v:
+        return {}
+    if not isinstance(v, dict) or v.get("type") != "doc":
+        raise WorkError("заметка: неверный формат текста")
+    if len(json.dumps(v, ensure_ascii=False)) > NOTE_DOC_MAX:
+        raise WorkError("заметка слишком большая — разделите её на несколько")
+    return v
+
+
 def _enum(v, allowed: list, what: str, default: str) -> str:
     v = str(v or default)
     if v not in allowed:
@@ -193,9 +233,17 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
         if pid and pid not in data["projects"]:
             raise WorkError("такого проекта нет")
         if kind == "notes":
-            out = {"project": pid, "title": _text(d.get("title"), "название", 200), "body": _text(d.get("body"), "заметка", 50000),
-                   "created": _date(d.get("created"), "создана") or datetime.now().strftime("%Y-%m-%d"),
-                   "color": _enum(d.get("color"), NOTE_COLORS, "цвет", "amber"), "fav": bool(d.get("fav"))}
+            out = {"project": pid, "title": _text(d.get("title"), "название", 200),
+                   "created": _date(d.get("created"), "создана") or datetime.now().strftime("%Y-%m-%d"), "fav": bool(d.get("fav"))}
+            if _enum(d.get("type"), NOTE_TYPES, "тип заметки", "quick") == "quick":   # у быстрых поля type нет — как было до 22.10
+                out.update(body=_text(d.get("body"), "заметка", 50000), color=_enum(d.get("color"), NOTE_COLORS, "цвет", "amber"))
+                return out
+            tid = str(d.get("task") or "")
+            if tid and tid not in data["tasks"]:
+                raise WorkError("такой задачи нет")
+            if tid and data["tasks"][tid].get("project"):
+                out["project"] = data["tasks"][tid]["project"]   # проект — из задачи (решение 22.10)
+            out.update(type="work", task=tid, doc=_doc(d.get("doc")))
             return out
         out = {"project": pid, "name": _text(d.get("name"), "статья", 300), "party": _text(d.get("party"), "кому", 300),
                "amount": _amount(d.get("amount")), "date": _date(d.get("date"), "дата"), "paid": bool(d.get("paid")),
@@ -236,7 +284,8 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
                "desc": _text(d.get("desc"), "описание", 20000), "subs": _subs(d.get("subs")),
                "time": _int(d.get("time"), "время", 0, 10 ** 8), "run": _stamp(d.get("run")), "est": _int(d.get("est"), "план", 0, 10 ** 6),
                "tags": [t for t in (d.get("tags") or []) if t in data["tags"]][:12],
-               "prio": _enum(d.get("prio"), PRIO, "приоритет", ""), "status": _enum(d.get("status"), STATUS, "статус", "")}
+               "prio": _enum(d.get("prio"), PRIO, "приоритет", ""), "status": _enum(d.get("status"), STATUS, "статус", ""),
+               "log": _log(d.get("log"))}
         if not out["text"]:
             raise WorkError("у задачи нужен текст")
         if out["done"]:
@@ -270,6 +319,10 @@ def apply_op(op: dict) -> dict:
                     rec[keep] = data[kind][oid][keep]
                 elif kind == "projects" and oid not in data[kind] and isinstance((op.get("data") or {}).get(keep), dict):
                     rec[keep] = _own_files(oid, op["data"][keep], keep)   # «Вернуть» удалённый проект: его файлы остались на диске
+            if kind == "tasks" and rec["project"] != (data["tasks"].get(oid) or {}).get("project", rec["project"]):
+                for n in data["notes"].values():   # задачу перенесли в другой проект — её рабочие заметки следом
+                    if n.get("task") == oid:
+                        n["project"] = rec["project"]
             data[kind][oid] = rec
         elif op.get("op") == "media":   # фото проекта: what — avatar | cover; data — data:image/…;base64 (пусто — убрать)
             p = data["projects"].get(oid)
@@ -334,6 +387,10 @@ def apply_op(op: dict) -> dict:
                 for r in data["tasks"].values():
                     if oid in (r.get("tags") or []):
                         r["tags"] = [t for t in r["tags"] if t != oid]
+            if kind == "tasks":   # рабочие заметки задачи остаются — в проекте, без задачи
+                for n in data["notes"].values():
+                    if n.get("task") == oid:
+                        n["task"] = ""
             if kind == "projects":   # задачи и документы проекта остаются — «без проекта»; гастроли — тоже (вернётся проект — вернутся и они)
                 for k in ("tasks", "docs", "costs", "notes", "shows"):
                     for r in data[k].values():
@@ -355,12 +412,46 @@ def _own_files(oid: str, given: dict, keep: str) -> dict:
     return out
 
 
+def note_file(op: dict) -> dict:
+    """Картинка или файл рабочей заметки: сохраняется в work_media как «номер заметки-fXXXXXXXX.расш»; в текст заметки
+    редактор вставляет ссылку. Заметки может ещё не быть на сервере (новая сохраняется с первым текстом) — нужен только номер."""
+    oid, name = str(op.get("id") or ""), _text(op.get("name"), "имя файла", 200)
+    m = re.match(r"^data:[\w.+/-]*;base64,([A-Za-z0-9+/=]+)$", str(op.get("data") or ""))
+    ext = name.rsplit(".", 1)[-1].lower() if "." in name else ""
+    if not _ID.match(oid):
+        raise WorkError("неверный номер заметки")
+    if not m or ext not in NOTE_EXT:
+        raise WorkError("файл: PDF, Word, Excel, PowerPoint, картинка, текст или архив")
+    raw = base64.b64decode(m.group(1))
+    if len(raw) > DOC_MAX:
+        raise WorkError("файл: не больше 15 МБ")
+    MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+    fname = f"{oid}-f{secrets.token_hex(4)}.{ext}"
+    (MEDIA_DIR / fname).write_bytes(raw)
+    return {"file": fname, "name": name, "size": len(raw)}
+
+
+def _doc_files(node):
+    """Файлы и картинки в тексте рабочей заметки: (файл, имя)."""
+    if isinstance(node, dict):
+        a = node.get("attrs") or {}
+        if a.get("file"):
+            yield a["file"], a.get("name") or a.get("alt") or ""
+        for c in node.get("content") or []:
+            yield from _doc_files(c)
+
+
 def doc_name(name: str) -> str:
-    """Под каким именем отдавать документ проекта при скачивании — как его загружали."""
-    for p in load()["projects"].values():
+    """Под каким именем отдавать документ проекта или файл заметки при скачивании — как его загружали."""
+    d = load()
+    for p in d["projects"].values():
         for f in (p.get("pfiles") or {}).values():
             if f.get("file") == name:
                 return f.get("name") or name
+    for n in d["notes"].values():
+        for f, fname in _doc_files(n.get("doc")):
+            if f == name and fname:
+                return fname
     return name
 
 
