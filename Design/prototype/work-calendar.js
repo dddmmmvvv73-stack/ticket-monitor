@@ -129,14 +129,15 @@
   function syncTaskFields(form) {
     var kind = form.elements.kind.value, off = !!kind && kind !== 'task';
     ['status', 'priority', 'tag'].forEach(function (k) { form.elements[k].disabled = off; if (off) form.elements[k].value = ''; });
+    enhanceSelects(form);   // списки — в стиле сайта (22.10): кнопки обновляются (недоступно, «все»)
   }
   function filterOpen(anchor) {
     if (WKPOP && WKPOP.anchor === anchor) { wkPopClose(); return; }
     var f = state().filters;
     function field(name, title, options) {
-      return '<label class="wkc-filter-field"><span>' + title + '</span><select name="' + name + '" data-native>' + options.map(function (o) {
+      return '<div class="wkc-filter-field"><span>' + title + '</span><select name="' + name + '" aria-label="' + esc(title) + '">' + options.map(function (o) {
         return '<option value="' + esc(o[0]) + '"' + (f[name] === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>';
-      }).join('') + '</select></label>';
+      }).join('') + '</select></div>';
     }
     var el = wkPopOpen(anchor, 'wkc-filterpop', '<form data-wkc-filter-form><div class="wkp-title">Фильтр календаря</div>' +
       field('project', 'Проект', [['', 'Все проекты'], ['none', 'Без проекта']].concat(wkProjects().map(function (p) { return [p.id, p.title]; }))) +
@@ -145,7 +146,7 @@
       field('priority', 'Приоритет', [['', 'Любой приоритет'], ['high', 'Высокий'], ['mid', 'Средний'], ['low', 'Низкий'], ['none', 'Без приоритета']]) +
       field('tag', 'Тег', [['', 'Все теги'], ['none', 'Без тегов']].concat(wkTagList().map(function (t) { return [t.id, t.name]; }))) +
       '<p class="wkc-filter-hint">Статус, приоритет и тег отбирают только задачи.</p><div class="wkc-filter-actions"><button type="button" class="btn-ghost" data-wkc-reset>Сбросить</button><button type="submit" class="btn-dark">Применить</button></div></form>', {});
-    el.setAttribute('aria-label', 'Фильтр календаря'); syncTaskFields(el.querySelector('form')); fitPopup(el); el.querySelector('select').focus({ preventScroll: true });
+    el.setAttribute('aria-label', 'Фильтр календаря'); syncTaskFields(el.querySelector('form')); fitPopup(el); el.querySelector('.dd-btn').focus({ preventScroll: true });
   }
   if (typeof module !== 'undefined' && module.exports) module.exports = { monthDays: monthDays, shift: shift, items: items };
   root.renderWkCalendar = renderCalendar;

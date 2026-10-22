@@ -91,8 +91,8 @@ body.wkc-mode #view { padding: 10px; gap: 0; }
 .wkc-filterpop::-webkit-scrollbar { display: none; }
 .wkc-filter-field { display: grid; gap: 5px; margin: 12px 0; }
 .wkc-filter-field > span { font-size: 12px; color: var(--ink-3); }
-.wkc-filter-field select { width: 100%; min-width: 0; border: 1px solid var(--line); border-radius: 8px; background: #fff var(--chevron) no-repeat right 10px center; padding: 8px 30px 8px 10px; font: inherit; font-size: 13px; appearance: none; }
-.wkc-filter-field select:disabled { opacity: .45; cursor: default; background-color: #f7f7f7; }
+.wkc-filter-field .dd-btn { width: 100%; min-width: 0; }   /* списки — в стиле сайта (enhanceSelects), не системные (22.10) */
+.wkc-filter-field .dd-btn:disabled { opacity: .45; cursor: default; }
 .wkc-filter-hint { font-size: 11px; color: var(--muted); line-height: 1.5; margin: 12px 0; }
 .wkc-filter-actions { display: flex; justify-content: space-between; gap: 12px; padding-top: 12px; border-top: 1px solid var(--line-soft); }
 @media (min-width: 1500px) { .wkc { grid-template-columns: minmax(0, 1fr) 330px; } .wkc .wkc-grid { grid-auto-rows: minmax(118px, 1fr); } }

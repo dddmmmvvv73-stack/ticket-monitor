@@ -50,7 +50,7 @@
 .wn-pv.wn-pv-none { color: var(--ash); }
 .wn-pv-fix { cursor: default; } .wn-pv-fix:hover { background: none; color: var(--ink-3); }
 .wn-pmenu { width: 320px; }
-.wn-pmenu-l { max-height: 320px; overflow-y: auto; }
+.wn-pmenu-l { max-height: 320px; }   /* прокрутка без полосы — .wk-mlist */
 .wn-pmenu .wk-menu-item > span { min-width: 0; overflow-wrap: anywhere; }
 .wn-pmenu-none { margin: 4px 8px 6px; font-size: 13px; color: var(--muted); }
 
