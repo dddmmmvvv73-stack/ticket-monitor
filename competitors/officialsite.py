@@ -20,7 +20,8 @@
 
 Как:
 1. Одна страница, как браузер покупателя (пауза, канал блокировок site/<сайт>: 403 / капча — не опрашиваем до срока).
-   Текста почти нет (страница рисуется скриптами) — та же страница в браузере (Playwright), один раз.
+   На странице есть скрипты — та же страница в браузере (Playwright), один раз; дат там больше — разбираем её.
+   Не только когда текста нет: у leonidkulakov.ru (Tilda) осенний тур — в HTML, весенний дорисовывает скрипт.
 2. Текст страницы с адресами ссылок → GigaChat: строки «ДД.ММ.ГГГГ | город | площадка | цена | ссылка».
    Текст не изменился с прошлого удачного разбора — GigaChat не спрашиваем.
 3. Проверка ответа (модель не должна ничего выдумать): дата — в будущем и есть в тексте (день + месяц словом или
@@ -65,11 +66,11 @@ RETRY = timedelta(hours=3)      # после ошибки — не раньше 
 NEAR_KM = 50                    # «тот же город»: Ессентуки ↔ Пятигорск у Яндекса (как SITE_NEAR_KM в прототипе)
 FRESH = timedelta(hours=30)     # для базы: разбор свежее этого — исчезнувшая дата значит «снята с сайта»
 TEXT_MAX = 14000                # знаков текста в одном запросе к GigaChat; длиннее — частями
-MIN_TEXT_DATES = 2              # меньше дат в тексте — страница, видимо, рисуется скриптами: открыть браузером
 TIMEOUT = 30
-PARSER = 2                      # версия разбора: поменялись подсказка GigaChat или проверка — страница разбирается заново
+PARSER = 3                      # версия разбора: поменялись подсказка GigaChat или проверка — страница разбирается заново
 
-MONTHS = ["январ", "феврал", "март", "апрел", "ма[йя]", "июн", "июл", "август", "сентябр", "октябр", "ноябр", "декабр"]
+# начала названий месяцев: и «марта», и «мар» (афиши-виджеты пишут «10 / мар / ср»)
+MONTHS = ["янв", "фев", "мар", "апр", "ма[йя]", "июн", "июл", "авг", "сен", "окт", "ноя", "дек"]
 _DATE_IN_TEXT = re.compile(r"(?<!\d)([0-3]?\d)\s*(?:(" + "|".join(MONTHS) + r")|[./]\s*([01]?\d)(?!\d))", re.I)
 _LINE = re.compile(r"^\W*([0-3]?\d)[./]([01]?\d)[./](\d{4})\s*\|(.*)$")
 
@@ -268,7 +269,7 @@ def page_text(src: str, base: str) -> tuple[str, set[str]]:
         if not u.startswith(("http://", "https://")):
             return inner
         links.add(u)
-        return f"{inner} ⟦{u}⟧"
+        return f"{inner} ⟦{html.escape(u, quote=False)}⟧"   # текст ниже раскодируется ещё раз: «&regionId» не должен стать «®ionId»
     s = re.sub(r"<a\b[^>]*?href\s*=\s*(?:\"([^\"]*)\"|'([^']*)')[^>]*>(.*?)</a>", link, s, flags=re.S | re.I)
     s = _BLOCK.sub("\n", s)
     s = re.sub(r"<[^>]+>", " ", s)
@@ -304,6 +305,16 @@ INSTR = """Ниже — текст страницы официального с�
 
 Текст страницы:
 {text}"""
+
+
+def _unquote(s: str) -> str:
+    """Кавычки вокруг поля ответа — долой, свои кавычки названия — на месте: «Кинотеатр «Заря»», а не «Кинотеатр «Заря»."""
+    s = s.strip().strip("«»\"'").strip()
+    if s.count("«") > s.count("»"):
+        s += "»"
+    if s.count('"') % 2:
+        s += '"'
+    return s
 
 
 def ask_gigachat(text: str, title: str, url: str, log=_log) -> tuple[list[dict], str]:
@@ -349,7 +360,7 @@ def ask_gigachat(text: str, title: str, url: str, log=_log) -> tuple[list[dict],
                 m = _LINE.match(line.strip())
                 if not m:
                     continue
-                f = [x.strip().strip("«»\"'") for x in m.group(4).split("|")]
+                f = [_unquote(x) for x in m.group(4).split("|")]
                 f += ["-"] * (4 - len(f))
                 out.append({"d": int(m.group(1)), "m": int(m.group(2)), "y": int(m.group(3)), "city": f[0], "venue": f[1], "price": f[2], "buy": f[3]})
     return out, model
@@ -466,8 +477,8 @@ def check(key: str, cfg: dict, data: dict, log=_log) -> dict:
         if blocks.state(channel) == "probe":
             blocks.clear(channel)
         text, links = page_text(src, url)
-        if dates_in_text(text) < MIN_TEXT_DATES and re.search(r"<script", src, re.I):
-            try:   # афиша рисуется скриптами — та же страница в браузере
+        if re.search(r"<script", src, re.I):
+            try:   # часть афиши (или вся) может рисоваться скриптами — та же страница в браузере
                 text2, links2 = page_text(render(url), url)
                 if dates_in_text(text2) > dates_in_text(text):
                     text, links, via = text2, links2, "browser"
