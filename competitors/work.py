@@ -23,7 +23,9 @@
      "notes":    {номер: {"project" — или пусто (общая), "title", "created", "fav" — избранная, "upd";
                           быстрая (цветная): "body", "color" — NOTE_COLORS;
                           рабочая (решение 22.10): "type": "work", "task" — или пусто, "doc" — документ редактора (TipTap JSON)}},
-     "shows":    {номер: {"project", "date", "venue" — номер в справочнике площадок, "name", "city", "upd"}}}   ← с чем связана задача; у задачи — "tags": [номера]; пока своих нет — DEFAULT_TAGS
+     "shows":    {номер: {"project", "date", "venue" — номер в справочнике площадок, "name", "city", "upd",
+                          "sale" — выход в продажу (решение 22.10): пусто — ждём площадку | allowed — площадка разрешила |
+                          onsale — в продаже у операторов; "sale_ok", "sale_on" — даты разрешения и выхода в продажу}}}   ← с чем связана задача; у задачи — "tags": [номера]; пока своих нет — DEFAULT_TAGS
 
     GET  /api/work                                   всё
     POST /api/work {"op": "put", "kind", "id", "data"}   запись целиком (проверяется)
@@ -75,6 +77,7 @@ NOTE_TYPES = ["quick", "work"]   # быстрая (цветная карточк
 NOTE_DOC_MAX = 2_000_000         # документ рабочей заметки, знаков JSON (картинки и файлы — отдельно, в work_media)
 LOG_MAX = 2000                   # записей в журнале задачи   # цвет карточки заметки (решение пользователя 20.10: 6 базовых)   # статус задачи: не начата | в работе | ждёт ответа («готово» — это done; решение пользователя 20.10)
 CLOSING = ["no", "got"]
+SALE = ["", "allowed", "onsale"]
 TEXT_MAX = 3000
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _STAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$")
@@ -259,7 +262,8 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
         if venue and not _VENUE.match(venue):
             raise WorkError("гастроли: неверный номер площадки")
         out = {"project": pid, "date": _date(d.get("date"), "дата"), "venue": venue,
-               "name": _text(d.get("name"), "площадка", 300), "city": _text(d.get("city"), "город", 120)}
+               "name": _text(d.get("name"), "площадка", 300), "city": _text(d.get("city"), "город", 120),
+               "sale": _enum(d.get("sale"), SALE, "продажи", ""), "sale_ok": _date(d.get("sale_ok"), "разрешено"), "sale_on": _date(d.get("sale_on"), "в продаже с")}
         if not (out["name"] or out["city"]):
             raise WorkError("у гастролей нужна площадка или город")
         return out

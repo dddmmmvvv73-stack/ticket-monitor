@@ -740,6 +740,11 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
 .wks-meta.nolink { color: var(--amber, #b7791f); }
 .wks-ctext { display: block; padding: 0 8px; }   /* как текст в поле ввода: рамка 1 + отступ 7 */
 .wks-vh { margin: 0 0 14px !important; }
+.wks td.wks-sale { white-space: nowrap; width: 1%; }
+.wks .wks-salebtn { margin-left: 0; }
+.wks-sdate { display: inline-flex; align-items: center; margin-left: 4px; font-size: 12px; color: var(--muted); }
+.wks-sdate .wk-datebtn { font-size: 12px; padding: 2px 5px; margin-left: 2px; color: var(--ink-3); }
+.wks-salemenu { width: 230px; }
 .wks tr.wks-past td { color: var(--muted); } .wks tr.wks-past .wks-venue { color: var(--muted); font-weight: 400; }
 .wks-vlist { list-style: none; margin: 0 0 22px; padding: 0; border: 1px solid var(--line); border-radius: 12px; background: var(--card); }
 .wks-vlist li + li { border-top: 1px solid var(--line-soft); }
@@ -754,8 +759,9 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
   .wks tbody tr + tr { border-top: 1px solid var(--line-soft); }
   .wks td { border: 0 !important; height: auto; padding: 1px 4px; }
   .wks td.wks-n { display: none; }
-  .wks td.wks-date, .wks td:nth-child(3), .wks td.wks-city { grid-column: 1; }
-  .wks td:last-child { grid-column: 2; grid-row: 1 / span 3; align-self: center; }
+  .wks td.wks-date, .wks td:nth-child(3), .wks td.wks-city, .wks td.wks-sale { grid-column: 1; }
+  .wks td.wks-sale { width: auto; padding-top: 4px; }
+  .wks td:last-child { grid-column: 2; grid-row: 1 / span 4; align-self: center; }
   .wks td .wk-in { min-width: 0 !important; }
   .wks td.wks-city .wks-ctext, .wks td.wks-city .wk-in { color: var(--muted); }
 }
@@ -4652,7 +4658,7 @@ function wkProjectPage(pid) {
         '<div class="pj-actions"><button class="pj-btn primary" data-wkp-edit>' + PJ_ICON.edit + 'Редактировать</button>' + docs + wkDeadlineBadge(pid, dl) + '</div>' +
       '</div>' +
       '<div class="wk-hstats" role="group" aria-label="Гастроли и задачи проекта">' + wkTourTile(pid, p) +
-        '<div class="wk-hstat"><b class="num">' + s.open + '</b><span>открыто</span></div>' +
+        wkSaleTile(pid) +   // вместо «открыто» (решение пользователя 22.10): открытые задачи — числом на вкладке «Задачи»
         '<div class="wk-hstat' + (s.over ? ' over' : '') + '"><b class="num">' + s.over + '</b><span>просрочено</span></div>' +
         '<div class="wk-hstat done"><b class="num">' + done + '<small>/' + all.length + '</small></b><span>выполнено</span><i class="wk-hbar"><em style="width:' + pct + '%"></em></i></div>' +
       '</div></div></section>';
@@ -4912,6 +4918,11 @@ function wksMatch(q) {   // площадки справочника: все сл
     .sort(function (a, b) { return a[0] - b[0] || String(a[1].city).localeCompare(String(b[1].city), "ru") || String(a[1].name).localeCompare(String(b[1].name), "ru"); })
     .slice(0, 8).map(function (x) { return x[1]; });
 }
+function wkSaleTile(pid) {   // шапка проекта: сколько дат гастролей в продаже
+  var l = wkShowsOf(pid), on = l.filter(function (d) { return d.sale === "onsale"; }).length, ok = l.filter(function (d) { return d.sale === "allowed"; }).length;
+  var tip = l.length ? "В продаже " + on + " из " + l.length + " · разрешено, ещё не в продаже — " + ok + " · ждём площадку — " + (l.length - on - ok) : "Дат гастролей пока нет — добавьте во вкладке «Гастроли»";
+  return '<div class="wk-hstat' + (l.length && on === l.length ? ' done' : '') + '" title="' + tip + '"><b class="num">' + (l.length ? on + '<small>/' + l.length + '</small>' : '—') + '</b><span>в продаже</span></div>';
+}
 function wkShowsTable(pid) {
   var list = wkShowsOf(pid), t0 = wkDay(0);
   var add = '<form class="wk-add wks-add" data-wk-add="shows" autocomplete="off"><input type="hidden" name="project" value="' + esc(pid) + '"><input type="hidden" name="date" value=""><input type="hidden" name="venue" value="">' +
@@ -4931,13 +4942,45 @@ function wkShowsTable(pid) {
       '<td>' + (v ? '<button type="button" class="wks-venue" data-wks-venue="' + esc(v.id) + '" title="Открыть страницу площадки">' + esc(v.name || "Без названия") + '</button>' + (v.seats ? '<span class="wks-meta">' + esc(wksSeats(v.seats)) + '</span>' : '')
         : '<input class="wk-in" data-wk-f="shows|' + d.id + '|name" value="' + esc(d.name || "") + '" placeholder="Площадка" aria-label="Площадка"><span class="wks-meta nolink">нет в справочнике</span>') + '</td>' +
       '<td class="wks-city">' + (v ? '<span class="wks-ctext">' + esc(city || "—") + '</span>' : '<input class="wk-in" data-wk-f="shows|' + d.id + '|city" value="' + esc(d.city || "") + '" placeholder="Город" aria-label="Город">') + '</td>' +
+      '<td class="wks-sale">' + wksSaleCell(d) + '</td>' +
       '<td><button class="icon-btn wk-x" data-wk-del="shows|' + d.id + '" aria-label="Удалить гастроли" title="Удалить строку">' + PJ_ICON.close + '</button></td></tr>';
   }).join("");
   var n = Object.keys(cities).length;
-  return add + '<div class="card wk-docs-card"><table class="wk-docs wks"><thead><tr><th class="wks-n">№</th><th>Дата</th><th>Площадка</th><th>Город</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+  return add + '<div class="card wk-docs-card"><table class="wk-docs wks"><thead><tr><th class="wks-n">№</th><th>Дата</th><th>Площадка</th><th>Город</th><th>Продажи</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
     '<p class="sub wk-sum">' + list.length + ' ' + plural(list.length, "дата", "даты", "дат") + (n ? ' · <b class="num">' + n + '</b> ' + plural(n, "город", "города", "городов") : '') +
-      (dates.length ? ' · с <b>' + wkShortDate(dates[0].date) + '</b>' + (dates.length > 1 ? ' по <b>' + wkShortDate(dates[dates.length - 1].date) + '</b>' : '') : '') + '</p>';
+      (dates.length ? ' · с <b>' + wkShortDate(dates[0].date) + '</b>' + (dates.length > 1 ? ' по <b>' + wkShortDate(dates[dates.length - 1].date) + '</b>' : '') : '') +
+      ' · в продаже <b class="num">' + list.filter(function (d) { return d.sale === "onsale"; }).length + '</b> из ' + list.length + '</p>';
 }
+// Выход в продажу по каждой дате (решение пользователя 22.10): ждём площадку → площадка разрешила (агентство запускает своё) →
+// в продаже у билетных операторов. Дата перехода ставится сама (сегодня), её можно поправить; видно ещё только в шапке проекта.
+var WKS_SALE = [["", "Ждём площадку", "new"], ["allowed", "Разрешено", "wait"], ["onsale", "В продаже", "done"]];
+function wksSaleChip(st) { var o = WKS_SALE.filter(function (x) { return x[0] === (st || ""); })[0] || WKS_SALE[0]; return '<span class="wk-st ws-' + o[2] + '"><i aria-hidden="true"></i>' + o[1] + '</span>'; }
+function wksSaleCell(d) {
+  var st = d.sale || "", f = st === "onsale" ? "sale_on" : st === "allowed" ? "sale_ok" : "";
+  return '<button type="button" class="wkt-tags wks-salebtn" data-wks-sale="' + d.id + '" aria-haspopup="menu" aria-label="Продажи: ' + wkLabel(WKS_SALE, st) + ' — изменить">' + wksSaleChip(st) + '</button>' +
+    (f ? '<span class="wks-sdate">' + (st === "onsale" ? "с" : "") + wkDateBtn("shows|" + d.id + "|" + f, d[f], { label: st === "onsale" ? "В продаже с" : "Разрешено", empty: "дата?" }) + '</span>' : '');
+}
+function wksSaleSet(id, st) {   // даты: разрешено — когда отметили «Разрешено»; в продаже с — когда «В продаже»; назад — поздняя дата стирается
+  var d = WK.shows[id]; if (!d || (d.sale || "") === st) return;
+  var r = Object.assign({}, d, { sale: st }); delete r.upd;
+  if (st === "") { r.sale_ok = ""; r.sale_on = ""; }
+  if (st === "allowed") { r.sale_ok = r.sale_ok || wkDay(0); r.sale_on = ""; }
+  if (st === "onsale") r.sale_on = r.sale_on || wkDay(0);
+  wkPut("shows", id, r, "Продажи: " + wkLabel(WKS_SALE, st).toLowerCase());
+}
+document.addEventListener("click", function (ev) {
+  var b = ev.target.closest && ev.target.closest("[data-wks-sale]");
+  if (b && wkOn()) {
+    if (WKPOP && WKPOP.anchor === b) { wkPopClose(); return; }
+    var id = b.getAttribute("data-wks-sale"), cur = (WK.shows[id] || {}).sale || "";
+    wkPopOpen(b, "wk-menu wk-stmenu wks-salemenu", '<div class="wkp-title">Выход в продажу</div>' + WKS_SALE.map(function (o) {
+      return '<button type="button" class="wk-menu-item' + (cur === o[0] ? ' on' : '') + '" data-wks-sale-set="' + o[0] + '" role="menuitemradio" aria-checked="' + (cur === o[0]) + '">' + wksSaleChip(o[0]) + (cur === o[0] ? WKT_ICON.check : '') + '</button>';
+    }).join(""), { saleId: id });
+    return;
+  }
+  var it = ev.target.closest && ev.target.closest(".wks-salemenu [data-wks-sale-set]");
+  if (it && WKPOP) { var sid = WKPOP.saleId; wkPopClose(); wksSaleSet(sid, it.getAttribute("data-wks-sale-set")); }
+});
 var WK_WD_SHORT = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
 function wksSugShow(inp) {   // подсказки площадок под полем
   var box = inp.parentNode.querySelector(".wks-sug"), q = inp.value, l = wksMatch(q);
@@ -6897,7 +6940,7 @@ var JR_FIELD = { title: "Название", rows: "Строки тура", note:
   desc: "Описание", subs: "Подзадачи", time: "Затрачено", est: "План", run: "Таймер", tags: "Теги", name: "Название", color: "Цвет",
   body: "Текст", paid: "Оплачено", date: "Дата", prio: "Приоритет", deadline: "Дедлайн проекта", pfiles: "Документы проекта",
   text: "Задача", due: "Дедлайн", done: "Готово", done_at: "Сделано", stage: "Стадия", start: "Начало", end: "Окончание", kind: "Документ", party: "С кем",
-  amount: "Сумма", pay: "Оплата", closing: "Закрывающие", created: "Создана", doc: "Текст заметки", task: "Задача", log: "Журнал задачи", type: "Тип заметки" };
+  amount: "Сумма", pay: "Оплата", closing: "Закрывающие", created: "Создана", doc: "Текст заметки", task: "Задача", log: "Журнал задачи", type: "Тип заметки", sale: "Продажи", sale_ok: "Разрешено", sale_on: "В продаже с" };
 function jrLabel(area, f) {
   if (area === "venues") { var c = VB_COLS.filter(function (x) { return x.id === f; })[0]; if (c) return c.label; }
   return JR_FIELD[f] || f;
@@ -6912,6 +6955,7 @@ function jrVal(area, f, v) {
   if (area === "work") { var wl = { stage: WK_STAGE, status: WK_STATUS.concat(WK_TSTATUS), pay: WK_PAY, closing: WK_CLOSE, prio: WK_PRIO }[f]; if (wl) v = wkLabel(wl, v) || v; if (f === "project") v = wkPname(v) || v; }
   if (area === "work" && f === "task") v = WK.tasks[v] ? WK.tasks[v].text : v;
   if (area === "work" && f === "type") v = v === "work" ? "рабочая" : "быстрая";
+  if (area === "work" && f === "sale") v = wkLabel(WKS_SALE, v).toLowerCase();
   if (area === "work" && f === "log" && Array.isArray(v)) return v.length + " " + plural(v.length, "запись", "записи", "записей");
   if (f === "rider" && v.name) return esc(v.name);
   if (f === "media") return esc(Object.keys(v).map(function (k) { return k === "avatar" ? "миниатюра" : "фон"; }).join(", ") || "—");
