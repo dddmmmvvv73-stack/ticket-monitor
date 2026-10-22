@@ -1,0 +1,120 @@
+/* Документы и контрагенты (решения пользователя 22.10). Код — work-docs.js */
+
+/* таблица документов: заголовок контрагента и строки его документов */
+.wdc-tools { display: flex; gap: 8px; }
+.wdc-tools .wk-sq { width: 40px; height: 40px; }
+.wk-docs.wdc td { height: 42px; }
+.wk-docs.wdc td .wk-in { min-width: 0; }
+.wdc tr.wdc-g td { background: #fafaf9; border-top: 1px solid var(--line); padding: 8px 8px 8px 14px; }
+.wdc tbody tr.wdc-g:first-child td { border-top: 0; }
+.wdc-gh { display: flex; align-items: center; gap: 12px; min-width: 0; }   /* слева название и данные (многоточием), справа суммы и кнопки — в одну строку */
+.wdc-gl { flex: 1; min-width: 0; contain: inline-size; display: flex; align-items: center; gap: 10px; overflow: hidden; white-space: nowrap; }
+.wdc-gr { flex: none; display: flex; align-items: center; gap: 8px; }
+.wdc-gl .wdc-name { flex: 0 1 auto; min-width: 60px; overflow: hidden; text-overflow: ellipsis; }
+.wdc-gl .wdc-meta { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.wdc-gl .wdc-proj, .wdc-gl .wdc-link, .wdc-gl .wdc-dot { flex: none; }
+.wdc-name { border: 0; background: none; padding: 3px 6px; margin-left: -6px; border-radius: 6px; font: inherit; font-size: 15px; font-weight: 600; color: var(--ink); cursor: pointer; }
+.wdc-name:hover { background: var(--line-soft); }
+.wdc-name.nolink { cursor: default; } .wdc-name.nolink:hover { background: none; }
+.wdc-proj { border: 0; background: none; padding: 3px 6px; margin-left: -6px; border-radius: 6px; font: inherit; font-size: 13px; color: var(--ink-3); cursor: pointer; }
+.wdc-proj:hover { background: var(--line-soft); color: var(--ink); }
+.wdc-dot { color: var(--ash); }
+.wdc-meta { font-size: 12.5px; color: var(--muted); }
+.wdc-link { font-size: 12.5px; }
+.wdc-sum { font-size: 12.5px; color: var(--muted); white-space: nowrap; }
+.wdc-sum b { font-weight: 600; color: var(--ink-2); }
+.wdc-sum b.wdc-rest { color: #b4541c; }
+.wdc-paidall { color: #1f7a3a; }
+.wdc-gbtn { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 9px; border: 1px solid var(--line); border-radius: 8px; background: var(--card); font: inherit; font-size: 12.5px; color: var(--ink-3); cursor: pointer; }
+.wdc-gbtn:hover, .wdc-gbtn[aria-expanded="true"] { border-color: var(--line-strong); color: var(--ink); }
+.wdc-gh .wk-x { width: 26px; height: 26px; }
+.wdc td.wdc-kind { padding-left: 24px; font-weight: 500; white-space: nowrap; width: 1%; }
+.wdc td.wdc-st, .wdc td.wdc-orig, .wdc td.wdc-pay, .wdc td.wdc-x { white-space: nowrap; width: 1%; }
+.wdc td.wdc-st .wkt-tags { margin-left: 0; }
+.wdc td.wdc-amt { width: 120px; }
+.wdc td.wdc-amt .wk-in { text-align: right; }
+.wdc td.wdc-note { min-width: 120px; }
+.wdc td.wdc-note .wk-in { color: var(--ink-3); }
+.wdc tr.wdc-done td.wdc-kind { color: var(--muted); }
+/* оригиналы: отправили / получили — переключатели */
+.wdc-ob { display: inline-flex; align-items: center; gap: 4px; height: 24px; padding: 0 8px; margin-right: 4px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); font: inherit; font-size: 12px; color: var(--muted); cursor: pointer; }
+.wdc-ob:hover { border-color: var(--line-strong); color: var(--ink); }
+.wdc-ob.on { background: #e3f3e7; border-color: #bfe3c9; color: #1f7a3a; font-weight: 600; }
+.wdc-edo { font-size: 12px; color: var(--ash); padding-left: 2px; }
+/* счёт: аванс / полная, оплачено */
+.wdc-inv { height: 24px; padding: 0 8px; border: 1px dashed var(--line-strong); border-radius: 6px; background: none; font: inherit; font-size: 12px; color: var(--muted); cursor: pointer; }
+.wdc-inv.on { border-style: solid; border-color: #c9dcf6; background: #eef4fc; color: #1d5fa8; font-weight: 600; }
+.wdc-paid { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; font-size: 12px; color: var(--muted); }
+.wdc-paid .wk-in { width: 96px; text-align: right; }
+.wdc-fmenu { width: 250px; }
+
+/* окно «Добавить контрагентов» */
+.pj-dlg.wdc-dlg { width: min(820px, calc(100vw - 32px)); }
+.wdc-nproj { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+.wdc-nproj select { flex: 1; height: 36px; border: 1px solid var(--line); background: var(--card) var(--chevron) no-repeat right 10px center; padding: 0 30px 0 10px; -webkit-appearance: none; appearance: none; }
+.wdc-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 12px; font-size: 12.5px; color: var(--muted); }
+.wdc-chip { display: inline-flex; align-items: center; gap: 5px; height: 28px; padding: 0 10px; border: 1px solid var(--line); border-radius: 9999px; background: var(--card); font: inherit; font-size: 13px; color: var(--ink-2); cursor: pointer; }
+.wdc-chip:hover { border-color: var(--line-strong); color: var(--ink); }
+.wdc-nhead, .wdc-nrow { display: grid; grid-template-columns: 22px minmax(0, 1fr) minmax(0, 150px) minmax(0, 170px) 32px; gap: 8px; align-items: center; }
+.wdc-nhead { font-size: 12px; color: var(--muted); padding-bottom: 4px; }
+.wdc-nrow { padding: 5px 0; border-top: 1px solid var(--line-soft); }
+.wdc-nrow .wk-in { border-color: var(--line); background: var(--card); height: 36px; width: 100%; }
+.wdc-nrow .wk-in:disabled { background: #f7f7f6; color: var(--muted); }
+.wdc-nrow select.wk-in { background: var(--card) var(--chevron) no-repeat right 8px center; padding-right: 24px; -webkit-appearance: none; appearance: none; }
+.wdc-pick { position: relative; min-width: 0; display: flex; }
+.wdc-pick input { flex: 1 1 auto; min-width: 0; }
+
+/* карточка контрагента */
+.pj-dlg.wdc-pdlg { width: min(560px, calc(100vw - 32px)); }
+.wdc-pcard { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; }
+.wdc-pf { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--muted); min-width: 0; }
+.wdc-pf .wk-in { width: 100%; height: 36px; border-color: var(--line); background: var(--card); font-size: 14px; }
+.wdc-pf textarea.wk-in { height: auto; resize: vertical; }
+.wdc-pf select.wk-in { background: var(--card) var(--chevron) no-repeat right 10px center; padding-right: 28px; -webkit-appearance: none; appearance: none; }
+.wdc-vfind, .wdc-pcard .wdc-pf:has(textarea), .wdc-pv, .wdc-pcard .form-actions { grid-column: 1 / -1; }
+.wdc-vfind .wk-in { border-style: dashed; }
+.wdc-pv { margin: 0; }
+
+/* раздел «Контрагенты» */
+.wdc-pt td { height: 46px; }
+.wdc-prow { cursor: pointer; }
+.wdc-prow:hover td { background: #fafaf9; }
+.wdc-prow:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.wdc-pn b { display: block; font-weight: 600; }
+.wdc-pn span { display: block; font-size: 12px; color: var(--muted); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wdc-pc { color: var(--ink-3); font-size: 13px; }
+.wdc-edotag { display: inline-flex; height: 22px; align-items: center; padding: 0 8px; border-radius: 6px; font-size: 12px; font-weight: 600; background: #f1efed; color: #78716c; }
+.wdc-edotag.e-full { background: #e3f3e7; color: #1f7a3a; }
+.wdc-edotag.e-in { background: #e3eefb; color: #1d5fa8; }
+.wdc-edotag.e-none { background: #fbf1d3; color: #8a6200; }
+.wdc-pt td .muted { color: var(--ash); }
+
+@media (max-width: 1380px) {   /* узко (телефон, планшет, ноутбук с развёрнутым меню) — документы карточками */
+  .wdc thead { display: none; }
+  .wdc tr { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; column-gap: 6px; padding: 6px 4px; }
+  .wdc tr.wdc-g { display: block; padding: 0; }
+  .wk-docs.wdc tr.wdc-g td { display: block; padding: 10px 8px; }
+  .wdc-gl { contain: none; flex-wrap: wrap; white-space: normal; }
+  .wdc-gh { flex-wrap: wrap; } .wdc-gl { flex-basis: 100%; } .wdc-gr { flex-wrap: wrap; width: 100%; } .wdc-sum { white-space: normal; margin-right: auto; }
+  .wdc tbody tr + tr { border-top: 1px solid var(--line-soft); }
+  .wk-docs.wdc td { border: 0 !important; height: auto; padding: 2px 4px; }
+  .wdc td.wdc-kind { grid-column: 1; grid-row: 1; padding-left: 4px; align-self: center; }
+  .wdc td.wdc-st { grid-column: 2; grid-row: 1; width: auto; justify-self: start; }
+  .wdc td.wdc-x { grid-column: 3; grid-row: 1; }
+  .wdc td.wdc-orig, .wdc td.wdc-amt, .wdc td.wdc-pay, .wdc td.wdc-note { grid-column: 1 / -1; width: auto; white-space: normal; }
+  .wdc td.wdc-amt .wk-in { text-align: left; max-width: 200px; }
+  .wdc td.wdc-orig:empty, .wdc td.wdc-pay:empty { display: none; }
+}
+@media (max-width: 720px) {
+  .wdc-nhead { display: none; }
+  .wdc-nrow { grid-template-columns: 18px minmax(0, 1fr) 32px; row-gap: 6px; padding: 8px 0; }
+  .wdc-nrow .wdc-pick, .wdc-nrow input[name=city], .wdc-nrow select { grid-column: 2; }
+  .wdc-nrow .wk-x { grid-column: 3; grid-row: 1; }
+  .wdc-pcard { grid-template-columns: 1fr; }
+  .wdc-pt thead { display: none; }
+  .wdc-pt tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; padding: 8px 4px; }
+  .wdc-pt td { border: 0 !important; height: auto; padding: 1px 6px; }
+  .wdc-pt td:nth-child(n+2) { grid-column: 1; font-size: 13px; color: var(--ink-3); }
+  .wdc-pt td:last-child { grid-column: 2; grid-row: 1; }
+  .wdc-pt tbody tr + tr { border-top: 1px solid var(--line-soft); }
+}

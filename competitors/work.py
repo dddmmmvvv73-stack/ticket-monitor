@@ -17,7 +17,11 @@
                           "time" — затрачено, секунд; "run" — таймер идёт с (ISO-время) или пусто; "est" — план, минут,
                           "prio" — приоритет: high | mid | low | пусто; "status" — work | wait | пусто (не начата),
                           "log": [{"id", "at" — ГГГГ-ММ-ДДTЧЧ:ММ, "text"}] — журнал задачи (решение 22.10)}},
-     "docs":     {номер: {"project", "kind", "party", "status", "amount", "pay", "closing", "note", "upd"}},
+     "docs":     {номер: {"project", "cp" — номер контрагента или пусто, "kind" (Договор / Счёт / УПД / …), "party" — название
+                          контрагента (копия), "status" — DOC_STATUS, "amount", "paid" — оплачено (счёт), "inv" — advance | full (счёт),
+                          "orig_out", "orig_in" — оригинал отправили / получили (контрагент без полного ЭДО), "note", "upd"}},
+     "parties":  {номер: {"name", "legal", "inn", "city", "service" — PARTY_SERVICE, "edo" — EDO, "contact", "phone", "email", "note",
+                          "venue" — номер площадки в справочнике или пусто, "upd"}}   ← контрагенты (решение пользователя 22.10)
      "tags":     {номер: {"name", "color"}},
      "costs":    {номер: {"project", "name" — статья, "party" — кому, "amount", "date", "paid", "note", "upd"}},
      "notes":    {номер: {"project" — или пусто (общая), "title", "created", "fav" — избранная, "upd";
@@ -47,7 +51,7 @@ from datetime import datetime
 from competitors.storage import CONFIG_DIR, load_json, save_json
 
 FILE = CONFIG_DIR / "work.json"
-KINDS = ("projects", "tasks", "docs", "tags", "costs", "notes", "shows", "stages")
+KINDS = ("projects", "tasks", "docs", "tags", "costs", "notes", "shows", "stages", "parties")
 # shows — гастроли проекта (решение пользователя 20.10): дата, площадка, город; площадка — из справочника «Площадки → Площадки»
 # (venue — номер записи config/venue_book.json); название и город хранятся копией — строка читается, даже если площадку убрали из справочника
 # Цвета тегов. Красный и оранжевый — только у приоритета (решение пользователя 19.10: полоса слева — по тегу, и красная
@@ -68,15 +72,17 @@ DEFAULT_STAGES = {"idea": {"name": "Идея", "color": "gray", "order": 1, "don
                   "live": {"name": "Проведение", "color": "green", "order": 5, "done": False},
                   "closing": {"name": "Закрытие", "color": "peach", "order": 6, "done": False},
                   "done": {"name": "Завершён", "color": "mint", "order": 7, "done": True}}
-DOC_STATUS = ["draft", "sent", "signed"]
-PAY = ["no", "part", "paid"]
+DOC_STATUS = ["wait", "got", "acc", "signed"]   # ожидаем → получен → у бухгалтера → подписан (решение 22.10)
+DOC_STATUS_OLD = {"draft": "got", "sent": "acc"}   # до 22.10: черновик / отправлен
+INV = ["", "advance", "full"]                     # счёт: аванс | полная оплата
+PARTY_SERVICE = ["", "venue", "hotel", "transport", "tech", "promo", "artist", "other"]
+EDO = ["", "full", "in", "none"]                  # как у площадок: полное | только входящий | не работают (оригиналы)
 PRIO = ["", "low", "mid", "high"]
 STATUS = ["", "work", "wait"]
 NOTE_COLORS = ["amber", "coral", "lime", "violet", "sky", "pink"]
 NOTE_TYPES = ["quick", "work"]   # быстрая (цветная карточка) | рабочая (редактор, привязка к задаче) — решение пользователя 22.10
 NOTE_DOC_MAX = 2_000_000         # документ рабочей заметки, знаков JSON (картинки и файлы — отдельно, в work_media)
 LOG_MAX = 2000                   # записей в журнале задачи   # цвет карточки заметки (решение пользователя 20.10: 6 базовых)   # статус задачи: не начата | в работе | ждёт ответа («готово» — это done; решение пользователя 20.10)
-CLOSING = ["no", "got"]
 SALE = ["", "allowed", "onsale"]
 TEXT_MAX = 3000
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
@@ -109,6 +115,11 @@ def load() -> dict:
         out["stages"] = {k: dict(v) for k, v in DEFAULT_STAGES.items()}
     for t in out["tags"].values():
         t["color"] = RECOLOR.get(t.get("color"), t.get("color"))
+    for d in out["docs"].values():   # документы до 22.10: прежние статусы и «оплачено полностью» — в новые поля
+        d["status"] = DOC_STATUS_OLD.get(d.get("status"), d.get("status"))
+        if d.pop("pay", None) == "paid" and not d.get("paid"):
+            d["paid"] = d.get("amount")
+        d.pop("closing", None)
     return out
 
 
@@ -295,13 +306,32 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
         if out["done"]:
             out["done_at"] = _date(d.get("done_at"), "сделано") or datetime.now().strftime("%Y-%m-%d")
         return out
+    if kind == "parties":
+        inn = re.sub(r"\s", "", str(d.get("inn") or ""))
+        if inn and not re.fullmatch(r"\d{10}|\d{12}", inn):
+            raise WorkError("ИНН — 10 или 12 цифр")
+        venue = str(d.get("venue") or "")
+        if venue and not _VENUE.match(venue):
+            raise WorkError("неверный номер площадки")
+        out = {"name": _text(d.get("name"), "название", 300), "legal": _text(d.get("legal"), "юрлицо", 300), "inn": inn,
+               "city": _text(d.get("city"), "город", 120), "service": _enum(d.get("service"), PARTY_SERVICE, "услуга", ""),
+               "edo": _enum(d.get("edo"), EDO, "ЭДО", ""), "contact": _text(d.get("contact"), "контакт", 300),
+               "phone": _text(d.get("phone"), "телефон", 200), "email": _text(d.get("email"), "почта", 200),
+               "note": _text(d.get("note"), "заметка"), "venue": venue}
+        if not out["name"]:
+            raise WorkError("у контрагента нужно название")
+        return out
     pid = str(d.get("project") or "")
     if pid and pid not in data["projects"]:
         raise WorkError("такого проекта нет")
-    out = {"project": pid, "kind": _text(d.get("kind"), "документ", 200), "party": _text(d.get("party"), "с кем", 300),
-           "status": _enum(d.get("status"), DOC_STATUS, "статус", "draft"), "amount": _amount(d.get("amount")),
-           "pay": _enum(d.get("pay"), PAY, "оплата", "no"), "closing": _enum(d.get("closing"), CLOSING, "закрывающие", "no"),
-           "note": _text(d.get("note"), "заметка")}
+    cp = str(d.get("cp") or "")
+    if cp and cp not in data["parties"]:
+        raise WorkError("такого контрагента нет")
+    out = {"project": pid, "cp": cp, "kind": _text(d.get("kind"), "документ", 200),
+           "party": data["parties"][cp]["name"] if cp else _text(d.get("party"), "с кем", 300),   # название — копией: строка читается и без контрагента
+           "status": _enum(DOC_STATUS_OLD.get(d.get("status"), d.get("status")), DOC_STATUS, "статус", "wait"),
+           "amount": _amount(d.get("amount")), "paid": _amount(d.get("paid")), "inv": _enum(d.get("inv"), INV, "счёт", ""),
+           "orig_out": bool(d.get("orig_out")), "orig_in": bool(d.get("orig_in")), "note": _text(d.get("note"), "заметка")}
     if not (out["kind"] or out["party"]):
         raise WorkError("у документа нужно название или контрагент")
     return out
@@ -391,6 +421,10 @@ def apply_op(op: dict) -> dict:
                 for r in data["tasks"].values():
                     if oid in (r.get("tags") or []):
                         r["tags"] = [t for t in r["tags"] if t != oid]
+            if kind == "parties":   # документы контрагента остаются — с его названием, без связи
+                for r in data["docs"].values():
+                    if r.get("cp") == oid:
+                        r["cp"] = ""
             if kind == "tasks":   # рабочие заметки задачи остаются — в проекте, без задачи
                 for n in data["notes"].values():
                     if n.get("task") == oid:
