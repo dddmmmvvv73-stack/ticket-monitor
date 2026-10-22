@@ -706,7 +706,6 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
 .wts-t td { padding: 7px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; height: 32px; }
 .wts-t tr.wts-r:hover td { background: #fafaf9; }
 .wts-t tr.wts-done .wts-name b { color: var(--muted); text-decoration: line-through; text-decoration-color: #c8c5c0; }
-.wts-cb { width: 16px; height: 16px; margin: 0; accent-color: #16a34a; cursor: pointer; }
 .wts-name { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .wts-name b { font-weight: 500; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; border: 0; background: none; padding: 0; font: inherit; font-weight: 500; text-align: left; }
 .wts-name b:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -6350,7 +6349,7 @@ function wtsTable(l) {
   if (!l.length) return '<p class="wts-none">' + (wkTasksOf(null).length ? "Ничего не нашлось — измените поиск или фильтры." : "Задач пока нет — нажмите «Создать задачу».") + '</p>';
   return '<div class="wts-tw"><table class="wts-t"><thead><tr><th style="width:26px"></th>' + th("text", "Задача") + th("proj", "Проект") + th("prio", "Приоритет") + th("status", "Статус") + th("due", "Срок") + '<th style="width:36px"></th></tr></thead><tbody>' +
     l.map(function (t) {
-      return '<tr class="wts-r wkt-row' + (t.done ? ' wts-done' : '') + '"><td><input type="checkbox" class="wts-cb" data-wk-done="' + t.id + '"' + (t.done ? ' checked' : '') + ' aria-label="Готово: ' + esc(t.text) + '"></td>' +
+      return '<tr class="wts-r wkt-row' + (t.done ? ' wts-done' : '') + '"><td><input type="checkbox" class="wk-check" data-wk-done="' + t.id + '"' + (t.done ? ' checked' : '') + ' aria-label="Готово: ' + esc(t.text) + '"></td>' +
         '<td style="max-width:380px"><div class="wts-name"><b role="button" tabindex="0" data-wkt-open="' + t.id + '" title="' + esc(t.text) + '">' + esc(t.text) + '</b><span class="wts-ics">' + wkIcons(t) + '</span></div></td>' +
         '<td>' + wtsProjCell(t) + '</td><td>' + wkPrioChip(t) + '</td><td>' + wtsStatus(t) + '</td>' +
         '<td class="wts-due">' + wkDateBtn("tasks|" + t.id + "|due", t.due, { due: true, done: t.done, label: "Срок" }) + '</td><td>' + wtsMore(t) + '</td></tr>' +
