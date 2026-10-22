@@ -5279,16 +5279,22 @@ function wnPage() {
       '<button type="button" class="wn-ic' + (m.fav ? ' on' : '') + '" data-wn-fav aria-pressed="' + m.fav + '" aria-label="' + (m.fav ? 'Убрать из избранного' : 'В избранное') + '" title="' + (m.fav ? 'Избранная — на доске первой' : 'В избранное') + '">' + (m.fav ? WKN_ICON.star : WKN_ICON.starO) + '</button>' +
       '<button type="button" class="wn-ic" data-wn-more aria-haspopup="menu" aria-label="Ещё" title="Ещё">' + WN_IC.more + '</button></div>' +
     '<textarea class="wn-title" data-wn-title rows="1" maxlength="200" placeholder="Без названия" aria-label="Название заметки">' + esc(m.title) + '</textarea>' +
-    '<div class="wn-props"><label class="wn-prop"><span>Проект</span><select data-native data-wn-proj>' + wkProjOpts(WK.projects[m.project] ? m.project : "", "Без проекта") + '</select></label>' +
-      '<label class="wn-prop"><span>Задача</span><select data-native data-wn-task>' + wnTaskOpts(m) + '</select></label>' +
-      '<span class="wn-prop"><span>Создана</span><b>' + esc(wknDate(m.created)) + '</b></span></div>' +
+    '<div class="wn-props">' + wnProp("proj", "Проект", wkPname(m.project), "Без проекта") + wnProp("task", "Задача", WK.tasks[m.task] ? WK.tasks[m.task].text : "", "Без задачи") +   // решение 22.10: столбиком, серым текстом, выбор — меню
+      '<div class="wn-prop"><span class="wn-pl">Создана</span><span class="wn-pv wn-pv-fix">' + esc(wknDate(m.created)) + '</span></div></div>' +
     '<div class="wn-host" data-wn-ed></div></div>';
 }
-function wnTaskOpts(m) {   // задачи проекта заметки (без проекта — все); открытые по сроку, готовые в конце
-  var cur = WK.tasks[m.task] ? m.task : "";
-  return '<option value="">Без задачи</option>' + WorkNotes.taskOptions(WK, WK.projects[m.project] ? m.project : "").map(function (x) {
-    return '<option value="' + x.id + '"' + (x.id === cur ? ' selected' : '') + '>' + esc(x.label) + '</option>';
-  }).join("");
+function wnProp(kind, label, val, empty) {
+  return '<div class="wn-prop"><span class="wn-pl">' + label + '</span><button type="button" class="wn-pv' + (val ? '' : ' wn-pv-none') + '" data-wn-pick="' + kind + '" aria-haspopup="menu" aria-label="' + label + ': ' + esc(val || empty) + ' — изменить">' + esc(val || empty) + '</button></div>';
+}
+function wnPickOpen(anchor, kind) {   // меню выбора проекта или задачи — как фильтры раздела; задачи — выбранного проекта, открытые по сроку, готовые в конце
+  if (WKPOP && WKPOP.anchor === anchor) { wkPopClose(); return; }
+  var m = S.wk.wn.meta, pid = WK.projects[m.project] ? m.project : "", cur = kind === "proj" ? pid : WK.tasks[m.task] ? m.task : "";
+  var opts = kind === "proj" ? [["", "Без проекта"]].concat(wkProjects().map(function (p) { return [p.id, p.title, wkStageDone(p.stage) ? "завершён" : ""]; }))
+    : [["", "Без задачи"]].concat(WorkNotes.taskOptions(WK, pid).map(function (x) { var t = WK.tasks[x.id], p = !pid && wkPname(t.project); return [x.id, t.text, [p, t.done ? "готово" : ""].filter(Boolean).join(" · ")]; }));
+  wkPopOpen(anchor, "wk-menu wn-pmenu", '<div class="wkp-title">' + (kind === "proj" ? "Проект" : pid ? "Задача проекта" : "Задача") + '</div><div class="wn-pmenu-l">' + opts.map(function (o) {
+    var on = o[0] === cur;
+    return '<button type="button" class="wk-menu-item' + (on ? ' on' : '') + '" data-wn-set="' + kind + '|' + o[0] + '" role="menuitemradio" aria-checked="' + on + '"><span>' + esc(o[1]) + (o[2] ? '<small>' + esc(o[2]) + '</small>' : '') + '</span>' + (on ? WKT_ICON.check : '') + '</button>';
+  }).join("") + (kind === "task" && opts.length === 1 ? '<p class="wn-pmenu-none">' + (pid ? 'У проекта пока нет задач' : 'Задач пока нет') + '</p>' : '') + '</div>', {});
 }
 function wnAttach(focus) {   // после render: редактор живёт между перерисовками — переносится в новую страницу, курсор не теряется
   var ph = document.querySelector("[data-wn-ed]"), st = S.wk.wn; if (!ph || !st) return;
@@ -5364,6 +5370,14 @@ document.addEventListener("click", function (ev) {
   if (!S.wk.wn || !ev.target.closest) return;
   var b;
   if (ev.target.closest("[data-wn-back]")) { wnClose(true); return; }
+  if (WN && ev.target.matches("#view, .wn-page, .wn-host, .wn-edwrap, .wn-ed") && ev.clientY > WN.ed.el.querySelector(".wn-ed").getBoundingClientRect().top) { WN.ed.focus("end"); return; }   // пустое место под и рядом с текстом — тоже для письма: курсор в конец
+  if ((b = ev.target.closest("[data-wn-pick]"))) { wnPickOpen(b, b.getAttribute("data-wn-pick")); return; }
+  if ((b = ev.target.closest(".wn-pmenu [data-wn-set]"))) {   // проект: задача из другого проекта отвязывается; задача: проект — из неё
+    var ps = b.getAttribute("data-wn-set").split("|"), tk = WK.tasks[ps[1]]; wkPopClose();
+    if (ps[0] === "proj") wnMeta(wnProjPatch({ type: "work", task: S.wk.wn.meta.task }, ps[1]));
+    else wnMeta(tk && tk.project ? { task: ps[1], project: tk.project } : { task: ps[1] });
+    return;
+  }
   if (ev.target.closest("[data-wn-fav]")) { var fv = !S.wk.wn.meta.fav; wnMeta({ fav: fv }, fv ? "В избранном — на доске первой" : "Убрано из избранного"); return; }
   if ((b = ev.target.closest("[data-wn-more]"))) {
     if (WKPOP && WKPOP.anchor === b) { wkPopClose(); return; }
@@ -5380,11 +5394,6 @@ document.addEventListener("click", function (ev) {
 document.addEventListener("click", function (ev) {   // ушли в другой раздел меню — заметка сохраняется и закрывается
   if (S.wk.wn && ev.target.closest && ev.target.closest("[data-view]")) wnClose(true, true);
 }, true);
-document.addEventListener("change", function (ev) {
-  var t = ev.target; if (!S.wk.wn || !t.hasAttribute) return;
-  if (t.hasAttribute("data-wn-proj")) wnMeta(wnProjPatch({ type: "work", task: S.wk.wn.meta.task }, t.value));
-  else if (t.hasAttribute("data-wn-task")) { var tk = WK.tasks[t.value]; wnMeta(tk && tk.project ? { task: t.value, project: tk.project } : { task: t.value }); }   // проект — из задачи
-});
 document.addEventListener("input", function (ev) {
   if (!S.wk.wn || !ev.target.hasAttribute || !ev.target.hasAttribute("data-wn-title")) return;
   S.wk.wn.meta.title = ev.target.value; wkGrow(ev.target); wnSchedule();

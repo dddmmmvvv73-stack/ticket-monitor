@@ -26,7 +26,7 @@
 .wkn-phead .wk-h2 { margin: 0; }
 
 /* страница рабочей заметки */
-.wn-page { width: 100%; max-width: 900px; min-width: 0; box-sizing: border-box; margin: 0 auto; padding-bottom: 64px; }   /* min-width: 0 — широкая таблица не раздвигает страницу */
+.wn-page { width: 100%; min-width: 0; box-sizing: border-box; }   /* на всю ширину раздела (решение 22.10); min-width: 0 — широкая таблица не раздвигает страницу */
 .wn-bar { display: flex; align-items: center; gap: 8px; margin: 2px 0 20px; }
 .wn-back { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 13px 0 9px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); font: inherit; font-size: 14px; color: var(--ink-2); cursor: pointer; }
 .wn-back:hover { border-color: var(--line-strong); color: var(--ink); }
@@ -39,24 +39,32 @@
 .wn-title { display: block; width: 100%; box-sizing: border-box; border: 0; background: transparent; resize: none; overflow: hidden; padding: 0; outline: none;
   font: 600 34px/1.2 var(--display); letter-spacing: -0.02em; color: var(--ink); }
 .wn-title::placeholder { color: var(--ash); }
-.wn-props { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 22px; margin: 14px 0 20px; font-size: 13.5px; color: var(--muted); }
-.wn-prop { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
-.wn-prop select { height: 32px; max-width: 300px; min-width: 0; border: 1px solid var(--line); border-radius: 9px; padding: 0 28px 0 10px; font: inherit; font-size: 13.5px; color: var(--ink);
-  background: var(--card) var(--chevron) no-repeat right 9px center; background-size: 10px; -webkit-appearance: none; appearance: none; cursor: pointer; text-overflow: ellipsis; }
-.wn-prop select:focus { outline: none; border-color: var(--cta); box-shadow: 0 0 0 3px rgba(59, 168, 245, .14); }
-.wn-prop b { font-weight: 400; color: var(--ink-2); }
+.wn-title:focus-visible { outline: none; }
+/* связи и дата — столбиком, серым текстом; нажатие — меню (решение 22.10); ниже — черта, под ней панель и текст */
+.wn-props { min-width: 0; display: flex; flex-direction: column; gap: 2px; margin: 14px 0 0; padding-bottom: 14px; border-bottom: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+.wn-prop { display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 30px; }
+.wn-pl { flex: none; width: 76px; }
+.wn-pv { min-width: 0; max-width: 100%; margin-left: -6px; padding: 4px 6px; border: 0; border-radius: 6px; background: none; font: inherit; color: var(--ink-3); text-align: left;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
+.wn-pv:hover, .wn-pv[aria-expanded="true"] { background: var(--line-soft); color: var(--ink); }
+.wn-pv.wn-pv-none { color: var(--ash); }
+.wn-pv-fix { cursor: default; } .wn-pv-fix:hover { background: none; color: var(--ink-3); }
+.wn-pmenu { width: 320px; }
+.wn-pmenu-l { max-height: 320px; overflow-y: auto; }
+.wn-pmenu .wk-menu-item > span { min-width: 0; overflow-wrap: anywhere; }
+.wn-pmenu-none { margin: 4px 8px 6px; font-size: 13px; color: var(--muted); }
 
-/* редактор: белая карточка, панель сверху прилипает */
-.wn-edwrap { min-width: 0; background: var(--card); border: 1px solid var(--line); border-radius: 18px; }
-.wn-tbox { position: sticky; top: 0; z-index: 5; background: var(--card); border-bottom: 1px solid var(--line-soft); border-radius: 18px 18px 0 0; }
-.wn-tb { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 8px 10px; }
+/* редактор: пишут прямо на странице, без карточки и рамок (решение пользователя 22.10); панель сверху прилипает */
+.wn-edwrap { min-width: 0; }
+.wn-tbox { position: sticky; top: 0; z-index: 5; background: var(--canvas); }
+.wn-tb { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 10px 0 6px; }
 .wn-b { width: 34px; height: 32px; display: grid; place-items: center; flex: none; border: 0; border-radius: 8px; background: transparent; color: var(--ink-3); cursor: pointer; padding: 0; }
 .wn-b:hover { background: var(--line-soft); color: var(--ink); }
 .wn-b.on { background: #1b1b1b; color: #fff; }
 .wn-b:disabled { opacity: .3; cursor: default; background: transparent; }
 .wn-hx { font: 600 13px/1 var(--ui); } .wn-hx small { font-size: 9.5px; margin-left: 1px; }
 .wn-sep { flex: none; width: 1px; height: 20px; background: var(--line); margin: 0 5px; }
-.wn-ctx { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 7px 12px 8px; border-top: 1px solid var(--line-soft); font-size: 13px; color: var(--ink-3); }
+.wn-ctx { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 2px 0 8px; font-size: 13px; color: var(--ink-3); }
 .wn-ctx[hidden] { display: none; }
 .wn-ctx-l { margin-right: 4px; }
 .wn-ctx-url { max-width: 380px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--cta); margin-right: 4px; }
@@ -67,11 +75,12 @@
 .wn-cb-ok { background: #1b1b1b; border-color: #1b1b1b; color: #fff; }
 .wn-cb-ok:hover { color: #fff; }
 .wn-cb-del { color: #b42318; }
-.wn-ed { min-width: 0; padding: 20px 34px 36px; }
+.wn-ed { min-width: 0; padding: 14px 0 0; }
 
 /* текст */
 .wn-pm, .wn-pm:focus-visible { outline: none; }
-.wn-pm { min-height: 46vh; font: 400 16px/1.6 var(--ui); color: var(--ink); overflow-wrap: break-word; }
+.wn-pm { box-sizing: border-box; min-height: calc(100vh - 300px); padding-bottom: 30vh;   /* пустое место ниже текста — тоже для письма: нажатие ставит курсор в конец */
+  font: 400 16px/1.6 var(--ui); color: var(--ink); overflow-wrap: break-word; }
 .wn-pm > * + * { margin-top: .5em; }
 .wn-pm p { margin: 0; }
 .wn-pm h1, .wn-pm h2, .wn-pm h3 { font-family: var(--display); font-weight: 600; color: var(--ink); }
@@ -152,19 +161,18 @@
   .wkn-work .wkn-foot > .wkn-link + .wkn-row .wkn-link { display: none; }   /* узко: задача видна, проект — в её окне */
   .wn-bar { margin-bottom: 14px; }
   .wn-title { font-size: 26px; }
-  .wn-props { gap: 8px; margin: 10px 0 14px; }
-  .wn-prop { width: 100%; } .wn-prop > span { flex: none; width: 58px; } .wn-prop select { flex: 1; max-width: none; }
-  .wn-edwrap { border-radius: 14px; margin: 0 -4px; }
-  .wn-tbox { border-radius: 14px 14px 0 0; }
-  .wn-tb { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 6px 8px; }
+  .wn-props { margin-top: 10px; padding-bottom: 10px; }
+  .wn-pl { width: 64px; }
+  .wn-tb { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding: 4px 0; }
   .wn-tb::-webkit-scrollbar { display: none; }
-  .wn-ed { padding: 14px 16px 28px; }
-  .wn-pm { font-size: 16px; min-height: 40vh; }
+  .wn-ed { padding: 10px 0 0; }
+  .wn-pm { font-size: 16px; min-height: calc(100vh - 340px); }
   .wn-pm table { min-width: 460px; }
   .wn-file { flex-wrap: wrap; } .wn-file-n { flex-basis: calc(100% - 52px); }
   /* пока пишут — панель над клавиатурой */
-  .wn-float .wn-tbox { position: fixed; left: 0; right: 0; top: auto; bottom: 0; z-index: 70; border-radius: 0; border-top: 1px solid var(--line); border-bottom: 0; box-shadow: 0 -4px 14px rgba(0, 0, 0, .06); }
-  .wn-float .wn-ed { padding-bottom: 120px; }
+  .wn-float .wn-tbox { position: fixed; left: 0; right: 0; top: auto; bottom: 0; z-index: 70; background: var(--card); border-top: 1px solid var(--line); box-shadow: 0 -4px 14px rgba(0, 0, 0, .06); }
+  .wn-float .wn-tb { padding: 6px 8px; }
+
   .wkd-log li { grid-template-columns: minmax(0, 1fr) auto; }
   .wkd-log-at { grid-column: 1 / -1; padding: 6px 0 0 7px; }
 }
