@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Анализ рынка — прототип</title>
+<title>Всё схвачено</title>
+<link rel="icon" type="image/png" href="favicon.png">
 <link rel="stylesheet" href="work-calendar.css">
 <link rel="stylesheet" href="work-notes.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -59,6 +60,27 @@ h1, h2, h3 { margin: 0; font-family: var(--display); }
 .nav-sub { display: grid; gap: 2px; margin: 2px 0 4px; }
 .nav-sub[hidden] { display: none; }
 .side .nav-sub .nav-item { padding-left: 38px; height: 34px; }
+.brand-mark { width: 28px; height: 28px; flex-shrink: 0; }
+.brand-name { white-space: nowrap; overflow: hidden; }
+.side-toggle { margin-left: auto; width: 28px; height: 28px; flex-shrink: 0; border: 0; border-radius: 8px; background: none; color: var(--ink-3); display: grid; place-items: center; }
+.side-toggle:hover { background: #f2f1ef; color: var(--ink); }
+/* группы разделов: заголовок со стрелкой сворачивает свои пункты (запоминается в браузере) */
+button.nav-group { display: flex; align-items: center; width: 100%; border: 0; background: none; text-align: left; }
+button.nav-group:hover { color: var(--ink); }
+.nav-group .nav-chev { margin-left: auto; transition: transform .2s ease-out; }
+.nav-group[aria-expanded="false"] .nav-chev { transform: rotate(-90deg); }
+.nav-grp { display: flex; flex-direction: column; gap: 4px; }
+.nav-grp[hidden] { display: none; }
+/* меню свёрнуто до значков — кнопка рядом с названием */
+.side { transition: width .2s ease-out, padding .2s ease-out; }
+body.side-mini .side { width: 64px; padding: 20px 10px; }
+body.side-mini .brand { flex-direction: column; gap: 12px; padding: 4px 0 8px; }
+body.side-mini .brand-name, body.side-mini .side .nav-chev, body.side-mini .nav-sub { display: none; }
+body.side-mini .side-toggle { margin-left: 0; }
+body.side-mini .side .nav-item { font-size: 0; gap: 0; padding: 0; justify-content: center; }
+body.side-mini .nav-group { font-size: 0; padding: 0; height: 1px; margin: 8px 6px; background: var(--line); pointer-events: none; }
+body.side-mini .nav-grp[hidden] { display: flex; }   /* в значках видны все разделы */
+body.side-mini .nav-parent.in { background: var(--soot); color: #fff; }
 .mtabs.rep-mobile { display: none; }  /* на компьютере три страницы «Репертуара» — в меню слева */
 @media (max-width: 820px) { .mtabs.rep-mobile { display: flex; } }
 @media (prefers-reduced-motion: reduce) { .nav-parent .nav-chev { transition: none; } }
@@ -2473,35 +2495,46 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <div class="shell">
   <nav class="side" aria-label="Разделы">
     <div class="brand">
-      <svg width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><rect x="2" y="12" width="4" height="8" rx="1" fill="#0c0a09"/><rect x="9" y="7" width="4" height="13" rx="1" fill="#0c0a09"/><rect x="16" y="2" width="4" height="18" rx="1" fill="#3ba6f1"/></svg>
-      Анализ рынка
+      <img class="brand-mark" src="logo-mark.png" width="28" height="28" alt="">
+      <span class="brand-name">Всё схвачено</span>
+      <button class="side-toggle" id="sideToggle" type="button" aria-expanded="true" aria-label="Свернуть меню" title="Свернуть меню"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2.5" width="12" height="11" rx="2"/><path d="M6 2.5v11"/></svg></button>
     </div>
-    <div class="nav-group" aria-hidden="true">Работа</div>
+    <button class="nav-group" type="button" data-grp="work" aria-expanded="true" aria-controls="grp-work">Работа<svg class="nav-chev" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></button>
+    <div class="nav-grp" id="grp-work">
     <a class="nav-item" href="#wkhome" data-view="wkhome"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 7.2L8 2.8l5.5 4.4v6.3a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5z"/><path d="M6.4 14v-3.6h3.2V14"/></svg>Обзор</a>
     <a class="nav-item" href="#work" data-view="work"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.6a1 1 0 0 1 1-1h3.1l1.5 1.6H13a1 1 0 0 1 1 1v5.9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>Проекты</a>
     <a class="nav-item" href="#wkcal" data-view="wkcal"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/><circle cx="8" cy="10.2" r=".9" fill="currentColor" stroke="none"/></svg>Календарь</a>
     <a class="nav-item" href="#wktasks" data-view="wktasks"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M5.2 6.2l1.3 1.3 2.4-2.4M5.2 10.6h5.6"/></svg>Задачи</a>
     <a class="nav-item" href="#wkdocs" data-view="wkdocs"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.6 1.8H4.2a1 1 0 0 0-1 1v10.4a1 1 0 0 0 1 1h7.6a1 1 0 0 0 1-1V5z"/><path d="M9.6 1.8V5h3.2M5.8 8.6l1.5 1.5 2.9-2.9"/></svg>Документы</a>
     <a class="nav-item" href="#wknotes" data-view="wknotes"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 2h6.3l2.7 2.7V14h-9z"/><path d="M9.6 2v2.9h2.9M5.7 8h4.6M5.7 10.6h3"/></svg>Заметки</a>
-    <div class="nav-group" aria-hidden="true">Анализ</div>
+    </div>
+    <button class="nav-group" type="button" data-grp="analysis" aria-expanded="true" aria-controls="grp-analysis">Анализ<svg class="nav-chev" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></button>
+    <div class="nav-grp" id="grp-analysis">
     <a class="nav-item" href="#overview" data-view="overview"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/></svg>Обзор</a>
     <a class="nav-item" href="#city" data-view="city"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 14.5s4.5-4.2 4.5-8a4.5 4.5 0 0 0-9 0c0 3.8 4.5 8 4.5 8z"/><circle cx="8" cy="6.5" r="1.6"/></svg>Город</a>
     <a class="nav-item" href="#niches" data-view="niches"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 2h3v3H2zM6.5 2h3v3h-3zM11 2h3v3h-3zM2 6.5h3v3H2zM6.5 6.5h3v3h-3zM2 11h3v3H2z"/></svg>Ниши</a>
     <a class="nav-item" href="#calendar" data-view="calendar"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg>Календарь событий</a>
     <a class="nav-item" href="#new" data-view="new"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 2v3M8 11v3M2 8h3M11 8h3M3.8 3.8l2 2M10.2 10.2l2 2M3.8 12.2l2-2M10.2 5.8l2-2"/></svg>Новые события</a>
-    <div class="nav-group" aria-hidden="true">Справочники</div>
+    </div>
+    <button class="nav-group" type="button" data-grp="refs" aria-expanded="true" aria-controls="grp-refs">Справочники<svg class="nav-chev" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></button>
+    <div class="nav-grp" id="grp-refs">
     <a class="nav-item" href="#events" data-view="events"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 5.5V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v1.5a2.5 2.5 0 0 0 0 5V12a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1v-1.5a2.5 2.5 0 0 0 0-5z"/><path d="M10 3v10" stroke-dasharray="1.6 1.6"/></svg>Мероприятия</a>
     <button class="nav-item nav-parent" id="repBtn" aria-expanded="false" aria-controls="repSub"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="3.5" cy="12" r="1.5"/><circle cx="12.5" cy="4" r="1.5"/><path d="M5 12h4.5a2 2 0 0 0 0-4h-3a2 2 0 0 1 0-4H11"/></svg>Репертуар<svg class="nav-chev" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></button>
     <div class="nav-sub" id="repSub" hidden><a class="nav-item" href="#projects" data-view="projects">Проекты</a><a class="nav-item" href="#touring" data-view="touring">Гастролирует</a><a class="nav-item" href="#favorites" data-view="favorites">Избранное</a><a class="nav-item" href="#suggest" data-view="suggest">Подсказки <span class="sub2" id="sgCount"></span></a></div>
     <a class="nav-item" href="#venues" data-view="venues"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 14V6l6-4 6 4v8M6 14v-4h4v4"/></svg>Площадки</a>
     <a class="nav-item" href="#operators" data-view="operators"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 2v4M11 2v4M3.5 6h9v2.5a4.5 4.5 0 0 1-9 0z"/><path d="M8 13v1.5"/></svg>Билетные операторы</a>
     <a class="nav-item" href="#archive" data-view="archive"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2.5" width="12" height="3.5" rx="1"/><path d="M3 6v7.5h10V6M6.5 9h3"/></svg>Архив</a>
-    <div class="nav-group" aria-hidden="true">Продажи</div>
+    </div>
+    <button class="nav-group" type="button" data-grp="sales" aria-expanded="true" aria-controls="grp-sales">Продажи<svg class="nav-chev" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></button>
+    <div class="nav-grp" id="grp-sales">
     <a class="nav-item" href="#sales" data-view="sales"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3.5 1.8h9v12.4l-1.8-1.1-1.8 1.1-1.9-1.1-1.8 1.1-1.7-1.1z"/><path d="M6 5.5h4M6 8.5h4"/></svg>История продаж</a>
     <a class="nav-item" href="#dynamics" data-view="dynamics"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 13l4-5 3 3 5-7"/></svg>Динамика продаж</a>
-    <div class="nav-group" aria-hidden="true">Планирование</div>
+    </div>
+    <button class="nav-group" type="button" data-grp="plan" aria-expanded="true" aria-controls="grp-plan">Планирование<svg class="nav-chev" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></button>
+    <div class="nav-grp" id="grp-plan">
     <a class="nav-item" href="#planning" data-view="planning"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="3" y="1.8" width="10" height="12.4" rx="1.5"/><path d="M5.5 4.5h5M5.5 7.5h1M7.5 7.5h1M9.5 7.5h1M5.5 10h1M7.5 10h1M9.5 10h1M5.5 12h1M7.5 12h3"/></svg>Финмодель туров</a>
     <a class="nav-item" href="#route" data-view="route"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="3.5" cy="12.5" r="1.6"/><circle cx="12.5" cy="3.5" r="1.6"/><path d="M5 12.5h4.5a2.5 2.5 0 000-5h-3a2.5 2.5 0 010-5H11"/></svg>Гастрольный маршрут</a>
+    </div>
     <div style="flex-grow:1"></div>
     <a class="nav-item" href="#settings" data-view="settings"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></svg>Настройки</a>
   </nav>
@@ -11534,11 +11567,39 @@ $("dateBtn").addEventListener("click", function (ev) { ev.stopPropagation(); if 
 $("q").addEventListener("input", function () { S.q = this.value; if (["events", "archive"].indexOf(S.view) < 0 && !isM() && !vbOn()) S.view = "events"; render(); });
 function repReset() { S.m.project = S.m.vproj = null; S.m.myEdit = false; S.m.limit = 200; S.colsOpen = false; }
 document.querySelectorAll("[data-view]").forEach(function (b) { b.addEventListener("click", function (ev) { if (newTabClick(ev)) return; ev.preventDefault(); if (S.view !== b.getAttribute("data-view")) S.enter = true; S.view = b.getAttribute("data-view"); if (REP_SUB[S.view]) { repReset(); S.repOpen = true; } location.hash = S.view; render(); window.scrollTo(0, 0); }); });
-$("repBtn").addEventListener("click", function () { S.repOpen = !S.repOpen; repMenu(); });
+$("repBtn").addEventListener("click", function () {
+  if (SIDE.mini) { document.querySelector('.side [data-view="projects"]').click(); return; }   // в значках подменю нет — сразу в «Репертуар»
+  S.repOpen = !S.repOpen; repMenu();
+});
 function repMenu() {
   var open = !!S.repOpen, inside = !!REP_SUB[S.view] || S.view === "suggest";
-  $("repSub").hidden = !open; $("repBtn").setAttribute("aria-expanded", String(open)); $("repBtn").classList.toggle("in", inside && !open);
+  $("repSub").hidden = !open; $("repBtn").setAttribute("aria-expanded", String(open)); $("repBtn").classList.toggle("in", inside && (!open || !!SIDE.mini));
 }
+// Меню слева: свернуть до значков (кнопка рядом с названием) и свернуть группы разделов (стрелка у серого заголовка).
+// Запоминается в этом браузере.
+var SIDE_KEY = "ticketmonitor.side";
+var SIDE = (function () { try { return JSON.parse(localStorage.getItem(SIDE_KEY)) || {}; } catch (e) { return {}; } })();
+function sideSave() { try { localStorage.setItem(SIDE_KEY, JSON.stringify(SIDE)); } catch (e) { /* нет хранилища — до перезагрузки */ } }
+function sideApply() {
+  var mini = !!SIDE.mini, t = $("sideToggle"), lbl = mini ? "Развернуть меню" : "Свернуть меню";
+  document.body.classList.toggle("side-mini", mini);
+  t.setAttribute("aria-expanded", String(!mini)); t.setAttribute("aria-label", lbl); t.title = lbl;
+  document.querySelectorAll(".side .nav-item").forEach(function (a) { if (mini) a.title = a.textContent.trim(); else a.removeAttribute("title"); });   // в значках название — подсказкой
+  document.querySelectorAll(".side [data-grp]").forEach(function (g) {
+    var k = g.getAttribute("data-grp"), shut = (SIDE.shut || []).indexOf(k) >= 0;
+    g.setAttribute("aria-expanded", String(!shut)); $("grp-" + k).hidden = shut;
+  });
+  repMenu();
+}
+$("sideToggle").addEventListener("click", function () { SIDE.mini = !SIDE.mini; sideSave(); sideApply(); });
+document.querySelectorAll(".side [data-grp]").forEach(function (g) {
+  g.addEventListener("click", function () {
+    var k = g.getAttribute("data-grp"), shut = (SIDE.shut || []).filter(function (x) { return x !== k; });
+    if (g.getAttribute("aria-expanded") === "true") shut.push(k);
+    SIDE.shut = shut; sideSave(); sideApply();
+  });
+});
+sideApply();
 $("veil").addEventListener("click", closeDrawer);
 $("view").addEventListener("click", function (ev) {
   var r = ev.target.closest("[data-rep-go]");

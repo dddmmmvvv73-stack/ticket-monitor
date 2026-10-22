@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Всё схвачено — варианты логотипа</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500&family=Onest:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --ink: #1c1917; --ink-3: #57534e; --muted: #78716c; --line: #e7e5e4; --canvas: #f5f5f4; --card: #fff; --cta: #3ba6f1; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--canvas); color: var(--ink); font: 14px/1.5 "Golos Text", system-ui, sans-serif; }
+  main { max-width: 1320px; margin: 0 auto; padding: 48px 24px 64px; }
+  h1 { font: 600 28px/1.2 Onest, sans-serif; margin: 0 0 6px; }
+  .lead { color: var(--ink-3); margin: 0 0 32px; max-width: 720px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 20px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 20px 22px 22px; display: flex; flex-direction: column; gap: 18px; }
+  .name { font: 500 13px/1 Onest, sans-serif; color: var(--muted); letter-spacing: .02em; }
+  .name b { color: var(--ink); font-weight: 600; }
+  .hero { height: 150px; display: flex; align-items: center; justify-content: center; gap: 16px; color: var(--ink); }
+  .hero svg { width: 64px; height: 64px; flex-shrink: 0; }
+  .word { font: 600 30px/1 Onest, sans-serif; letter-spacing: -.01em; white-space: nowrap; }
+  .why { color: var(--ink-3); margin: 0; min-height: 42px; }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .menu { display: flex; align-items: center; gap: 10px; font: 500 15px Onest, sans-serif; background: #fafaf9; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; color: var(--ink); }
+  .menu svg { width: 22px; height: 22px; }
+  .dark { width: 48px; height: 48px; border-radius: 12px; background: var(--ink); color: #fff; display: grid; place-items: center; }
+  .dark svg { width: 30px; height: 30px; }
+  .fav { display: flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 8px 8px 0 0; background: #e7e5e4; font-size: 12px; color: var(--ink-3); }
+  .fav svg { width: 16px; height: 16px; color: var(--ink); }
+  .tag { font-size: 12px; color: var(--muted); }
+  /* вариант 6: точки над «ё» */
+  .yo { position: relative; display: inline-block; }
+  .yo i { position: absolute; top: -.12em; width: .15em; height: .15em; border-radius: 50%; background: var(--cta); }
+  .yo i:first-child { left: .1em; } .yo i:last-child { right: .1em; }
+  .tile { width: 64px; height: 64px; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- 1. Скрепка: лист и скрепка -->
+  <symbol id="m1" viewBox="0 0 48 48">
+    <rect x="19" y="12" width="21" height="29" rx="3" fill="#3ba6f1"/>
+    <path d="M21 15V31a3 3 0 0 0 6 0V11a5 5 0 0 0-10 0V34a7 7 0 0 0 14 0V17" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <!-- 2. Хватка: обхват и галочка -->
+  <symbol id="m2" viewBox="0 0 48 48">
+    <path d="M35.5 14.4A15 15 0 1 0 35.5 33.6" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+    <path d="M16.5 24.5l5.5 5.5 12-13" fill="none" stroke="#3ba6f1" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <!-- 3. Лассо: петля и пойманные точки -->
+  <symbol id="m3" viewBox="0 0 48 48">
+    <ellipse cx="23" cy="19" rx="16" ry="12" fill="none" stroke="currentColor" stroke-width="3.4"/>
+    <path d="M21 31c-1 5 3 7 7 8s7 3 7 6" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round"/>
+    <circle cx="16" cy="18" r="3" fill="#3ba6f1"/><circle cx="24" cy="14" r="3" fill="#3ba6f1"/><circle cx="29" cy="22" r="3" fill="#3ba6f1"/>
+  </symbol>
+  <!-- 4. Карабин: надёжно закреплено (как подвес на сцене) -->
+  <symbol id="m4" viewBox="0 0 48 48">
+    <g transform="rotate(-20 24 24)">
+      <path d="M11 16a8 8 0 0 1 8-8h10a10 10 0 0 1 10 10v12a10 10 0 0 1-10 10H19a8 8 0 0 1-8-8" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+      <path d="M11 20.5v7" stroke="#3ba6f1" stroke-width="4" stroke-linecap="round"/>
+    </g>
+  </symbol>
+  <!-- 5. Полосы в обхвате: нынешний значок сайта, стянутый ремнём -->
+  <symbol id="m5" viewBox="0 0 48 48">
+    <rect x="9" y="24" width="8" height="16" rx="1.5" fill="currentColor"/>
+    <rect x="20" y="16" width="8" height="24" rx="1.5" fill="currentColor"/>
+    <rect x="31" y="8" width="8" height="32" rx="1.5" fill="currentColor"/>
+    <rect x="5" y="27" width="38" height="8" rx="4" fill="none" stroke="#3ba6f1" stroke-width="3"/>
+  </symbol>
+  <!-- 6. Точки над «ё» -->
+  <symbol id="m6" viewBox="0 0 48 48">
+    <text x="24" y="37" text-anchor="middle" font-family="Onest, sans-serif" font-weight="600" font-size="34" fill="currentColor">е</text>
+    <circle cx="17.5" cy="11" r="3.6" fill="#3ba6f1"/><circle cx="30.5" cy="11" r="3.6" fill="#3ba6f1"/>
+  </symbol>
+</svg>
+
+<main>
+  <h1>Всё схвачено — варианты логотипа</h1>
+  <p class="lead">Шесть направлений в цветах и шрифте сайта (Onest, тёмный #1c1917, голубой #3ba6f1). У каждого: знак с названием, как будет в меню, на тёмном фоне и на вкладке браузера (16 px). Это эскизы для выбора направления, не финальная отрисовка.</p>
+  <div class="grid">
+
+    <section class="card">
+      <div class="name"><b>1 · Скрепка</b></div>
+      <div class="hero"><svg><use href="#m1"/></svg><span class="word">Всё схвачено</span></div>
+      <p class="why">Разрозненные листы проекта скреплены вместе — ровно главная идея продукта.</p>
+      <div class="row"><div class="menu"><svg><use href="#m1"/></svg>Всё схвачено</div><div class="dark"><svg><use href="#m1"/></svg></div><div class="fav"><svg><use href="#m1"/></svg>Всё схвачено</div></div>
+    </section>
+
+    <section class="card">
+      <div class="name"><b>2 · Хватка</b></div>
+      <div class="hero"><svg><use href="#m2"/></svg><span class="word">Всё схвачено</span></div>
+      <p class="why">Рука-обхват держит галочку: «сделано и под контролем». Буквальное прочтение названия.</p>
+      <div class="row"><div class="menu"><svg><use href="#m2"/></svg>Всё схвачено</div><div class="dark"><svg><use href="#m2"/></svg></div><div class="fav"><svg><use href="#m2"/></svg>Всё схвачено</div></div>
+    </section>
+
+    <section class="card">
+      <div class="name"><b>3 · Лассо</b></div>
+      <div class="hero"><svg><use href="#m3"/></svg><span class="word">Всё схвачено</span></div>
+      <p class="why">Петля поймала разбросанные точки: люди, даты, деньги — в одном кольце. Живее и с юмором.</p>
+      <div class="row"><div class="menu"><svg><use href="#m3"/></svg>Всё схвачено</div><div class="dark"><svg><use href="#m3"/></svg></div><div class="fav"><svg><use href="#m3"/></svg>Всё схвачено</div></div>
+    </section>
+
+    <section class="card">
+      <div class="name"><b>4 · Карабин</b></div>
+      <div class="hero"><svg><use href="#m4"/></svg><span class="word">Всё схвачено</span></div>
+      <p class="why">Надёжно закреплено; отсылка к сценическому подвесу. Голубая защёлка — «замкнуто».</p>
+      <div class="row"><div class="menu"><svg><use href="#m4"/></svg>Всё схвачено</div><div class="dark"><svg><use href="#m4"/></svg></div><div class="fav"><svg><use href="#m4"/></svg>Всё схвачено</div></div>
+    </section>
+
+    <section class="card">
+      <div class="name"><b>5 · Полосы в обхвате</b></div>
+      <div class="hero"><svg><use href="#m5"/></svg><span class="word">Всё схвачено</span></div>
+      <p class="why">Нынешний значок сайта (рост продаж), стянутый ремнём, — преемственность с тем, что уже есть.</p>
+      <div class="row"><div class="menu"><svg><use href="#m5"/></svg>Всё схвачено</div><div class="dark"><svg><use href="#m5"/></svg></div><div class="fav"><svg><use href="#m5"/></svg>Всё схвачено</div></div>
+    </section>
+
+    <section class="card">
+      <div class="name"><b>6 · Точки над «ё»</b></div>
+      <div class="hero"><span class="word">вс<span class="yo">е<i></i><i></i></span> схвачено</span></div>
+      <p class="why">Знак — сама буква «ё»: две голубые точки как две части, которые держатся вместе. Только шрифт, без картинки.</p>
+      <div class="row"><div class="menu"><svg><use href="#m6"/></svg>Всё схвачено</div><div class="dark"><svg><use href="#m6"/></svg></div><div class="fav"><svg><use href="#m6"/></svg>Всё схвачено</div></div>
+    </section>
+
+  </div>
+</main>
+</body>
+</html>
