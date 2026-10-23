@@ -1052,7 +1052,7 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .cand-cb.on { background: #1b1b1b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 6.2l2 2 4-4.4' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 11px no-repeat; border-color: #1b1b1b; }
 .cand-fmenu .wk-menu-item.on { font-weight: 400; }
 .cand-freset { margin-top: 6px; border-top: 1px solid var(--line-soft) !important; border-radius: 0 0 8px 8px; color: var(--cta); }
-.cand-fbtn { flex: none; }
+.cand-fbtn { flex: none; margin-left: auto; }   /* фильтр — справа в строке (23.10) */
 .wk-msearch { display: flex; align-items: center; gap: 6px; height: 34px; margin: 0 0 6px; padding: 0 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); }
 .wk-msearch:focus-within { border-color: var(--cta); box-shadow: 0 0 0 3px rgba(59, 168, 245, .14); }
 .wk-msearch input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 13.5px; color: var(--ink); }
@@ -10632,7 +10632,7 @@ function mCandTable(cands, foN, l, fmt, genre) {
           '<select class="flat-select" data-flat-label="Федеральный округ" data-cand-fo aria-label="Федеральный округ"><option value="">Все</option>' +
             FO_ORDER.filter(function (fo) { return foN[fo]; }).map(function (fo) { return '<option value="' + fo + '"' + (S.m.candFo === fo ? " selected" : "") + '>' + fo + ' · ' + foN[fo] + '</option>'; }).join("") + '</select>' +
           '<button type="button" class="wk-sq cand-fbtn' + (candFiltered() ? ' on' : '') + '" data-cand-filter aria-haspopup="menu" aria-label="Фильтр: где в маршруте, население" title="Фильтр: по пути, население">' + WKT_ICON.group + (candFiltered() ? '<i class="wk-sq-dot" aria-hidden="true"></i>' : '') + '</button>' +
-          '<span class="sub2" data-cand-count aria-live="polite"></span></div></div>' +
+          '</div></div>' +
       '<table class="vtable"><thead><tr><th scope="col">Город</th><th scope="col">Где в маршруте</th><th scope="col" class="r">До тура, км</th><th scope="col">Окно дат</th><th scope="col" class="r">Конкурентов в окне</th><th scope="col">Лучшая дата</th><th scope="col" class="r">Цены формата</th><th scope="col"><span class="sr-only">Действие</span></th></tr></thead><tbody>' +
       cands.map(function (c, n) {
         var hide = !candMatch(c.city, n, cands.length, c.kind);
@@ -10663,34 +10663,39 @@ function mRouteVenues(l, limit) {
     }).join("") + '</tbody></table>' + (v.length < allV.length ? '<div class="pj-all" style="padding-bottom:16px"><button class="btn-ghost" data-pj="an-ven-all">Показать все · ' + allV.length + '</button></div>' : '') + '</section>';
 }
 // «Города, где его нет»: без поиска и округа — первые 25 (или все), с ними — все подходящие
-// Фильтр «Городов, где его нет» (решение пользователя 23.10): где в маршруте и население — галочками; снятое не показываем
+// Фильтр «Городов, где его нет» (решения пользователя 23.10): где в маршруте и население — галочками; сначала ничего не отмечено —
+// видны все; отмеченное сужает выдачу; группа без галочек ни на что не влияет; между группами — «и»
 var CAND_KIND = [["path", "По пути"], ["start", "Перед туром"], ["end", "После тура"], ["near", "Рядом"], ["far", "Остальные"]];
 var CAND_POP = [["big", "Крупные", "от 500 тыс."], ["mid", "Средние", "100–500 тыс."], ["small", "Малые", "до 100 тыс. и без данных"]];
 function candPop(city) { var v = typeof MPOP !== "undefined" && MPOP[city] ? MPOP[city][0] : 0; return v >= 500000 ? "big" : v >= 100000 ? "mid" : "small"; }
-function candFiltered() { var o = S.m.candOff || {}; return Object.keys(o).some(function (k) { return o[k]; }); }
+function candFiltered() { var o = S.m.candOn || {}; return Object.keys(o).some(function (k) { return o[k]; }); }
+function candGroupOk(on, g, v) {   // в группе что-то отмечено — подходит только отмеченное; ничего — подходит всё
+  var any = Object.keys(on).some(function (k) { return on[k] && k.indexOf(g + ":") === 0; });
+  return !any || !!on[g + ":" + v];
+}
 function candMatch(city, n, total, kind) {
-  var q = (S.m.candQ || "").trim().toLowerCase().replace(/ё/g, "е"), fo = S.m.candFo, off = S.m.candOff || {};
-  if (off["k:" + kind] || off["p:" + candPop(city)]) return false;
+  var q = (S.m.candQ || "").trim().toLowerCase().replace(/ё/g, "е"), fo = S.m.candFo, on = S.m.candOn || {};
+  if (!candGroupOk(on, "k", kind) || !candGroupOk(on, "p", candPop(city))) return false;
   if (!q && !fo && !candFiltered()) return S.m.candAll || n < 25;
   return (!q || city.toLowerCase().replace(/ё/g, "е").indexOf(q) >= 0) && (!fo || MK.fo[city] === fo);
 }
 function candFilterHtml() {
-  var rows = [].slice.call(document.querySelectorAll("tr[data-cand-city]")), off = S.m.candOff || {};
+  var rows = [].slice.call(document.querySelectorAll("tr[data-cand-city]")), sel = S.m.candOn || {};
   var n = function (f) { return rows.filter(f).length; };
   var item = function (key, label, sub, cnt) {
-    var on = !off[key];
+    var on = !!sel[key];
     return '<button type="button" class="wk-menu-item' + (on ? ' on' : '') + '" data-cand-f="' + key + '" role="menuitemcheckbox" aria-checked="' + on + '"><span class="cand-fl"><i class="cand-cb' + (on ? ' on' : '') + '" aria-hidden="true"></i><span>' + label + (sub ? '<small>' + sub + '</small>' : '') + '</span></span><span class="wks-fn">' + cnt + '</span></button>';
   };
   return '<div class="wkp-title">Где в маршруте</div>' + CAND_KIND.map(function (o) { return item("k:" + o[0], o[1], "", n(function (tr) { return tr.getAttribute("data-cand-kind") === o[0]; })); }).join("") +
     '<div class="wkp-title wk-menu-sep">Население</div>' + CAND_POP.map(function (o) { return item("p:" + o[0], o[1], o[2], n(function (tr) { return candPop(tr.getAttribute("data-cand-city")) === o[0]; })); }).join("") +
-    (candFiltered() ? '<button type="button" class="wk-menu-item cand-freset" data-cand-f="reset"><span>Показать все города</span></button>' : '');
+    (candFiltered() ? '<button type="button" class="wk-menu-item cand-freset" data-cand-f="reset"><span>Сбросить — все города</span></button>' : '');
 }
 document.addEventListener("click", function (ev) {
   var b = ev.target.closest && ev.target.closest("[data-cand-filter]");
   if (b) { if (WKPOP && WKPOP.anchor === b) { wkPopClose(); return; } wkPopOpen(b, "wk-menu cand-fmenu", candFilterHtml(), {}); return; }
   var it = ev.target.closest && ev.target.closest(".cand-fmenu [data-cand-f]"); if (!it || !WKPOP) return;
-  var k = it.getAttribute("data-cand-f"); S.m.candOff = S.m.candOff || {};
-  if (k === "reset") S.m.candOff = {}; else S.m.candOff[k] = !S.m.candOff[k];
+  var k = it.getAttribute("data-cand-f"); S.m.candOn = S.m.candOn || {};
+  if (k === "reset") S.m.candOn = {}; else S.m.candOn[k] = !S.m.candOn[k];
   candApply(); WKPOP.el.innerHTML = candFilterHtml(); wkPopPlace();   // меню остаётся открытым — можно снять несколько галочек
   var fb = document.querySelector("[data-cand-filter]"), on = candFiltered();
   if (fb) { fb.classList.toggle("on", on); var dot = fb.querySelector(".wk-sq-dot"); if (on && !dot) fb.insertAdjacentHTML("beforeend", '<i class="wk-sq-dot" aria-hidden="true"></i>'); if (!on && dot) dot.remove(); }
@@ -10699,7 +10704,6 @@ function candApply() {
   var rows = document.querySelectorAll("tr[data-cand-city]"); if (!rows.length) return;
   var shown = 0, active = (S.m.candQ || "").trim() || S.m.candFo || candFiltered();
   rows.forEach(function (tr, n) { var ok = candMatch(tr.getAttribute("data-cand-city"), n, rows.length, tr.getAttribute("data-cand-kind")); tr.hidden = !ok; if (ok) shown++; });
-  var cnt = document.querySelector("[data-cand-count]"); if (cnt) cnt.textContent = active ? "найдено " + shown + " из " + rows.length : "";
   var empty = document.querySelector(".cand-empty"); if (empty) empty.hidden = !!shown;
   var more = document.querySelector(".cand-more"); if (more) more.hidden = !!(active || S.m.candAll || rows.length <= 25);
 }
@@ -10712,7 +10716,7 @@ function mProjectDetail(k) {
   var cities = mUniq(l.concat(past), "city"), fmt = mostOf(l, "format"), genre = mostOf(l, "genre");
   var p = { k: k, l: l, cities: cities, format: fmt, genre: genre, title: mostOf(l, "title") };
   var cands = mCandidates(p);
-  if (S.m.candFor !== k) { S.m.candFor = k; S.m.candQ = ""; S.m.candFo = ""; S.m.candOff = {}; }  // поиск и фильтр «Городов, где его нет» — свои у каждого проекта
+  if (S.m.candFor !== k) { S.m.candFor = k; S.m.candQ = ""; S.m.candFo = ""; S.m.candOn = {}; }  // поиск и фильтр «Городов, где его нет» — свои у каждого проекта
   var foN = {}; cands.forEach(function (c) { foN[MK.fo[c.city]] = (foN[MK.fo[c.city]] || 0) + 1; });
   var pmin = Math.min.apply(null, l.map(function (e) { return e.pmin || 1e9; })), pmax = Math.max.apply(null, l.map(function (e) { return e.pmax || 0; }));
   var ours = ALL.filter(function (e) { return projKey(e.title) === k; });
