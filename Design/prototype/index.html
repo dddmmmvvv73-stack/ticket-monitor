@@ -1045,6 +1045,14 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wk-menu-item { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px; border: 0; background: none; border-radius: 8px; text-align: left; font: inherit; font-size: 14px; color: var(--ink); cursor: pointer; }
 .wk-menu-item:hover { background: var(--line-soft); }
 .wk-menu-item[hidden], .wk-mnone[hidden] { display: none; }
+.cand-fmenu { width: 270px; }
+.cand-fl { display: flex; align-items: center; gap: 9px; }
+.cand-fl small { display: block; font-size: 12px; color: var(--muted); }
+.cand-cb { flex: none; width: 16px; height: 16px; border-radius: 4px; border: 1.5px solid var(--line-strong); background: var(--card); }
+.cand-cb.on { background: #1b1b1b url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 6.2l2 2 4-4.4' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 11px no-repeat; border-color: #1b1b1b; }
+.cand-fmenu .wk-menu-item.on { font-weight: 400; }
+.cand-freset { margin-top: 6px; border-top: 1px solid var(--line-soft) !important; border-radius: 0 0 8px 8px; color: var(--cta); }
+.cand-fbtn { flex: none; }
 .wk-msearch { display: flex; align-items: center; gap: 6px; height: 34px; margin: 0 0 6px; padding: 0 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--card); }
 .wk-msearch:focus-within { border-color: var(--cta); box-shadow: 0 0 0 3px rgba(59, 168, 245, .14); }
 .wk-msearch input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 13.5px; color: var(--ink); }
@@ -10618,16 +10626,17 @@ function anRouteBg(l) {
 // «Города, где его нет» — таблица кандидатов (страница маршрута и «Аналитика»)
 function mCandTable(cands, foN, l, fmt, genre) {
   var kindTxt = { path: "по пути", start: "перед туром", end: "после тура", near: "рядом", far: "" };
-  return '<section class="card" style="overflow:auto"><div class="card-pad" style="padding-bottom:0"><h2>Города, где его нет · ' + cands.length + '</h2><p class="sub">Сначала — «по пути»: между соседними выступлениями (переезд до 800 км и до 2 недель), крюк до 150 км, есть свободный день. Конкуренция — мероприятия того же формата («' + esc(fmt) + '») в окне дат. «Разобрать» открывает город на вкладке «Город» с этим окном и форматом.</p>' +
+  return '<section class="card" style="overflow:auto"><div class="card-pad" style="padding-bottom:0"><h2>Города, где его нет · ' + cands.length + '</h2>' +
         '<div class="cand-tools"><label class="cand-q"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/></svg>' +
           '<input type="search" data-cand-q placeholder="Найти город" aria-label="Найти город среди тех, где проекта нет" autocomplete="off" value="' + esc(S.m.candQ) + '"></label>' +
           '<select class="flat-select" data-flat-label="Федеральный округ" data-cand-fo aria-label="Федеральный округ"><option value="">Все</option>' +
             FO_ORDER.filter(function (fo) { return foN[fo]; }).map(function (fo) { return '<option value="' + fo + '"' + (S.m.candFo === fo ? " selected" : "") + '>' + fo + ' · ' + foN[fo] + '</option>'; }).join("") + '</select>' +
+          '<button type="button" class="wk-sq cand-fbtn' + (candFiltered() ? ' on' : '') + '" data-cand-filter aria-haspopup="menu" aria-label="Фильтр: где в маршруте, население" title="Фильтр: по пути, население">' + WKT_ICON.group + (candFiltered() ? '<i class="wk-sq-dot" aria-hidden="true"></i>' : '') + '</button>' +
           '<span class="sub2" data-cand-count aria-live="polite"></span></div></div>' +
       '<table class="vtable"><thead><tr><th scope="col">Город</th><th scope="col">Где в маршруте</th><th scope="col" class="r">До тура, км</th><th scope="col">Окно дат</th><th scope="col" class="r">Конкурентов в окне</th><th scope="col">Лучшая дата</th><th scope="col" class="r">Цены формата</th><th scope="col"><span class="sr-only">Действие</span></th></tr></thead><tbody>' +
       cands.map(function (c, n) {
-        var hide = !candMatch(c.city, n, cands.length);
-        return '<tr data-cand-city="' + esc(c.city) + '"' + (hide ? ' hidden' : '') + '><th scope="row"><b style="font-weight:500">' + esc(c.city) + '</b><div class="sub2">' + esc(MK.fo[c.city]) + ' ФО · ' + c.events + ' мер.</div></th>' +
+        var hide = !candMatch(c.city, n, cands.length, c.kind);
+        return '<tr data-cand-city="' + esc(c.city) + '" data-cand-kind="' + c.kind + '"' + (hide ? ' hidden' : '') + '><th scope="row"><b style="font-weight:500">' + esc(c.city) + '</b><div class="sub2">' + esc(MK.fo[c.city]) + ' ФО · ' + c.events + ' мер.</div></th>' +
           '<td>' + (c.kind !== "far" ? '<span class="tag"' + (c.kind === "path" ? ' style="background:#fdeee6;border-color:#fdeee6;color:#9a3412"' : '') + '>' + kindTxt[c.kind] + '</span><div class="sub2">' + esc(c.where) + (c.detour != null && c.kind === "path" ? ', крюк ' + c.detour + ' км' : '') + '</div>' : '<span class="sub2">далеко от маршрута</span>') + '</td>' +
           '<td class="r num">' + (c.near != null ? num(c.near) : '—') + '<div class="sub2">' + esc(c.nearCity) + '</div></td>' +
           '<td class="nowrap">' + (c.from ? human(c.from) + ' – ' + human(c.to) : '<span class="muted">—</span>') + '</td>' +
@@ -10637,7 +10646,7 @@ function mCandTable(cands, foN, l, fmt, genre) {
           '<td><button class="btn-ghost" data-mcity-go="' + esc(c.city) + '" data-from="' + (c.from || addDays(l[0].date, -7)) + '" data-to="' + (c.to || addDays(l[l.length - 1].date, 7)) + '" data-fmt="' + esc(fmt) + '" data-genre="' + esc(genre) + '">Разобрать</button></td></tr>';
       }).join("") + '</tbody></table>' +
       '<p class="sub cand-empty" hidden style="padding:0 24px">Не найдено — среди городов, где проекта нет, такого нет. Возможно, он там уже выступает: см. «Маршрут по датам».</p>' +
-      '<div class="cand-more"' + (S.m.candAll || cands.length <= 25 || S.m.candQ || S.m.candFo ? ' hidden' : '') + '><button class="btn-ghost" data-maction="cand-all">Показать все ' + cands.length + '</button></div></section>';
+      '<div class="cand-more"' + (S.m.candAll || cands.length <= 25 || S.m.candQ || S.m.candFo || candFiltered() ? ' hidden' : '') + '><button class="btn-ghost" data-maction="cand-all">Показать все ' + cands.length + '</button></div></section>';
 }
 // Площадки тура — на странице «Аналитика» (перенесены со страницы проекта 09.10): где выступает, тип площадки, мест, дат, заполняемость
 function mRouteVenues(l, limit) {
@@ -10654,15 +10663,42 @@ function mRouteVenues(l, limit) {
     }).join("") + '</tbody></table>' + (v.length < allV.length ? '<div class="pj-all" style="padding-bottom:16px"><button class="btn-ghost" data-pj="an-ven-all">Показать все · ' + allV.length + '</button></div>' : '') + '</section>';
 }
 // «Города, где его нет»: без поиска и округа — первые 25 (или все), с ними — все подходящие
-function candMatch(city, n, total) {
-  var q = (S.m.candQ || "").trim().toLowerCase().replace(/ё/g, "е"), fo = S.m.candFo;
-  if (!q && !fo) return S.m.candAll || n < 25;
+// Фильтр «Городов, где его нет» (решение пользователя 23.10): где в маршруте и население — галочками; снятое не показываем
+var CAND_KIND = [["path", "По пути"], ["start", "Перед туром"], ["end", "После тура"], ["near", "Рядом"], ["far", "Остальные"]];
+var CAND_POP = [["big", "Крупные", "от 500 тыс."], ["mid", "Средние", "100–500 тыс."], ["small", "Малые", "до 100 тыс. и без данных"]];
+function candPop(city) { var v = typeof MPOP !== "undefined" && MPOP[city] ? MPOP[city][0] : 0; return v >= 500000 ? "big" : v >= 100000 ? "mid" : "small"; }
+function candFiltered() { var o = S.m.candOff || {}; return Object.keys(o).some(function (k) { return o[k]; }); }
+function candMatch(city, n, total, kind) {
+  var q = (S.m.candQ || "").trim().toLowerCase().replace(/ё/g, "е"), fo = S.m.candFo, off = S.m.candOff || {};
+  if (off["k:" + kind] || off["p:" + candPop(city)]) return false;
+  if (!q && !fo && !candFiltered()) return S.m.candAll || n < 25;
   return (!q || city.toLowerCase().replace(/ё/g, "е").indexOf(q) >= 0) && (!fo || MK.fo[city] === fo);
 }
+function candFilterHtml() {
+  var rows = [].slice.call(document.querySelectorAll("tr[data-cand-city]")), off = S.m.candOff || {};
+  var n = function (f) { return rows.filter(f).length; };
+  var item = function (key, label, sub, cnt) {
+    var on = !off[key];
+    return '<button type="button" class="wk-menu-item' + (on ? ' on' : '') + '" data-cand-f="' + key + '" role="menuitemcheckbox" aria-checked="' + on + '"><span class="cand-fl"><i class="cand-cb' + (on ? ' on' : '') + '" aria-hidden="true"></i><span>' + label + (sub ? '<small>' + sub + '</small>' : '') + '</span></span><span class="wks-fn">' + cnt + '</span></button>';
+  };
+  return '<div class="wkp-title">Где в маршруте</div>' + CAND_KIND.map(function (o) { return item("k:" + o[0], o[1], "", n(function (tr) { return tr.getAttribute("data-cand-kind") === o[0]; })); }).join("") +
+    '<div class="wkp-title wk-menu-sep">Население</div>' + CAND_POP.map(function (o) { return item("p:" + o[0], o[1], o[2], n(function (tr) { return candPop(tr.getAttribute("data-cand-city")) === o[0]; })); }).join("") +
+    (candFiltered() ? '<button type="button" class="wk-menu-item cand-freset" data-cand-f="reset"><span>Показать все города</span></button>' : '');
+}
+document.addEventListener("click", function (ev) {
+  var b = ev.target.closest && ev.target.closest("[data-cand-filter]");
+  if (b) { if (WKPOP && WKPOP.anchor === b) { wkPopClose(); return; } wkPopOpen(b, "wk-menu cand-fmenu", candFilterHtml(), {}); return; }
+  var it = ev.target.closest && ev.target.closest(".cand-fmenu [data-cand-f]"); if (!it || !WKPOP) return;
+  var k = it.getAttribute("data-cand-f"); S.m.candOff = S.m.candOff || {};
+  if (k === "reset") S.m.candOff = {}; else S.m.candOff[k] = !S.m.candOff[k];
+  candApply(); WKPOP.el.innerHTML = candFilterHtml(); wkPopPlace();   // меню остаётся открытым — можно снять несколько галочек
+  var fb = document.querySelector("[data-cand-filter]"), on = candFiltered();
+  if (fb) { fb.classList.toggle("on", on); var dot = fb.querySelector(".wk-sq-dot"); if (on && !dot) fb.insertAdjacentHTML("beforeend", '<i class="wk-sq-dot" aria-hidden="true"></i>'); if (!on && dot) dot.remove(); }
+});
 function candApply() {
   var rows = document.querySelectorAll("tr[data-cand-city]"); if (!rows.length) return;
-  var shown = 0, active = (S.m.candQ || "").trim() || S.m.candFo;
-  rows.forEach(function (tr, n) { var ok = candMatch(tr.getAttribute("data-cand-city"), n, rows.length); tr.hidden = !ok; if (ok) shown++; });
+  var shown = 0, active = (S.m.candQ || "").trim() || S.m.candFo || candFiltered();
+  rows.forEach(function (tr, n) { var ok = candMatch(tr.getAttribute("data-cand-city"), n, rows.length, tr.getAttribute("data-cand-kind")); tr.hidden = !ok; if (ok) shown++; });
   var cnt = document.querySelector("[data-cand-count]"); if (cnt) cnt.textContent = active ? "найдено " + shown + " из " + rows.length : "";
   var empty = document.querySelector(".cand-empty"); if (empty) empty.hidden = !!shown;
   var more = document.querySelector(".cand-more"); if (more) more.hidden = !!(active || S.m.candAll || rows.length <= 25);
@@ -10676,7 +10712,7 @@ function mProjectDetail(k) {
   var cities = mUniq(l.concat(past), "city"), fmt = mostOf(l, "format"), genre = mostOf(l, "genre");
   var p = { k: k, l: l, cities: cities, format: fmt, genre: genre, title: mostOf(l, "title") };
   var cands = mCandidates(p);
-  if (S.m.candFor !== k) { S.m.candFor = k; S.m.candQ = ""; S.m.candFo = ""; }  // поиск «Городов, где его нет» — свой у каждого проекта
+  if (S.m.candFor !== k) { S.m.candFor = k; S.m.candQ = ""; S.m.candFo = ""; S.m.candOff = {}; }  // поиск и фильтр «Городов, где его нет» — свои у каждого проекта
   var foN = {}; cands.forEach(function (c) { foN[MK.fo[c.city]] = (foN[MK.fo[c.city]] || 0) + 1; });
   var pmin = Math.min.apply(null, l.map(function (e) { return e.pmin || 1e9; })), pmax = Math.max.apply(null, l.map(function (e) { return e.pmax || 0; }));
   var ours = ALL.filter(function (e) { return projKey(e.title) === k; });
