@@ -13,13 +13,15 @@
      "choices": {дата: "site" | "kassa"} — выбор при расхождении (тот же день, у касс другой город)}
 Что получается — data/competitors/official_sites.json:
     {ключ: {"url", "title", "checked": последняя попытка, "ok_at": последний удачный разбор, "error": текст или "",
-            "hash": отпечаток текста страницы, "via": "http" | "browser", "model",
+            "hash": отпечаток текста страницы, "via": "http" | "browser", "pages": страниц афиши, "model",
             "rows": [{"date", "city", "venue", "pmin", "buy", "first_seen", "last_seen"}],   ← будущие даты на сайте
             "gone": [{…, "gone": дата}],    ← были на сайте и исчезли до своей даты («снята с сайта»)
             "past": [{…}]}}                 ← прошли, пока были на сайте (архив проекта)
 
 Как:
-1. Одна страница, как браузер покупателя (пауза, канал блокировок site/<сайт>: 403 / капча — не опрашиваем до срока).
+1. Страница афиши, как браузер покупателя (пауза, канал блокировок site/<сайт>: 403 / капча — не опрашиваем до срока).
+   Афиша разбита на страницы по номерам (?page=N, PAGEN_1=N, /page/N/…) — обходим все страницы той же афиши (до
+   MAX_PAGES, пауза PAGE_PAUSE), какую бы из них ни вставили (23.10: slavamusic.ru — 5 страниц, была вставлена вторая).
    На странице есть скрипты — та же страница в браузере (Playwright), один раз; дат там больше — разбираем её.
    Не только когда текста нет: у leonidkulakov.ru (Tilda) осенний тур — в HTML, весенний дорисовывает скрипт.
 2. Текст страницы с адресами ссылок → GigaChat: строки «ДД.ММ.ГГГГ | город | площадка | цена | ссылка».
@@ -126,9 +128,45 @@ def configs() -> dict[str, dict]:
 # ---------------------------------------------------------------- города: список рынка, карта прототипа, OpenStreetMap
 
 def _norm(s: str) -> str:
-    s = (s or "").lower().replace("ё", "е")
+    s = (s or "").lower().replace("ё", "е").replace("ë", "е")
     s = re.sub(r"^(г\.|город)\s*", "", s.strip())
     return re.sub(r"[\s\-]+", " ", s).strip()
+
+
+_COUNTRIES = (r"(?:республика )?(?:беларусь|белоруссия|рб|казахстан|армения|грузия|узбекистан|кыргызстан|киргизия|"
+              r"азербайджан|молдова|молдавия|абхазия|латвия|литва|эстония|израиль|турция|сербия|черногория|кипр|оаэ|"
+              r"таджикистан|туркменистан|монголия|германия|россия|рф)")
+
+
+def _strip_country(n: str) -> str:
+    """«беларусь. гродно», «минск, беларусь», «гомель (рб)» → город (сайт пишет страну рядом с городом — slavamusic.ru)."""
+    n = re.sub(r"^" + _COUNTRIES + r"\s*[.,:;/]\s*", "", n)
+    n = re.sub(r"\s*[.,/(]\s*" + _COUNTRIES + r"\)?$", "", n)
+    return n.strip()
+
+
+def _city_key(city: str) -> str:
+    return _strip_country(_norm(city))
+
+
+def _typo_dist(a: str, b: str) -> int:
+    """Опечаток между словами: пропуск, лишняя, замена буквы, две соседние местами (Дамерау — Левенштейн)."""
+    d = [[i + j if not i * j else 0 for j in range(len(b) + 1)] for i in range(len(a) + 1)]
+    for i in range(1, len(a) + 1):
+        for j in range(1, len(b) + 1):
+            d[i][j] = min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] != b[j - 1]))
+            if i > 1 and j > 1 and a[i - 1] == b[j - 2] and a[i - 2] == b[j - 1]:
+                d[i][j] = min(d[i][j], d[i - 2][j - 2] + 1)
+    return d[-1][-1]
+
+
+def _typo_fix(n: str, known) -> str | None:
+    """Опечатка сайта в известном городе («Старвополь», «Дмитровград»): одна ошибка, та же первая буква, от 6 букв,
+    подходит ровно один город. Иначе — None (лучше отбросить дату, чем поставить её не в тот город)."""
+    if len(n) < 6:
+        return None
+    hits = {c for c in known if (k := _norm(c)) and k[0] == n[0] and len(k) >= 6 and abs(len(k) - len(n)) <= 1 and _typo_dist(n, k) == 1}
+    return hits.pop() if len(hits) == 1 else None
 
 
 _GEO: dict | None = None
@@ -194,7 +232,7 @@ def _geocode(name: str) -> tuple[float, float] | None:
 
 def resolve_city(raw: str, log=_log) -> str | None:
     """Название города как в нашей системе; неизвестный — ищем в OpenStreetMap (кэш). None — не город."""
-    n = _norm(raw)
+    n = _city_key(raw)
     if not n or len(n) < 2:
         return None
     market = load_json(CITIES_FILE, {}).get("cities", [])
@@ -208,8 +246,13 @@ def resolve_city(raw: str, log=_log) -> str | None:
         save_json(GEO_FILE, cache)
         global _GEO
         _GEO = None
-        log(f"  город «{name}» — {'найден в OpenStreetMap' if cache[name] else 'не найден в OpenStreetMap: строка отброшена'}")
-    return name if cache.get(name) else None
+        log(f"  город «{name}» — {'найден в OpenStreetMap' if cache[name] else 'не найден в OpenStreetMap'}")
+    if cache.get(name):
+        return name
+    fix = _typo_fix(n, market)   # только города рынка: у них проверенные названия
+    if fix:
+        log(f"  город «{name}» — опечатка на сайте, считаю «{fix}»")
+    return fix
 
 
 # ---------------------------------------------------------------- страница → текст с адресами ссылок
@@ -281,6 +324,42 @@ def page_text(src: str, base: str) -> tuple[str, set[str]]:
             lines.append(line)
         prev = line or prev
     return "\n".join(lines), links
+
+
+MAX_PAGES = 10                  # страниц одной афиши (сайт разбил её по номерам: «1 2 3 … Вперёд»)
+PAGE_PAUSE = 2.0                # пауза между страницами, с
+_PAGE_KEYS = {"page", "pg", "paged", "pagenum", "page_num", "pn", "str", "start", "limitstart"}   # не «p»: у WordPress ?p=123 — запись
+_PAGE_PATH = re.compile(r"^(.*?)/page[/\-_]?(\d+)$", re.I)   # WordPress и др.: /afisha/page/2/
+
+
+def page_no(url: str) -> tuple[tuple, int]:
+    """Страница афиши: (адрес без номера страницы, номер). Без номера — первая. Две ссылки — страницы одной афиши, если
+    первое совпало: тот же сайт и путь, те же прочие параметры (ссылки фильтра «?page=1&date=…» — другая афиша)."""
+    u = urllib.parse.urlsplit(url)
+    path = urllib.parse.unquote(u.path).rstrip("/").lower() or "/"
+    hostname = (u.hostname or "").lower().removeprefix("www.")
+    q = urllib.parse.parse_qsl(u.query, keep_blank_values=True)
+    n, rest = None, []
+    for k, v in q:
+        if n is None and (k.lower() in _PAGE_KEYS or re.fullmatch(r"pagen_\d+", k, re.I)) and v.isdigit():
+            n = int(v)
+        else:
+            rest.append((k, v))
+    m = _PAGE_PATH.match(path)
+    if n is None and m:
+        path, n = m.group(1) or "/", int(m.group(2))
+    return (hostname, path, tuple(sorted(rest))), (n if n is not None else 1)
+
+
+def other_pages(url: str, links: set[str]) -> dict[int, str]:
+    """Ссылки страницы на другие страницы той же афиши: {номер: адрес}."""
+    base, here = page_no(url)
+    out: dict[int, str] = {}
+    for u in sorted(links):
+        b, n = page_no(u)
+        if b == base and n != here and 0 < n < 1000:
+            out.setdefault(n, u)
+    return out
 
 
 def dates_in_text(text: str) -> int:
@@ -369,11 +448,12 @@ def ask_gigachat(text: str, title: str, url: str, log=_log) -> tuple[list[dict],
 # ---------------------------------------------------------------- проверка ответа
 
 def _flat(text: str) -> str:
-    return re.sub(r"\s+", " ", text.lower().replace("ё", "е"))
+    return re.sub(r"\s+", " ", text.lower().replace("ё", "е").replace("ë", "е"))   # «ОРËЛ» — латинская Ë (adrenalinhouse.ru)
 
 
 def _date_in(flat: str, d: int, m: int) -> bool:
-    pat = rf"(?<!\d)0?{d}\s*(?:{MONTHS[m - 1]}|[./\-]\s*0?{m}(?!\d))"
+    """День и месяц рядом: «23 октября», «23.10» — или месяц первым: «ОКТЯБРЯ / 23 / Пт, 18:00» (adrenalinhouse.ru)."""
+    pat = rf"(?<!\d)0?{d}\s*(?:{MONTHS[m - 1]}|[./\-]\s*0?{m}(?!\d))|{MONTHS[m - 1]}[а-я]*\s+0?{d}(?![\d:.])"
     return re.search(pat, flat) is not None
 
 
@@ -420,7 +500,7 @@ def validate(raw: list[dict], text: str, links: set[str], log=_log) -> list[dict
 # ---------------------------------------------------------------- один проект
 
 def _row_id(r: dict) -> str:
-    return r["date"] + "|" + r["city"]
+    return r["date"] + "|" + _city_key(r["city"])   # «Беларусь. Минск» (до 23.10) и «Минск» — одна дата
 
 
 def merge_history(prev: dict, rows: list[dict]) -> dict:
@@ -468,12 +548,15 @@ def check(key: str, cfg: dict, data: dict, log=_log) -> dict:
         entry["error"] = f"сайт закрыл доступ — проверка после {(blocks.until(channel) or '')[:16].replace('T', ' ')}"
         data[key] = entry
         return entry
-    try:
+    def get(u: str) -> str:
         try:
-            src, via = fetch(url), "http"
+            return fetch(u)
         except SiteDenied as e:
             blocks.trip(channel, 403, str(e), {"project": key})
             raise RuntimeError(str(e) + " — не опрашиваем до срока")
+
+    try:
+        src, via = get(url), "http"
         if blocks.state(channel) == "probe":
             blocks.clear(channel)
         text, links = page_text(src, url)
@@ -484,6 +567,29 @@ def check(key: str, cfg: dict, data: dict, log=_log) -> dict:
                     text, links, via = text2, links2, "browser"
             except Exception as e:  # noqa: BLE001 — без браузера разбираем то, что есть
                 log(f"  браузер не помог: {e}")
+        # Афиша разбита на страницы («1 2 3 … Вперёд»; slavamusic.ru — 5 по 10 дат, вставлена была вторая): обходим все
+        # страницы той же афиши, какую бы из них ни вставили; номера новых страниц — и со следующих страниц
+        texts, seen_n, seen_h = [text], {page_no(url)[1]}, {hashlib.sha256(text.encode("utf-8")).hexdigest()}
+        todo = other_pages(url, links)
+        while todo and len(texts) < MAX_PAGES:
+            n = min(todo)
+            u = todo.pop(n)
+            seen_n.add(n)
+            time.sleep(PAGE_PAUSE)
+            t, lk = page_text(render(u) if via == "browser" else get(u), u)
+            th = hashlib.sha256(t.encode("utf-8")).hexdigest()
+            if th in seen_h:   # сайт отдаёт ту же страницу на любой номер
+                continue
+            seen_h.add(th)
+            texts.append(t)
+            links |= lk
+            for m, v in other_pages(u, lk).items():
+                if m not in seen_n:
+                    todo.setdefault(m, v)
+        if len(texts) > 1:
+            text = "\n\n".join(texts)
+            log(f"  {host(url)}: афиша на {len(texts)} страницах")
+        entry["pages"] = len(texts)
         h = hashlib.sha256(text.encode("utf-8")).hexdigest()[:16]
         if h == prev.get("hash") and prev.get("parser") == PARSER and prev.get("ok_at") and not prev.get("error"):
             _age_rows(entry)   # текст тот же — даты те же; GigaChat не спрашиваем
