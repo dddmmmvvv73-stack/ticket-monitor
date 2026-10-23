@@ -1,7 +1,10 @@
 """
 Копия вне облака (после аварии Yandex Cloud 11.10.2026): база и данные сборов — зашифрованным архивом в закрытый
-репозиторий GitHub `ticket-monitor-backup`. Хранятся последние KEEP копий одним коммитом (без истории — репозиторий
-не растёт). На ноутбуке-сервере — каждую ночь в 03:30 (deploy/laptop/tm.sh backup).
+репозиторий GitHub `ticket-monitor-backup`. Каждая ночная копия — своя ветка `day-ГГГГ-ММ-ДД` (один коммит без
+истории), хранятся последние KEEP; ночью отправляется только новая (~80 МБ), ветки старше — удаляются. Ветка main —
+README и снимки настроек. На ноутбуке-сервере — каждую ночь в 03:30 (deploy/laptop/tm.sh backup).
+(До 23.10 все копии уходили одним коммитом в main — каждую ночь заново, 22.10 перевалило за 500 МБ и GitHub стал
+отвечать 400.)
 
     python3 -m db.offsite            сделать копию и отправить
     python3 -m db.offsite --local    только сделать (без отправки)
@@ -12,8 +15,8 @@
     python3 -m db.offsite --check    пробное восстановление: скачать с GitHub последнюю ночную копию и свежие настройки,
                                      расшифровать, сверить с живыми данными (раз в месяц сам; ошибка — код 1 → Telegram)
 
-Глубина: ночные копии (база + данные) — KEEP последних; настройки — снимок за каждый день (KEEP_DAYS) и за каждый
-месяц (KEEP_MONTHS) — лежат в ночной копии рядом с архивами (config-day-*, config-month-*).
+Глубина: ночные копии (база + данные) — KEEP последних (ветки day-*); настройки — снимок за каждый день (KEEP_DAYS) и
+за каждый месяц (KEEP_MONTHS) — в ветке main (config-day-*, config-month-*).
 
 Что внутри архива backup-<дата>.tar (зашифрован openssl aes-256-cbc, pbkdf2, 200 000 итераций):
     db.dump        pg_dump -Fc всей базы (история продаж, сеансы, итоги)
@@ -51,17 +54,21 @@ EXCLUDE_DIRS = {"market.local-0410"}
 
 README = """# Копии ticket-monitor (закрытый репозиторий)
 
-Каждую ночь — зашифрованный архив базы и данных сборов; здесь последние 7 копий, история коммитов не хранится.
-Сделано `db/offsite.py` в основном репозитории (после аварии Yandex Cloud 11.10.2026).
+Каждую ночь — зашифрованный архив базы и данных сборов. **Каждая ночная копия — своя ветка `day-ГГГГ-ММ-ДД`**
+(последние 7; список — выбор веток на GitHub или `git ls-remote --heads <адрес> 'day-*'`); история коммитов не хранится.
+Здесь, в ветке main, — эта инструкция и снимки настроек. Сделано `db/offsite.py` в основном репозитории (после аварии
+Yandex Cloud 11.10.2026).
 
 ## Восстановить
 1. Пароль — в Связке ключей Mac, служба «ticket-monitor-backup» (`security find-generic-password -s ticket-monitor-backup -w`)
    или там, где вы его сохранили.
-2. Собрать и расшифровать:
+2. Скачать нужную копию: `git clone --depth 1 -b day-ГГГГ-ММ-ДД <адрес репозитория> копия && cd копия`
+   (или на GitHub: выбрать ветку → Code → Download ZIP).
+3. Собрать и расшифровать:
    `cat backup-ГГГГ-ММ-ДД.tar.enc.part* | openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass pass:'ПАРОЛЬ' > backup.tar`
-3. `tar xf backup.tar` → `db.dump` и `data.tar.gz`.
-4. Данные: `tar xzf data.tar.gz -C <папка проекта>`.
-5. База: `pg_restore --clean --if-exists --no-owner -d <адрес базы> db.dump` (на сервере — `postgresql:///ticket_monitor`).
+4. `tar xf backup.tar` → `db.dump` и `data.tar.gz`.
+5. Данные: `tar xzf data.tar.gz -C <папка проекта>`.
+6. База: `pg_restore --clean --if-exists --no-owner -d <адрес базы> db.dump` (на сервере — `postgresql:///ticket_monitor`).
 
 ## Только настройки (площадки, финмодель, карточки проектов, фото, журнал изменений)
 - самые свежие — ветка **config**, файл `config-latest.tar.enc` (обновляется каждые 15 минут, если что-то поменялось);
@@ -72,9 +79,15 @@ README = """# Копии ticket-monitor (закрытый репозиторий
 README_CFG = """# Свежие настройки ticket-monitor (ветка config)
 
 `config-latest.tar.enc` — папка config/ (площадки, финмодель, карточки проектов, фото, журнал изменений) на момент последней
-правки; обновляется каждые 15 минут, если что-то поменялось. Ночные копии и снимки по дням и месяцам — ветка main.
+правки; обновляется каждые 15 минут, если что-то поменялось. Снимки по дням и месяцам и инструкция — ветка main, ночные
+копии — ветки day-ГГГГ-ММ-ДД.
 `openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass pass:'ПАРОЛЬ' -in config-latest.tar.enc | tar xz`
 """
+README_DAY = """# Ночная копия ticket-monitor за %s
+
+Зашифрованный архив базы и данных сборов (части `backup-%s.tar.enc.partNN`). Как восстановить — README.md в ветке main.
+"""
+DAY_PREFIX = "day-"   # ветка ночной копии: day-ГГГГ-ММ-ДД
 
 
 def log(msg: str) -> None:
@@ -231,14 +244,40 @@ def _publish(repo: Path, branch: str, files: list, readme: str) -> None:
     git("gc", "-q", "--prune=now", cwd=repo)
 
 
-def push() -> None:
-    """Ночью: все ночные копии, снимки настроек по дням и месяцам и свежие настройки — ветка main."""
-    files = [f for s in (sorted(SETS.iterdir()) if SETS.exists() else []) for f in sorted(s.iterdir())]
+def remote_days() -> list:
+    """Дни ночных копий, которые уже лежат в репозитории (ветки day-*), по порядку."""
+    r = git("ls-remote", "--heads", REMOTE, DAY_PREFIX + "*", cwd=WORK)
+    return sorted(line.split("refs/heads/" + DAY_PREFIX, 1)[1] for line in r.stdout.splitlines() if "refs/heads/" + DAY_PREFIX in line)
+
+
+def push(fresh: str | None = None) -> None:
+    """Ночью: каждая ночная копия, которой ещё нет в репозитории, и только что сделанная (fresh — повторный запуск в тот
+    же день заменяет копию дня) — своя ветка day-<день> (отдельной отправкой ~80 МБ); ветки дней, которых уже нет среди
+    KEEP последних, — удаляются; снимки настроек по дням и месяцам и свежие настройки — ветка main."""
+    WORK.mkdir(parents=True, exist_ok=True)
+    days = sorted(s.name for s in SETS.iterdir()) if SETS.exists() else []
+    there = remote_days()
+    sent = 0
+    for day in days:
+        if day in there and day != fresh:
+            continue
+        repo = WORK / "repo-day"   # временный: после отправки удаляется, на диске остаются только SETS
+        shutil.rmtree(repo, ignore_errors=True)
+        try:
+            _publish(repo, DAY_PREFIX + day, sorted((SETS / day).iterdir()), README_DAY % (day, day))
+        finally:
+            shutil.rmtree(repo, ignore_errors=True)
+        sent += 1
     snaps = sorted(CFG_DIR.glob("config-*.tar.enc")) if CFG_DIR.exists() else []
     latest = [WORK / CONFIG_FILE] if (WORK / CONFIG_FILE).exists() else []
-    _publish(REPO_DIR, "main", files + snaps + latest, README)
-    log("отправлено в закрытый репозиторий: копий %d, снимков настроек %d%s" % (
-        len(list(SETS.iterdir())) if SETS.exists() else 0, len(snaps), ", свежие настройки" if latest else ""))
+    _publish(REPO_DIR, "main", snaps + latest, README)
+    old = [d for d in there if d not in days]   # удаляем последними: новые копии уже в репозитории
+    if old:
+        r = git("push", "-q", "origin", "--delete", *[DAY_PREFIX + d for d in old], check=False)
+        if r.returncode != 0:
+            raise RuntimeError("не удалились старые копии в GitHub: " + (r.stderr or r.stdout)[-300:])
+    log("отправлено в закрытый репозиторий: новых копий %d (всего %d, удалено старых %d), снимков настроек %d%s" % (
+        sent, len(days), len(old), len(snaps), ", свежие настройки" if latest else ""))
 
 
 def push_config() -> None:
@@ -296,30 +335,42 @@ def check() -> int:
     tmp.mkdir(parents=True)
     problems, report = [], []
     try:
-        # 1. Ночная копия (ветка main): скачиваем только последнюю — список файлов без содержимого, потом нужные
+        # 1. Ночная копия: последняя ветка day-*; снимки настроек — ветка main (список файлов без содержимого)
         main_dir = tmp / "main"
         git("clone", "-q", "--depth", "1", "--filter=blob:none", "--no-checkout", "-b", "main", REMOTE, str(main_dir), cwd=tmp)
         names = git("ls-tree", "--name-only", "HEAD", cwd=main_dir).stdout.split()
-        days = sorted({n[len("backup-"):len("backup-") + 10] for n in names if n.startswith("backup-")})
+        snaps = sorted(n for n in names if n.startswith("config-day-") or n.startswith("config-month-"))
+        days = remote_days()
+        src, branch = tmp / "day", "main"
+        if days:
+            branch = DAY_PREFIX + days[-1]
+            git("clone", "-q", "--depth", "1", "-b", branch, REMOTE, str(src), cwd=tmp)
+            names = git("ls-tree", "--name-only", "HEAD", cwd=src).stdout.split()
+        else:   # прежнее устройство (до 23.10): все копии — в ветке main
+            days = sorted({n[len("backup-"):len("backup-") + 10] for n in names if n.startswith("backup-")})
+            src = main_dir
         if not days:
             raise RuntimeError("в репозитории нет ночных копий")
         day = days[-1]
         age = (datetime.now() - datetime.strptime(day, "%Y-%m-%d")).days
         parts = sorted(n for n in names if n.startswith(f"backup-{day}"))
-        snaps = sorted(n for n in names if n.startswith("config-day-") or n.startswith("config-month-"))
-        report.append(f"ночная копия {day} ({age} дн. назад), частей {len(parts)}; в репозитории копий {len(days)}, "
+        if not parts:
+            raise RuntimeError(f"в ветке {branch} нет частей копии")
+        report.append(f"ночная копия {day} ({age} дн. назад, ветка {branch}), частей {len(parts)}; в репозитории копий {len(days)}, "
                       f"снимков настроек: по дням {sum(n.startswith('config-day-') for n in snaps)}, по месяцам {sum(n.startswith('config-month-') for n in snaps)}")
         if age > 2:
             problems.append(f"последняя ночная копия — {day}: копии не обновлялись больше двух суток")
-        git("sparse-checkout", "set", "--no-cone", *parts, cwd=main_dir)
-        git("checkout", "-q", "main", cwd=main_dir)
+        if src == main_dir:
+            git("sparse-checkout", "set", "--no-cone", *parts, cwd=main_dir)
+            git("checkout", "-q", "main", cwd=main_dir)
         enc = tmp / "backup.tar.enc"
         with open(enc, "wb") as out:
             for n in parts:
-                out.write((main_dir / n).read_bytes())
+                out.write((src / n).read_bytes())
         _decrypt(enc, tmp / "backup.tar")
         enc.unlink()
         shutil.rmtree(main_dir, ignore_errors=True)
+        shutil.rmtree(tmp / "day", ignore_errors=True)
         with tarfile.open(tmp / "backup.tar") as t:
             t.extractall(tmp)
         (tmp / "backup.tar").unlink()
@@ -400,7 +451,7 @@ def main() -> None:
     if not (CFG_DIR.exists() and any(CFG_DIR.glob("config-day-*"))) and (WORK / CONFIG_FILE).exists():
         snapshot_config()   # первый запуск после перехода на снимки: настройки не менялись, а снимка ещё нет
     if "--local" not in sys.argv:
-        push()
+        push(day)
         if sig:
             push_config()
         mark_config(sig)
