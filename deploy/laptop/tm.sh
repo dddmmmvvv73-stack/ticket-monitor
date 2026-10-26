@@ -16,7 +16,7 @@ export TM_ON_SERVER=1                      # сайт берёт продажи 
 export TM_DISABLED_OPERATORS=             # с 13.10 Яндекс собирается и с ноутбука (решение пользователя; отказ закрыл только облачный сервер)
 export SALES_BUDGET_YANDEX=2500            # запросов в сутки — решение пользователя 13.10 (с сервера было 4 000)
 export SALES_BUDGET_KASSIR=500             # с домашнего адреса Кассир — бережнее, чем с сервера (2 000): 04.10 он ограничивал этот адрес
-export SALES_BUDGET_QTICKETS=800           # потолок; сам лимит — ступенями (data/qtickets_ramp.json)
+export SALES_BUDGET_QTICKETS=500           # потолок (26.10 снижен с 800 — решение пользователя: рост ошибок окна зала и «стопов»); сам лимит — ступенями (data/qtickets_ramp.json)
 export MARKET_KASSIR_PAUSE=2.0 MARKET_ORG_THREADS=1 MARKET_ORG_PAUSE=3.0
 # systemctl-заглушка («Собрать сейчас» → launchctl) и gh (вход в GitHub для правок сайта и копий) — у launchd PATH короткий
 export PATH="$APP/deploy/laptop/bin:/usr/local/bin:/opt/homebrew/bin:$PATH"
