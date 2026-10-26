@@ -6,10 +6,11 @@
 <title>Всё схвачено</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="stylesheet" href="work-calendar.css">
+<link rel="stylesheet" href="work-home.css">
 <link rel="stylesheet" href="work-notes.css">
 <link rel="stylesheet" href="work-docs.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Onest:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600&family=Onest:wght@400;500;600&display=swap" rel="stylesheet">
 <!--
   Прототип интерфейса (стиль — Design/Reference, адаптирован под рабочий инструмент).
   Данные — реальный снимок сбора 30.09.2026, 12:11: Владимир (ОДКиИ, Арт Холл) и Иваново (ЦКиО, Музыкальный театр). Открывается двойным кликом.
@@ -524,8 +525,6 @@ select.wk-in { cursor: pointer; -webkit-appearance: none; appearance: none; padd
 .wk-status-signed, .wk-pay-paid, .wk-closing-got, .wk-stage-done { color: var(--good); }
 .wk-status-sent, .wk-stage-sales, .wk-stage-live { color: var(--data); }
 .wk-pay-part { color: #a16207; } .wk-pay-no, .wk-closing-no, .wk-status-draft { color: var(--ink-3); }
-.wk-empty { max-width: 560px; padding: 28px 28px 26px; background: var(--card); border: 1px dashed var(--line-strong); border-radius: 14px; }
-.wk-empty b { font-size: 16px; font-weight: 600; } .wk-empty p { margin: 6px 0 0; color: var(--ink-3); }
 /* «Проекты» (20.10, референсы пользователя): плитки аналитики · строка «Канбан / Список / Карточки», поиск, фильтр ·
    список — группы по стадиям, строки-карточки · канбан по стадиям · карточки */
 .wkp-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin: 4px 0 22px; }
@@ -2635,6 +2634,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <script src="vendor/tiptap-3.30.0.min.js"></script>
 <script src="work-notes.js"></script>
 <script src="work-docs.js"></script>
+<script src="work-home.js"></script>
 <script src="market-pop.js"></script>
 <script src="venue-cap.js"></script>
 <script src="venue-book.js"></script>
@@ -6311,14 +6311,7 @@ function wkGate(title) {   // данные раздела — с сервера:
   if (!WK_OK) { wkLoad(); return head(title, "") + '<div class="sub">Загружаем…</div>'; }
   return "";
 }
-// Пустые разделы — наполняем постепенно
-var WK_EMPTY = {
-  wkhome: ["Обзор", "Главное по работе и простая аналитика — раздел создан, наполним постепенно."]
-};
-function renderWkEmpty(v) {
-  var e = WK_EMPTY[v], g = wkGate(e[0]); if (g) return g;
-  return head(e[0], "") + '<div class="wk-empty"><b>Пока пусто</b><p>' + e[1] + '</p></div>';
-}
+// «Обзор» (#wkhome) — work-home.js и work-home.css (макет утверждён пользователем 26.10: Design/mockups/obzor.html)
 // «Задачи» — по референсу пользователя (20.10): поиск · Список / Канбан · статусы с числами · Проект · Приоритет · «Создать задачу»;
 // сводка: по приоритетам (открытые) и итоги; таблица — Задача · Проект · Приоритет · Статус · Срок · •••, сортировка по столбцам;
 // канбан — Начало · В работе · Готово (перетаскивание меняет статус). Без «Ждёт ответа» (20.10). Функции — прежние: галочка, статус, приоритет, срок, окно задачи.
@@ -7112,7 +7105,7 @@ var JR_FIELD = { title: "Название", rows: "Строки тура", note:
   body: "Текст", paid: "Оплачено", date: "Дата", prio: "Приоритет", deadline: "Дедлайн проекта", pfiles: "Документы проекта",
   text: "Задача", due: "Дедлайн", done: "Готово", done_at: "Сделано", stage: "Стадия", start: "Начало", end: "Окончание", kind: "Документ", party: "С кем",
   amount: "Сумма", pay: "Оплата", closing: "Закрывающие", created: "Создана", doc: "Текст заметки", task: "Задача", log: "Журнал задачи", type: "Тип заметки", sale: "Продажи", sale_ok: "Разрешено", sale_on: "В продаже с", cp: "Контрагент", inv: "Счёт", orig_out: "Оригинал отправили", orig_in: "Оригинал получили",
-  legal: "Юрлицо", inn: "ИНН", service: "Услуга", edo: "ЭДО", contact: "Контакт", phone: "Телефон", email: "Почта", venue: "Площадка" };
+  legal: "Юрлицо", inn: "ИНН", service: "Услуга", edo: "ЭДО", contact: "Контакт", phone: "Телефон", email: "Почта", venue: "Площадка", pin: "Закреплена в фокусе", remind: "Напомнить", order: "Порядок" };
 function jrLabel(area, f) {
   if (area === "venues") { var c = VB_COLS.filter(function (x) { return x.id === f; })[0]; if (c) return c.label; }
   return JR_FIELD[f] || f;
@@ -11688,6 +11681,7 @@ function render() {
   syncMarketView(); S.city = S.m.city;  // раздел — по вкладке «Рынка», если её переключил код; город шапки один на все разделы
   if (location.hash.slice(1) !== viewHash()) history.replaceState(null, "", "#" + viewHash());   // адрес — всегда текущий раздел: его можно скопировать или открыть в новой вкладке
   document.body.classList.toggle("wk-mode", wkOn());
+  document.body.classList.toggle("wh-mode", S.view === "wkhome" && !S.wk.wn);   // «Обзор»: серый фон, как в референсах
   document.body.classList.toggle("wkc-mode", S.view === "wkcal" && !S.wk.wn);
   if (WK_OK) wkStagesSync();   // статусы проектов — свои у пользователя   // разделы «Работы» — без верхней панели рынка (город, период, поиск, сбор; решение пользователя 20.10)
   var ip = $("infoPop"); if (ip) ip.hidden = true;  // элемент под курсором заменится — его подсказка не должна «висеть»
@@ -11705,7 +11699,7 @@ function render() {
   $("dateBtn").style.borderColor = ARCH_ON || S.period === "custom" ? "var(--soot)" : "";
   $("period").style.display = ARCH_ON ? "none" : "";  // «30 дней / 90 дней / Сезон» — про будущее; в архиве период — кнопкой «Даты»
   HEAD_SUB = !isM() && SUBS[S.view] ? subSwitch(S.view) : "";
-  $("view").innerHTML = wkOn() && S.wk.wn ? wnPage() : S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? (vbOn() ? renderVenueBook() : renderVenues()) : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : S.view === "planning" ? renderPlanning() : S.view === "route" ? renderRoute() : S.view === "work" ? renderWork() : S.view === "wktasks" ? renderWkTasks() : S.view === "wkdocs" ? renderWkDocs() : S.view === "wkparties" ? WorkDocs.renderParties() : S.view === "wkhome" ? renderWkEmpty("wkhome") : S.view === "wkcal" ? renderWkCalendar() : S.view === "wknotes" ? renderWkNotes() : renderEvents();
+  $("view").innerHTML = wkOn() && S.wk.wn ? wnPage() : S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? (vbOn() ? renderVenueBook() : renderVenues()) : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : S.view === "planning" ? renderPlanning() : S.view === "route" ? renderRoute() : S.view === "work" ? renderWork() : S.view === "wktasks" ? renderWkTasks() : S.view === "wkdocs" ? renderWkDocs() : S.view === "wkparties" ? WorkDocs.renderParties() : S.view === "wkhome" ? renderWkHome() : S.view === "wkcal" ? renderWkCalendar() : S.view === "wknotes" ? renderWkNotes() : renderEvents();
   $("view").classList.toggle("enter", !!S.enter); S.enter = false; S.colsAnim = false;
   ddClose(false); enhanceSelects(document.querySelector(".top")); enhanceSelects($("view")); vdRestore();
   candApply();  // «Города, где его нет» — счётчик найденного после перерисовки

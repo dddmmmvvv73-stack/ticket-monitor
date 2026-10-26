@@ -48,7 +48,8 @@ case "$JOB" in
            "$PY" -m sales.export >> "$LOG" 2>&1 ;;
   sync)    "$PY" -m competitors.officialsite >> "$LOG" 2>&1 || log "официальные сайты — ошибка, база пополняется дальше"
            "$PY" -m db.sync >> "$LOG" 2>&1
-           "$PY" -m sales.results >> "$LOG" 2>&1 ;;
+           "$PY" -m sales.results >> "$LOG" 2>&1
+           "$PY" -m competitors.work remind >> "$LOG" 2>&1 || log "напоминания о задачах — ошибка" ;;
   backup)  "$PY" -m db.offsite >> "$LOG" 2>&1 ;;
   backupcfg) "$PY" -m db.offsite --config >> "$LOG" 2>&1 ;;
   check)   "$PY" -m db.offsite --check >> "$LOG" 2>&1 ;;

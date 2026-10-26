@@ -29,7 +29,12 @@
                           рабочая (решение 22.10): "type": "work", "task" — или пусто, "doc" — документ редактора (TipTap JSON)}},
      "shows":    {номер: {"project", "date", "venue" — номер в справочнике площадок, "name", "city", "upd",
                           "sale" — выход в продажу (решение 22.10): пусто — ждём площадку | allowed — площадка разрешила |
-                          onsale — в продаже у операторов; "sale_ok", "sale_on" — даты разрешения и выхода в продажу}}}   ← с чем связана задача; у задачи — "tags": [номера]; пока своих нет — DEFAULT_TAGS
+                          onsale — в продаже у операторов; "sale_ok", "sale_on" — даты разрешения и выхода в продажу}},
+     "goals":    {номер: {"month" — ГГГГ-ММ, "text", "done", "order", "upd"}}}   ← цели месяца («Обзор», решение пользователя 26.10)
+У проекта — "created" (дата создания: от неё «Обзор» считает, где проект должен быть к дедлайну готовности; у проектов
+до 26.10 — дата первой его задачи). У задачи — "pin" (закреплена в «Фокусе» «Обзора») и "remind" (напомнить в Telegram:
+утром в день срока и, пока не сделана, каждое утро после — python3 -m competitors.work remind, tm-sync каждый час).
+Теги задачи — "tags": [номера]; пока своих нет — DEFAULT_TAGS.
 
     GET  /api/work                                   всё
     POST /api/work {"op": "put", "kind", "id", "data"}   запись целиком (проверяется)
@@ -37,6 +42,8 @@
                    {"op": "media", "kind": "projects", "id", "what": "avatar" | "cover", "data"}   фото проекта
     POST /api/work/nfile {"id" — номер заметки, "name", "data"}   картинка или файл рабочей заметки → {"file", "name", "size"}
     GET  /api/work/file/<файл>                     фото проекта, файлы заметок (config/work_media/, вне git)
+
+    python3 -m competitors.work remind             напоминания о задачах в Telegram (раз в день, с REMIND_HOUR)
 """
 
 from __future__ import annotations
@@ -48,10 +55,10 @@ import secrets
 import threading
 from datetime import datetime
 
-from competitors.storage import CONFIG_DIR, load_json, save_json
+from competitors.storage import BASE_DIR, CONFIG_DIR, load_json, save_json
 
 FILE = CONFIG_DIR / "work.json"
-KINDS = ("projects", "tasks", "docs", "tags", "costs", "notes", "shows", "stages", "parties")
+KINDS = ("projects", "tasks", "docs", "tags", "costs", "notes", "shows", "stages", "parties", "goals")
 # shows — гастроли проекта (решение пользователя 20.10): дата, площадка, город; площадка — из справочника «Площадки → Площадки»
 # (venue — номер записи config/venue_book.json); название и город хранятся копией — строка читается, даже если площадку убрали из справочника
 # Цвета тегов. Красный и оранжевый — только у приоритета (решение пользователя 19.10: полоса слева — по тегу, и красная
@@ -86,6 +93,7 @@ LOG_MAX = 2000                   # записей в журнале задачи
 SALE = ["", "allowed", "onsale"]
 TEXT_MAX = 3000
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+_MONTH = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 _STAMP = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2})?$")
 SUBS_MAX = 200
 _ID = re.compile(r"^[a-z0-9]{3,40}$")
@@ -115,6 +123,10 @@ def load() -> dict:
         out["stages"] = {k: dict(v) for k, v in DEFAULT_STAGES.items()}
     for t in out["tags"].values():
         t["color"] = RECOLOR.get(t.get("color"), t.get("color"))
+    for pid, p in out["projects"].items():   # проекты до 26.10 — без даты создания: дата первой задачи (иначе — последней правки)
+        if not p.get("created"):
+            first = min((t.get("created") or "9" for t in out["tasks"].values() if t.get("project") == pid), default="9")
+            p["created"] = first if first != "9" else (p.get("upd") or "")[:10] or datetime.now().strftime("%Y-%m-%d")
     for d in out["docs"].values():   # документы до 22.10: прежние статусы и «оплачено полностью» — в новые поля
         d["status"] = DOC_STATUS_OLD.get(d.get("status"), d.get("status"))
         if d.pop("pay", None) == "paid" and not d.get("paid"):
@@ -238,7 +250,8 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
         stages = sorted(data["stages"], key=lambda k: data["stages"][k].get("order", 0))
         out = {"title": _text(d.get("title"), "название", 300), "stage": _enum(d.get("stage"), stages, "статус", stages[0]),
                "start": _date(d.get("start"), "начало"), "end": _date(d.get("end"), "окончание"),
-               "deadline": _date(d.get("deadline"), "дедлайн"), "note": _text(d.get("note"), "заметка"), "fav": bool(d.get("fav"))}   # fav — избранный (звезда в карточках, 20.10)
+               "deadline": _date(d.get("deadline"), "дедлайн"), "note": _text(d.get("note"), "заметка"), "fav": bool(d.get("fav")),   # fav — избранный (звезда в карточках, 20.10)
+               "created": _date(d.get("created"), "создан")}   # пусто — сегодня или прежняя (apply_op)
         if not out["title"]:
             raise WorkError("у проекта нужно название")
         return out
@@ -300,11 +313,19 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
                "time": _int(d.get("time"), "время", 0, 10 ** 8), "run": _stamp(d.get("run")), "est": _int(d.get("est"), "план", 0, 10 ** 6),
                "tags": [t for t in (d.get("tags") or []) if t in data["tags"]][:12],
                "prio": _enum(d.get("prio"), PRIO, "приоритет", ""), "status": _enum(d.get("status"), STATUS, "статус", ""),
-               "log": _log(d.get("log"))}
+               "log": _log(d.get("log")), "pin": bool(d.get("pin")), "remind": bool(d.get("remind"))}
         if not out["text"]:
             raise WorkError("у задачи нужен текст")
         if out["done"]:
             out["done_at"] = _date(d.get("done_at"), "сделано") or datetime.now().strftime("%Y-%m-%d")
+        return out
+    if kind == "goals":
+        month = str(d.get("month") or "")
+        if not _MONTH.match(month):
+            raise WorkError("цель: месяц вида ГГГГ-ММ")
+        out = {"month": month, "text": _text(d.get("text"), "цель", 300), "done": bool(d.get("done")), "order": _int(d.get("order"), "порядок", 0, 10000)}
+        if not out["text"]:
+            raise WorkError("у цели нужен текст")
         return out
     if kind == "parties":
         inn = re.sub(r"\s", "", str(d.get("inn") or ""))
@@ -348,6 +369,8 @@ def apply_op(op: dict) -> dict:
         if op.get("op") == "put":
             rec = _validate(kind, op.get("data") or {}, data)
             rec["upd"] = datetime.now().isoformat(timespec="seconds")
+            if kind == "projects":   # дата создания не меняется правками; новый проект — сегодня
+                rec["created"] = (data[kind].get(oid) or {}).get("created") or rec["created"] or datetime.now().strftime("%Y-%m-%d")
             for keep in ("media", "pfiles"):   # фото и документы проекта меняются отдельно — правка полей их не трогает
                 if kind == "projects" and (data[kind].get(oid) or {}).get(keep):
                     rec[keep] = data[kind][oid][keep]
@@ -498,3 +521,41 @@ def media_file(name: str):
         return None
     path = MEDIA_DIR / name
     return path if path.is_file() else None
+
+
+# ---------------------------------------------------------------- напоминания в Telegram (колокольчик у задачи, «Обзор» 26.10)
+
+REMIND_HOUR = 9                                    # утром: первый запуск tm-sync после 9:00
+REMIND_FILE = BASE_DIR / "data" / "work_remind.json"   # {"day": ГГГГ-ММ-ДД} — в этот день уже отправлено
+
+
+def remind(now: datetime | None = None, send=None) -> int:
+    """Раз в день: задачи с колокольчиком, срок которых сегодня или прошёл, а задача не сделана, — одним сообщением.
+    Telegram не настроен — ничего не отправляется и день не отмечается (настроят — придёт в тот же день)."""
+    from competitors import telegram
+    now, send = now or datetime.now(), send or telegram.send
+    today = now.strftime("%Y-%m-%d")
+    if now.hour < REMIND_HOUR or load_json(REMIND_FILE, {}).get("day") == today:
+        return 0
+    d = load()
+    due = sorted((t for t in d["tasks"].values() if t.get("remind") and not t.get("done") and t.get("due") and t["due"] <= today),
+                 key=lambda t: (t["due"], t.get("text", "")))
+    if not due:
+        save_json(REMIND_FILE, {"day": today})
+        return 0
+    lines = []
+    for t in due:
+        p = d["projects"].get(t.get("project") or "") or {}
+        when = "сегодня" if t["due"] == today else "просрочено с " + ".".join(reversed(t["due"].split("-")[1:]))
+        lines.append(f"• {t['text']}" + (f" — {p['title']}" if p.get("title") else "") + f" ({when})")
+    if not send(f"🔔 Задачи на сегодня — {len(due)}:\n" + "\n".join(lines[:40]) + ("\n…" if len(lines) > 40 else "")):
+        return 0
+    save_json(REMIND_FILE, {"day": today})
+    return len(due)
+
+
+if __name__ == "__main__":
+    import sys
+    if sys.argv[1:] == ["remind"]:
+        n = remind()
+        print(f"напоминания: отправлено задач {n}" if n else "напоминания: нечего отправлять, рано или уже отправлено сегодня")
