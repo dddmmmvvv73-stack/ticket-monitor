@@ -4,6 +4,8 @@ config/settings.json
 config/my_projects.json
 # «Планирование»: гонорары, аренда, расходы туров — коммерческие данные (репозиторий публичный)
 config/planning.json
+# Ссылки для руководителя: снимки предложения с гонорарами и комментарии (competitors/shares.py)
+config/shares/
 # Справочник площадок: контакты, телефоны, почты (competitors/venuebook.py)
 config/venue_book.json
 config/venue_media/

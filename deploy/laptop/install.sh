@@ -2,7 +2,7 @@
 # Ноутбук как временный сервер: расписание launchd — как таймеры systemd на сервере (deploy/systemd).
 #   deploy/laptop/install.sh            поставить / обновить
 #   deploy/laptop/install.sh remove     убрать (когда сервер снова главный)
-# Дела: web — сайт http://127.0.0.1:5050/proto/ (всегда); collect — :25 каждый час; sales — :05 каждый час;
+# Дела: web — сайт http://127.0.0.1:5050/proto/ (всегда); share — страница ссылки для руководителя :5070 (всегда); collect — :25 каждый час; sales — :05 каждый час;
 # sync — :58 каждый час; market — 21:00; backup — 03:30 (зашифрованная копия в закрытый репозиторий GitHub);
 # backupcfg — каждые 15 минут (только config/: площадки, финмодель, карточки проектов, фото, журнал изменений — если
 # изменились); check — 1-го числа в 04:30 (пробное восстановление копии с GitHub, сверка с живыми данными);
@@ -11,14 +11,14 @@ set -euo pipefail
 APP="$(cd "$(dirname "$0")/../.." && pwd)"
 AG="$HOME/Library/LaunchAgents"
 UIDN=$(id -u)
-JOBS="web collect sales sync market backup backupcfg check awake"
+JOBS="web share collect sales sync market backup backupcfg check awake"
 mkdir -p "$AG" "$APP/data/logs"
 
 # Идущий сбор не прерываем (12.10 переустановка убила сбор афиши на 12-й минуте): такое дело оставляем как есть
 running() { launchctl list | awk -v l="ru.ticketmonitor.$1" '$3 == l && $1 != "-" {f=1} END {exit !f}'; }
 KEEP=""
 for j in $JOBS; do
-  if [ "${1:-}" != "remove" ] && [ "$j" != web ] && [ "$j" != awake ] && running "$j"; then KEEP="$KEEP $j"; continue; fi
+  if [ "${1:-}" != "remove" ] && [ "$j" != web ] && [ "$j" != share ] && [ "$j" != awake ] && running "$j"; then KEEP="$KEEP $j"; continue; fi
   launchctl bootout "gui/$UIDN/ru.ticketmonitor.$j" 2>/dev/null || true
   rm -f "$AG/ru.ticketmonitor.$j.plist"
 done
@@ -49,6 +49,7 @@ P
 run() { echo "<string>/bin/bash</string><string>$APP/deploy/laptop/tm.sh</string><string>$1</string>"; }
 
 plist web     "$(run web)"     "<key>RunAtLoad</key><true/><key>KeepAlive</key><true/>"
+plist share   "$(run share)"   "<key>RunAtLoad</key><true/><key>KeepAlive</key><true/>"
 plist collect "$(run collect)" "$(cal 25)"
 plist sales   "$(run sales)"   "$(cal 5)"
 plist sync    "$(run sync)"    "$(cal 58)"

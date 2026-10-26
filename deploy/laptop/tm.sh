@@ -1,7 +1,7 @@
 #!/bin/bash
 # Ноутбук как временный сервер (с 12.10.2026 — авария Yandex Cloud): те же сборы, что systemd на сервере (deploy/systemd),
 # по расписанию launchd (deploy/laptop/install.sh). Запуск одного дела вручную:
-#   deploy/laptop/tm.sh web | collect | market | sales | sync | backup | backupcfg | check
+#   deploy/laptop/tm.sh web | share | collect | market | sales | sync | backup | backupcfg | check
 # Копия или пробное восстановление не прошли — сообщение в Telegram (competitors/telegram.py, если настроен).
 # Журналы — data/logs/<дело>.log. Одновременно одно и то же дело не запускается (замок в data/locks).
 set -uo pipefail
@@ -29,6 +29,9 @@ log() { echo "$(date '+%d.%m %H:%M:%S')  $*" >> "$LOG"; }
 if [ "$JOB" = "web" ]; then
   exec "$PY" app.py >> "$LOG" 2>&1
 fi
+if [ "$JOB" = "share" ]; then   # страница ссылки для руководителя (порт 5070) — единственное, что видно снаружи (CITY_PICK_PLAN.md, п. 2.8)
+  exec "$PY" share_app.py >> "$LOG" 2>&1
+fi
 
 LOCK="data/locks/$JOB"
 if ! mkdir "$LOCK" 2>/dev/null; then
@@ -53,7 +56,7 @@ case "$JOB" in
   backup)  "$PY" -m db.offsite >> "$LOG" 2>&1 ;;
   backupcfg) "$PY" -m db.offsite --config >> "$LOG" 2>&1 ;;
   check)   "$PY" -m db.offsite --check >> "$LOG" 2>&1 ;;
-  *) echo "дело: web | collect | market | sales | sync | backup | backupcfg | check"; exit 2 ;;
+  *) echo "дело: web | share | collect | market | sales | sync | backup | backupcfg | check"; exit 2 ;;
 esac
 RC=$?
 log "=== конец: $JOB (код $RC)"

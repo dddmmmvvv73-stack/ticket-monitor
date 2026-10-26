@@ -32,4 +32,5 @@ test("руководителю — обе группы, риски, экрани
   assert.ok(b.includes("&lt;b&gt;x&lt;/b&gt;") && !b.includes("<b>x</b>"));
   const s = offerDocBody(snap, "boss", { share: true });
   assert.ok(s.includes('data-mgr="Калининград"') && s.includes('data-mgr=""') && !s.includes("contenteditable"));
+  assert.ok(s.includes('class="cc"') && !s.includes("<table"));   // на странице ссылки — карточки, не широкая таблица
 });

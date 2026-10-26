@@ -1755,6 +1755,11 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .tb-decbtn[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: #fff; font-weight: 500; }
 .tb-zhead { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; margin: 10px 0 6px; } .tb-zhead .seg { height: 34px; } .tb-zhead .seg button { padding: 0 10px; }
 .tb-zones .pl-in.pl-text { width: 100%; } .tb-note { min-height: 64px; }
+.tb-shares { padding: 12px 14px; margin-bottom: 12px; } .tb-shares-head { display: flex; gap: 8px; align-items: center; }
+.tb-share { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 14px; } .tb-share.closed { color: var(--muted); }
+.tb-shareurl { width: 320px; max-width: 100%; text-align: left; font-size: 13px; } .tb-sharebase { margin-top: 8px; } .tb-sharebase summary { cursor: pointer; } #tbShareBase { width: 360px; max-width: 100%; text-align: left; }
+.tb-mgr { display: flex; flex-wrap: wrap; gap: 2px 8px; margin-top: 2px; } .tb-mgr.new .tb-st { font-weight: 600; }
+.tb-mgrcard { margin: 10px 0; padding: 8px 12px; border-left: 3px solid #1d6fae; background: #f1f7fc; border-radius: 0 8px 8px 0; font-size: 14px; } .tb-mgrc { margin-top: 6px; }
 .tb-more2 { margin-top: 12px; } .tb-more2 summary { cursor: pointer; font-weight: 600; font-size: 14px; }
 .tb-cardk { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0; } .tb-cardk > div { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; }
 .tb-cardin { margin: 12px 0; } .tb-cardh { font-size: 14px; margin: 16px 0 6px; }
@@ -13005,6 +13010,7 @@ function tbAction(a, b) {   // кнопки вкладки (из общего о
   else if (a === "tb-onmap") { t.view = "map"; S.pl.tbFocus = b.getAttribute("data-city"); tbRe(); var m = $("tbMap"); if (m) m.scrollIntoView({ block: "center" }); }
   else if (a === "tb-tour") tbMakeTour(tbCur(), Object.keys(t.sel));
   else if (a === "tb-offer") tbOfferDoc(b.getAttribute("data-k"));
+  else if (a.indexOf("tb-share") === 0) tbShareAction(a, b);
   else if (a === "tb-card") tbOpenCard(b.getAttribute("data-city"));
   else if (a === "tb-pkflag") {   // переключатели подбора; «не были и не стоят» и «скрыть не подходит» — включены по умолчанию
     var fk = b.getAttribute("data-k"), def = fk === "pkFree" || fk === "pkHideNo";
@@ -13370,6 +13376,88 @@ function tbMakeTour(Lc, cities) {   // тур в «Финмодель туров
   if (cx && cx.A.from) tour.month = cx.A.from.slice(0, 7);
   S.pl.tb.sel = {}; S.pl.tab = "tours"; S.pl.tour = tid; closeDrawer();
   plPut("tours", tid, tour, "Тур создан: " + cities.length + " " + plural(cities.length, "город", "города", "городов") + (pid ? "" : " — выберите проект тура"));
+}
+// Ссылка для руководителя (CITY_PICK_PLAN.md, п. 2.8): версии предложения на сервере (competitors/shares.py), страница —
+// share_app.py. Решения и комментарии руководителя — значком у города (таблицы и карточка) и счётчиком новых у вкладки.
+var TB_MGR = { ok: ["согласовано", "#15803d"], ask: ["вопрос", "#b45309"], no: ["не согласовано", "#b42318"] };
+function tbSharesLoad(force) {   // версии текущего списка; не чаще раза в минуту (после правок — сразу)
+  var id = S.pl.tb.list, st = S.pl.tbShares;
+  if (!CAN_SAVE || !id || (!force && st && st.list === id && Date.now() - st.at < 60000)) return;
+  S.pl.tbShares = { list: id, at: Date.now(), base: st && st.list === id ? st.base : "", shares: st && st.list === id ? st.shares : [], loading: true };
+  apiJson("GET", "/api/shares?list=" + encodeURIComponent(id)).then(function (x) {
+    if (!x.ok || S.pl.tb.list !== id) return;
+    var was = JSON.stringify((S.pl.tbShares || {}).shares || []);
+    S.pl.tbShares = { list: id, at: Date.now(), base: x.d.base, shares: x.d.shares || [] };
+    if (was !== JSON.stringify(S.pl.tbShares.shares) && S.view === "planning" && S.pl.tab === "build") tbRe();
+  }, function () {});
+}
+function tbShareUrl(s) { return ((S.pl.tbShares || {}).base || "http://127.0.0.1:5070") + "/s/" + s.token; }
+function tbShareSeen() { return PL_PREFS.shareSeen || (PL_PREFS.shareSeen = {}); }
+function tbShareIsNew(s, c) { var t = tbShareSeen()[s.token]; return !t || Date.parse(c.at) > Date.parse(t); }   // время с поясом — сравнивать датами, не строками
+function tbShareMarks(A) {   // r.mgr — значок у города в таблице, r.mgrCard — комментарии в карточке; S.pl.tbNewC — новых
+  tbSharesLoad();
+  var st = S.pl.tbShares, by = {}, seen = tbShareSeen(), nNew = 0;
+  if (st && st.list === S.pl.tb.list) (st.shares || []).slice().reverse().forEach(function (s) {   // от старой версии к новой: последнее решение — свежее
+    (s.comments || []).forEach(function (c) {
+      var isNew = tbShareIsNew(s, c); if (isNew) nNew++;
+      var o = by[c.city] = by[c.city] || { list: [], dec: "", nNew: 0 }; o.list.push({ c: c, s: s }); if (c.decision) o.dec = c.decision; if (isNew) o.nNew++;
+    });
+  });
+  S.pl.tbNewC = nNew;
+  A.rows.forEach(function (r) {
+    var o = by[r.city]; r.mgr = ""; r.mgrCard = "";
+    if (!o) return;
+    var m = TB_MGR[o.dec], txt = o.list.filter(function (x) { return x.c.text; }).length;
+    r.mgr = '<div class="tb-mgr' + (o.nNew ? ' new' : '') + '" title="Руководитель: ' + esc(o.list.map(function (x) { return x.c.name + (x.c.decision ? " — " + TB_MGR[x.c.decision][0] : "") + (x.c.text ? ": " + x.c.text : ""); }).join("\n")) + '">' +
+      (m ? '<span class="tb-st" style="--c:' + m[1] + '">' + m[0] + '</span>' : '') + (txt ? '<span class="sub2">💬 ' + txt + '</span>' : '') + '</div>';
+    r.mgrCard = '<div class="tb-mgrcard"><b>Руководитель</b>' + o.list.slice().reverse().map(function (x) {
+      var mm = TB_MGR[x.c.decision];
+      return '<div class="tb-mgrc"><span class="sub2">' + esc(x.c.name) + ' · ' + new Date(x.c.at).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + (mm ? ' · ' + mm[0] : '') + '</span>' + (x.c.text ? '<div>' + esc(x.c.text) + '</div>' : '') + '</div>';
+    }).join("") + '</div>';
+  });
+  var gen = by[""]; S.pl.tbGenC = gen ? gen.list : [];
+}
+function tbShareBtn() {
+  return '<button class="btn-ghost" data-pl="tb-share" title="Страница с этим предложением, где руководитель отмечает города и пишет комментарии. Ноутбук должен быть включён, иначе ссылка не откроется">Ссылка для руководителя</button>';
+}
+function tbSharePanel() {
+  var st = S.pl.tbShares; if (!st || st.list !== S.pl.tb.list || !(st.shares || []).length) return '';
+  var seen = tbShareSeen(), local = /127\.0\.0\.1|localhost/.test(st.base || "");
+  var gen = (S.pl.tbGenC || []).slice().reverse();
+  return '<section class="card pl-card tb-shares"><div class="tb-shares-head"><b>Ссылки для руководителя</b>' +
+      (S.pl.tbNewC ? '<span class="tb-newc">' + S.pl.tbNewC + '</span> <button class="pj-plain" data-pl="tb-shareseen">прочитано</button>' : '') + '</div>' +
+    (local ? '<p class="sub2" style="margin:4px 0 8px">Ссылка откроется только на этом компьютере, пока не настроен внешний доступ (Tailscale). PDF работает всегда.</p>' : '') +
+    st.shares.slice(0, 5).map(function (s, i) {
+      var url = tbShareUrl(s), n = (s.comments || []).length, nn = (s.comments || []).filter(function (c) { return tbShareIsNew(s, c); }).length;
+      return '<div class="tb-share' + (s.closed ? ' closed' : '') + '"><span>' + (i === 0 && !s.closed ? '<b>Текущая</b> · ' : '') + 'от ' + new Date(s.created).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) +
+        ' · ' + s.cities + ' ' + plural(s.cities, "город", "города", "городов") + ' · ' + (n ? n + ' ' + plural(n, "отметка", "отметки", "отметок") + (nn ? ' (новых ' + nn + ')' : '') : 'без комментариев') + (s.closed ? ' · закрыта' : '') + '</span>' +
+        (s.closed ? '' : '<input class="pl-in pl-text tb-shareurl" readonly value="' + esc(url) + '" aria-label="Адрес ссылки" onfocus="this.select()"><button class="btn-ghost" data-pl="tb-sharecopy" data-url="' + esc(url) + '">Скопировать</button>' +
+          '<a class="pj-plain" href="' + esc(url) + '" target="_blank" rel="noopener">открыть</a><button class="pj-plain" data-pl="tb-shareclose" data-token="' + esc(s.token) + '">закрыть ссылку</button>') + '</div>';
+    }).join("") +
+    (gen.length ? '<div class="tb-mgrcard"><b>Общие комментарии</b>' + gen.map(function (x) { return '<div class="tb-mgrc"><span class="sub2">' + esc(x.c.name) + ' · ' + new Date(x.c.at).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) + '</span><div>' + esc(x.c.text) + '</div></div>'; }).join("") + '</div>' : '') +
+    '<details class="tb-sharebase"><summary class="sub2">Адрес для ссылок</summary><div class="tb-actions"><input id="tbShareBase" class="pl-in pl-text" value="' + esc(local ? "" : st.base) + '" placeholder="https://имя.сеть.ts.net — после настройки Tailscale Funnel" aria-label="Адрес для ссылок"><button class="btn-ghost" data-pl="tb-sharebase">Сохранить</button></div></details></section>';
+}
+function tbShareAction(a, b) {
+  if (!CAN_SAVE) { toast("Ссылка работает только через сайт, не из файла"); return; }
+  var id = S.pl.tb.list;
+  if (a === "tb-share") {
+    var cx = S.pl.tbCtx, L = tbCur(); if (!cx || !cx.A || !L) return;
+    var snap = tbSnapshot(L, cx.A, cx.P); if (!snap.rows.length) { toast("В предложении нет городов"); return; }
+    apiJson("POST", "/api/shares", { list: id, snapshot: snap }).then(function (x) {
+      if (!x.ok) { toast("Не создано: " + (x.d.error || "ошибка")); return; }
+      toast("Новая версия ссылки готова — скопируйте адрес"); tbSharesLoad(true);
+    }, function () { toast("Не создано: " + NO_APP); });
+  } else if (a === "tb-sharecopy") {
+    var url = b.getAttribute("data-url");
+    (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(function () { toast("Ссылка скопирована"); }, function () { var i = b.previousElementSibling; if (i) { i.focus(); i.select(); } toast("Скопируйте выделенный адрес: ⌘C"); });
+  } else if (a === "tb-shareclose") {
+    if (!confirm("Закрыть ссылку? Руководитель увидит «ссылка закрыта», комментарии сохранятся.")) return;
+    apiJson("POST", "/api/shares/" + encodeURIComponent(b.getAttribute("data-token")) + "/close", {}).then(function (x) { toast(x.ok ? "Ссылка закрыта" : "Не закрыто: " + (x.d.error || "ошибка")); tbSharesLoad(true); }, function () { toast("Не закрыто: " + NO_APP); });
+  } else if (a === "tb-shareseen") {
+    var seen = tbShareSeen(), now = new Date().toISOString(); ((S.pl.tbShares || {}).shares || []).forEach(function (s) { seen[s.token] = now; }); plPrefsSave(); tbRe();
+  } else if (a === "tb-sharebase") {
+    apiJson("POST", "/api/shares/base", { base: ($("tbShareBase") || {}).value || "" }).then(function (x) { toast(x.ok ? "Адрес сохранён" : "Не сохранено: " + (x.d.error || "ошибка")); tbSharesLoad(true); }, function () { toast("Не сохранено: " + NO_APP); });
+  }
 }
 // Снимок предложения — одни и те же строки и цифры для PDF и для ссылки руководителю (offer-doc.js)
 function tbSnapshot(L, A, P) {
