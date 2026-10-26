@@ -1733,6 +1733,19 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .tb-win { color: #15803d; } .tb-list tr.sel > * { background: #eaf2fa; }
 .tb-selbar { position: sticky; top: 8px; z-index: 5; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--soot); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
 .tb-selbar[hidden] { display: none; } .pl-gm-period b { font-weight: 600; color: var(--ink); }
+.tb-econ { padding: 14px 16px; margin-bottom: 14px; } .tb-econ-head { display: flex; gap: 6px 14px; align-items: baseline; flex-wrap: wrap; margin-bottom: 10px; } .tb-econ-head h3 { margin: 0; font-size: 16px; }
+.tb-econ-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px 18px; align-items: end; }
+.tb-ef { display: flex; flex-direction: column; gap: 4px; font-size: 13px; color: var(--ink-2); min-width: 0; } .tb-ef .pl-in, .tb-ef .pl-sel { align-self: flex-start; }
+.tb-ef2 { display: inline-flex; gap: 6px; align-items: center; } .tb-fillseg { height: 34px; } .tb-fillseg button { padding: 0 10px; }
+.tb-econ-note { margin: 10px 0 0; } .tb-econ-note summary { cursor: pointer; } .tb-econ-note p { margin: 6px 0 0; } .tb-pkbtn { border: 0; background: none; padding: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+.tb-pkbtn:hover .tb-st { text-decoration: underline; } .tb-xbtn { width: 28px; height: 28px; opacity: .55; } .tb-xbtn:hover, .tb-xbtn:focus-visible { opacity: 1; }
+.tb-plist .tb-vname { display: block; max-width: 200px; }
+.tb-xs { margin-top: 10px; font-size: 14px; } .tb-xlist { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.tb-xchip { display: inline-flex; gap: 6px; align-items: center; padding: 3px 4px 3px 10px; border: 1px solid var(--line); border-radius: 9999px; background: var(--card); font-size: 13px; }
+.tb-offer { display: flex; gap: 8px 10px; align-items: center; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); }
+.tb-cardk { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0; } .tb-cardk > div { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; }
+.tb-cardin { margin: 12px 0; } .tb-cardh { font-size: 14px; margin: 16px 0 6px; }
+.tb-cmp { list-style: none; padding: 0; margin: 0; font-size: 13px; } .tb-cmp li { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--line); } .tb-cmp li > .num { white-space: nowrap; }
 .pl-gm-regbtn { height: 32px; padding: 0 12px; font-size: 13px; } .pl-gm-regbtn[aria-expanded="true"] { border-color: var(--soot); }
 .pl-gm-reg { padding: 12px 14px; margin-bottom: 10px; }
 .pl-gm-reg-head { display: flex; gap: 8px 14px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; } .pl-gm-reg-head .pl-in { width: 220px; max-width: 100%; text-align: left; }
@@ -2628,6 +2641,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <script src="site-data.js"></script>
 <script src="project-rating.js"></script>
 <script src="plan-model.js"></script>
+<script src="city-pick.js"></script>
 <script src="tour-parse.js"></script>
 <script src="route-plan.js"></script>
 <script src="work-calendar.js"></script>
@@ -11852,7 +11866,7 @@ function plRerender() {
   setTimeout(function () {
     var a = document.activeElement, sig = a && a.getAttribute && a.getAttribute("data-plf");
     var y = window.scrollY; render(); window.scrollTo(0, y);
-    if ($("drawer").classList.contains("open")) { if (S.pl.vz && S.pl.vzOpen) plVenueZones(S.pl.vz); else if (S.pl.row && S.view === "planning") plOpenRow(S.pl.row, true); }
+    if ($("drawer").classList.contains("open")) { if (S.pl.tbCard && S.view === "planning" && S.pl.tab === "build") tbOpenCard(S.pl.tbCard, true); else if (S.pl.vz && S.pl.vzOpen) plVenueZones(S.pl.vz); else if (S.pl.row && S.view === "planning") plOpenRow(S.pl.row, true); }
     if (sig) { var el = document.querySelector('[data-plf="' + sig.replace(/"/g, '\\"') + '"]'); if (el) { el.focus(); if (el.select) el.select(); } }
   }, 0);
 }
@@ -12771,7 +12785,7 @@ function plBuild() {
     '<span style="flex-grow:1"></span><span class="sub2 pl-gm-period" title="Сезон — кнопка «Даты» в шапке: месяц или несколько месяцев подряд">Сезон: <b>' + esc(periodLabel()) + '</b> — «Даты» в шапке</span></div>';
   if (t.draft) return head + tbEditor(t.draft);
   var L = tbCur();
-  if (!L) return head + '<div class="empty" style="margin-top:16px"><h2>Списков пока нет</h2><p style="margin:0 0 12px">Вставьте список городов и дат от продюсера как есть — из письма, мессенджера или таблицы. Программа разберёт строки, сверит с нашей базой касс и покажет свободные города.</p><button class="btn-dark" data-pl="tb-new">+ Новый список</button></div>';
+  if (!L) return head + '<div class="empty" style="margin-top:16px"><h2>Списков пока нет</h2><p style="margin:0 0 12px">Назовите артиста и укажите, как он называется в афише. Если продюсер прислал города и даты — вставьте их как есть. Потом впишите гонорар: программа покажет свободные города, где концерт окупается.</p><button class="btn-dark" data-pl="tb-new">+ Новый список</button></div>';
   return head + tbResults(L);
 }
 function tbEditor(d) {
@@ -12792,36 +12806,55 @@ function tbEditor(d) {
   return dl + '<section class="card pl-card tb-editor"><div class="tb-meta pl-flat">' +
       '<label class="pl-lab">Название <input class="pl-in pl-text" id="tbTitle" value="' + esc(d.title || "") + '" placeholder="например, «Призрак Оперы — сезон 26/27»" style="min-width:280px"></label>' +
       '<label class="pl-lab">Проект в афише <input class="pl-in pl-text" id="tbProject" list="tbProjList" value="' + esc(d.project || "") + '" placeholder="название, как в «Мероприятиях»" style="min-width:260px" title="По нему ищем даты проекта в нашей базе касс"></label></div>' +
-    '<textarea id="tbText" class="tb-text" rows="10" placeholder="Вставьте список от продюсера как есть, например:&#10;Тольятти - 1 февраля&#10;Самара - 2 февраля&#10;11 января 2027 Призрак Оперы Салехард">' + esc(d.text || "") + '</textarea>' +
-    '<div class="tb-actions"><button class="btn-dark" data-pl="tb-parse">Разобрать</button>' + (rows.length ? '<button class="btn-dark" data-pl="tb-save">Сохранить список</button>' : '') + '<button class="btn-ghost" data-pl="tb-cancel">Отмена</button>' +
+    '<textarea id="tbText" class="tb-text" rows="10" placeholder="Если есть — список от продюсера как есть (где артист уже работает), например:&#10;Тольятти - 1 февраля&#10;Самара - 2 февраля&#10;Нет списка — оставьте пустым и нажмите «Сохранить»: подбор пойдёт по всем городам">' + esc(d.text || "") + '</textarea>' +
+    '<div class="tb-actions"><button class="btn-' + (rows.length ? 'ghost' : 'dark') + '" data-pl="tb-parse">Разобрать</button><button class="btn-' + (rows.length ? 'dark' : 'ghost') + '" data-pl="tb-save" title="Без списка продюсера — подбор по всем городам: гонорар и прочее — после сохранения">Сохранить</button><button class="btn-ghost" data-pl="tb-cancel">Отмена</button>' +
       '<span class="sub2">Даты без года — ближайшие будущие. Строки чата («01:06 PM ред.») пропускаются.</span></div></section>' + table;
 }
 function tbResults(L) {
-  var p = tbPrefs(), A = tbAnalyze(L, p), all = A.rows, vis = tbFilter(all, p), t = S.pl.tb;
-  S.pl.tbCtx = { A: A, vis: vis, visMap: tbFilter(all, Object.assign({}, p, { show: "all" })), p: p };   // на карте — все статусы, слоями
+  var p = tbPrefs(), A = tbAnalyze(L, p), all = A.rows, t = S.pl.tb, econ = tbFee(L), P = econ ? tbPick(L, A) : null;
+  var pf = econ ? Object.assign({}, p, { capMin: "", capMax: "" }) : p;   // с экономикой зал — «от–до» в экономике проекта
+  var vis = tbFilter(all, pf), xs = econ ? all.filter(function (r) { return r.pick.x; }) : [];
+  if (econ) vis = vis.filter(function (r) { return !r.pick.x; });
+  var prow = null;
+  if (econ) {   // список подбора: свободные (или все), фильтр окупаемости, сортировка
+    prow = vis.filter(function (r) { return (p.show !== "free" || r.st === "free") && tbPkShow(r, p); });
+    var ps = p.psort || "margin", rank = { prod: 0, base: 1, recent: 2, free: 3 };
+    var by = { margin: function (r) { return r.pick.k.margin == null ? 1e9 : -r.pick.k.margin; }, profit: function (r) { var s = r.pick.k.status; return s === "ok" || s === "edge" || s === "no" ? -r.pick.k.r.profit : 1e12; },
+      near: function (r) { return r.near ? r.near.d : 1e9; }, pop: function (r) { return -(r.pop || 0); }, cap: function (r) { return -(r.pick.k.r.seats || 0); } }[ps];
+    prow.sort(function (a, b) { return ps === "name" ? a.city.localeCompare(b.city, "ru") : (p.show === "all" && rank[a.st] !== rank[b.st] ? rank[a.st] - rank[b.st] : by(a) - by(b)); });
+  }
+  S.pl.tbCtx = { A: A, vis: vis, visMap: tbFilter(all, Object.assign({}, pf, { show: "all" })).filter(function (r) { return !r.pick || !r.pick.x; }), p: p, P: P,   // на карте — все статусы, слоями
+    offer: prow ? prow.filter(function (r) { return r.st === "free" || r.st === "recent"; }) : [] };
   var prodN = all.filter(function (r) { return r.st === "prod"; }).length, baseN = all.filter(function (r) { return r.base.length; }).length;
   var shows = (L.rows || []).filter(function (r) { return r.city && (r.status === "ok" || r.status === "maybe"); }).length;
   var free = vis.filter(function (r) { return r.st === "free"; });
+  var hasProd = (L.rows || []).some(function (r) { return r.city; });
   var info = '<div class="tb-info">' +
-    '<span><i style="background:' + TB_ST.prod[1] + '"></i><b>' + prodN + '</b> ' + plural(prodN, "город", "города", "городов") + ' у продюсера · ' + shows + ' ' + plural(shows, "выступление", "выступления", "выступлений") + (A.out ? ' <span class="sub2">(' + A.out + ' вне сезона)</span>' : '') + '</span>' +
+    (hasProd ? '<span><i style="background:' + TB_ST.prod[1] + '"></i><b>' + prodN + '</b> ' + plural(prodN, "город", "города", "городов") + ' у продюсера · ' + shows + ' ' + plural(shows, "выступление", "выступления", "выступлений") + (A.out ? ' <span class="sub2">(' + A.out + ' вне сезона)</span>' : '') + '</span>' : '') +
     '<span><i style="background:' + TB_ST.base[1] + '"></i>' + (A.key ? '<b>' + baseN + '</b> ' + plural(baseN, "город", "города", "городов") + ' по нашей базе · ' + A.nb + ' ' + plural(A.nb, "дата", "даты", "дат") : '<span class="muted">проект в афише не указан — базу не сверяем</span>') + '</span>' +
-    (A.baseOnly.length ? '<span class="tb-warn" title="Даты проекта есть в кассах, а в списке продюсера этих городов нет">нет у продюсера, есть в кассах: ' + esc(A.baseOnly.slice(0, 6).join(", ")) + (A.baseOnly.length > 6 ? " и ещё " + (A.baseOnly.length - 6) : "") + '</span>' : '') +
+    (hasProd && A.baseOnly.length ? '<span class="tb-warn" title="Даты проекта есть в кассах, а в списке продюсера этих городов нет">нет у продюсера, есть в кассах: ' + esc(A.baseOnly.slice(0, 6).join(", ")) + (A.baseOnly.length > 6 ? " и ещё " + (A.baseOnly.length - 6) : "") + '</span>' : '') +
     '<span><i style="background:' + TB_ST.free[1] + '"></i><b>' + free.length + '</b> ' + plural(free.length, "свободный город", "свободных города", "свободных городов") + ' по фильтрам</span></div>';
   var seg = function (k, opts, cur) { return '<div class="seg" role="group">' + opts.map(function (o) { return '<button data-pl="tb-set" data-k="' + k + '" data-v="' + o[0] + '" aria-pressed="' + (String(cur) === String(o[0])) + '">' + o[1] + '</button>'; }).join("") + '</div>'; };
   var nOff = Object.keys(p.offReg).length;
   var tools = '<div class="tb-tools pl-flat">' + seg("view", [["list", "Список"], ["map", "Карта"]], t.view) + seg("show", [["free", "Свободные"], ["all", "Все города"]], p.show) +
       '<button class="btn-ghost pl-gm-regbtn" data-pl="tb-reg" aria-expanded="' + !!t.regOpen + '">Области: ' + (nOff ? 'скрыто ' + nOff : 'все') + ' <span aria-hidden="true">▾</span></button>' +
       '<label class="pl-lab">Жителей от ' + plInput("tb|popMin", p.popMin, { label: "Жителей от", cls: "pl-sm", ph: "—" }) + ' до ' + plInput("tb|popMax", p.popMax, { label: "Жителей до", cls: "pl-sm", ph: "—" }) + '</label>' +
-      '<label class="pl-lab">Зал от ' + plInput("tb|capMin", p.capMin, { label: "Мест в зале от", cls: "pl-sm", ph: "—" }) + ' до ' + plInput("tb|capMax", p.capMax, { label: "Мест в зале до", cls: "pl-sm", ph: "—" }) + '</label>' +
+      (econ ? '' : '<label class="pl-lab">Зал от ' + plInput("tb|capMin", p.capMin, { label: "Мест в зале от", cls: "pl-sm", ph: "—" }) + ' до ' + plInput("tb|capMax", p.capMax, { label: "Мест в зале до", cls: "pl-sm", ph: "—" }) + '</label>') +
       '<label class="pl-lab">До гастролей ' + plSelect("tb|km", p.km, [["", "любое"], [150, "≤ 150 км"], [300, "≤ 300 км"], [500, "≤ 500 км"], [800, "≤ 800 км"], [1100, "≤ 1 100 км"], [2000, "≤ 2 000 км"]], "Расстояние до ближайшего города гастролей") + '</label>' +
     '</div><div class="tb-tools pl-flat"><div class="an-layers" role="group" aria-label="Логистика">' + TB_LOGI.map(function (x) { return '<button class="an-layer" data-pl="tb-logi" data-k="' + x[0] + '" aria-pressed="' + !!p.logi[x[0]] + '">' + x[1] + '</button>'; }).join("") + '</div>' +
       '<button class="an-layer" data-pl="tb-all" aria-pressed="' + !!p.all + '" title="Кроме 344 городов рынка — все города от 20 тыс. жителей (у многих нет данных о залах)">+ все города от 20 тыс.</button>' +
-      (t.view === "list" ? '<label class="pl-lab" style="margin-left:auto">Сортировка ' + plSelect("tb|sort", p.sort, [["near", "ближе к гастролям"], ["pop", "население"], ["cap", "вместимость зала"], ["comp", "меньше конкуренции"], ["name", "по алфавиту"]], "Сортировка") + '</label>' : '') + '</div>' +
+      (t.view === "list" ? '<label class="pl-lab" style="margin-left:auto">Сортировка ' + (econ ? plSelect("tb|psort", p.psort || "margin", [["margin", "запас окупаемости"], ["profit", "прибыль"], ["near", "ближе к гастролям"], ["pop", "население"], ["cap", "вместимость зала"], ["name", "по алфавиту"]], "Сортировка")
+        : plSelect("tb|sort", p.sort, [["near", "ближе к гастролям"], ["pop", "население"], ["cap", "вместимость зала"], ["comp", "меньше конкуренции"], ["name", "по алфавиту"]], "Сортировка")) + '</label>' : '') + '</div>' +
+    (econ ? '<div class="tb-tools pl-flat">' + (function () {
+        var cnt = { go: 0, all: 0, no: 0, nodata: 0 };
+        vis.forEach(function (r) { if (p.show === "free" && r.st !== "free") return; var s = r.pick.k.status; cnt.all++; if (s === "ok" || s === "edge") cnt.go++; else if (s === "no") cnt.no++; else cnt.nodata++; });
+        return '<div class="seg seg-scroll" role="group" aria-label="Окупаемость">' + TB_PK_SHOW.map(function (o) { return '<button data-pl="tb-set" data-k="pk" data-v="' + o[0] + '" aria-pressed="' + ((p.pk || "go") === o[0]) + '">' + o[1] + ' <span class="sub2 num">' + cnt[o[0]] + '</span></button>'; }).join("") + '</div>';
+      })() + '<span class="sub2">окупается — запас от +' + PICK_DEFAULTS.edge + '%, на грани — ±' + PICK_DEFAULTS.edge + '%: цена города против нужной цены</span></div>' : '') +
     (t.regOpen ? tbRegPanel(p) : '');
   var nsel = Object.keys(t.sel).length;
   var selBar = '<div class="tb-selbar"' + (nsel ? '' : ' hidden') + '><b>Выбрано: ' + nsel + '</b> <span class="sub2">' + esc(Object.keys(t.sel).slice(0, 8).join(", ")) + (nsel > 8 ? "…" : "") + '</span><span style="flex-grow:1"></span>' +
     '<button class="btn-dark" data-pl="tb-tour">Создать тур из выбранных</button><button class="btn-ghost" data-pl="tb-unsel">Снять выбор</button></div>';
-  return info + tools + selBar + (t.view === "map" ? tbMapHtml(A, vis, p) : tbListHtml(vis, p)) +
+  return tbEconHtml(L, t.list, P) + info + tools + selBar + (econ ? tbOfferBar(S.pl.tbCtx.offer) : '') + (t.view === "map" ? tbMapHtml(A, vis, p) : econ ? tbPickListHtml(prow, p, L, P) : tbListHtml(vis, p)) + tbXHtml(xs) +
     '<p class="sub2" style="margin:8px 0 0">Логистика — от ближайшего города гастролей, по прямой: трансфер — до ' + TB_TRANSFER + ' км, поезд — примерно до 24 ч (путь по железной дороге ≈ 1,3 × по прямой, ~60 км/ч), дальше — авиа. ' +
       '«Был недавно» — проект был в городе за ' + (plCfg().ban_months || 13) + ' мес. до начала сезона (архив гастролей и даты до сезона). Наша база видит около 40 % мероприятий площадок, которые продают билеты сами.</p>';
 }
@@ -12941,10 +12974,11 @@ function tbAction(a, b) {   // кнопки вкладки (из общего о
     if (!d.rows.length) toast("Не нашли ни одной строки — вставьте список в поле");
   }
   else if (a === "tb-save") {
-    var dd = t.draft; dd.title = $("tbTitle").value.trim() || dd.title || "Список продюсера"; dd.project = $("tbProject").value.trim(); dd.text = $("tbText").value;
+    var dd = t.draft; dd.title = $("tbTitle").value.trim() || dd.title || $("tbProject").value.trim() || "Список продюсера"; dd.project = $("tbProject").value.trim(); dd.text = $("tbText").value;
+    if (dd.text.trim() && !(dd.rows || []).length) dd.rows = tpParse(dd.text, { cities: tbCities(), today: TODAY, title: dd.project }).rows.map(function (r) { var o = {}; ["city", "date", "date2", "time", "status", "other", "note", "line", "fix", "raw"].forEach(function (k) { if (r[k]) o[k] = r[k]; }); return o; });
     var id = t.editId || plId("l"); PLAN.lists = PLAN.lists || {};
     t.draft = null; t.list = id; t.sel = {};
-    plPut("lists", id, { title: dd.title, project: dd.project, text: dd.text, rows: dd.rows }, "Список «" + dd.title + "» сохранён");
+    plPut("lists", id, Object.assign({}, t.editId ? PLAN.lists[t.editId] : {}, { title: dd.title, project: dd.project, text: dd.text, rows: dd.rows || [] }), "Список «" + dd.title + "» сохранён");
   }
   else if (a === "tb-del") { if (!confirm("Удалить список «" + PLAN.lists[t.list].title + "»?")) return; var did = t.list; t.list = null; plDel("lists", did, "Список удалён"); }
   else if (a === "tb-set") { var k = b.getAttribute("data-k"), v = b.getAttribute("data-v"); if (k === "view") { t.view = v; } else { p[k] = v; tbSave(p); } tbRe(); }
@@ -12957,15 +12991,289 @@ function tbAction(a, b) {   // кнопки вкладки (из общего о
   else if (a === "tb-unsel") { t.sel = {}; tbRe(); }
   else if (a === "tb-pick") { var pc = b.getAttribute("data-city"); if (t.sel[pc]) delete t.sel[pc]; else t.sel[pc] = 1; if (S.pl.tbObj) S.pl.tbObj.closePopup(); tbRe(); }
   else if (a === "tb-onmap") { t.view = "map"; S.pl.tbFocus = b.getAttribute("data-city"); tbRe(); var m = $("tbMap"); if (m) m.scrollIntoView({ block: "center" }); }
-  else if (a === "tb-tour") {
-    var Lc = tbCur(), cx = S.pl.tbCtx, byc = {}; (cx ? cx.A.rows : []).forEach(function (r) { byc[r.city] = r; });
-    var cities = Object.keys(t.sel).sort(function (x, y) { var a1 = byc[x] && byc[x].near ? byc[x].near.date : "9", b1 = byc[y] && byc[y].near ? byc[y].near.date : "9"; return a1 < b1 ? -1 : a1 > b1 ? 1 : 0; });
-    var pk = Lc && Lc.project ? projKey(Lc.project) : "", pid = Object.keys(PLAN.projects).filter(function (k) { return pk && projKey(PLAN.projects[k].title) === pk; })[0];
-    var tid = plId("t"), tour = { title: (Lc ? Lc.title : "Тур") + " — новые города", status: "Черновик", rows: cities.map(function (c) { return { id: plId("r"), city: c }; }) };
-    if (pid) tour.project = pid;
-    t.sel = {}; S.pl.tab = "tours"; S.pl.tour = tid;
-    plPut("tours", tid, tour, "Тур создан: " + cities.length + " " + plural(cities.length, "город", "города", "городов") + (pid ? "" : " — выберите проект тура"));
+  else if (a === "tb-tour") tbMakeTour(tbCur(), Object.keys(t.sel));
+  else if (a === "tb-otour") { var ot = (S.pl.tbCtx || {}).offer || []; if (ot.length) tbMakeTour(tbCur(), ot.map(function (r) { return r.city; })); }
+  else if (a === "tb-offer") tbOfferDoc(b.getAttribute("data-k"));
+  else if (a === "tb-card") tbOpenCard(b.getAttribute("data-city"));
+  else if (a === "tb-xopen") { t.xOpen = !t.xOpen; tbRe(); }
+  else if (a === "tb-x" || a === "tb-unx" || a === "tb-creset" || a === "tb-fill") {   // вычеркнуть / вернуть город, вернуть значение города, заполняемость проекта
+    var lx = JSON.parse(JSON.stringify(PLAN.lists[t.list] || {})), xc = b.getAttribute("data-city"), msg = "";
+    if (!lx.title) return;
+    if (a === "tb-fill") { lx.econ = lx.econ || {}; lx.econ.fill = +b.getAttribute("data-v"); }
+    else {
+      lx.cities = lx.cities || {}; var xo = lx.cities[xc] = lx.cities[xc] || {};
+      if (a === "tb-x") { xo.x = true; delete t.sel[xc]; msg = "«" + xc + "» вычеркнут — внизу списка можно вернуть"; }
+      else if (a === "tb-unx") { delete xo.x; msg = "«" + xc + "» снова в списке"; }
+      else delete xo[b.getAttribute("data-f")];
+      if (!Object.keys(xo).length) delete lx.cities[xc];
+    }
+    if (a === "tb-x" && S.pl.tbCard === xc) closeDrawer();
+    plPut("lists", t.list, lx, msg);
   }
+}
+
+// ---------- «Построение гастролей» → подбор городов для артиста (решения пользователя 26.10, TOUR_PLANNER.md; расчёт —
+// city-pick.js). У списка — экономика первого касания (гонорар, % сверху, состав…; пустое — нормы, серым). По каждому
+// свободному городу — зал для расчёта, цена, которую город платит за гастроли того же формата, нужная средняя цена,
+// прибыль при базовой заполняемости, окупаемость. Город вычёркивается (✕), его цифры правятся в карточке; оставшиеся —
+// предложение артисту (без экономики) и на согласование руководителю (с экономикой) — страницы для печати в PDF.
+var TB_PK = { ok: ["окупается", "#15803d"], edge: ["на грани", "#b45309"], no: ["не окупается", "#b42318"], nohall: ["нет зала", "#78716c"], noprice: ["нет цен", "#78716c"] };
+var TB_PK_SHOW = [["go", "Можно везти"], ["all", "Все"], ["no", "Не окупается"], ["nodata", "Нет данных"]];
+var TB_SRC = { ovr: "правка этого города", econ: "из экономики проекта", venue: "из «Площадок»", norm: "норма", city: "по афише", none: "нет данных" };
+var TB_CMP = null;
+function tbFee(L) { return !!(L && L.econ && planNum(L.econ.fee) > 0); }
+function tbFormat(L) {   // формат для цены города: вписанный в списке, иначе — как у проекта в афише, иначе «Концерт»
+  if (L.format) return L.format;
+  var key = L.project ? canonPk(projKey(L.project)) : "";
+  return (key ? mostOf(MR.filter(function (e) { return e.pk === key; }), "format") : "") || "Концерт";
+}
+function tbCmp(fmt) {   // гастроли того же формата с ценами: по городам и по областям (афиша + архив); кэш до правок разметки
+  var key = fmt + "#" + CUR_VER + "#" + (typeof MREG !== "undefined");
+  if (TB_CMP && TB_CMP.key === key) return TB_CMP;
+  var city = {}, reg = {}, all = [];
+  var add = function (e) {
+    if (e.format !== fmt || (!e.pmin && !e.pmax)) return;
+    all.push(e); (city[e.city] = city[e.city] || []).push(e);
+    var rg = typeof MREG !== "undefined" ? MREG.city[e.city] : ""; if (rg) (reg[rg] = reg[rg] || []).push(e);
+  };
+  MR.forEach(function (e) { if (e.tour === "tour" && !e.offList) add(e); });
+  MA.forEach(add);
+  TB_CMP = { key: key, city: city, reg: reg, all: all };
+  return TB_CMP;
+}
+function tbOwnCap(key) {   // залы, где артист выступает по нашей афише и архиву: самый большой — граница «до» по умолчанию
+  if (!key) return null;
+  var seen = {}, caps = [];
+  MR.concat(MA).forEach(function (e) {
+    if (e.pk !== key || seen[e.city + "|" + e.venue]) return; seen[e.city + "|" + e.venue] = 1;
+    var c = plVenueCap(e.city, e.venue); if (c && c.cap >= 100) caps.push({ cap: c.cap, name: e.venue, city: e.city });
+  });
+  if (caps.length < 2) return null;
+  caps.sort(function (a, b) { return b.cap - a.cap; });
+  return { max: Math.ceil(caps[0].cap / 100) * 100, n: caps.length, top: caps[0] };
+}
+function tbPick(L, A) {   // расчёт по каждому городу → r.pick; московские расходы — на число городов «можно везти»
+  var econ = L.econ || {}, d = PICK_DEFAULTS, cfg = plCfg(), fmt = tbFormat(L), cmp = tbCmp(fmt), ov = L.cities || {};
+  var capMin = econ.capMin != null ? econ.capMin : d.capMin, own = tbOwnCap(A.key), capAuto = own ? own.max : d.capMax;
+  econ = Object.assign({}, econ, { capMax: econ.capMax != null ? econ.capMax : capAuto });
+  var lvAuto = A.key ? pickLevel(MR.concat(MA).filter(function (e) { return e.pk === A.key && (e.pmin || e.pmax); }), cmp.all) : null;
+  var lv = planNum(econ.lvl) > 0 ? { k: planNum(econ.lvl), manual: true, auto: lvAuto } : lvAuto;
+  var one = function (r, n) {   // зал — только где были гастроли этого формата (не меньше двух), или вписанный вручную: цирк и дельфинарий не подставляются
+    var o = ov[r.city] || {}, used = {}; (cmp.city[r.city] || []).forEach(function (e) { used[e.venue] = (used[e.venue] || 0) + 1; });
+    var halls = r.venues.filter(function (x) { return x.src === "manual" || (used[x.name] || 0) >= 2; });
+    var v = o.venue ? r.venues.filter(function (x) { return x.name === o.venue; })[0] || { name: o.venue, cap: null } : pickVenue(halls, capMin, econ.capMax);
+    var rg = typeof MREG !== "undefined" ? MREG.city[r.city] : "", pr = pickPrice(cmp.city[r.city], rg ? cmp.reg[rg] : [], d, lv ? lv.k : null);
+    var inp = pickInputs(econ, { seats: v ? v.cap : null, venueRent: v ? v.rent : null, price: pr ? pr.price : null, km: plKm("Москва", r.city), cities: n }, o, d);
+    return { v: v, pr: pr, inp: inp, k: pickCalc(inp, cfg, d), o: o, x: !!o.x };
+  };
+  A.rows.forEach(function (r) { r.pick = one(r, 1); });
+  if (planNum(econ.moscow)) {
+    var n = A.rows.filter(function (r) { return r.st === "free" && !r.pick.x && (r.pick.k.status === "ok" || r.pick.k.status === "edge"); }).length;
+    if (n > 1) A.rows.forEach(function (r) { r.pick = one(r, n); });
+  }
+  A.rows.forEach(function (r) {   // крупные концерты того же формата в городе за сезон — предупреждение, не вычёркивание
+    r.pick.big = (MR_CITY[r.city] || []).filter(function (e) { return e.tour === "tour" && e.format === fmt && !e.offList && e.date >= A.from && e.date <= A.to && planNum(e.pmax) >= d.big && e.pk !== A.key; });
+  });
+  return { fmt: fmt, cmp: cmp, capMin: capMin, capMax: econ.capMax, own: own, lv: lv };
+}
+function tbPkShow(r, p) {
+  var s = r.pick.k.status, f = p.pk || "go";
+  return f === "all" || (f === "go" ? s === "ok" || s === "edge" : f === "no" ? s === "no" : s === "nohall" || s === "noprice");
+}
+function tbPkBadge(k) {
+  var s = TB_PK[k.status] || ["—", "#78716c"];
+  return '<span class="tb-st" style="--c:' + s[1] + '">' + s[0] + '</span>' + (k.margin != null ? '<div class="sub2 num">запас ' + (k.margin >= 0 ? '+' : '−') + Math.abs(Math.round(k.margin * 100)) + '%</div>' : '');
+}
+function tbEconHtml(L, id, P) {
+  var e = L.econ || {}, d = PICK_DEFAULTS, cfg = plCfg(), sg = function (f) { return "tbe|" + id + "|" + f; };
+  var f = function (label, k, ph, title, cls) {
+    return '<label class="tb-ef"' + (title ? ' title="' + esc(title) + '"' : '') + '><span>' + label + '</span>' + plInput(sg(k), e[k], { ph: ph, label: label, cls: cls || "pl-sm" }) + '</label>';
+  };
+  var fill = e.fill != null ? e.fill : d.fill;
+  var fmts = (MK.formats || []).filter(Boolean);
+  return '<section class="card pl-card tb-econ pl-flat"><div class="tb-econ-head"><h3>Экономика проекта</h3><span class="sub2">' +
+      (tbFee(L) ? 'пустые поля — по нормам (серым); город — своя правка в карточке' : 'впишите гонорар — появятся окупаемость, нужная цена билета и прибыль по каждому городу') + '</span></div>' +
+    '<div class="tb-econ-grid">' +
+      f("Гонорар", "fee", "", "Гонорар артиста за один концерт") +
+      f("% сверху к гонорару", "cashless", 0, "Например «+13 %»: налог или безнал сверху — процент от гонорара", "pl-xs") +
+      f("Состав на выезде", "crew", d.crew, "Сколько человек едет. Не знаете — " + d.crew + ": от этого — дорога и суточные", "pl-xs") +
+      f("Райдер на город", "rider", pickRider(e.fee) || "", "Технический и бытовой райдер на один город. Пусто — от 1 млн гонорара 500 тыс., меньше — половина гонорара (не меньше 100 тыс.)") +
+      f("Суточные на человека", "per_diem", 0, "За один день, × состав") +
+      f("Реклама на город", "ads", "по залу", "Пусто — по вместимости зала: до 500 мест — 80 тыс., до 1 000 — 150 тыс., до 2 000 — 250 тыс., больше — 400 тыс.") +
+      f("Московские на тур", "moscow", 0, "Выезд и возвращение коллектива — делится на число городов «можно везти»") +
+      f("РАО/ВОИС, %", "rao", 0, "% от сборов, если платится", "pl-xs") +
+      f("Комиссия касс, %", "kassa", d.kassa, "% от сборов", "pl-xs") +
+      f("Уровень цен артиста, ×", "lvl", P && P.lv && !P.lv.manual ? P.lv.k : P && P.lv && P.lv.auto ? P.lv.auto.k : "—",
+        P && (P.lv && P.lv.auto || P.lv && !P.lv.manual) ? (function (a) { return "Билеты артиста по нашей афише: середина цены " + num(a.price) + " ₽ по " + a.n + " датам, типичная гастроль «" + P.fmt + "» — " + num(a.market) + " ₽. Цена города = типичная цена в городе × этот уровень. Впишите своё число, если знаете лучше"; })(P.lv.manual ? P.lv.auto : P.lv)
+          : "Артиста с ценами в нашей афише нет — цена города берётся по крупным концертам (75-й процентиль). Впишите уровень, например 1,5 — билеты в полтора раза дороже типичной гастроли", "pl-xs") +
+      '<label class="tb-ef" title="' + esc(P && P.own ? "До — по умолчанию самый большой зал артиста в нашей афише: " + P.own.top.name + " (" + P.own.top.city + "), " + num(P.own.top.cap) + " мест; залов с известной вместимостью — " + P.own.n : "До — по умолчанию " + num(PICK_DEFAULTS.capMax) + " мест (залов артиста в афише мало)") + '"><span>Зал, мест</span><span class="tb-ef2">от ' + plInput(sg("capMin"), e.capMin, { ph: d.capMin, label: "Зал от, мест", cls: "pl-xs" }) + ' до ' + plInput(sg("capMax"), e.capMax, { ph: P ? P.capMax : PICK_DEFAULTS.capMax, label: "Зал до, мест", cls: "pl-xs" }) + '</span></label>' +
+      '<div class="tb-ef"><span>Заполняемость</span><div class="seg tb-fillseg" role="group" aria-label="Заполняемость">' + cfg.scenarios.map(function (s) { return '<button data-pl="tb-fill" data-v="' + s + '" aria-pressed="' + (+fill === +s) + '">' + s + '%</button>'; }).join("") + '</div></div>' +
+      '<label class="tb-ef" title="Цена города — по гастролям этого формата"><span>Формат для цены города</span><select class="pl-sel" data-plf="' + esc(sg("format")) + '" aria-label="Формат для цены города"><option value="">как у проекта — ' + esc(P ? P.fmt : tbFormat(L)) + '</option>' +
+        fmts.map(function (x) { return '<option value="' + esc(x) + '"' + (L.format === x ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join("") + '</select></label>' +
+    '</div><details class="tb-econ-note"><summary class="sub2">Как считается: нормы, цена города, зал</summary><p class="sub2">Нормы, если пусто: аренда — по вместимости зала (до 500 мест — 80 тыс., до 1 000 — 150 тыс., до 2 000 — 300 тыс., больше — 500 тыс.); дорога — состав × билеты туда и обратно по расстоянию от Москвы (до 700 км — 6 тыс. на человека, до 2 000 — 15 тыс., дальше — 25 тыс.); налог — ' + cfg.tax + ' %. ' +
+'Цена города — ' + (P && P.lv ? 'типичная цена гастролей этого формата в городе (медиана середины цен: (мин. + макс.) ÷ 2, афиша и архив) × уровень цен артиста ' + String(P.lv.k).replace(".", ",") + (P.lv.manual ? ' (вписан)' : ' (по ' + P.lv.n + ' датам артиста)') : 'цены крупных концертов этого формата в городе (75-й процентиль середины цен: (мин. + макс.) ÷ 2, афиша и архив) — дат артиста с ценами в афише нет') + '; меньше ' + d.minN + ' гастролей в городе — по области. Зал — самый большой с известной вместимостью в пределах «от–до»; зал берётся только там, где по афише и архиву было не меньше двух гастролей этого формата (или вписан вручную); «до» по умолчанию — ' + (P && P.own ? 'самый большой зал артиста в нашей афише (' + esc(P.own.top.name) + ', ' + num(P.own.top.cap) + ')' : num(PICK_DEFAULTS.capMax) + ' мест') + '. Цирк, стадион, дельфинарий подставляются, только если вписаны в «Площадках».</p></details></section>';
+}
+function tbPickListHtml(rows, p, L, P) {
+  var t = S.pl.tb, cfg = plCfg(), fill = (L.econ || {}).fill != null ? L.econ.fill : PICK_DEFAULTS.fill;
+  if (!rows.length) return '<div class="empty" style="margin-top:12px"><h2>Городов нет</h2><p style="margin:0">Смените «Можно везти» на «Все» или ослабьте фильтры: области, население, расстояние.</p></div>';
+  var shown = rows.slice(0, t.limit || 300);
+  return '<section class="card pl-card tb-list tb-plist"><table class="vtable"><thead><tr><th scope="col" class="tb-ck"><span class="sr-only">Выбрать</span></th><th scope="col">Город</th><th scope="col">Область</th><th scope="col" class="r">Жителей</th>' +
+      '<th scope="col">Зал для расчёта</th><th scope="col" class="r" title="Средняя цена билета, которую город платит за гастроли этого формата">Цена города</th><th scope="col" class="r" title="Средняя цена билета, чтобы выйти в ноль при выбранной заполняемости">Нужна цена</th>' +
+      '<th scope="col" class="r" title="Прибыль по цене города при заполняемости ' + fill + '%">Прибыль · ' + fill + '%</th><th scope="col">Окупаемость</th>' +
+      '<th scope="col" class="r" title="Гастроли того же формата в городе за сезон с билетами от ' + num(PICK_DEFAULTS.big) + ' ₽ — конкуренты по уровню">Крупных концертов</th>' + (p.show === "all" ? '<th scope="col">Статус</th>' : '') + '<th scope="col"><span class="sr-only">Вычеркнуть</span></th></tr></thead><tbody>' +
+    shown.map(function (r) {
+      var k = r.pick.k, v = r.pick.v, pr = r.pick.pr, src = r.pick.inp.src, has = k.status === "ok" || k.status === "edge" || k.status === "no", free = r.st === "free" || r.st === "recent";
+      var bigT = r.pick.big.slice(0, 4).map(function (e) { return e.title + " — " + human(e.date) + ", до " + num(e.pmax) + " ₽"; }).join("\n");
+      return '<tr class="' + (t.sel[r.city] ? 'sel' : '') + '"><td class="tb-ck">' + (free ? '<input type="checkbox" data-tbsel="' + esc(r.city) + '"' + (t.sel[r.city] ? ' checked' : '') + ' aria-label="Выбрать: ' + esc(r.city) + '">' : '') + '</td>' +
+        '<th scope="row"><button class="ev-title" data-pl="tb-card" data-city="' + esc(r.city) + '" title="Расчёт по городу">' + esc(r.city) + '</button>' +
+          (r.win ? '<div class="sub2 tb-win">по пути: ' + esc(r.win.a.city) + ' ' + human(r.win.a.date) + ' → ' + esc(r.win.b.city) + ' ' + human(r.win.b.date) + '</div>' : '') +
+          (r.st === "recent" ? '<div class="sub2" style="color:#78716c">был ' + esc(human(r.recent.slice().sort().slice(-1)[0])) + '</div>' : '') + '</th>' +
+        '<td class="sub2">' + esc(r.reg || "—") + '</td><td class="r num">' + (r.pop ? plShort(r.pop) : '<span class="muted">—</span>') + '</td>' +
+        '<td>' + (v && k.r.seats ? '<span class="tb-vname" style="margin:0">' + esc(v.name) + '</span><div class="sub2 num">' + num(k.r.seats) + ' мест' + (src.seats === "ovr" || r.pick.o.venue ? ' · правка' : '') + '</div>'
+          : '<span class="muted" title="' + (r.maxCap ? 'Самый большой известный зал — ' + num(r.maxCap) + ' мест: вне «от–до»' : 'Вместимость залов неизвестна — впишите в «Площадках» или в карточке города') + '">нет зала' + (r.maxCap ? ' от ' + num(P.capMin) : '') + '</span>') + '</td>' +
+        '<td class="r num">' + (k.price ? plMoney(k.price) + '<div class="sub2">' + (src.price === "ovr" ? 'правка' : pr.src === "region" ? 'по области · ' + pr.n : pr.n + ' ' + plural(pr.n, "гастроль", "гастроли", "гастролей")) + '</div>' : '<span class="muted">—</span>') + '</td>' +
+        '<td class="r num">' + (k.need && k.status !== "nohall" ? plMoney(k.need) : '<span class="muted">—</span>') + '</td>' +
+        '<td class="r num' + (has && k.r.profit < 0 ? ' pl-neg' : '') + '">' + (has ? plShort(k.r.profit) : '<span class="muted">—</span>') + '</td>' +
+        '<td><button class="tb-pkbtn" data-pl="tb-card" data-city="' + esc(r.city) + '" title="Расчёт по городу">' + tbPkBadge(k) + '</button></td>' +
+        '<td class="r num"' + (bigT ? ' title="' + esc(bigT) + '"' : '') + '>' + (r.pick.big.length || '<span class="muted">0</span>') + '</td>' + (p.show === "all" ? '<td>' + tbStatusText(r) + '</td>' : '') +
+        '<td>' + (free ? '<button class="icon-btn tb-xbtn" data-pl="tb-x" data-city="' + esc(r.city) + '" aria-label="Вычеркнуть: ' + esc(r.city) + '" title="Вычеркнуть — не поедем">' + PJ_ICON.close + '</button>' : '') + '</td></tr>';
+    }).join("") + '</tbody></table></section>' +
+    (rows.length > shown.length ? '<div style="display:flex;justify-content:center;margin-top:10px"><button class="btn-ghost" data-pl="tb-more">Показать ещё (' + (rows.length - shown.length) + ')</button></div>' : '');
+}
+function tbXHtml(xs) {   // вычеркнутые города — списком с «вернуть»
+  if (!xs.length) return '';
+  var t = S.pl.tb;
+  return '<div class="tb-xs"><button class="pj-plain" data-pl="tb-xopen" aria-expanded="' + !!t.xOpen + '">Вычеркнуто: ' + xs.length + ' ' + (t.xOpen ? '▴' : '▾') + '</button>' +
+    (t.xOpen ? '<div class="tb-xlist">' + xs.map(function (r) { return '<span class="tb-xchip">' + esc(r.city) + '<button class="pj-plain" data-pl="tb-unx" data-city="' + esc(r.city) + '" title="Вернуть в список">вернуть</button></span>'; }).join("") + '</div>' : '') + '</div>';
+}
+function tbOfferBar(rows) {
+  var tt = pickTotals(rows.map(function (r) { return r.pick.k; }).filter(function (k) { return k.status === "ok" || k.status === "edge" || k.status === "no"; }));
+  return '<div class="tb-offer"><div><b>В предложении: ' + rows.length + ' ' + plural(rows.length, "город", "города", "городов") + '</b> <span class="sub2">— то, что видно в списке, без вычеркнутых' +
+      (tt.n ? ' · прибыль по всем ' + plShort(tt.profit) + ' ₽' : '') + '</span></div><span style="flex-grow:1"></span>' +
+    '<button class="btn-dark" data-pl="tb-offer" data-k="artist"' + (rows.length ? '' : ' disabled') + ' title="Города, площадки, вместимость — без нашей экономики. Откроется страница для печати в PDF">Предложение артисту</button>' +
+    '<button class="btn-ghost" data-pl="tb-offer" data-k="boss"' + (rows.length ? '' : ' disabled') + ' title="С экономикой по каждому городу и допущениями. Откроется страница для печати в PDF">На согласование</button>' +
+    '<button class="btn-ghost" data-pl="tb-otour"' + (rows.length ? '' : ' disabled') + ' title="Тур в «Финмодели туров» с этими городами, залами и цифрами">Тур в финмодель</button></div>';
+}
+function tbOpenCard(city, keep) {   // карточка города: зал, цена, правки, расшифровка расчёта, откуда цена, конкуренты
+  var cx = S.pl.tbCtx, L = tbCur(), id = S.pl.tb.list, r = cx && cx.A.rows.filter(function (x) { return x.city === city; })[0];
+  if (!r || !r.pick || !L || !id) { closeDrawer(); return; }
+  S.pl.tbCard = city; S.pl.row = null; S.pl.vz = null;
+  var P = r.pick, k = P.k, R = k.r, x = P.inp.x, src = P.inp.src, cfg = plCfg(), d = PICK_DEFAULTS;
+  var sg = function (f) { return "tbc|" + id + "|" + city + "|" + f; };
+  var line = function (label, f, val, hint) {
+    var o = src[f] === "ovr";
+    return '<div class="pl-line"><span class="pl-lbl">' + label + (hint ? ' <span class="sub2">' + hint + '</span>' : '') + '</span>' +
+      plInput(sg(f), o ? val : null, { ph: o ? null : val || "", label: label, cls: "pl-sm" + (o ? " pl-ovr" : ""), title: TB_SRC[src[f]] || "" }) +
+      '<span class="pl-src">' + (o ? '<button class="pj-plain" data-pl="tb-creset" data-city="' + esc(city) + '" data-f="' + f + '" title="Вернуть расчётное значение">↺</button>' : '<span class="sub2">' + esc(f === "seats" && src[f] === "venue" ? (P.v && P.v.src === "manual" ? "из «Площадок»" : "по схемам касс") : TB_SRC[src[f]] || "") + '</span>') + '</span></div>';
+  };
+  var wl = function (label, sum, b) { return '<div class="pl-wl"><span>' + label + '</span>' + (b ? '<b class="num">' : '<span class="num">') + plMoney(sum) + (b ? '</b>' : '</span>') + '</div>'; };
+  var vs = r.venues.filter(function (v) { return v.cap; }).slice(0, 25);
+  var has = k.status === "ok" || k.status === "edge" || k.status === "no";
+  var cmpL = P.pr ? (P.pr.src === "region" ? cx.P.cmp.reg[r.reg] || [] : cx.P.cmp.city[city] || []).slice().sort(function (a, b) { return pickMid(b) - pickMid(a); }).slice(0, 8) : [];
+  var tile = function (label, val, cls) { return '<div><span class="pl-kl">' + label + '</span><b class="num' + (cls ? ' ' + cls : '') + '">' + val + '</b></div>'; };
+  var html = '<div class="pl-dr-head"><div><div class="sub" style="margin:0">' + esc(L.title) + ' · подбор городов</div><h2 class="pl-dr-title">' + esc(city) + '</h2><div class="sub2">' + esc(r.reg || "") + (r.pop ? ' · ' + plShort(r.pop) + ' жителей' : '') + '</div>' +
+      '<div style="margin-top:6px">' + tbStatusText(r) + ' ' + tbPkBadge(k) + '</div></div>' +
+      '<button class="icon-btn" data-drawer="close" aria-label="Закрыть">' + PJ_ICON.close + '</button></div>' +
+    '<div class="tb-cardk">' + tile("Цена города", k.price ? plMoney(k.price) : "—") + tile("Нужна цена", k.need && x.seats ? plMoney(k.need) : "—") +
+      tile("Прибыль · " + x.fill + "%", has ? plShort(R.profit) : "—", has && R.profit < 0 ? "pl-neg" : "") + tile("Выйти в ноль", R.beTickets != null && x.seats ? num(Math.ceil(R.beTickets)) + " бил. · " + Math.round(R.beShare * 100) + "%" : "—") + '</div>' +
+    (has ? '<div class="pl-scens" aria-label="Прибыль по сценариям заполняемости">' + cfg.scenarios.map(function (s) { var z = pickCalc({ x: Object.assign({}, x, { fill: s }), src: src }, cfg, d).r; return '<div title="Прибыль при заполняемости ' + s + '%"><span class="pl-kl">' + s + '%</span><b class="num' + (z.profit < 0 ? ' pl-neg' : '') + '">' + plShort(z.profit) + '</b></div>'; }).join("") + '</div>' : '') +
+    '<div class="pl-flat tb-cardin"><div class="pl-line"><span class="pl-lbl">Зал</span><select class="pl-sel" data-plf="' + esc(sg("venue")) + '" aria-label="Зал для расчёта"><option value="">' + esc(P.o.venue ? "— выбрать сам —" : "авто: " + (P.v ? P.v.name + " · " + num(P.v.cap) : "нет зала")) + '</option>' +
+        vs.map(function (v) { return '<option value="' + esc(v.name) + '"' + (P.o.venue === v.name ? ' selected' : '') + '>' + esc(v.name) + ' · ' + num(v.cap) + (v.src === "manual" ? '' : '*') + '</option>'; }).join("") + '</select><span></span></div>' +
+      line("Мест в продаже", "seats", x.seats, "") + line("Средняя цена билета", "price", k.price, "") + line("Заполняемость, %", "fill", x.fill, "") +
+      line("Райдер", "rider", x.org.tech, "") + line("Аренда", "rent", x.rent, "") + line("Реклама", "ads", x.ads, "") + line("Дорога", "logistics", x.logistics, plKm("Москва", city) != null ? num(plKm("Москва", city)) + ' км от Москвы' : '') + '</div>' +
+    (has ? '<div class="pl-water pl-flat">' + wl("Вал · " + num(x.seats) + " × " + plMoney(k.price), R.gross) + wl("Сборы · " + Math.round(R.fillEff) + "%", R.sales, true) +
+      wl("− Налог и комиссии · " + R.varPct.toLocaleString("ru-RU") + "%", R.variable) + wl("− Гонорар", R.project.fee) + (R.project.cashless ? wl("− % сверху к гонорару", R.project.cashless) : '') +
+      (R.project.per_diem ? wl("− Суточные", R.project.per_diem) : '') + (R.project.author ? wl("− Авторские", R.project.author) : '') + (R.project.moscow ? wl("− Московские ÷ " + x.cities, R.project.moscow) : '') +
+      wl("− Райдер", R.org) + wl("− Аренда", R.rent) + wl("− Дорога", R.logistics) + wl("− Реклама", R.ads) + wl("= Расходы", R.total, true) +
+      '<div class="pl-wl"><span><b>Прибыль</b></span><b class="num' + (R.profit < 0 ? ' pl-neg' : '') + '">' + plMoney(R.profit) + '</b></div></div>' : '') +
+    '<h3 class="tb-cardh">Откуда цена города</h3>' + (P.pr ? '<p class="sub2" style="margin:0 0 6px">' + (P.pr.src === "region" ? 'В городе ' + (P.pr.nCity || 0) + ' гастролей «' + esc(cx.P.fmt) + '» с ценами — мало; взята область «' + esc(r.reg) + '»: ' + P.pr.n + '.' : P.pr.n + ' гастролей «' + esc(cx.P.fmt) + '» с ценами (афиша и архив).') +
+        (P.pr.k ? ' Типичная (медиана) середина цены — ' + plMoney(P.pr.base) + ' × уровень артиста ' + String(P.pr.k).replace(".", ",") + ' = ' + plMoney(P.pr.price) + '.' : ' 75-й процентиль середины цены (крупные концерты) — ' + plMoney(P.pr.price) + '.') +
+        ' Уверенность: ' + { high: "высокая", mid: "средняя", low: "низкая" }[P.pr.conf] + '.</p>' +
+        '<ul class="tb-cmp">' + cmpL.map(function (e) { return '<li><span>' + esc(e.title) + '<span class="sub2"> · ' + esc(e.city !== city ? e.city + ", " : "") + esc(e.venue) + ', ' + human(e.date) + '</span></span><span class="num">' + (e.pmin ? num(e.pmin) + '–' : '') + num(e.pmax || e.pmin) + ' ₽</span></li>'; }).join("") + '</ul>'
+      : '<p class="sub2">Гастролей этого формата с ценами нет ни в городе, ни в области — впишите цену сами.</p>') +
+    (P.big.length ? '<h3 class="tb-cardh">Крупные концерты за сезон · ' + P.big.length + '</h3><ul class="tb-cmp">' + P.big.slice(0, 6).map(function (e) { return '<li><span>' + esc(e.title) + '<span class="sub2"> · ' + esc(e.venue) + ', ' + human(e.date) + '</span></span><span class="num">до ' + num(e.pmax) + ' ₽</span></li>'; }).join("") + '</ul>' : '') +
+    '<div class="tb-actions" style="margin-top:16px">' + (r.st === "free" || r.st === "recent" ? '<button class="btn-ghost" data-pl="' + (P.x ? 'tb-unx' : 'tb-x') + '" data-city="' + esc(city) + '">' + (P.x ? 'Вернуть в список' : 'Вычеркнуть — не поедем') + '</button>' : '') + '</div>';
+  var dr = $("drawer");
+  if (keep && dr.classList.contains("open")) { var top = dr.scrollTop; dr.innerHTML = html; dr.scrollTop = top; enhanceSelects(dr); }
+  else showDrawer(html);
+}
+function tbMakeTour(Lc, cities) {   // тур в «Финмодель туров»: проект (создаётся из экономики, если нет), города по порядку гастролей, залы и цифры подбора
+  var cx = S.pl.tbCtx, byc = {}; (cx ? cx.A.rows : []).forEach(function (r) { byc[r.city] = r; });
+  cities = cities.slice().sort(function (x, y) { var a1 = byc[x] && byc[x].near ? byc[x].near.date : "9", b1 = byc[y] && byc[y].near ? byc[y].near.date : "9"; return a1 < b1 ? -1 : a1 > b1 ? 1 : 0; });
+  var pk = Lc && Lc.project ? projKey(Lc.project) : "", pid = Object.keys(PLAN.projects).filter(function (k) { return pk && projKey(PLAN.projects[k].title) === pk; })[0], econ = (Lc && Lc.econ) || {};
+  if (!pid && tbFee(Lc)) {
+    pid = plId("p"); var pr = { title: Lc.project || Lc.title };
+    ["fee", "cashless", "crew", "per_diem", "author", "moscow"].forEach(function (f) { if (econ[f] != null) pr[f] = econ[f]; });
+    if (planNum(econ.rao)) { pr.rao_on = true; pr.rao = econ.rao; }
+    plPut("projects", pid, pr);
+  }
+  var rows = cities.map(function (c) {
+    var row = { id: plId("r"), city: c }, P = byc[c] && byc[c].pick;
+    if (!P || P.k.status === "nofee") return row;
+    var x = P.inp.x, src = P.inp.src, ovr = { rent: x.rent, logistics: x.logistics, tech: x.org.tech, kassa: x.kassa };
+    if (P.v && P.v.name) row.venue = plVenueKey(c, P.v.name);
+    if (src.seats === "ovr" || !row.venue) { if (x.seats) ovr.seats = x.seats; }
+    if (!econ.crew && planNum(econ.per_diem)) ovr.crew = x.crew;
+    if (P.k.price) row.avg = Math.round(P.k.price);
+    if (src.fill !== "norm") row.fill = x.fill;
+    row.ads = x.ads; row.ovr = ovr;
+    return row;
+  });
+  var tid = plId("t"), tour = { title: (Lc ? Lc.title : "Тур") + " — новые города", status: "Черновик", rows: rows };
+  if (pid) tour.project = pid;
+  if (cx && cx.A.from) tour.month = cx.A.from.slice(0, 7);
+  S.pl.tb.sel = {}; S.pl.tab = "tours"; S.pl.tour = tid; closeDrawer();
+  plPut("tours", tid, tour, "Тур создан: " + cities.length + " " + plural(cities.length, "город", "города", "городов") + (pid ? "" : " — выберите проект тура"));
+}
+function tbOfferDoc(kind) {   // страница для печати (PDF): артисту — без экономики, руководителю — с экономикой и допущениями
+  var cx = S.pl.tbCtx, L = tbCur(); if (!cx || !L) return;
+  var rows = cx.offer || [], e = L.econ || {}, d = PICK_DEFAULTS, cfg = plCfg(), who = L.project || L.title, period = periodLabel();
+  var today = new Date().toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" });
+  var css = 'body{font:14px/1.45 -apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#1c1917;background:#fff;margin:0;padding:32px 40px;max-width:1100px}' +
+    'h1{font-size:22px;margin:0 0 4px}.sub{color:#57534e;margin:0 0 18px}table{border-collapse:collapse;width:100%;margin:12px 0 18px}th,td{border-bottom:1px solid #e7e5e4;padding:6px 8px;text-align:left;vertical-align:top}' +
+    'th{font-size:12px;color:#57534e;font-weight:600}.r{text-align:right;white-space:nowrap}.neg{color:#b42318}.ok{color:#15803d}.edge{color:#b45309}.muted{color:#78716c}' +
+    '.ed{border:1px dashed #d6d3d1;border-radius:8px;padding:10px 12px;margin:10px 0;min-height:1.5em}.ed:focus{outline:2px solid #1d6fae}.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:4px 24px;margin:8px 0 14px}' +
+    '.kv div{display:flex;justify-content:space-between;gap:8px;border-bottom:1px dotted #e7e5e4;padding:3px 0}.bar{position:sticky;top:0;background:#fff;padding:8px 0 12px;display:flex;gap:10px;align-items:center}' +
+    'button{font:inherit;padding:8px 16px;border-radius:9999px;border:1px solid #1c1917;background:#1c1917;color:#fff;cursor:pointer}.hint{color:#78716c;font-size:12px}' +
+    '@media print{.bar{display:none}.ed{border:0;padding:0}body{padding:0}}';
+  var bar = '<div class="bar"><button onclick="window.print()">Сохранить в PDF / печать</button><span class="hint">Текст в рамках можно править прямо здесь перед сохранением.</span></div>';
+  var body;
+  if (kind === "artist") {
+    body = '<h1>Предложение по городам</h1><p class="sub">' + esc(who) + ' · период: ' + esc(period) + ' · ' + today + '</p>' +
+      '<div class="ed" contenteditable="true">Добрый день! Предлагаем города для концертов в период «' + esc(period) + '». Залы ниже — предварительные; даты и площадки подтверждаем после вашего согласия.</div>' +
+      '<table><thead><tr><th>№</th><th>Город</th><th>Область</th><th>Площадка</th><th class="r">Мест</th></tr></thead><tbody>' +
+      rows.map(function (r, i) { var P = r.pick; return '<tr><td>' + (i + 1) + '</td><td>' + esc(r.city) + '</td><td>' + esc(r.reg || "") + '</td><td>' + esc(P.v ? P.v.name : "уточняется") + '</td><td class="r">' + (P.k.r.seats ? num(P.k.r.seats) : "—") + '</td></tr>'; }).join("") +
+      '</tbody></table><div class="ed" contenteditable="true">Контакт: </div>';
+  } else {
+    var calcs = rows.map(function (r) { return r.pick.k; }).filter(function (k) { return k.status === "ok" || k.status === "edge" || k.status === "no"; }), tt = pickTotals(calcs);
+    var low = rows.filter(function (r) { return r.pick.pr && r.pick.pr.conf === "low" && r.pick.inp.src.price !== "ovr"; }).map(function (r) { return r.city; });
+    var nod = rows.filter(function (r) { var s = r.pick.k.status; return s === "nohall" || s === "noprice"; }).map(function (r) { return r.city; });
+    var kv = function (a, b) { return '<div><span>' + a + '</span><b>' + b + '</b></div>'; };
+    body = '<h1>На согласование: ' + esc(who) + '</h1><p class="sub">Подбор городов · период: ' + esc(period) + ' · ' + today + '</p>' +
+      '<div class="kv">' + kv("Городов", rows.length) + kv("Окупается / на грани / нет", tt.ok + " / " + tt.edge + " / " + tt.no) + kv("Сборы", plMoney(tt.sales)) + kv("Расходы", plMoney(tt.total)) +
+        kv("Прибыль", '<span class="' + (tt.profit < 0 ? 'neg' : 'ok') + '">' + plMoney(tt.profit) + '</span>') + '</div>' +
+      '<h3>Допущения</h3><div class="kv">' + kv("Гонорар", plMoney(e.fee)) + kv("% сверху к гонорару", (e.cashless || 0) + " %") + kv("Райдер на город", e.rider != null ? plMoney(e.rider) : plMoney(pickRider(e.fee)) + " (норма)") +
+        kv("Состав на выезде", e.crew != null ? e.crew + " чел." : d.crew + " чел. (не знаем)") + kv("Заполняемость", (e.fill != null ? e.fill : d.fill) + " %") + (cx.P && cx.P.lv ? kv("Уровень цен артиста", "× " + String(cx.P.lv.k).replace(".", ",") + (cx.P.lv.manual ? " (вписан)" : " (по " + cx.P.lv.n + " датам)")) : '') + kv("Налог + кассы", cfg.tax + " % + " + (e.kassa != null ? e.kassa : d.kassa) + " %") +
+        (planNum(e.rao) ? kv("РАО/ВОИС", e.rao + " %") : '') + (planNum(e.per_diem) ? kv("Суточные", plMoney(e.per_diem)) : '') + (planNum(e.moscow) ? kv("Московские на тур", plMoney(e.moscow)) : '') + '</div>' +
+      '<p class="hint">Цена города — ' + (cx.P && cx.P.lv ? 'типичная цена гастролей этого формата в городе × уровень цен артиста' : 'цены крупных концертов этого формата в городе (75-й процентиль)') + ' по нашей афише и архиву; аренда, реклама, дорога — нормы, если не вписаны. Наша афиша видит около 40 % мероприятий площадок, которые продают билеты сами.</p>' +
+      '<table><thead><tr><th>№</th><th>Город</th><th>Зал</th><th class="r">Мест</th><th class="r">Цена города</th><th class="r">Нужна цена</th><th class="r">Сборы</th><th class="r">Расходы</th><th class="r">Прибыль</th><th class="r">В ноль</th><th>Окупаемость</th><th>Решение</th></tr></thead><tbody>' +
+      rows.map(function (r, i) {
+        var P = r.pick, k = P.k, R = k.r, has = k.status === "ok" || k.status === "edge" || k.status === "no", s = TB_PK[k.status] || ["—"];
+        return '<tr><td>' + (i + 1) + '</td><td>' + esc(r.city) + '<div class="muted">' + esc(r.reg || "") + '</div></td><td>' + esc(P.v ? P.v.name : "—") + '</td><td class="r">' + (R.seats ? num(R.seats) : "—") + '</td>' +
+          '<td class="r">' + (k.price ? plMoney(k.price) + (P.inp.src.price === "ovr" ? '<div class="muted">правка</div>' : P.pr && P.pr.conf === "low" ? '<div class="muted">мало данных</div>' : '') : "—") + '</td>' +
+          '<td class="r">' + (has ? plMoney(k.need) : "—") + '</td><td class="r">' + (has ? plMoney(R.sales) : "—") + '</td><td class="r">' + (has ? plMoney(R.total) : "—") + '</td>' +
+          '<td class="r ' + (has && R.profit < 0 ? 'neg' : '') + '">' + (has ? plMoney(R.profit) : "—") + '</td><td class="r">' + (has && R.beTickets != null ? num(Math.ceil(R.beTickets)) + ' бил. · ' + Math.round(R.beShare * 100) + '%' : "—") + '</td>' +
+          '<td class="' + k.status + '">' + s[0] + (k.margin != null ? ' · ' + (k.margin >= 0 ? '+' : '−') + Math.abs(Math.round(k.margin * 100)) + '%' : '') + '</td><td contenteditable="true"></td></tr>';
+      }).join("") + '</tbody></table>' +
+      (low.length || nod.length ? '<h3>Риски</h3><ul>' + (low.length ? '<li>Мало данных о ценах (взята область или 1–2 гастроли): ' + esc(low.join(", ")) + '</li>' : '') + (nod.length ? '<li>Нет данных о зале или ценах — не посчитано: ' + esc(nod.join(", ")) + '</li>' : '') + '</ul>' : '') +
+      '<h3>Комментарий руководителя</h3><div class="ed" contenteditable="true"></div>';
+  }
+  var title = (kind === "artist" ? "Предложение — " : "На согласование — ") + who;
+  var w = window.open("", "_blank");
+  if (!w) { toast("Браузер не дал открыть окно — разрешите всплывающие окна для этого сайта"); return; }
+  w.document.open();
+  w.document.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(title) + '</title><style>' + css + '</style></head><body>' + bar + body + '</body></html>');
+  w.document.close();
 }
 
 // ---------- Карта тура — в стиле «Маршрута» «Аналитики» (OpenStreetMap, Leaflet): синие кружки с номером города по порядку
@@ -13326,7 +13634,7 @@ function plSetPath(obj, path, val) {
   for (var i = 0; i < p.length - 1; i++) { if (o[p[i]] == null || typeof o[p[i]] !== "object") o[p[i]] = /^\d+$/.test(p[i + 1]) ? [] : {}; o = o[p[i]]; }
   if (val === null || val === "") delete o[p[p.length - 1]]; else o[p[p.length - 1]] = val;
 }
-var PL_NUM = /^(avg|target|fee|cashless|per_diem|crew|author|rao|moscow|logistics|kassa|seats|gross|rent|days|fill|ads|agent|tax|base|ban_months|org\.\w+|scenarios\.\d|classes\.\d|weights\.\w+|transfer|hotel|tech|catering|loaders|security|services|other)$/;
+var PL_NUM = /^(avg|target|rider|price|capMin|capMax|lvl|fee|cashless|per_diem|crew|author|rao|moscow|logistics|kassa|seats|gross|rent|days|fill|ads|agent|tax|base|ban_months|org\.\w+|scenarios\.\d|classes\.\d|weights\.\w+|transfer|hotel|tech|catering|loaders|security|services|other)$/;
 function plValue(el, field) {
   if (el.type === "checkbox") return el.checked;
   var v = el.value.trim();
@@ -13341,6 +13649,19 @@ function plChange(el) {
   if (kind === "rp") { S.pl.rp.id = el.value || null; S.pl.rp.draft = null; S.pl.rp.sel = 0; S.pl.rp.open = {}; S.pl.rpScroll = 0; tbRe(); return; }   // выбор маршрута
   if (kind === "ana") { S.pl.anaCity = el.value; tbRe(); return; }   // аналитика тура: весь тур или город
   if (kind === "sens") { var sp = plSens(), sv = planNum(el.value); if (isFinite(sv) && sv >= 0) sp[p[1]] = sv; PL_PREFS.sens = sp; plPrefsSave(); tbRe(); return; }
+  if (kind === "tbe" || kind === "tbc") {   // подбор городов: экономика проекта (tbe|список|поле) / правка города (tbc|список|город|поле)
+    var lr = JSON.parse(JSON.stringify(PLAN.lists[p[1]] || {})); if (!lr.title) return;
+    if (kind === "tbe") {
+      if (p[2] === "format") { if (el.value) lr.format = el.value; else delete lr.format; }
+      else { lr.econ = lr.econ || {}; var ev = plValue(el, p[2]); if (ev == null) delete lr.econ[p[2]]; else lr.econ[p[2]] = p[2] === "fill" ? Math.max(0, Math.min(100, ev)) : ev; }
+    } else {
+      lr.cities = lr.cities || {}; var co = lr.cities[p[2]] = lr.cities[p[2]] || {}, cv = p[3] === "venue" ? el.value || null : plValue(el, p[3]);
+      if (cv == null) delete co[p[3]]; else co[p[3]] = p[3] === "fill" ? Math.max(0, Math.min(100, cv)) : cv;
+      if (p[3] === "venue") delete co.seats;
+      if (!Object.keys(co).length) delete lr.cities[p[2]];
+    }
+    plPut("lists", p[1], lr); return;
+  }
   if (kind === "tb") {   // «Построение гастролей»: список, фильтры
     var tbp = tbPrefs();
     if (p[1] === "list") { S.pl.tb.list = el.value || null; S.pl.tb.draft = null; S.pl.tb.sel = {}; S.pl.tbView = null; }
@@ -13395,7 +13716,7 @@ function plChange(el) {
 }
 function plAction(b) {
   var a = b.getAttribute("data-pl"), id = b.getAttribute("data-id"), copy = function (o) { return JSON.parse(JSON.stringify(o || {})); };
-  if (a === "tab") { S.pl.tab = b.getAttribute("data-tab"); S.pl.tour = null; closeDrawer(); render(); }
+  if (a === "tab") { S.pl.tab = b.getAttribute("data-tab"); S.pl.tour = null; S.pl.tbCard = null; closeDrawer(); render(); }
   else if (a.indexOf("tb-") === 0) tbAction(a, b);
   else if (a.indexOf("rp-") === 0) rpAction(a, b);
   else if (a === "ana-toggle") { PL_PREFS.ana = PL_PREFS.ana === false; plPrefsSave(); tbRe(); }
@@ -13449,7 +13770,7 @@ function plAction(b) {
     vr.zones = (rr.zones || []).filter(function (z) { return z.name || z.seats; }).map(function (z) { return { name: z.name || "", seats: z.seats || 0 }; });
     plPut("venues", rr.venue, vr, "Шаблон поясов площадки сохранён");
   }
-  else if (a === "vz-open") { S.pl.row = null; S.pl.vzOpen = false; plVenueZones(b.getAttribute("data-k")); }
+  else if (a === "vz-open") { S.pl.row = null; S.pl.vzOpen = false; S.pl.tbCard = null; plVenueZones(b.getAttribute("data-k")); }
   else if (a === "vz-add" || a === "vz-del") {
     var vk2 = S.pl.vz, vv = copy(PLAN.venues[vk2]); vv.city = vk2.split("|")[0]; vv.venue = vk2.split("|").slice(1).join("|"); vv.zones = vv.zones || [];
     if (a === "vz-add") vv.zones.push({ name: "" }); else vv.zones.splice(+b.getAttribute("data-i"), 1);
@@ -13474,7 +13795,7 @@ function plAction(b) {
     setTimeout(function () { var el = document.querySelector('[data-plf="row|' + S.pl.tour + '|' + rid + '|city"]'); if (el) el.focus(); }, 30);
   }
   else if (a === "row-del") { var t2 = copy(PLAN.tours[S.pl.tour]); t2.rows = (t2.rows || []).filter(function (x) { return x.id !== id; }); if (S.pl.row === id) { S.pl.row = null; closeDrawer(); } plPut("tours", S.pl.tour, t2, "Город убран из тура"); }
-  else if (a === "row-open") { S.pl.vz = null; S.pl.vzOpen = false; plOpenRow(id); }
+  else if (a === "row-open") { S.pl.vz = null; S.pl.vzOpen = false; S.pl.tbCard = null; plOpenRow(id); }
   else if (a === "ovr-reset" || a === "score") {
     var t3 = copy(PLAN.tours[S.pl.tour]), row = (t3.rows || []).filter(function (x) { return x.id === S.pl.row; })[0]; if (!row) return;
     if (a === "ovr-reset") { delete (row.ovr || {})[b.getAttribute("data-f")]; if (row.ovr && !Object.keys(row.ovr).length) delete row.ovr; }

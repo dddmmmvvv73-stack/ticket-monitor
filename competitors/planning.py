@@ -14,8 +14,14 @@
                   "zones": [{"name", "seats"}] — шаблон поясов зала}},   ← раздел «Площадки»
      "tours":    {номер: {"title", "project", "month", "status", "note", "rows": [строка]}},
      "lists":    {номер: {"title", "project" — название проекта в афише, "text" — список продюсера как прислан,
-                  "rows": [{"city", "date", "date2", "time", "status", "other", "note", "line", "fix", "raw"}]}}}
-                 ← «Построение гастролей»: где проект уже работает по словам продюсера (разбор — tour-parse.js)
+                  "rows": [{"city", "date", "date2", "time", "status", "other", "note", "line", "fix", "raw"}],
+                  "format" — формат для цены города (пусто — по афише проекта),
+                  "econ": {"fee", "cashless", "crew", "per_diem", "rider", "author", "rao", "moscow", "kassa", "fill",
+                           "capMin", "capMax", "ads", "lvl" — уровень цен артиста ×, "note"} — экономика первого касания,
+                  "cities": {город: {"x" — вычеркнут, "venue", "seats", "price", "fill", "rent", "ads", "logistics",
+                             "rider", "note"}} — правки подбора по городу}}}
+                 ← «Построение гастролей»: где проект уже работает по словам продюсера (разбор — tour-parse.js);
+                   подбор городов для артиста — city-pick.js (решения пользователя 26.10)
      "routes":   {номер: {"title", "month" — ГГГГ-ММ, "text" — «Город — Площадка — числа» как прислано, "limit" — км переезда,
                   "project" — номер проекта, "trips" — {вариант: {"dep", "ret"}} выезд из Москвы и возвращение, если не день в день}}
                  ← «Построение гастрольного маршрута» (route-plan.js)
@@ -136,7 +142,11 @@ def _zones(v, fields: dict, what: str) -> list:
         raise PlanningError(f"{what}: до 40 поясов")
     return [z for z in (_clean(x or {}, fields, what) for x in v) if z]
 TOUR = {"title": 200, "project": 24, "month": "date", "status": STATUSES, "note": 2000}
-LIST = {"title": 200, "project": 300, "text": 30000}
+LIST = {"title": 200, "project": 300, "text": 30000, "format": 60}
+ECON = {"fee": "money", "cashless": "pct", "crew": "int", "per_diem": "money", "rider": "money", "author": "money", "rao": "pct",
+        "moscow": "money", "kassa": "pct", "fill": "pct", "capMin": "int", "capMax": "int", "ads": "money", "lvl": "money", "note": 2000}
+PICK_CITY = {"x": "bool", "venue": 200, "seats": "int", "price": "money", "fill": "pct", "rent": "money", "ads": "money",
+             "logistics": "money", "rider": "money", "note": 500}
 ROUTE = {"title": 200, "month": "date", "text": 30000, "limit": "int", "project": 24}
 LIST_ROW = {"city": 100, "date": "date", "date2": "date", "time": 5, "status": ("ok", "maybe", "nodate", "transit", "other", "note", "title"),
             "other": 200, "note": 300, "line": 500, "fix": 20, "raw": 100}
@@ -219,6 +229,16 @@ def _validate(kind: str, data: dict) -> dict:
         if not isinstance(rows, list) or len(rows) > 500:
             raise PlanningError("список гастролей: до 500 строк")
         out["rows"] = [_clean(r or {}, LIST_ROW, "строка списка") for r in rows]
+        econ = _clean(data.get("econ") or {}, ECON, "экономика проекта")
+        if econ:
+            out["econ"] = econ
+        cities = data.get("cities") or {}
+        if not isinstance(cities, dict) or len(cities) > 1000:
+            raise PlanningError("подбор городов: до 1000 городов")
+        cities = {_text(c, "город", 100): v for c, v in ((c, _clean(v or {}, PICK_CITY, "город подбора")) for c, v in cities.items())
+                  if c and v and v != {"x": False}}
+        if cities:
+            out["cities"] = cities
         return out
     out = _clean(data, TOUR, "тур")
     if not out.get("title"):
