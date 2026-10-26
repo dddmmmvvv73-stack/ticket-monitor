@@ -18,8 +18,10 @@
                   "format" — формат для цены города (пусто — по афише проекта),
                   "econ": {"fee", "cashless", "crew", "per_diem", "rider", "author", "rao", "moscow", "kassa", "fill",
                            "capMin", "capMax", "ads", "lvl" — уровень цен артиста ×, "note"} — экономика первого касания,
-                  "cities": {город: {"x" — вычеркнут, "venue", "seats", "price", "fill", "rent", "ads", "logistics",
-                             "rider", "note"}} — правки подбора по городу}}}
+                  "cities": {город: {"dec" — решение: yes | maybe | no, "ord" — порядок в предложении, "venue", "seats",
+                             "price", "fill", "rent", "ads", "logistics", "rider", "fee", "cashless", "per_diem", "crew",
+                             "author", "kassa", "agent", "rao", "org": {статья: ₽}, "zmode", "zones": [пояс], "note"}}
+                             — правки подбора по городу (старое "x" — вычеркнут — читается как dec «no»)}}}
                  ← «Построение гастролей»: где проект уже работает по словам продюсера (разбор — tour-parse.js);
                    подбор городов для артиста — city-pick.js (решения пользователя 26.10)
      "routes":   {номер: {"title", "month" — ГГГГ-ММ, "text" — «Город — Площадка — числа» как прислано, "limit" — км переезда,
@@ -145,8 +147,9 @@ TOUR = {"title": 200, "project": 24, "month": "date", "status": STATUSES, "note"
 LIST = {"title": 200, "project": 300, "text": 30000, "format": 60}
 ECON = {"fee": "money", "cashless": "pct", "crew": "int", "per_diem": "money", "rider": "money", "author": "money", "rao": "pct",
         "moscow": "money", "kassa": "pct", "fill": "pct", "capMin": "int", "capMax": "int", "ads": "money", "lvl": "money", "note": 2000}
-PICK_CITY = {"x": "bool", "venue": 200, "seats": "int", "price": "money", "fill": "pct", "rent": "money", "ads": "money",
-             "logistics": "money", "rider": "money", "note": 500}
+PICK_CITY = {"x": "bool", "dec": ("", "yes", "maybe", "no"), "ord": "int", "venue": 200, "seats": "int", "price": "money", "fill": "pct",
+             "rent": "money", "ads": "money", "logistics": "money", "rider": "money", "fee": "money", "cashless": "pct", "per_diem": "money",
+             "crew": "int", "author": "money", "kassa": "pct", "agent": "pct", "rao": "pct", "zmode": "bool", "note": 2000}
 ROUTE = {"title": 200, "month": "date", "text": 30000, "limit": "int", "project": 24}
 LIST_ROW = {"city": 100, "date": "date", "date2": "date", "time": 5, "status": ("ok", "maybe", "nodate", "transit", "other", "note", "title"),
             "other": 200, "note": 300, "line": 500, "fix": 20, "raw": 100}
@@ -181,6 +184,23 @@ def _row(r: dict) -> dict:
         out["scores"] = sc
     if r.get("zones"):
         out["zones"] = _zones(r["zones"], ZONE, "распоясовка")
+    return out
+
+
+def _pick_city(d: dict) -> dict:
+    """Правка города в подборе: решение, поля финмодели, статьи расходов, распоясовка. Старое x (вычеркнут) → dec «no»."""
+    out = _clean(d, PICK_CITY, "город подбора")
+    if out.pop("x", False) and not out.get("dec"):
+        out["dec"] = "no"
+    if not out.get("zmode"):
+        out.pop("zmode", None)
+    org = _clean(d.get("org") or {}, {o: "money" for o in ORG}, "статьи расходов города")
+    if org:
+        out["org"] = org
+    if d.get("zones"):
+        zones = _zones(d["zones"], ZONE, "распоясовка города")
+        if zones:
+            out["zones"] = zones
     return out
 
 
@@ -235,8 +255,7 @@ def _validate(kind: str, data: dict) -> dict:
         cities = data.get("cities") or {}
         if not isinstance(cities, dict) or len(cities) > 1000:
             raise PlanningError("подбор городов: до 1000 городов")
-        cities = {_text(c, "город", 100): v for c, v in ((c, _clean(v or {}, PICK_CITY, "город подбора")) for c, v in cities.items())
-                  if c and v and v != {"x": False}}
+        cities = {_text(c, "город", 100): v for c, v in ((c, _pick_city(v or {})) for c, v in cities.items()) if c and v}
         if cities:
             out["cities"] = cities
         return out

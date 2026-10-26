@@ -76,33 +76,51 @@ function pickVenue(venues, capMin, capMax) {
   return ok[0] || null;
 }
 
+// Решение по городу (решения пользователя 26.10): yes — подходит, maybe — на рассмотрении, no — не подходит, "" — нет.
+// Старое «вычеркнут» (x) читается как «не подходит».
+function pickDec(o) { return o && (o.dec || (o.x ? "no" : "")) || ""; }
+
 // Входы planCalc для города. econ — экономика проекта (гонорар, % сверху, состав…); c — город: {seats, venueRent, price,
-// km — от Москвы, cities — городов в предложении}; o — правки города. src — откуда каждое значение: ovr | econ | venue | norm.
+// km — от Москвы, cities — городов в предложении}; o — правки города (любое поле финмодели; статьи org вместо райдера;
+// распоясовка zones при zmode). src — откуда каждое значение: ovr | econ | venue | city | norm | org | zones | none.
 function pickInputs(econ, c, o, d) {
   d = d || PICK_DEFAULTS; econ = econ || {}; o = o || {};
   var n = planNum, src = {}, has = function (v) { return v != null && v !== ""; };
   var pick = function (f, list) { for (var i = 0; i < list.length; i++) if (has(list[i][0])) { src[f] = list[i][1]; return n(list[i][0]); } src[f] = "none"; return 0; };
-  var crew = pick("crew", [[econ.crew, "econ"], [d.crew, "norm"]]);
+  var fee = pick("fee", [[o.fee, "ovr"], [econ.fee, "econ"]]);
+  var cashless = pick("cashless", [[o.cashless, "ovr"], [econ.cashless, "econ"]]);
+  var per_diem = pick("per_diem", [[o.per_diem, "ovr"], [econ.per_diem, "econ"]]);
+  var author = pick("author", [[o.author, "ovr"], [econ.author, "econ"]]);
+  var rao = pick("rao", [[o.rao, "ovr"], [econ.rao, "econ"]]);
+  var agent = pick("agent", [[o.agent, "ovr"]]);
+  var crew = pick("crew", [[o.crew, "ovr"], [econ.crew, "econ"], [d.crew, "norm"]]);
   var seats = pick("seats", [[o.seats, "ovr"], [c.seats, "venue"]]);
   var price = pick("price", [[o.price, "ovr"], [c.price, "city"]]);
   var fill = pick("fill", [[o.fill, "ovr"], [econ.fill, "econ"], [d.fill, "norm"]]);
-  var rider = pick("rider", [[o.rider, "ovr"], [econ.rider, "econ"], [pickRider(econ.fee, d) || null, "norm"]]);
+  var rider = pick("rider", [[o.rider, "ovr"], [econ.rider, "econ"], [pickRider(fee, d) || null, "norm"]]);
+  var org = { tech: rider }, items = o.org || {};
+  if (Object.keys(items).some(function (k) { return has(items[k]); })) {   // расписано по статьям — сумма статей вместо райдера
+    org = {}; Object.keys(items).forEach(function (k) { if (has(items[k])) org[k] = n(items[k]); }); src.rider = "org";
+  }
   var rent = pick("rent", [[o.rent, "ovr"], [c.venueRent, "venue"], [seats ? pickTier(d.rent, seats) : null, "norm"]]);
   var ads = pick("ads", [[o.ads, "ovr"], [econ.ads, "econ"], [seats ? pickTier(d.ads, seats) : null, "norm"]]);
   var logistics = pick("logistics", [[o.logistics, "ovr"], [c.km != null ? crew * pickTier(d.travel, c.km) : null, "norm"]]);
-  var kassa = pick("kassa", [[econ.kassa, "econ"], [d.kassa, "norm"]]);
-  return { src: src, x: { gross: price * seats, seats: seats, fill: fill, fee: n(econ.fee), cashless: n(econ.cashless), per_diem: n(econ.per_diem), crew: crew, days: 1,
-    author: n(econ.author), rao_on: n(econ.rao) > 0, rao: n(econ.rao), moscow: n(econ.moscow), cities: Math.max(1, n(c.cities) || 1),
-    org: { tech: rider }, rent: rent, logistics: logistics, ads: ads, kassa: kassa, agent: 0 } };
+  var kassa = pick("kassa", [[o.kassa, "ovr"], [econ.kassa, "econ"], [d.kassa, "norm"]]);
+  var x = { gross: price * seats, seats: seats, fill: fill, fee: fee, cashless: cashless, per_diem: per_diem, crew: crew, days: 1,
+    author: author, rao_on: rao > 0, rao: rao, moscow: n(econ.moscow), cities: Math.max(1, n(c.cities) || 1),
+    org: org, rent: rent, logistics: logistics, ads: ads, kassa: kassa, agent: agent };
+  if (o.zmode && o.zones && o.zones.length) { x.zones = o.zones; src.price = src.seats = "zones"; }   // распоясовка: вал, места и сборы — по поясам
+  return { src: src, x: x };
 }
 
-// Расчёт города: planCalc по цене города + нужная цена, запас и статус (ok | edge | no | nohall | noprice | nofee)
+// Расчёт города: planCalc по цене города + нужная цена, запас и статус (ok | edge | no | nohall | noprice | nofee).
+// С распоясовкой — места, средняя цена и заполняемость берутся итоговые по поясам.
 function pickCalc(inp, cfg, d) {
   d = d || PICK_DEFAULTS;
-  var x = inp.x, r = planCalc(x, cfg), f = planNum(x.fill) / 100, v = r.varPct / 100;
-  var need = x.seats > 0 && f > 0 && v < 1 ? r.fixed / (x.seats * f * (1 - v)) : null;
-  var price = x.seats > 0 ? x.gross / x.seats : 0, margin = need && price ? price / need - 1 : null, e = d.edge / 100;
-  var status = !x.fee ? "nofee" : !x.seats ? "nohall" : !price ? "noprice" : margin >= e ? "ok" : margin >= -e ? "edge" : "no";
+  var x = inp.x, r = planCalc(x, cfg), seats = r.seats, f = r.fillEff / 100, v = r.varPct / 100;
+  var need = seats > 0 && f > 0 && v < 1 ? r.fixed / (seats * f * (1 - v)) : null;
+  var price = r.avg, margin = need && price ? price / need - 1 : null, e = d.edge / 100;
+  var status = !x.fee ? "nofee" : !seats ? "nohall" : !price ? "noprice" : margin >= e ? "ok" : margin >= -e ? "edge" : "no";
   return { r: r, need: need, price: price, margin: margin, status: status };
 }
 
@@ -114,4 +132,4 @@ function pickTotals(calcs) {
 }
 
 if (typeof module !== "undefined") module.exports = { PICK_DEFAULTS: PICK_DEFAULTS, pickTier: pickTier, pickRider: pickRider, pickQuantile: pickQuantile, pickMid: pickMid,
-  pickLevel: pickLevel, pickPrice: pickPrice, pickVenue: pickVenue, pickInputs: pickInputs, pickCalc: pickCalc, pickTotals: pickTotals };
+  pickLevel: pickLevel, pickPrice: pickPrice, pickVenue: pickVenue, pickDec: pickDec, pickInputs: pickInputs, pickCalc: pickCalc, pickTotals: pickTotals };

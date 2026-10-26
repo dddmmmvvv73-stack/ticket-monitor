@@ -4,7 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const model = require("../Design/prototype/plan-model.js");
 Object.assign(global, model);   // в браузере plan-model.js и city-pick.js — общие скрипты страницы
-const { PICK_DEFAULTS, pickTier, pickRider, pickQuantile, pickLevel, pickPrice, pickVenue, pickInputs, pickCalc, pickTotals } = require("../Design/prototype/city-pick.js");
+const { PICK_DEFAULTS, pickTier, pickRider, pickQuantile, pickLevel, pickPrice, pickVenue, pickDec, pickInputs, pickCalc, pickTotals } = require("../Design/prototype/city-pick.js");
 
 const near = (a, b, eps = 0.5) => assert.ok(Math.abs(a - b) <= eps, `${a} ≠ ${b}`);
 
@@ -101,4 +101,41 @@ test("итог предложения: московские расходы де�
   near(a.r.project.moscow, 100000);
   const t = pickTotals([a, a]);
   assert.equal(t.n, 2); near(t.profit, a.r.profit * 2);
+});
+
+test("решение по городу: dec; старое «вычеркнут» — «не подходит»", () => {
+  assert.equal(pickDec({ dec: "yes" }), "yes");
+  assert.equal(pickDec({ x: true }), "no");
+  assert.equal(pickDec({ x: true, dec: "maybe" }), "maybe");
+  assert.equal(pickDec(null), "");
+});
+
+test("правки города: гонорар, %, состав, кассы, агентские, РАО — важнее экономики артиста", () => {
+  const inp = pickInputs({ fee: 1500000, cashless: 13, crew: 10 }, { seats: 1000, price: 5000, km: 500 },
+    { fee: 1200000, cashless: 0, crew: 6, kassa: 8, agent: 5, rao: 4 });
+  const x = inp.x;
+  assert.equal(x.fee, 1200000); assert.equal(x.cashless, 0); assert.equal(x.crew, 6); assert.equal(x.logistics, 6 * 6000);
+  assert.equal(x.kassa, 8); assert.equal(x.agent, 5); assert.equal(x.rao, 4); assert.equal(x.rao_on, true);
+  assert.equal(inp.src.fee, "ovr"); assert.equal(inp.src.cashless, "ovr");
+  assert.equal(x.org.tech, 500000);   // райдер — по гонорару города (1,2 млн → 500 тыс.)
+  const k = pickCalc(inp, PLAN_DEFAULTS);
+  near(k.r.varPct, 2 + 8 + 5 + 4);
+});
+
+test("статьи расходов вместо райдера: сумма статей, райдер не учитывается", () => {
+  const inp = pickInputs({ fee: 1000000 }, { seats: 800, price: 5000, km: 300 }, { rider: 700000, org: { hotel: 120000, transfer: 40000, tech: "" } });
+  assert.deepEqual(inp.x.org, { hotel: 120000, transfer: 40000 });
+  assert.equal(inp.src.rider, "org");
+  const k = pickCalc(inp, PLAN_DEFAULTS);
+  near(k.r.org, 160000);
+});
+
+test("распоясовка: места, средняя цена, заполняемость — по поясам; нужная цена — от итогов поясов", () => {
+  const zones = [{ name: "Партер", price: 6000, seats: 400 }, { name: "Балкон", price: 3000, seats: 200, fill: 50 }];
+  const inp = pickInputs({ fee: 1000000 }, { seats: 900, price: 4000, km: 300 }, { zmode: true, zones: zones, fill: 80 });
+  assert.equal(inp.src.price, "zones");
+  const k = pickCalc(inp, PLAN_DEFAULTS);
+  near(k.r.seats, 600); near(k.r.gross, 3000000); near(k.price, 5000);
+  near(k.r.sales, 6000 * 400 * 0.8 + 3000 * 200 * 0.5);   // 2 220 000
+  near(k.need, k.r.fixed / (600 * (k.r.fillEff / 100) * 0.88), 0.01);
 });
