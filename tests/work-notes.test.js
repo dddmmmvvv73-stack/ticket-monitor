@@ -98,3 +98,8 @@ test('картинка или файл: по типу и по расширени
   assert.equal(N.sizeText(1536), '2 КБ');
   assert.equal(N.sizeText(2.5 * 1048576), '2,5 МБ');
 });
+
+test('заметка процесса выбирает только его задачи', () => {
+  const w = {tasks: {a: {text:'Процесс', proc:'proc1'}, b: {text:'Проект', project:'p1'}, c: {text:'Другой', proc:'proc2'}}};
+  assert.deepEqual(N.taskOptions(w, 'proc:proc1').map(t => t.id), ['a']);
+});

@@ -45,6 +45,7 @@
   var SALE = { '': 'Ждём площадку', allowed: 'Разрешено', onsale: 'В продаже' };
   var TST = [['new', 'Не начата', '#b4b4b2'], ['work', 'В работе', 'var(--wh-lilac)'], ['over', 'Просрочено', 'var(--wh-orange)'], ['done', 'Готово', '#ffffff']];
 
+  function taskOwnerName(t) { return t.proc ? ((WK.procs || {})[t.proc] || {}).title || '' : wkPname(t.project); }
   function D(s) { return new Date(s + 'T12:00:00'); }   // местный полдень: без сдвига дня
   function days(a, b) { return Math.round((D(b) - D(a)) / 864e5); }
   function short(s) { var d = D(s); return d.getDate() + ' ' + MON[d.getMonth()]; }
@@ -80,8 +81,8 @@
   }
   function fire() {
     var out = [], t0 = wkDay(0), all = tasks();
-    all.filter(late).sort(function (a, b) { return a.due.localeCompare(b.due); }).forEach(function (t) { out.push({ g: 'tasks', sev: 'red', k: 'Просрочено · ' + short(t.due), t: t.text, p: wkPname(t.project) || 'Без проекта', task: t.id }); });
-    all.filter(function (t) { return !t.done && t.due === t0; }).forEach(function (t) { out.push({ g: 'tasks', sev: 'orange', k: 'Сегодня', t: t.text, p: wkPname(t.project) || 'Без проекта', task: t.id }); });
+    all.filter(late).sort(function (a, b) { return a.due.localeCompare(b.due); }).forEach(function (t) { out.push({ g: 'tasks', sev: 'red', k: 'Просрочено · ' + short(t.due), t: t.text, p: taskOwnerName(t) || 'Без проекта', task: t.id }); });
+    all.filter(function (t) { return !t.done && t.due === t0; }).forEach(function (t) { out.push({ g: 'tasks', sev: 'orange', k: 'Сегодня', t: t.text, p: taskOwnerName(t) || 'Без проекта', task: t.id }); });
     active().filter(function (p) { return p.deadline && p.deadline >= t0 && days(t0, p.deadline) <= 7; }).forEach(function (p) { out.push({ g: 'tasks', sev: 'orange', k: 'Дедлайн готовности · ' + short(p.deadline), t: p.title, p: '', proj: p.id }); });
     var by = {};
     ahead().filter(function (s) { return s.sale !== 'onsale' && days(t0, s.date) <= SALE_DAYS; }).forEach(function (s) { (by[s.project] = by[s.project] || []).push(s); });
@@ -212,12 +213,12 @@
     return '<section class="wh-a-focus" aria-label="В фокусе"><div class="wh-h wh-fh"><h2>В фокусе (' + l.length + ')</h2><span class="wh-sp"></span><div class="wh-chips">' +
       chips(fs.map(function (f) { return [f[0], f[1] + ' ' + focusList(f[0]).length]; }), s.focus, 'wh-focus') + '</div></div>' +
       '<div class="wh-frow" data-wh-frow>' + l.map(function (t, i) {
-        var due = !t.due ? 'Без срока' : t.due === t0 ? 'Сегодня' : t.due < t0 ? 'Просрочено · ' + short(t.due) : short(t.due), pn = wkPname(t.project);
+        var due = !t.due ? 'Без срока' : t.due === t0 ? 'Сегодня' : t.due < t0 ? 'Просрочено · ' + short(t.due) : short(t.due), pn = taskOwnerName(t);
         return '<article class="wh-tc" style="--rot:' + rot[i % rot.length] + '"><div class="wh-tc-h"><span class="wh-tc-ic">' + ico(TAG_ICON[tagName(t)] || 'task', 26, 1.6) + '</span>' +
           (t.pin ? '<span class="wh-tc-pin" title="Закреплена">' + ico('pin', 15) + '</span>' : '') +
           '<button type="button" class="wh-icon" data-wh-tmore="' + t.id + '" aria-label="Ещё" aria-haspopup="menu">' + ico('dots') + '</button></div>' +
           '<h3 data-wh-task="' + t.id + '" title="' + esc(t.text) + '" tabindex="0" role="button">' + esc(t.text) + '</h3>' +
-          (pn ? '<button type="button" class="wh-tc-p" data-wh-open="' + t.project + '" title="' + esc(pn) + '">' + esc(pn) + '</button>' : '<span class="wh-tc-p">Без проекта</span>') +
+          (pn ? '<button type="button" class="wh-tc-p" ' + (t.proc ? 'data-proc-open="' + t.proc : 'data-wh-open="' + t.project) + '" title="' + esc(pn) + '">' + esc(pn) + '</button>' : '<span class="wh-tc-p">Без проекта</span>') +
           '<span class="wh-tc-due' + (late(t) ? ' late' : '') + '">' + due + '</span>' +
           '<div class="wh-tc-f"><span class="wh-prio p-' + (t.prio || 'none') + '" title="Приоритет: ' + (wkLabel(WK_PRIO, t.prio) || 'не задан').toLowerCase() + '">' + wkPrioIcon(t.prio) + '</span>' +
           '<span class="wh-tc-btns"><button type="button" class="wh-bell' + (t.remind ? ' on' : '') + '" data-wh-remind="' + t.id + '" aria-pressed="' + !!t.remind + '" aria-label="Напомнить в Telegram" title="' + (t.remind ? 'Напомню в Telegram утром' : 'Напомнить в Telegram') + '">' + ico('bell', 17) + '</button>' +

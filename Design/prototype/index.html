@@ -7,6 +7,7 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="stylesheet" href="work-calendar.css">
 <link rel="stylesheet" href="work-home.css">
+<link rel="stylesheet" href="work-processes.css">
 <link rel="stylesheet" href="work-notes.css">
 <link rel="stylesheet" href="work-docs.css">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2586,6 +2587,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
     <div class="nav-grp" id="grp-work">
     <a class="nav-item" href="#wkhome" data-view="wkhome"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 7.2L8 2.8l5.5 4.4v6.3a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5z"/><path d="M6.4 14v-3.6h3.2V14"/></svg>Обзор</a>
     <a class="nav-item" href="#work" data-view="work"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.6a1 1 0 0 1 1-1h3.1l1.5 1.6H13a1 1 0 0 1 1 1v5.9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>Проекты</a>
+    <a class="nav-item" href="#wkproc" data-view="wkproc"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/><path d="M7 4h5v5M9 12H4V7"/></svg>Процессы</a>
     <a class="nav-item" href="#wkcal" data-view="wkcal"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/><circle cx="8" cy="10.2" r=".9" fill="currentColor" stroke="none"/></svg>Календарь</a>
     <a class="nav-item" href="#wktasks" data-view="wktasks"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="2.5" width="11" height="11" rx="2"/><path d="M5.2 6.2l1.3 1.3 2.4-2.4M5.2 10.6h5.6"/></svg>Задачи</a>
     <a class="nav-item" href="#wkdocs" data-view="wkdocs"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.6 1.8H4.2a1 1 0 0 0-1 1v10.4a1 1 0 0 0 1 1h7.6a1 1 0 0 0 1-1V5z"/><path d="M9.6 1.8V5h3.2M5.8 8.6l1.5 1.5 2.9-2.9"/></svg>Документы</a>
@@ -2655,7 +2657,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <nav class="bottom-nav" aria-label="Разделы">
   <a href="#city" data-view="city">Город</a><a href="#events" data-view="events">Мероприятия</a><a href="#projects" data-view="projects">Репертуар</a><a href="#work" data-view="work">Проекты</a><button type="button" id="moreBtn" aria-expanded="false" aria-controls="moreSheet">Ещё</button>
 </nav>
-<div class="more-sheet" id="moreSheet" hidden><a href="#wkhome" data-view="wkhome">Обзор работы</a><a href="#wktasks" data-view="wktasks">Задачи</a><a href="#wkdocs" data-view="wkdocs">Документы</a><a href="#wkparties" data-view="wkparties">Контрагенты</a><a href="#wkcal" data-view="wkcal">Календарь</a><a href="#wknotes" data-view="wknotes">Заметки</a><a href="#archive" data-view="archive">Архив</a><a href="#overview" data-view="overview">Обзор</a><a href="#niches" data-view="niches">Ниши</a><a href="#calendar" data-view="calendar">Календарь событий</a><a href="#new" data-view="new">Новые события</a><a href="#venues" data-view="venues">Площадки</a><a href="#operators" data-view="operators">Билетные операторы</a><a href="#sales" data-view="sales">История продаж</a><a href="#dynamics" data-view="dynamics">Динамика продаж</a><a href="#planning" data-view="planning">Финмодель туров</a><a href="#route" data-view="route">Гастрольный маршрут</a><a href="#settings" data-view="settings">Настройки</a></div>
+<div class="more-sheet" id="moreSheet" hidden><a href="#wkproc" data-view="wkproc">Процессы</a><a href="#wkhome" data-view="wkhome">Обзор работы</a><a href="#wktasks" data-view="wktasks">Задачи</a><a href="#wkdocs" data-view="wkdocs">Документы</a><a href="#wkparties" data-view="wkparties">Контрагенты</a><a href="#wkcal" data-view="wkcal">Календарь</a><a href="#wknotes" data-view="wknotes">Заметки</a><a href="#archive" data-view="archive">Архив</a><a href="#overview" data-view="overview">Обзор</a><a href="#niches" data-view="niches">Ниши</a><a href="#calendar" data-view="calendar">Календарь событий</a><a href="#new" data-view="new">Новые события</a><a href="#venues" data-view="venues">Площадки</a><a href="#operators" data-view="operators">Билетные операторы</a><a href="#sales" data-view="sales">История продаж</a><a href="#dynamics" data-view="dynamics">Динамика продаж</a><a href="#planning" data-view="planning">Финмодель туров</a><a href="#route" data-view="route">Гастрольный маршрут</a><a href="#settings" data-view="settings">Настройки</a></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <dialog class="confirm" id="confirmDlg" aria-labelledby="cdTitle" aria-describedby="cdText">
   <h2 id="cdTitle"></h2><p id="cdText" class="sub"></p>
@@ -2681,6 +2683,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <script src="work-notes.js"></script>
 <script src="work-docs.js"></script>
 <script src="work-home.js"></script>
+<script src="work-processes.js"></script>
 <script src="market-pop.js"></script>
 <script src="venue-cap.js"></script>
 <script src="venue-book.js"></script>
@@ -3385,6 +3388,7 @@ function openDrawer(i) {
 }
 function openEditor(i) { S.editing = true; S.sel = i; showDrawer(drawerForm(i == null ? null : findEvent(i), null, i == null)); }
 function closeDrawer() {
+  WorkProcesses.closed();
   if (!$("drawer").classList.contains("open")) return;
   $("drawer").classList.remove("open"); $("drawer").setAttribute("aria-hidden", "true"); $("veil").classList.remove("open");
   setTimeout(function () { if (!$("drawer").classList.contains("open")) $("drawer").hidden = true; }, 240);  // после анимации закрытия
@@ -4265,7 +4269,7 @@ function hallSection(halls) {
 // Решение пользователя 19.10.2026: «прям буквально простое», чтобы перенести реальные задачи; дальше — CRM ведения гастролей.
 // Данные — competitors/work.py (/api/work, config/work.json вне git); каждая правка — в журнале изменений, её можно вернуть.
 // Правка — прямо в строке: поле сохраняется, когда из него выходят (Enter, Tab, клик мимо); Esc — вернуть как было.
-var WK = { projects: {}, tasks: {}, docs: {} }, WK_OK = false;
+var WK = { projects: {}, tasks: {}, docs: {}, procs: {}, leads: {} }, WK_OK = false;
 S.wk = { proj: null, fproj: "", showDone: false, addProj: "" };
 // Статусы проектов — свои у пользователя (work.json → stages; решение 20.10): [номер, название, цвет, «завершённые», порядок]
 var WK_STAGE = [["idea", "Идея", "gray", false, 1], ["talks", "Переговоры", "amber", false, 2], ["prep", "Подготовка", "violet", false, 3], ["sales", "Продажи", "blue", false, 4],
@@ -4300,10 +4304,11 @@ function wkProjects() {   // проекты: незавершённые — по
 function wkProjOpts(v, empty) {
   return '<option value="">' + (empty || "Без проекта") + '</option>' + wkProjects().map(function (p) { return '<option value="' + p.id + '"' + (p.id === v ? ' selected' : '') + '>' + esc(p.title) + (wkStageDone(p.stage) ? " (завершён)" : "") + '</option>'; }).join("");
 }
-function wkPname(id) { return id && WK.projects[id] ? WK.projects[id].title : ""; }
+function wkPname(id) { if ((id || "").indexOf("proc:") === 0) return ((WK.procs || {})[id.slice(5)] || {}).title || ""; return id && WK.projects[id] ? WK.projects[id].title : ""; }
 function wkMoney(n) { return n == null ? "" : String(Math.round(n * 100) / 100).replace(/\B(?=(\d{3})+(?!\d))/g, " ").replace(".", ","); }
 // Сохранить запись: сразу на экране, потом на сервере; ошибка — сообщение и данные с сервера заново
 function wkPut(kind, id, rec, msg, quiet) {   // quiet — без перерисовки: курсор остаётся там, куда перешли (Tab)
+  if (kind === "tasks" || kind === "notes") rec = WorkProcesses.normalize(rec);
   WK[kind][id] = rec; if (!quiet) render();
   apiJson("POST", "/api/work", { op: "put", kind: kind, id: id, data: rec }).then(function (x) {
     if (!x.ok) { toast("Не сохранено: " + ((x.d && x.d.error) || "ошибка")); wkLoad(); return; }
@@ -4369,7 +4374,7 @@ function wkTaskRow(t, showProj) {
       (wkSpent(t) || t.run ? '<span class="wkt-ic' + (t.run ? ' wk-running' : '') + '" title="Затрачено">' + WKT_ICON.watch + '<span class="num" data-wk-tick="' + t.id + '">' + wkDur(wkSpent(t), !!t.run) + '</span></span>' : '') +
       '<button class="icon-btn wk-openbtn" data-wkt-open="' + t.id + '" aria-label="Открыть задачу: описание, подзадачи, время" title="Открыть: описание, подзадачи, время">' + WKT_ICON.desc + '</button>' +
       wkDateBtn("tasks|" + t.id + "|due", t.due, { due: true, done: t.done, label: "Срок" }) +
-      (showProj ? '<select class="wk-in wk-sel" data-native ' + f("project") + ' aria-label="Проект">' + wkProjOpts(t.project) + '</select>' : '') +
+      (showProj ? '<select class="wk-in wk-sel" data-native ' + f("project") + ' aria-label="Проект">' + WorkProcesses.ownerOptions(WorkProcesses.owner(t)) + '</select>' : '') +
       '<button class="icon-btn wk-x" data-wk-del="tasks|' + t.id + '" aria-label="Удалить задачу" title="Удалить задачу">' + PJ_ICON.close + '</button>' +
     '</span></li>';
 }
@@ -4391,7 +4396,7 @@ function wkTaskList(list, showProj) {
     (S.wk.showDone ? '<ul class="wk-tasks">' + done.slice(0, 200).map(function (t) { return wkTaskRow(t, showProj); }).join("") + '</ul>' : '') + '</section>';
   return html;
 }
-function wkTasksOf(pid) { return Object.keys(WK.tasks).map(function (id) { return Object.assign({ id: id }, WK.tasks[id]); }).filter(function (t) { return pid == null || t.project === pid; }); }
+function wkTasksOf(pid) { return Object.keys(WK.tasks).map(function (id) { return Object.assign({ id: id }, WK.tasks[id]); }).filter(function (t) { return pid == null || WorkProcesses.owner(t) === pid; }); }
 function wkDocsOf(pid) { return Object.keys(WK.docs).map(function (id) { return Object.assign({ id: id }, WK.docs[id]); }).filter(function (d) { return pid == null || d.project === pid; }); }
 // ---------- Документы и контрагенты — work-docs.js (решения пользователя 22.10)
 // ---------- Проекты: таблица и страница проекта
@@ -4755,7 +4760,7 @@ function wkProjectPage(pid) {
         '<div class="wk-hstat done"><b class="num">' + done + '<small>/' + all.length + '</small></b><span>выполнено</span><i class="wk-hbar"><em style="width:' + pct + '%"></em></i></div>' +
       '</div></div></section>';
   var filtOn = S.wk.groupBy === "due" || !!S.wk.prioF;
-  return hero + wkPickBlock(pid) +
+  return hero + WorkProcesses.projectLine(p) + wkPickBlock(pid) +
     '<div class="wk-ptabs-row"><div class="mtabs subtabs wk-ptabs" role="tablist" aria-label="Разделы проекта">' + [["tasks", "Задачи", s.open], ["shows", "Гастроли", wkShowsOf(pid).length], ["docs", "Документы", wkDocsOf(pid).length], ["costs", "Расходы", wkCostsOf(pid).length]].map(function (t) {
       return '<button role="tab" data-wk-ptab="' + t[0] + '" aria-selected="' + (S.wk.ptab === t[0]) + '">' + t[1] + (t[2] ? ' <span class="wk-tabn">' + t[2] + '</span>' : '') + '</button>'; }).join("") + '</div>' +
       (S.wk.ptab === "tasks" ? '<div class="wk-tabtools"><button type="button" class="wk-sq' + (filtOn ? ' on' : '') + '" data-wkt-groupmenu aria-haspopup="menu" aria-label="Фильтры и группировка задач" title="Фильтры и группировка">' + WKT_ICON.group + (filtOn ? '<i class="wk-sq-dot" aria-hidden="true"></i>' : '') + '</button>' +
@@ -4927,7 +4932,7 @@ function wkProjMedia(kind, data) {
   document.body.appendChild(inp);
 })();
 document.addEventListener("click", function (ev) {
-  if (!wkOn() || !wkEP() || !ev.target.closest) return;
+  if (!wkOn() || (!wkEP() && S.view !== "wkproc") || !ev.target.closest) return;
   var t = ev.target.closest("[data-wkp-photo],[data-wkp-unphoto],[data-wkp-edit],[data-wkp-save],[data-wkp-openpg],[data-wkt-quickadd],[data-wkt-prio-clear],.wk-menu [data-wkt-prio-f],#pjDlg [data-wk-del]");
   if (!t) return;
   if (t.hasAttribute("data-wkp-openpg")) { var op = wkEP(); $("pjDlg").close(); S.wk.editPid = null; wkpOpenPage(op); return; }
@@ -4956,7 +4961,7 @@ document.addEventListener("submit", function (ev) {
   var fm = ev.target.closest && ev.target.closest("[data-wkt-qa]"); if (!fm) return;
   ev.preventDefault();
   var v = fm.elements.text.value.trim(); if (!v || !S.wk.proj) return;
-  wkPut("tasks", wkId("t"), { text: v, due: "", project: S.wk.proj, done: false, created: wkDay(0) }, "Задача добавлена");
+  wkPut("tasks", wkId("t"), { text: v, due: "", project: WorkProcesses.scope(), done: false, created: wkDay(0) }, "Задача добавлена");
   var nb = document.querySelector("[data-wkt-quickadd]");   // страница перерисована — окошко снова у кнопки
   if (WKPOP && nb) { WKPOP.anchor = nb; nb.setAttribute("aria-expanded", "true"); var i = WKPOP.el.querySelector("input"); i.value = ""; i.focus(); }
 });
@@ -4968,7 +4973,7 @@ var WKM_ICON = { prev: '<svg width="14" height="14" viewBox="0 0 16 16" fill="no
   next: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5L10.5 8 6 12.5"/></svg>' };
 var WK_WD_FULL = ["воскресенье", "понедельник", "вторник", "среда", "четверг", "пятница", "суббота"];
 function wkCostsOf(pid) { return Object.keys(WK.costs || {}).map(function (id) { return Object.assign({ id: id }, WK.costs[id]); }).filter(function (d) { return pid == null || d.project === pid; }); }
-function wkNotesOf(pid) { return Object.keys(WK.notes || {}).map(function (id) { return Object.assign({ id: id }, WK.notes[id]); }).filter(function (d) { return d.project === pid; }); }
+function wkNotesOf(pid) { return Object.keys(WK.notes || {}).map(function (id) { return Object.assign({ id: id }, WK.notes[id]); }).filter(function (d) { return WorkProcesses.owner(d) === pid; }); }
 function wkDayTasks(pid) {   // день → задачи проекта с этим сроком
   var by = {};
   wkTasksOf(pid).forEach(function (t) { if (t.due) (by[t.due] = by[t.due] || []).push(t); });
@@ -5011,16 +5016,16 @@ var WKM_HOVER = null;
 function wkCalTip(btn, focus) {   // наведение — только дни с задачами; нажатие — любой день, курсор в строку «+ Задача»
   var iso = btn.getAttribute("data-wkm-day");
   if (!focus && !btn.classList.contains("has")) return;
-  if (!(WKPOP && WKPOP.anchor === btn)) wkPopOpen(btn, "wkm-tip", wkCalTipHtml(iso, S.wk.proj), { tip: true, iso: iso });
+  if (!(WKPOP && WKPOP.anchor === btn)) wkPopOpen(btn, "wkm-tip", wkCalTipHtml(iso, WorkProcesses.scope()), { tip: true, iso: iso });
   if (focus) { WKPOP.pinned = true; var i = WKPOP.el.querySelector(".wkm-add input"); if (i) i.focus(); }
 }
 document.addEventListener("submit", function (ev) {   // задача на выбранный день — прямо из календаря
   var fm = ev.target.closest && ev.target.closest("[data-wkm-add]"); if (!fm) return;
   ev.preventDefault();
   var iso = fm.getAttribute("data-wkm-add"), v = fm.elements.text.value.trim(); if (!v || !S.wk.proj) return;
-  wkPut("tasks", wkId("t"), { text: v, due: iso, project: S.wk.proj, done: false, created: wkDay(0) }, "Задача добавлена на " + wkDueInfo(iso).text.toLowerCase());
+  wkPut("tasks", wkId("t"), { text: v, due: iso, project: WorkProcesses.scope(), done: false, created: wkDay(0) }, "Задача добавлена на " + wkDueInfo(iso).text.toLowerCase());
   var nb = document.querySelector('[data-wkm-day="' + iso + '"]');   // календарь перерисован — окошко снова у своего дня
-  if (WKPOP && nb) { WKPOP.anchor = nb; nb.setAttribute("aria-expanded", "true"); WKPOP.el.innerHTML = wkCalTipHtml(iso, S.wk.proj); wkPopPlace(); var i = WKPOP.el.querySelector(".wkm-add input"); if (i) i.focus(); }
+  if (WKPOP && nb) { WKPOP.anchor = nb; nb.setAttribute("aria-expanded", "true"); WKPOP.el.innerHTML = wkCalTipHtml(iso, WorkProcesses.scope()); wkPopPlace(); var i = WKPOP.el.querySelector(".wkm-add input"); if (i) i.focus(); }
 });
 document.addEventListener("mouseover", function (ev) {
   if (!wkOn() || !ev.target.closest) return;
@@ -5349,7 +5354,7 @@ function wkNoteOpen(id, draft) {
   n = n || draft;
   var d = pjDialog("wkn-pop nc-" + wknColor(n), n.title || "Без названия",
     '<textarea class="wkn-body" maxlength="50000" placeholder="Впишите текст заметки…" aria-label="Текст заметки">' + esc(n.body || "") + '</textarea>' +
-    '<div class="wkn-meta"><span>' + esc([wknDate(n.created || wkDay(0)), n.project && WK.projects[n.project] ? WK.projects[n.project].title : "без проекта"].join(" · ")) + '</span><span>Enter — сохранить и закрыть · Shift+Enter — новая строка</span></div>');
+    '<div class="wkn-meta"><span>' + esc([wknDate(n.created || wkDay(0)), WorkProcesses.ownerName(n) || "без проекта"].join(" · ")) + '</span><span>Enter — сохранить и закрыть · Shift+Enter — новая строка</span></div>');
   var ta = d.querySelector(".wkn-body"); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
   if (!d.wknBound) { d.wknBound = true; d.addEventListener("close", function () { if (S.wk.note) { wkNoteSave(); S.wk.note = null; if (wkOn()) render(); } }); }
 }
@@ -5358,7 +5363,8 @@ function wkNoteSave() {   // пустая новая (без названия и
   var body = ta.value.replace(/\s+$/, ""), old = WK.notes[st.id], base = old || st.draft;
   if (!old && !base.title && !body.trim()) return;
   if (old && (old.body || "") === body) return;
-  var rec = { project: base.project || "", title: base.title || "", body: body, created: base.created || wkDay(0), color: wknColor(base), fav: !!base.fav };
+  var rec = { project: WorkProcesses.owner(base), title: base.title || "", body: body, created: base.created || wkDay(0), color: wknColor(base), fav: !!base.fav };
+  rec = WorkProcesses.normalize(rec);
   WK.notes[st.id] = Object.assign({}, rec, { upd: wkStamp() });
   apiJson("POST", "/api/work", { op: "put", kind: "notes", id: st.id, data: rec }).then(function (x) {
     if (!x.ok) { toast("Заметка не сохранена: " + ((x.d && x.d.error) || "ошибка")); wkLoad(); return; }
@@ -5380,7 +5386,7 @@ function wknEdHtml(n, isNew) {
     (wknIsWork(n) ? '' : '<label>Цвет</label><div class="wkn-sw" role="group" aria-label="Цвет заметки">' + WKN_COLORS.map(function (c) {   // у рабочей цвета нет
       return '<button type="button" class="wkn-c nc-' + c[0] + (wknColor(n) === c[0] ? ' on' : '') + '" data-wkn-ed-color="' + c[0] + '" aria-pressed="' + (wknColor(n) === c[0]) + '" aria-label="' + c[1] + '" title="' + c[1] + '"></button>';
     }).join("") + '</div>') +
-    '<label for="wknEdP">Проект</label><select id="wknEdP" data-native data-wkn-ed-proj>' + wkProjOpts(n.project || "", "Без проекта") + '</select>' +
+    '<label for="wknEdP">Проект</label><select id="wknEdP" data-native data-wkn-ed-proj>' + WorkProcesses.ownerOptions(WorkProcesses.owner(n), "Без проекта или процесса") + '</select>' +
     '<div class="wkn-edfoot">' + (isNew ? '<button type="button" class="btn-dark" data-wkn-ed-create>Создать</button><span class="sub2">Enter — создать</span>'
       : '<span class="sub2">Сохраняется сразу</span><button type="button" class="pj-plain" data-wkn-ed-del>Удалить заметку</button>') + '</div>';
 }
@@ -5446,7 +5452,7 @@ document.addEventListener("change", function (ev) {
   if (WKPOP.wknNew) return;   // новая — сохраняется кнопкой «Создать»
   var id = WKPOP.wkn, n = WK.notes[id]; if (!n) return;
   if (t.hasAttribute("data-wkn-ed-title")) { var v = t.value.trim(); if (v !== (n.title || "")) { wkNoteSet(id, { title: v }); wknEdReanchor(id); } }
-  else if (t.hasAttribute("data-wkn-ed-proj") && t.value !== (n.project || "")) { wkNoteSet(id, wnProjPatch(n, t.value), t.value ? "Заметка — в проекте «" + WK.projects[t.value].title + "»" : "Заметка — без проекта"); wknEdReanchor(id); }
+  else if (t.hasAttribute("data-wkn-ed-proj") && t.value !== WorkProcesses.owner(n)) { wkNoteSet(id, wnProjPatch(n, t.value), t.value ? "Заметка — «" + wkPname(t.value) + "»" : "Заметка — без проекта"); wknEdReanchor(id); }
 });
 document.addEventListener("input", function (ev) {   // поиск — по мере ввода, курсор остаётся в поле
   if (S.view !== "wknotes" || !ev.target.hasAttribute || !ev.target.hasAttribute("data-wkn-q")) return;
@@ -5496,7 +5502,7 @@ var WN = null;   // её редактор: {ed — WorkNotes.mount, timer, chain
 function wknIsWork(n) { return !!n && n.type === "work"; }
 function wknWorkCard(n) {   // как быстрая, только белая: название, начало текста, задача и проект, дата, чек-лист, вложения
   var doc = n.doc || {}, pre = WorkNotes.docText(doc, 400).replace(/\s+/g, " ").trim(), s = WorkNotes.docStats(doc), files = s.files + s.images;
-  var t = n.task && WK.tasks[n.task], pn = wkPname(n.project);
+  var t = n.task && WK.tasks[n.task], pn = WorkProcesses.ownerName(n);
   return '<article class="wkn-card wkn-work" role="button" tabindex="0" data-wkn-open="' + n.id + '" aria-label="Рабочая заметка: ' + esc(n.title || "без названия") + '">' +
     '<p class="wkn-t' + (n.title ? '' : ' muted') + (pre ? ' has-pre' : '') + '">' + esc(n.title || "Без названия") + '</p>' +
     (pre ? '<p class="wkn-pre">' + esc(pre.slice(0, 240)) + '</p>' : '') +
@@ -5514,8 +5520,8 @@ function wknAddMenu(anchor, pp) {   // «+»: какая заметка
     '<button type="button" class="wk-menu-item" data-wkn-add="work" role="menuitem"><span>Рабочая заметка</span><small>Страница с редактором — к проекту или задаче</small></button>', { wknAdd: pp || "" });
 }
 function wnProjPatch(n, pid) {   // сменили проект рабочей заметки — задача из другого проекта отвязывается (иначе сервер вернёт проект задачи)
-  var p = { project: pid };
-  if (wknIsWork(n) && n.task && WK.tasks[n.task] && (WK.tasks[n.task].project || "") !== pid) p.task = "";
+  var p = { project: pid, proc: "" };
+  if (wknIsWork(n) && n.task && WK.tasks[n.task] && WorkProcesses.owner(WK.tasks[n.task]) !== pid) p.task = "";
   return p;
 }
 function wnOpen(id, o) {   // o: {project, task — для новой; fromTask — открыли из окна задачи: «Назад» вернёт туда}
@@ -5526,8 +5532,8 @@ function wnOpen(id, o) {   // o: {project, task — для новой; fromTask 
   var t = o.task && WK.tasks[o.task];
   S.wk.wn = { id: id || wkId("n"), doc: n ? n.doc : null,
     from: { view: S.view, proj: S.view === "work" ? S.wk.proj : null, y: window.scrollY, task: o.fromTask || null },
-    meta: n ? { title: n.title || "", project: n.project || "", task: n.task || "", fav: !!n.fav, created: n.created || wkDay(0) }
-      : { title: "", project: (t && t.project) || o.project || "", task: o.task || "", fav: false, created: wkDay(0) } };
+    meta: n ? { title: n.title || "", project: WorkProcesses.owner(n), task: n.task || "", fav: !!n.fav, created: n.created || wkDay(0) }
+      : { title: "", project: (t && WorkProcesses.owner(t)) || o.project || "", task: o.task || "", fav: false, created: wkDay(0) } };
   WN = null; S.enter = true; render(); window.scrollTo(0, 0);
   if (!n) { var ti = document.querySelector("[data-wn-title]"); if (ti) ti.focus(); }
 }
@@ -5559,9 +5565,9 @@ function wnProp(kind, label, val, empty) {
 }
 function wnPickOpen(anchor, kind) {   // меню выбора проекта или задачи — как фильтры раздела; задачи — выбранного проекта, открытые по сроку, готовые в конце
   if (WKPOP && WKPOP.anchor === anchor) { wkPopClose(); return; }
-  var m = S.wk.wn.meta, pid = WK.projects[m.project] ? m.project : "", cur = kind === "proj" ? pid : WK.tasks[m.task] ? m.task : "";
-  var opts = kind === "proj" ? [["", "Без проекта"]].concat(wkProjects().map(function (p) { return [p.id, p.title, wkStageDone(p.stage) ? "завершён" : ""]; }))
-    : [["", "Без задачи"]].concat(WorkNotes.taskOptions(WK, pid).map(function (x) { var t = WK.tasks[x.id], p = !pid && wkPname(t.project); return [x.id, t.text, [p, t.done ? "готово" : ""].filter(Boolean).join(" · ")]; }));
+  var m = S.wk.wn.meta, pid = wkPname(m.project) ? m.project : "", cur = kind === "proj" ? pid : WK.tasks[m.task] ? m.task : "";
+  var opts = kind === "proj" ? [["", "Без проекта"]].concat(wkProjects().map(function (p) { return [p.id, p.title, wkStageDone(p.stage) ? "завершён" : ""]; })).concat(Object.keys(WK.procs || {}).map(function (id) { return ["proc:" + id, WK.procs[id].title, "процесс"]; }))
+    : [["", "Без задачи"]].concat(WorkNotes.taskOptions(WK, pid).map(function (x) { var t = WK.tasks[x.id], p = !pid && WorkProcesses.ownerName(t); return [x.id, t.text, [p, t.done ? "готово" : ""].filter(Boolean).join(" · ")]; }));
   var search = kind === "task" && opts.length > 2;   // задачи — с поиском (22.10)
   wkPopOpen(anchor, "wk-menu wn-pmenu", '<div class="wkp-title">' + (kind === "proj" ? "Проект" : pid ? "Задача проекта" : "Задача") + '</div>' + (search ? wkMenuSearch("Найти задачу") : '') + '<div class="wn-pmenu-l wk-mlist">' + opts.map(function (o) {
     var on = o[0] === cur;
@@ -5585,8 +5591,8 @@ function wnAttach(focus) {   // после render: редактор живёт �
 }
 function wnRecord() {   // запись целиком: свойства — со страницы, текст — из редактора; удалённые проект и задача не отправляем
   var m = S.wk.wn.meta;
-  return { type: "work", project: WK.projects[m.project] ? m.project : "", task: WK.tasks[m.task] ? m.task : "", title: m.title.trim(),
-    created: m.created, fav: !!m.fav, doc: WN.ed.json() };
+  return WorkProcesses.normalize({ type: "work", project: wkPname(m.project) ? m.project : "", task: WK.tasks[m.task] ? m.task : "", title: m.title.trim(),
+    created: m.created, fav: !!m.fav, doc: WN.ed.json() });
 }
 function wnState(txt, err) { var el = $("wnState"); if (el) { el.textContent = txt; el.classList.toggle("err", !!err); } }
 function wnSchedule() { if (!WN) return; clearTimeout(WN.timer); wnState("Изменено"); WN.timer = setTimeout(function () { wnSave(false); }, 1200); }
@@ -5649,7 +5655,7 @@ document.addEventListener("click", function (ev) {
   if ((b = ev.target.closest(".wn-pmenu [data-wn-set]"))) {   // проект: задача из другого проекта отвязывается; задача: проект — из неё
     var ps = b.getAttribute("data-wn-set").split("|"), tk = WK.tasks[ps[1]]; wkPopClose();
     if (ps[0] === "proj") wnMeta(wnProjPatch({ type: "work", task: S.wk.wn.meta.task }, ps[1]));
-    else wnMeta(tk && tk.project ? { task: ps[1], project: tk.project } : { task: ps[1] });
+    else wnMeta(tk && WorkProcesses.owner(tk) ? { task: ps[1], project: WorkProcesses.owner(tk) } : { task: ps[1] });
     return;
   }
   if (ev.target.closest("[data-wn-fav]")) { var fv = !S.wk.wn.meta.fav; wnMeta({ fav: fv }, fv ? "В избранном — на доске первой" : "Убрано из избранного"); return; }
@@ -5946,7 +5952,7 @@ function wkTaskDlgHtml(id) {
   return '<div class="wkd" data-wkd="' + id + '">' +
     '<div class="wkd-top"><input type="checkbox" class="wk-check" data-wkd-done' + (t.done ? ' checked' : '') + ' aria-label="Готово">' +
       '<textarea class="wk-in wkd-title" data-wkd-f="text" rows="1" maxlength="1000" aria-label="Задача">' + esc(t.text) + '</textarea></div>' +
-    '<div class="wkd-meta">' + (S.view === "work" && S.wk.proj ? '' : '<label>Проект <select class="wk-in wk-sel" data-native data-wkd-f="project">' + wkProjOpts(t.project) + '</select></label>') +   // внутри проекта проект не выбирают (решение пользователя 20.10)
+    '<div class="wkd-meta">' + ((S.view === "work" && S.wk.proj || S.view === "wkproc") ? '' : '<label>Проект / процесс <select class="wk-in wk-sel" data-native data-wkd-f="project">' + WorkProcesses.ownerOptions(WorkProcesses.owner(t)) + '</select></label>') +   // внутри проекта проект не выбирают (решение пользователя 20.10)
       '<label>Срок ' + wkDateBtn("tasks|" + id + "|due", t.due, { due: true, done: t.done, label: "Срок", icon: true }) + '</label>' +
       (due.cls === "over" && !t.done ? '<span class="wkd-over">просрочено на ' + -due.days + ' ' + plural(-due.days, "день", "дня", "дней") + '</span>' : due.cls === "today" && !t.done ? '<span class="wkd-today">срок сегодня</span>' : '') + '</div>' +
     '<section class="wkd-sec"><h3>Статус</h3><div class="wkd-prio" role="group" aria-label="Статус">' + WK_TSTATUS.map(function (o) {
@@ -5977,7 +5983,7 @@ function wkTaskDlgHtml(id) {
       }).join("") + '</ul>' : '') +
       '<form class="wkd-subadd" data-wkd-sub-add><input class="wk-in" name="sub" placeholder="+ Подзадача — впишите и Enter" maxlength="500" autocomplete="off" aria-label="Новая подзадача"></form></section>' +
     wkdNotesSec(id) + wkdLogSec(t) +
-    wkPickTaskLine(id) +
+    wkPickTaskLine(id) + WorkProcesses.taskLine(id) +
     '<div class="form-actions wkd-foot"><button class="btn-dark" data-pj="close">Готово</button><button class="pj-plain wkd-del" data-wkd-act="del">Удалить задачу</button>' +
       '<span class="sub2">создана ' + (t.created ? human(t.created) : '—') + (t.done && t.done_at ? ' · сделана ' + human(t.done_at) : '') + '</span></div></div>';
 }
@@ -6003,7 +6009,7 @@ document.addEventListener("change", function (ev) {
     var v = el.value.trim();
     if (f === "text" && !v) { toast("Пустую задачу не сохраняем"); el.value = t.text; return; }
     if ((r[f] || "") === v) return;
-    r[f] = v; wkPut("tasks", id, r, "");
+    r[f] = v; if (f === "project") delete r.proc; wkPut("tasks", id, r, "");
     if (f === "due" || f === "project") wkDlgRefresh();
     return;
   }
@@ -6282,7 +6288,7 @@ function wkNewTaskHtml() {
   var d = S.wk.draft;
   return '<div class="wkd wknew">' +
     '<textarea class="wk-in wkd-title" id="wkn-text" rows="1" maxlength="1000" placeholder="Что нужно сделать" aria-label="Название задачи">' + esc(d.text) + '</textarea>' +
-    '<div class="wkd-meta" style="margin-left:6px">' + (S.view === "work" && S.wk.proj ? '' : '<label>Проект <select class="wk-in wk-sel" id="wkn-proj" data-native aria-label="Проект задачи">' + wkProjOpts(d.project || "") + '</select></label>') +
+    '<div class="wkd-meta" style="margin-left:6px">' + ((S.view === "work" && S.wk.proj || S.view === "wkproc") ? '' : '<label>Проект / процесс <select class="wk-in wk-sel" id="wkn-proj" data-native aria-label="Проект задачи">' + WorkProcesses.ownerOptions(d.project || "") + '</select></label>') +
       '<label>Срок ' + wkDateBtn("draft", d.due, { due: true, label: "Срок", icon: true }) + '</label>' +
       '<label>План <input class="wk-in wkd-dur" id="wkn-est" value="' + esc(d.est || "") + '" placeholder="ч:мм" aria-label="План, ч:мм"></label></div>' +
     '<section class="wkd-sec"><h3>Приоритет</h3><div class="wkd-prio">' + WK_PRIO.concat([["", "Без приоритета"]]).map(function (o) {
@@ -6321,7 +6327,7 @@ document.addEventListener("click", function (ev) {
     if (!text) { err.hidden = false; err.textContent = "Впишите, что нужно сделать"; $("wkn-text").focus(); return; }
     if (est == null) { err.hidden = false; err.textContent = "План — в виде 2:40, 2,5 или 1ч 30м"; $("wkn-est").focus(); return; }
     $("pjDlg").close();
-    wkPut("tasks", wkId("t"), { text: text, desc: $("wkn-desc").value, due: d.due, prio: d.prio, tags: d.tags, est: est, subs: d.subs, project: S.view === "work" && S.wk.proj ? S.wk.proj : ($("wkn-proj") ? $("wkn-proj").value : ""), done: false, created: wkDay(0) }, "Задача создана");
+    wkPut("tasks", wkId("t"), { text: text, desc: $("wkn-desc").value, due: d.due, prio: d.prio, tags: d.tags, est: est, subs: d.subs, project: (S.view === "work" && S.wk.proj || S.view === "wkproc") ? WorkProcesses.scope() : ($("wkn-proj") ? $("wkn-proj").value : ""), done: false, created: wkDay(0) }, "Задача создана");
     S.wk.draft = null;
   }
 });
@@ -6393,7 +6399,7 @@ document.addEventListener("click", function (ev) {
   }
 });
 // ---------- Группа «Работа» в меню (решение пользователя 20.10): Обзор · Проекты · Календарь · Задачи · Заметки — одни данные (WK)
-var WK_VIEWS = ["wkhome", "work", "wkcal", "wktasks", "wkdocs", "wkparties", "wknotes"];
+var WK_VIEWS = ["wkhome", "work", "wkproc", "wkcal", "wktasks", "wkdocs", "wkparties", "wknotes"];
 function wkOn() { return WK_VIEWS.indexOf(S.view) >= 0; }
 function wkGate(title) {   // данные раздела — с сервера: без приложения или пока грузятся — заглушка
   if (!CAN_SAVE) return head(title, "") + '<div class="note">Раздел хранится на сервере — откройте сайт через приложение: python3 app.py → http://127.0.0.1:5050/proto/</div>';
@@ -6458,7 +6464,7 @@ function wtsFiltered(ignoreSt) {
 function wtsSorted(l) {
   var k = S.wk.tsort.k, dir = S.wk.tsort.dir, rank = { high: 0, mid: 1, low: 2 }, srank = { over: 0, work: 1, wait: 2, new: 3, done: 4 };
   var val = function (t) {
-    return k === "text" ? t.text.toLowerCase() : k === "proj" ? wkPname(t.project).toLowerCase() || "яяя" : k === "prio" ? (t.prio in rank ? rank[t.prio] : 3) : k === "status" ? srank[wtsKey(t)] : (t.due || "9999");
+    return k === "text" ? t.text.toLowerCase() : k === "proj" ? WorkProcesses.ownerName(t).toLowerCase() || "яяя" : k === "prio" ? (t.prio in rank ? rank[t.prio] : 3) : k === "status" ? srank[wtsKey(t)] : (t.due || "9999");
   };
   return l.slice().sort(function (a, b) {
     if (k === "due" && !!a.done !== !!b.done) return a.done ? 1 : -1;   // по сроку: готовые — внизу
@@ -6491,7 +6497,8 @@ function wtsStats() {
       c("wts-ic-over", WTS_IC.clock, "Просрочено", open.filter(function (t) { return t.due && t.due < wkDay(0); }).length) + '</div></div>';
 }
 function wtsMore(t) { return '<button type="button" class="wts-more" data-wkt-open="' + t.id + '" aria-label="Открыть задачу: ' + esc(t.text) + '" title="Открыть задачу">•••</button>'; }
-function wtsProjCell(t) {   // проект — ссылкой: нажатие открывает страницу проекта
+function wtsProjCell(t) {
+  if (t.proc && (WK.procs || {})[t.proc]) return '<button type="button" class="wts-pj" data-proc-open="' + t.proc + '">' + esc(WK.procs[t.proc].title) + '</button>';   // проект — ссылкой: нажатие открывает страницу проекта
   return t.project && WK.projects[t.project] ? '<button type="button" class="wts-pj" data-wk-open="' + t.project + '" title="Открыть проект">' + wtsAv(t.project) + '<span>' + esc(WK.projects[t.project].title) + '</span></button>' : '<span class="muted">—</span>';
 }
 function wtsTable(l) {
@@ -6647,6 +6654,7 @@ $("view").addEventListener("change", function (ev) {
   if (fld === "amount" || fld === "paid") val = val.replace(/\s/g, "").replace(",", ".");
   if (String(rec[fld] == null ? "" : rec[fld]) === val) return;
   rec[fld] = val;
+  if (fld === "project") delete rec.proc;
   if (kind === "docs" && !rec.kind && !rec.party) { toast("У документа нужно название или контрагент"); render(); return; }
   if (kind === "costs" && !rec.name && !rec.party) { toast("У расхода нужна статья или получатель"); render(); return; }
   if (kind === "shows" && !rec.name && !rec.city) { toast("У гастролей нужна площадка или город"); render(); return; }
@@ -11786,7 +11794,7 @@ function mSplitTools(html) {
 
 // ---------------------------------------------------------------- рендер и события
 // Разделы, которые на телефоне спрятаны в «Ещё»
-var MORE_VIEWS = ["wkhome", "wktasks", "wkdocs", "wkparties", "wkcal", "wknotes", "archive", "overview", "niches", "calendar", "new", "venues", "operators", "sales", "dynamics", "settings", "planning", "route"];
+var MORE_VIEWS = ["wkproc", "wkhome", "wktasks", "wkdocs", "wkparties", "wkcal", "wknotes", "archive", "overview", "niches", "calendar", "new", "venues", "operators", "sales", "dynamics", "settings", "planning", "route"];
 function render() {
   if (S.wk.wn && S.view !== S.wk.wn.from.view) wnClose(true, true);   // рабочая заметка открыта, а раздел сменили — сохранить и закрыть
   var keepY = wkOn() ? window.scrollY : null;   // «Проекты»: правка не сдвигает страницу (переходы сами прокручивают наверх)
@@ -11813,7 +11821,7 @@ function render() {
   $("dateBtn").style.borderColor = ARCH_ON || S.period === "custom" ? "var(--soot)" : "";
   $("period").style.display = ARCH_ON ? "none" : "";  // «30 дней / 90 дней / Сезон» — про будущее; в архиве период — кнопкой «Даты»
   HEAD_SUB = !isM() && SUBS[S.view] ? subSwitch(S.view) : "";
-  $("view").innerHTML = wkOn() && S.wk.wn ? wnPage() : S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? (vbOn() ? renderVenueBook() : renderVenues()) : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : S.view === "planning" ? renderPlanning() : S.view === "route" ? renderRoute() : S.view === "work" ? renderWork() : S.view === "wktasks" ? renderWkTasks() : S.view === "wkdocs" ? renderWkDocs() : S.view === "wkparties" ? WorkDocs.renderParties() : S.view === "wkhome" ? renderWkHome() : S.view === "wkcal" ? renderWkCalendar() : S.view === "wknotes" ? renderWkNotes() : renderEvents();
+  $("view").innerHTML = wkOn() && S.wk.wn ? wnPage() : S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? (vbOn() ? renderVenueBook() : renderVenues()) : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : S.view === "planning" ? renderPlanning() : S.view === "route" ? renderRoute() : S.view === "wkproc" ? WorkProcesses.page() : S.view === "work" ? renderWork() : S.view === "wktasks" ? renderWkTasks() : S.view === "wkdocs" ? renderWkDocs() : S.view === "wkparties" ? WorkDocs.renderParties() : S.view === "wkhome" ? renderWkHome() : S.view === "wkcal" ? renderWkCalendar() : S.view === "wknotes" ? renderWkNotes() : renderEvents();
   $("view").classList.toggle("enter", !!S.enter); S.enter = false; S.colsAnim = false;
   ddClose(false); enhanceSelects(document.querySelector(".top")); enhanceSelects($("view")); vdRestore();
   candApply();  // «Города, где его нет» — счётчик найденного после перерисовки
@@ -13178,6 +13186,7 @@ var IX_COLS = [
   { id: "afisha", labels: ["Проект в афише", "В афише"], w: 180, left: true, off: true }, { id: "crew", labels: ["Состав"], w: 70, off: true },
   { id: "no", labels: ["Не подходит", "Не подх."], w: 90, off: true }, { id: "created", labels: ["Создан"], w: 100, off: true }
 ];
+IX_COLS.push({ id: "lead", labels: ["Воронка"], w: 200, left: true });
 PL_COLSETS.ix = { id: "ix", cols: IX_COLS, key: "ixcols" };
 var IX_TASK = [["all", "Все"], ["none", "Без задачи"], ["has", "С задачей"]], IX_BOSS = [["all", "Все"], ["new", "Есть новые комментарии"], ["never", "Ссылка не отправлялась"]];
 function ixNeedWK() {   // «Работа» на странице «Планирования» может быть не загружена
@@ -13191,8 +13200,8 @@ function ixSharesLoad(force) {   // сводка ссылок для руков�
   S.pl.ixShares = { at: Date.now(), lists: st ? st.lists : {} };
   apiJson("GET", "/api/shares/summary").then(function (x) {
     if (!x.ok) return;
-    var was = JSON.stringify(S.pl.ixShares.lists); S.pl.ixShares = { at: Date.now(), lists: x.d.lists || {} };
-    if (was !== JSON.stringify(S.pl.ixShares.lists) && S.view === "planning" && S.pl.tab === "build") tbRe();
+    var was = JSON.stringify(S.pl.ixShares.lists); S.pl.ixShares = { at: Date.now(), lists: x.d.lists || {}, base: x.d.base };
+    if (was !== JSON.stringify(S.pl.ixShares.lists) && (S.view === "wkproc" || S.view === "planning" && S.pl.tab === "build")) { tbRe(); WorkProcesses.refreshShares(); }
   }, function () {});
 }
 function ixRow(id) {
@@ -13228,6 +13237,7 @@ function ixCell(c, r) {
     case "offer": return td(r.n.yes || r.n.maybe ? (r.n.yes ? r.n.yes + ' подх.' : '') + (r.n.yes && r.n.maybe ? ' · ' : '') + (r.n.maybe ? r.n.maybe + ' рассм.' : '') : dash);
     case "boss": return td(!r.sh ? '<span class="muted">не отправлено</span>' : 'ссылка ' + ixDate(r.sh.created) + (r.sh.open ? '' : ' · закрыта') + (r.fresh ? ' <span class="tb-newc" title="Новые комментарии руководителя">новое</span>' : '') +
       (r.sh.ok + r.sh.ask + r.sh.no ? '<div class="sub2">✔ ' + r.sh.ok + ' · ? ' + r.sh.ask + ' · ✖ ' + r.sh.no + '</div>' : ''));
+    case "lead": return td(WorkProcesses.chip(r.L) || "—");
     case "wproj": return td(ixProjSel(r));
     case "wtask": return td(ixTaskSel(r));
     case "upd": return td(ixDate(r.upd) || dash);
@@ -13243,6 +13253,7 @@ function ixSortVal(id, r) {
     case "title": return r.title; case "fee": return r.fee; case "offer": return r.n.yes * 1000 + r.n.maybe || null;
     case "boss": return r.sh ? Date.parse(r.sh.last_at || r.sh.created) : null; case "wproj": return r.wp && WK.projects[r.wp] ? WK.projects[r.wp].title : null;
     case "wtask": var t = r.wt && WK.tasks[r.wt]; return t ? (t.done ? "~" : t.due || "9999") : null;
+    case "lead": var lead = (WK.leads || {})[(r.L.work || {}).lead]; return lead ? lead.stage : null;
     case "upd": return r.upd || null; case "afisha": return r.L.project || null; case "crew": return r.L.econ && r.L.econ.crew != null ? +r.L.econ.crew : null;
     case "no": return r.n.no || null; case "created": return r.L.created || null;
   }
@@ -13350,7 +13361,7 @@ document.addEventListener("change", function (ev) {   // ячейки и пла�
 });
 function ixChips(id) {   // шапка экрана артиста: проект и задача «Работы» — те же списки, что в таблице
   var r = ixRow(id);
-  return '<span class="tb-wchip"><span class="sub2">Проект</span>' + ixProjSel(r) + '</span><span class="tb-wchip"><span class="sub2">Задача</span>' + ixTaskSel(r) + '</span>';
+  return '<span class="tb-wchip"><span class="sub2">Проект</span>' + ixProjSel(r) + '</span><span class="tb-wchip"><span class="sub2">Задача</span>' + ixTaskSel(r) + '</span>' + WorkProcesses.chip(r.L);
 }
 // ---------- «Подбор городов» → экран артиста (как считается — CITY_PICK.md; экран — CITY_PICK_PLAN.md,
 // решения пользователя 26.10). У списка — экономика артиста (гонорар, % сверху, состав…; пустое — нормы). Две вкладки:
@@ -14427,7 +14438,7 @@ function plAction(b) {
   }
 }
 document.addEventListener("click", function (ev) {
-  if (S.view !== "planning" && S.view !== "venues" && S.view !== "route") return;
+  if (S.view !== "planning" && S.view !== "venues" && S.view !== "route" && S.view !== "wkproc") return;
   var b = ev.target.closest("[data-pl]"); if (b) { ev.preventDefault(); plAction(b); return; }
   if (S.pl.cols && !ev.target.closest(".cols-anchor")) { S.pl.cols = false; tbRe(); }   // клик мимо — закрыть «Столбцы»
 });
@@ -14459,7 +14470,7 @@ document.addEventListener("input", function (ev) {
 // Подбор городов: сортировка по заголовку (числа — сначала по убыванию, текст — по алфавиту; третий клик — без
 // сортировки), поиск города (перерисовка через 0,2 с, курсор остаётся в поле), порядок городов предложения перетаскиванием
 document.addEventListener("click", function (ev) {
-  if (S.view !== "planning") return;
+  if (S.view !== "planning" && S.view !== "wkproc") return;
   var th = ev.target.closest && ev.target.closest("th[data-plsort]"); if (!th || ev.target.closest(".resizer")) return;
   var id = th.getAttribute("data-plsort"), cp = plColPrefs(th.getAttribute("data-cset")), cur = cp.sort || { id: "status", dir: -1 };
   var first = id === "city" || id === "venue" || id === "reg" ? 1 : -1;
@@ -14624,6 +14635,7 @@ document.addEventListener("change", function (ev) {
 });
 document.addEventListener("keydown", function (ev) {   // Enter в поле — сохранить и перейти к следующему, как в таблице
   if (ev.key !== "Enter" || !ev.target.matches || !ev.target.matches("input.pl-in")) return;
+  if (ev.target.closest("[data-proc-add], [data-proc-edit], [data-lead-log]")) return;
   if (ev.target.id === "plNewProject" || ev.target.id === "plNewCity" || ev.target.id === "plNewRegion") {
     ev.preventDefault(); var btn = ev.target.parentNode.querySelector("[data-pl=ref-add]"); if (btn) btn.click(); return;
   }
@@ -14793,7 +14805,7 @@ function renderDynamics() {
   return head("Динамика продаж", "Как идут продажи по кассам · " + cityLabel()) + sfDynamicsBlock() +
     (old ? '<h2 class="sf-sub">Площадки прямого сбора — подробно</h2>' + old : '');
 }
-var VIEWS = ["wkhome", "work", "wkcal", "wktasks", "wkdocs", "wkparties", "wknotes", "overview", "city", "niches", "calendar", "new", "events", "projects", "touring", "favorites", "venues", "operators", "suggest", "archive", "sales", "dynamics", "settings", "market", "planning", "route"];
+var VIEWS = ["wkhome", "work", "wkproc", "wkcal", "wktasks", "wkdocs", "wkparties", "wknotes", "overview", "city", "niches", "calendar", "new", "events", "projects", "touring", "favorites", "venues", "operators", "suggest", "archive", "sales", "dynamics", "settings", "market", "planning", "route"];
 // Адрес раздела — #раздел или #раздел:версия (#venues:book): меню и вкладки — ссылки, каждый раздел открывается в новой вкладке
 function viewHash() { return S.view + (SUBS[S.view] ? ":" + S.sub[S.view] : ""); }
 function fromHash() {   // раздел из адреса; false — в адресе не раздел

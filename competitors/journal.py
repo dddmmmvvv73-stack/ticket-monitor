@@ -98,7 +98,7 @@ def _work_set(d, key, rec):
         d.setdefault(kind, {})[oid] = rec
 
 
-WORK_KIND = {"projects": "Проект", "tasks": "Задача", "docs": "Документ", "tags": "Тег", "costs": "Расход", "notes": "Заметка", "shows": "Гастроли", "stages": "Статус проекта", "parties": "Контрагент", "goals": "Цель месяца"}
+WORK_KIND = {"procs": "Процесс", "leads": "Запись воронки", "projects": "Проект", "tasks": "Задача", "docs": "Документ", "tags": "Тег", "costs": "Расход", "notes": "Заметка", "shows": "Гастроли", "stages": "Статус проекта", "parties": "Контрагент", "goals": "Цель месяца"}
 PLAN_KIND = {"params": "Параметры", "projects": "Проект (финмодель)", "regions": "Регион", "cities": "Город",
              "venues": "Площадка (финмодель)", "tours": "Тур", "lists": "Список гастролей", "routes": "Маршрут"}
 

@@ -12,7 +12,7 @@
     {"projects": {номер: {"title", "stage", "start", "end", "deadline" — дедлайн готовности проекта, "note", "upd",
                           "media": {"avatar" | "cover": файл?v=метка},
                           "pfiles": {"rider" | "logistics" | "timing": {"file", "name", "size", "at"}}}},
-     "tasks":    {номер: {"text", "due", "project", "done", "done_at", "note", "created", "upd",
+     "tasks":    {номер: {"text", "due", "project" или "proc" (взаимоисключающие), "done", "done_at", "note", "created", "upd",
                           "desc" — описание, "subs": [{"id", "text", "done"}] — подзадачи,
                           "time" — затрачено, секунд; "run" — таймер идёт с (ISO-время) или пусто; "est" — план, минут,
                           "prio" — приоритет: high | mid | low | пусто; "status" — work | wait | пусто (не начата),
@@ -30,6 +30,8 @@
      "shows":    {номер: {"project", "date", "venue" — номер в справочнике площадок, "name", "city", "upd",
                           "sale" — выход в продажу (решение 22.10): пусто — ждём площадку | allowed — площадка разрешила |
                           onsale — в продаже у операторов; "sale_ok", "sale_on" — даты разрешения и выхода в продажу}},
+     "procs":    {номер: {"title", "kind": artists | venue_dates | other, "note", "media": {"cover"}, "created", "upd"}},
+     "leads":    {номер: {"proc", "title", "stage", "called", "ready", "fee", "season", "next", "next_at", "list", "task", "project", "cities", "log"}},
      "goals":    {номер: {"month" — ГГГГ-ММ, "text", "done", "order", "upd"}}}   ← цели месяца («Обзор», решение пользователя 26.10)
 У проекта — "created" (дата создания: от неё «Обзор» считает, где проект должен быть к дедлайну готовности; у проектов
 до 26.10 — дата первой его задачи). У задачи — "pin" (закреплена в «Фокусе» «Обзора») и "remind" (напомнить в Telegram:
@@ -58,7 +60,7 @@ from datetime import datetime
 from competitors.storage import BASE_DIR, CONFIG_DIR, load_json, save_json
 
 FILE = CONFIG_DIR / "work.json"
-KINDS = ("projects", "tasks", "docs", "tags", "costs", "notes", "shows", "stages", "parties", "goals")
+KINDS = ("projects", "tasks", "docs", "tags", "costs", "notes", "shows", "stages", "parties", "goals", "procs", "leads")
 # shows — гастроли проекта (решение пользователя 20.10): дата, площадка, город; площадка — из справочника «Площадки → Площадки»
 # (venue — номер записи config/venue_book.json); название и город хранятся копией — строка читается, даже если площадку убрали из справочника
 # Цвета тегов. Красный и оранжевый — только у приоритета (решение пользователя 19.10: полоса слева — по тегу, и красная
@@ -245,13 +247,71 @@ def _enum(v, allowed: list, what: str, default: str) -> str:
     return v
 
 
+def _ref(v, what="связь") -> str:
+    v = str(v or "")
+    if v and not re.fullmatch(r"[a-z0-9]{1,24}", v):
+        raise WorkError(f"{what}: неверный номер")
+    return v
+
+
+def _owner(d, data) -> dict:
+    pid, proc = str(d.get("project") or ""), _ref(d.get("proc"), "процесс")
+    if pid and proc:
+        raise WorkError("выберите проект или процесс, не оба")
+    if proc and proc not in data.get("procs", {}):
+        raise WorkError("такого процесса нет")
+    return {"proc": proc} if proc else {}
+
+
+LEAD_STAGES = ["found", "called", "ready", "offer", "answered", "decided", "declined"]
+LEAD_LABELS = dict(zip(LEAD_STAGES, ["На входе", "Позвонили", "Готовы, ждут предложения", "Получили предложение", "Ответили на предложение", "Решение", "Не готовы / отказ"]))
+
+
 def _validate(kind: str, d: dict, data: dict) -> dict:
+    if not isinstance(d, dict):
+        raise WorkError("запись: неверный формат")
+    if kind == "procs":
+        out = {"title": _text(d.get("title"), "название", 300),
+               "kind": _enum(d.get("kind"), ["artists", "venue_dates", "other"], "вид процесса", "other"),
+               "note": _text(d.get("note"), "описание"), "order": _int(d.get("order"), "порядок", 0, 1000000),
+               "created": _date(d.get("created"), "создан")}
+        if not out["title"]:
+            raise WorkError("у процесса нужно название")
+        return out
+    if kind == "leads":
+        out = {k: _text(d.get(k), k, limit) for k, limit in
+               (("title", 300), ("afisha", 300), ("contact", 1000), ("next", 1000), ("source", 1000), ("note", 20000))}
+        if not out["title"]:
+            raise WorkError("у записи нужно название")
+        out.update({k: _ref(d.get(k), k) for k in ("proc", "list", "task", "project")})
+        if out["proc"] and out["proc"] not in data.get("procs", {}):
+            raise WorkError("такого процесса нет")
+        out.update({k: _date(d.get(k), k) for k in ("called_at", "next_at", "cities_at", "created")})
+        if not isinstance(d.get("called", False), bool):
+            raise WorkError("позвонил: нужно да или нет")
+        out.update(stage=_enum(d.get("stage"), LEAD_STAGES, "этап", "found"), called=d.get("called", False),
+                   ready=_enum(d.get("ready"), ["", "yes", "no"], "готовы", ""),
+                   season=_enum(d.get("season"), ["", "this", "next"], "сезон", ""),
+                   fee=_amount(d.get("fee")), cashless=_amount(d.get("cashless")),
+                   order=_int(d.get("order"), "порядок", 0, 1000000), log=_log(d.get("log")))
+        if out["cashless"] is not None and out["cashless"] > 100:
+            raise WorkError("% сверху: от 0 до 100")
+        cities = d.get("cities") or []
+        if not isinstance(cities, list) or len(cities) > 1000:
+            raise WorkError("возможные города: до 1000 записей")
+        out["cities"] = []
+        for c in cities:
+            if not isinstance(c, dict) or not c.get("city"):
+                raise WorkError("возможные города: нужен город")
+            out["cities"].append({"city": _text(c.get("city"), "город", 100), "venue": _text(c.get("venue"), "зал", 300),
+                                  "price": _amount(c.get("price")), "at": _date(c.get("at"), "дата фиксации")})
+        return out
     if kind == "projects":
         stages = sorted(data["stages"], key=lambda k: data["stages"][k].get("order", 0))
         out = {"title": _text(d.get("title"), "название", 300), "stage": _enum(d.get("stage"), stages, "статус", stages[0]),
                "start": _date(d.get("start"), "начало"), "end": _date(d.get("end"), "окончание"),
                "deadline": _date(d.get("deadline"), "дедлайн"), "note": _text(d.get("note"), "заметка"), "fav": bool(d.get("fav")),   # fav — избранный (звезда в карточках, 20.10)
-               "created": _date(d.get("created"), "создан")}   # пусто — сегодня или прежняя (apply_op)
+               "created": _date(d.get("created"), "создан"), "lead": _ref(d.get("lead"), "воронка")}   # пусто — сегодня или прежняя (apply_op)
         if not out["title"]:
             raise WorkError("у проекта нужно название")
         return out
@@ -262,6 +322,7 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
         if kind == "notes":
             out = {"project": pid, "title": _text(d.get("title"), "название", 200),
                    "created": _date(d.get("created"), "создана") or datetime.now().strftime("%Y-%m-%d"), "fav": bool(d.get("fav"))}
+            out.update(_owner(d, data))
             if _enum(d.get("type"), NOTE_TYPES, "тип заметки", "quick") == "quick":   # у быстрых поля type нет — как было до 22.10
                 out.update(body=_text(d.get("body"), "заметка", 50000), color=_enum(d.get("color"), NOTE_COLORS, "цвет", "amber"))
                 return out
@@ -270,6 +331,9 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
                 raise WorkError("такой задачи нет")
             if tid and data["tasks"][tid].get("project"):
                 out["project"] = data["tasks"][tid]["project"]   # проект — из задачи (решение 22.10)
+                out.pop("proc", None)
+            if tid and data["tasks"][tid].get("proc"):
+                out["project"], out["proc"] = "", data["tasks"][tid]["proc"]
             out.update(type="work", task=tid, doc=_doc(d.get("doc")))
             return out
         out = {"project": pid, "name": _text(d.get("name"), "статья", 300), "party": _text(d.get("party"), "кому", 300),
@@ -314,6 +378,7 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
                "tags": [t for t in (d.get("tags") or []) if t in data["tags"]][:12],
                "prio": _enum(d.get("prio"), PRIO, "приоритет", ""), "status": _enum(d.get("status"), STATUS, "статус", ""),
                "log": _log(d.get("log")), "pin": bool(d.get("pin")), "remind": bool(d.get("remind"))}
+        out.update(_owner(d, data))
         if not out["text"]:
             raise WorkError("у задачи нужен текст")
         if out["done"]:
@@ -366,25 +431,49 @@ def apply_op(op: dict) -> dict:
         raise WorkError("неверный номер записи")
     with _lock:
         data = load()
-        if op.get("op") == "put":
+        if op.get("op") == "init" and kind == "procs":
+            if not data["procs"]:
+                today = datetime.now().strftime("%Y-%m-%d")
+                for n, (key, title, pkind) in enumerate((("procartists", "Поиск проектов под реализацию", "artists"),
+                                                       ("procvenues", "Запрос свободных дат у площадок", "venue_dates"))):
+                    data["procs"][key] = {"title": title, "kind": pkind, "note": "", "order": n,
+                                           "created": today, "upd": datetime.now().isoformat(timespec="seconds")}
+        elif op.get("op") == "put":
             rec = _validate(kind, op.get("data") or {}, data)
             rec["upd"] = datetime.now().isoformat(timespec="seconds")
-            if kind == "projects":   # дата создания не меняется правками; новый проект — сегодня
+            if kind in ("projects", "procs", "leads"):   # дата создания не меняется правками; новый проект — сегодня
                 rec["created"] = (data[kind].get(oid) or {}).get("created") or rec["created"] or datetime.now().strftime("%Y-%m-%d")
             for keep in ("media", "pfiles"):   # фото и документы проекта меняются отдельно — правка полей их не трогает
-                if kind == "projects" and (data[kind].get(oid) or {}).get(keep):
+                if kind in ("projects", "procs") and (data[kind].get(oid) or {}).get(keep):
                     rec[keep] = data[kind][oid][keep]
-                elif kind == "projects" and oid not in data[kind] and isinstance((op.get("data") or {}).get(keep), dict):
+                elif kind in ("projects", "procs") and oid not in data[kind] and isinstance((op.get("data") or {}).get(keep), dict):
                     rec[keep] = _own_files(oid, op["data"][keep], keep)   # «Вернуть» удалённый проект: его файлы остались на диске
-            if kind == "tasks" and rec["project"] != (data["tasks"].get(oid) or {}).get("project", rec["project"]):
+            if kind == "tasks" and any(rec.get(f, "") != (data["tasks"].get(oid) or {}).get(f, "") for f in ("project", "proc")):
                 for n in data["notes"].values():   # задачу перенесли в другой проект — её рабочие заметки следом
                     if n.get("task") == oid:
                         n["project"] = rec["project"]
+                        if rec.get("proc"):
+                            n["proc"] = rec["proc"]
+                        else:
+                            n.pop("proc", None)
+            if kind == "leads":
+                prev = data[kind].get(oid) or {}
+                labels = {"stage": "Этап", "called": "Позвонил", "ready": "Готовы", "season": "Сезон"}
+                values = {"yes": "да", "no": "нет", "this": "этот сезон", "next": "следующий сезон"}
+                def label(v):
+                    if isinstance(v, bool):
+                        return "да" if v else "нет"
+                    return LEAD_LABELS.get(v, values.get(v, v or "—"))
+                for field, title in labels.items():
+                    if prev.get(field, "") != rec.get(field, ""):
+                        rec["log"].append({"id": "log" + secrets.token_hex(6), "at": datetime.now().isoformat(timespec="seconds"),
+                                           "text": title + ": " + label(prev.get(field)) + " → " + label(rec.get(field))})
+                rec["log"] = rec["log"][-LOG_MAX:]
             data[kind][oid] = rec
         elif op.get("op") == "media":   # фото проекта: what — avatar | cover; data — data:image/…;base64 (пусто — убрать)
-            p = data["projects"].get(oid)
+            p = data[kind].get(oid)
             what = str(op.get("what") or "")
-            if kind != "projects" or not p or what not in MEDIA_KINDS:
+            if kind not in ("projects", "procs") or not p or what not in (MEDIA_KINDS if kind == "projects" else ("cover",)):
                 raise WorkError("фото: нет такого проекта")
             raw = ext = None
             if op.get("data"):
@@ -440,6 +529,12 @@ def apply_op(op: dict) -> dict:
                 if len(data["stages"]) == 1:
                     raise WorkError("нужен хотя бы один статус")
             data[kind].pop(oid, None)
+            if kind == "procs":   # сохраняем записи и задачи, снимаем связь; сироты доступны в списке процессов
+                for bucket in ("leads", "tasks", "notes"):
+                    for r in data[bucket].values():
+                        if r.get("proc") == oid:
+                            r["proc"] = ""
+
             if kind == "tags":   # убрали тег — снимается и с задач
                 for r in data["tasks"].values():
                     if oid in (r.get("tags") or []):
@@ -545,7 +640,7 @@ def remind(now: datetime | None = None, send=None) -> int:
         return 0
     lines = []
     for t in due:
-        p = d["projects"].get(t.get("project") or "") or {}
+        p = (d["procs"] if t.get("proc") else d["projects"]).get(t.get("proc") or t.get("project") or "") or {}
         when = "сегодня" if t["due"] == today else "просрочено с " + ".".join(reversed(t["due"].split("-")[1:]))
         lines.append(f"• {t['text']}" + (f" — {p['title']}" if p.get("title") else "") + f" ({when})")
     if not send(f"🔔 Задачи на сегодня — {len(due)}:\n" + "\n".join(lines[:40]) + ("\n…" if len(lines) > 40 else "")):

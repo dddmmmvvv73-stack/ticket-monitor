@@ -76,3 +76,8 @@ test('цели месяца — только выбранного месяца, 
   assert.deepEqual(home.goals('2026-10').map((g) => g.text), ['Первая', 'Вторая']);
   assert.deepEqual(home.goals('2026-12'), []);
 });
+
+test('задача процесса в «Что горит» подписана названием процесса', () => {
+  setWork({procs: {proc1: {title:'Поиск проектов'}}, tasks: {t1: {text:'Позвонить', proc:'proc1', due:TODAY}}});
+  assert.equal(home.fire()[0].p, 'Поиск проектов');
+});

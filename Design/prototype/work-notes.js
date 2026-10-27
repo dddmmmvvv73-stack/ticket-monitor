@@ -60,7 +60,7 @@
   // Задачи для выбора в заметке: проекта (если выбран) или все; открытые — по сроку, готовые — в конце
   function taskOptions(work, project) {
     var tasks = work.tasks || {}, projects = work.projects || {};
-    return Object.keys(tasks).filter(function (id) { return !project || tasks[id].project === project; }).map(function (id) {
+    return Object.keys(tasks).filter(function (id) { return !project || (project.indexOf('proc:') === 0 ? tasks[id].proc === project.slice(5) : tasks[id].project === project); }).map(function (id) {
       var t = tasks[id], p = !project && projects[t.project] ? projects[t.project].title : '';
       return { id: id, done: !!t.done, due: t.due || '', label: (t.text || '').replace(/\s+/g, ' ').slice(0, 90) + (p ? ' · ' + p : '') + (t.done ? ' (готово)' : '') };
     }).sort(function (a, b) {
