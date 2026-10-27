@@ -1766,7 +1766,10 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .tb-cardin { margin: 12px 0; } .tb-cardh { font-size: 14px; margin: 16px 0 6px; }
 .tb-cmp { list-style: none; padding: 0; margin: 0; font-size: 13px; } .tb-cmp li { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--line); } .tb-cmp li > .num { white-space: nowrap; }
 .pl-gm-regbtn { height: 32px; padding: 0 12px; font-size: 13px; } .pl-gm-regbtn[aria-expanded="true"] { border-color: var(--soot); } .tb-freset { white-space: nowrap; }
-.tb-back { font-size: 14px; } .tb-ahead { align-items: center; } .tb-atitle { margin: 0 8px 0 0; font-size: 22px; }
+.tb-back { font-size: 14px; }
+.wk-pick { margin: 16px 0; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--card); } .wk-pick-h { display: flex; gap: 10px; align-items: baseline; margin-bottom: 4px; }
+.wk-pick-r { display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; padding: 6px 0; border-top: 1px solid var(--line-soft); font-size: 14px; } .wk-pick-h + .wk-pick-r { border-top: 0; }
+.wk-pick-t { font-weight: 500; } .wk-pick-x { color: var(--muted); } .wk-pick-task { margin: 12px 0 0; padding: 6px 12px; } .tb-ahead { align-items: center; } .tb-atitle { margin: 0 8px 0 0; font-size: 22px; }
 .tb-wchip { display: inline-grid; grid-template-columns: auto auto; column-gap: 8px; align-items: center; } .tb-wchip > .sub2:first-child { white-space: nowrap; }
 .tb-wchip > div.sub2 { grid-column: 2; } .tb-awork { gap: 8px 28px; align-items: flex-start; } .tb-wchip .ix-sel, .tb-wchip .dd-btn { max-width: 240px; }
 .tb-grid .ix-sel { max-width: 100%; } .ix-newpop { width: 320px; } .ix-newf { display: grid; gap: 8px; padding: 4px 8px 8px; } .ix-newf .pl-in { width: 100%; text-align: left; }
@@ -4752,7 +4755,7 @@ function wkProjectPage(pid) {
         '<div class="wk-hstat done"><b class="num">' + done + '<small>/' + all.length + '</small></b><span>выполнено</span><i class="wk-hbar"><em style="width:' + pct + '%"></em></i></div>' +
       '</div></div></section>';
   var filtOn = S.wk.groupBy === "due" || !!S.wk.prioF;
-  return hero +
+  return hero + wkPickBlock(pid) +
     '<div class="wk-ptabs-row"><div class="mtabs subtabs wk-ptabs" role="tablist" aria-label="Разделы проекта">' + [["tasks", "Задачи", s.open], ["shows", "Гастроли", wkShowsOf(pid).length], ["docs", "Документы", wkDocsOf(pid).length], ["costs", "Расходы", wkCostsOf(pid).length]].map(function (t) {
       return '<button role="tab" data-wk-ptab="' + t[0] + '" aria-selected="' + (S.wk.ptab === t[0]) + '">' + t[1] + (t[2] ? ' <span class="wk-tabn">' + t[2] + '</span>' : '') + '</button>'; }).join("") + '</div>' +
       (S.wk.ptab === "tasks" ? '<div class="wk-tabtools"><button type="button" class="wk-sq' + (filtOn ? ' on' : '') + '" data-wkt-groupmenu aria-haspopup="menu" aria-label="Фильтры и группировка задач" title="Фильтры и группировка">' + WKT_ICON.group + (filtOn ? '<i class="wk-sq-dot" aria-hidden="true"></i>' : '') + '</button>' +
@@ -4766,6 +4769,48 @@ function wkProjectPage(pid) {
       : '<div class="wk-split"><div class="wk-split-main">' + wktTable(wkTasksOf(pid), pid) + '</div><aside class="wk-split-side" aria-label="Календарь сроков и фокус">' + wkCalBlock(pid) + wkFocusBlock(pid) + '</aside></div>') +
     wkNotesGrid(pid);
 }
+// «Подбор городов» в «Работе» (CITY_PICK_INDEX_PLAN.md, п. 2.6; решение пользователя 27.10): артисты, привязанные к проекту
+// или задаче, — «Открыть →» ведёт на экран артиста, «✕ Отвязать» убирает связь (сам подбор остаётся)
+function wkPickLinks(field, id) { var ls = PLAN.lists || {}; return Object.keys(ls).filter(function (k) { return (ls[k].work || {})[field] === id; }).map(function (k) { return { id: k, L: ls[k] }; }); }
+function wkPickOffer(L) {
+  var n = { yes: 0, maybe: 0 }; Object.keys(L.cities || {}).forEach(function (c) { var d = pickDec(L.cities[c]); if (n[d] != null) n[d]++; });
+  return n.yes || n.maybe ? "предложение: " + (n.yes ? n.yes + " подх." : "") + (n.yes && n.maybe ? " · " : "") + (n.maybe ? n.maybe + " рассм." : "") : tbFee(L) ? "предложения пока нет" : "список продюсера";
+}
+function wkPickBlock(pid) {
+  var ls = wkPickLinks("project", pid); if (!ls.length) return "";
+  return '<section class="wk-pick" aria-label="Подбор городов"><div class="wk-pick-h"><b>Подбор городов</b><span class="sub2">' + ls.length + ' ' + plural(ls.length, "артист", "артиста", "артистов") + '</span></div>' +
+    ls.map(function (x) {
+      return '<div class="wk-pick-r"><span class="wk-pick-t">' + esc(x.L.title) + '</span><span class="sub2">' + esc(wkPickOffer(x.L)) + '</span><span style="flex-grow:1"></span>' +
+        '<button class="pj-plain" data-wk-pick-open="' + x.id + '">Открыть →</button><button class="pj-plain wk-pick-x" data-wk-pick-unlink="' + x.id + '|project" title="Убрать связь с проектом — подбор останется">✕ Отвязать</button></div>';
+    }).join("") + '</section>';
+}
+function wkPickTaskLine(tid) {
+  var ls = wkPickLinks("task", tid); if (!ls.length) return "";
+  return '<div class="wk-pick wk-pick-task">' + ls.map(function (x) {
+    return '<div class="wk-pick-r"><span class="sub2">Подбор городов:</span><span class="wk-pick-t">' + esc(x.L.title) + '</span><span style="flex-grow:1"></span>' +
+      '<button class="pj-plain" data-wk-pick-open="' + x.id + '">Открыть →</button><button class="pj-plain wk-pick-x" data-wk-pick-unlink="' + x.id + '|task" title="Убрать связь с задачей — подбор останется">✕ Отвязать</button></div>';
+  }).join("") + '</div>';
+}
+document.addEventListener("click", function (ev) {
+  var o = ev.target.closest && ev.target.closest("[data-wk-pick-open]");
+  if (o) {
+    ev.preventDefault();
+    var d = $("pjDlg"); if (d && d.open) d.close();
+    S.pl.tab = "build"; S.pl.tb.list = o.getAttribute("data-wk-pick-open"); S.pl.tb.draft = null; S.pl.tbCard = null;
+    goView("planning"); window.scrollTo(0, 0); return;
+  }
+  var u = ev.target.closest && ev.target.closest("[data-wk-pick-unlink]"); if (!u) return;
+  ev.preventDefault();
+  var q = u.getAttribute("data-wk-pick-unlink").split("|"), L = PLAN.lists[q[0]]; if (!L) return;
+  askConfirm("Отвязать «" + L.title + "» от " + (q[1] === "project" ? "проекта" : "задачи") + "?",
+    q[1] === "project" ? "Подбор городов останется, связь с проектом и задачей уберётся." : "Подбор городов останется, уберётся только связь с задачей.", "Отвязать", function () {
+      var c = JSON.parse(JSON.stringify(L)), w = c.work || {};
+      if (q[1] === "project") { delete w.project; delete w.task; } else delete w.task;
+      if (Object.keys(w).length) c.work = w; else delete c.work;
+      plPut("lists", q[0], c, "Связь убрана");
+      if (q[1] === "task") setTimeout(function () { if (typeof wkDlgRefresh === "function") wkDlgRefresh(); }, 0);
+    });
+});
 // «Фокус» под календарём: что сделать первым сегодня, что просрочено, у чего скоро срок
 // Дедлайн проекта — акцентная плашка: флажок, дата, отсчёт; далеко — тёплая, неделя — ярче с пульсом, прошёл — тёмно-красная
 function wkDeadlineBadge(pid, dl) {
@@ -5932,6 +5977,7 @@ function wkTaskDlgHtml(id) {
       }).join("") + '</ul>' : '') +
       '<form class="wkd-subadd" data-wkd-sub-add><input class="wk-in" name="sub" placeholder="+ Подзадача — впишите и Enter" maxlength="500" autocomplete="off" aria-label="Новая подзадача"></form></section>' +
     wkdNotesSec(id) + wkdLogSec(t) +
+    wkPickTaskLine(id) +
     '<div class="form-actions wkd-foot"><button class="btn-dark" data-pj="close">Готово</button><button class="pj-plain wkd-del" data-wkd-act="del">Удалить задачу</button>' +
       '<span class="sub2">создана ' + (t.created ? human(t.created) : '—') + (t.done && t.done_at ? ' · сделана ' + human(t.done_at) : '') + '</span></div></div>';
 }
@@ -11867,7 +11913,7 @@ var PL_STATUS = ["Черновик", "Планируется", "В процес�
 var PL_DECISION = ["", "В работу", "Отмена", "Замена города", "Перенос месяца", "Замена площадки"];
 function plLoad() {
   if (!CAN_SAVE) return;
-  apiJson("GET", "/api/planning").then(function (x) { if (x.ok) { PLAN = x.d; if (S.view === "planning" || S.view === "venues" || S.view === "route") render(); } }, function () {});
+  apiJson("GET", "/api/planning").then(function (x) { if (x.ok) { PLAN = x.d; if (S.view === "planning" || S.view === "venues" || S.view === "route" || wkOn()) render(); } }, function () {});   // «Работа» — блок «Подбор городов»
 }
 function plCfg() {
   var p = PLAN.params || {}, c = Object.assign({}, PLAN_DEFAULTS, p);
