@@ -6737,7 +6737,7 @@ S.vb = { sort: "city", desc: false, city: "", fill: "", limit: 200, sel: null, a
   hidden: vbPrefs.hidden || ["legal", "inn"], widths: vbPrefs.widths || {} };   // юрлицо и ИНН почти пусты (8 и 2 строки) — скрыты, включаются в «Столбцах»
 function vbSave() { try { localStorage.setItem(VB_PREFS_KEY, JSON.stringify({ hidden: S.vb.hidden, widths: S.vb.widths })); } catch (e) { /* хранилище недоступно */ } }
 function vbOn() { return S.view === "venues" && S.sub.venues === "book"; }
-var VB_ROWS = typeof VBOOK !== "undefined" && VBOOK.rows || [];
+var VB_ROWS = typeof VBOOK !== "undefined" && VBOOK.rows || [], VB_VER = 0;   // VB_VER — номер правки справочника (кэш залов города, plBookCity)
 var VB_COLS = [
   { id: "city", label: "Город", w: 130, sort: "city", lock: true },
   { id: "name", label: "Площадка", w: 240, sort: "name", lock: true },
@@ -6873,6 +6873,7 @@ function renderVenueBook() {
       '<span class="sub vb-count" style="margin:0">' + num(list.length) + ' ' + plural(list.length, "площадка", "площадки", "площадок") + '</span>' +
       '<button class="chip-btn vb-editbtn' + (S.vb.edit ? ' chip-active' : '') + '" data-vb="table-edit" aria-pressed="' + !!S.vb.edit + '" title="Вписывать данные прямо в ячейки таблицы">' + PJ_ICON.edit + (S.vb.edit ? 'Правка включена' : 'Править в таблице') + '</button>' +
       vbColsControl() +
+      '<button class="btn-dark" data-vb="add">+ Площадка</button>' +
     '</div>' +
     (S.vb.edit ? '<div class="note vb-editnote">Режим правки: нажмите на ячейку и впишите. Enter — сохранить и вниз, Tab — вправо, Shift+Enter — новая строка в ячейке, Esc — отменить ввод, ⌘Z / Ctrl+Z — отменить последнюю сохранённую правку. Страница площадки в этом режиме не открывается.</div>' : '') +
     '<section class="card ev-card-table vb-card"><table class="ev-table vb-table' + (S.vb.edit ? ' vb-editing' : '') + '" id="evTable" style="width:' + totalW + 'px"><colgroup>' + cols.map(function (c) { return '<col data-col="' + c.id + '" style="width:' + fitW[c.id] + 'px">'; }).join("") + '</colgroup>' +
@@ -6920,6 +6921,7 @@ function vbSave2(op, okMsg, done) {
   apiJson("POST", "/api/venuebook", op).then(function (x) {
     if (!x.ok) { toast("Не сохранено: " + ((x.d && x.d.error) || "ошибка")); if (done) done(false); return; }
     var r = vbRec(op.id); if (r) { Object.keys(r).forEach(function (k) { delete r[k]; }); Object.assign(r, x.d.row); }
+    VB_VER++;   // залы города в «Подборе городов» пересчитаются
     if (okMsg) toast(okMsg);
     if (done) done(true);
   }, function () { toast("Не сохранено: " + NO_APP); if (done) done(false); });
@@ -7003,21 +7005,42 @@ function vbRiderBox(r) {
     '<div class="pj-ph-btns"><button type="button" class="btn-ghost" data-vb="rider">' + (r.rider ? "Заменить" : "Загрузить файл") + '</button>' +
     (r.rider ? '<button type="button" class="btn-ghost" data-vb="unrider">Убрать</button>' : '') + '</div></div></div>';
 }
-function vbEditHtml(r) {
+function vbEditHtml(r, add) {   // add — новая площадка: без фото и райдера (они — на её странице, после сохранения)
   var field = function (x) {
-    var v = r[x[0]] || "", ph = x[2] ? ' placeholder="' + esc(x[2]) + '"' : '';
+    var v = r[x[0]] || "", ph = (x[2] ? ' placeholder="' + esc(x[2]) + '"' : '') + (x[0] === "city" ? ' list="vbCityList" autocomplete="off"' : '');
     return '<div class="field"><label for="vb-' + x[0] + '">' + x[1] + '</label>' + (VB_MULTI[x[0]]
       ? '<textarea id="vb-' + x[0] + '" name="' + x[0] + '" rows="' + Math.min(4, Math.max(1, v.split("\n").length)) + '" maxlength="3000"' + ph + '>' + esc(v) + '</textarea>'
       : '<input id="vb-' + x[0] + '" name="' + x[0] + '" value="' + esc(v) + '" maxlength="3000"' + ph + '>') + '</div>';
   };
   return '<form id="vbForm" class="myform" novalidate>' +
-    '<div class="pj-ph-row">' + vbPh(r, "avatar") + vbPh(r, "cover") + '</div>' +
+    (add ? '' : '<div class="pj-ph-row">' + vbPh(r, "avatar") + vbPh(r, "cover") + '</div>') +
     VB_FORM.map(function (g) { return '<h3 class="vb-fgroup">' + g[0] + '</h3><div class="vb-fgrid">' + g[1].map(field).join("") + '</div>'; }).join("") +
     '<div class="vb-fgrid"><div class="field"><label for="vb-edo">ЭДО</label><select id="vb-edo" name="edo"><option value="">не указано</option>' +
       VB_EDO.map(function (o) { return '<option value="' + o[0] + '"' + (r.edo === o[0] ? ' selected' : '') + '>' + o[1] + '</option>'; }).join("") + '</select></div></div>' +
-    vbRiderBox(r) +
+    (add ? '' : vbRiderBox(r)) +
+    '<datalist id="vbCityList">' + vbCityNames().map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + '</datalist>' +
     '<div class="err" id="vb-err" hidden></div></form>' +
-    '<div class="form-actions"><button class="btn-dark" data-vb="save">Сохранить</button><button class="btn-ghost" data-pj="close">Отмена</button></div>';
+    '<div class="form-actions"><button class="btn-dark" data-vb="' + (add ? 'add-save' : 'save') + '">' + (add ? 'Добавить' : 'Сохранить') + '</button><button class="btn-ghost" data-pj="close">Отмена</button></div>';
+}
+function vbCityNames() {   // подсказка в поле «Город»: города справочника и афиши — так площадка найдётся в «Подборе городов»
+  var s = {}; VB_ROWS.forEach(function (r) { if (r.city) s[r.city] = 1; }); (typeof MK !== "undefined" && MK.cities || []).forEach(function (c) { s[c] = 1; });
+  return Object.keys(s).sort(function (a, b) { return a.localeCompare(b, "ru"); });
+}
+function vbAdd() {
+  if (!ON_APP) { toast("Добавить площадку можно только на сайте: справочник хранится на сервере"); return; }
+  var d = pjDialog("pj-edit vb-edit", "Новая площадка", vbEditHtml({ city: S.vb.city || "" }, true));
+  var el = d.querySelector(S.vb.city ? "#vb-name" : "#vb-city"); if (el) el.focus();
+}
+function vbAddSave() {
+  var f = $("vbForm"), data = {}, err = $("vb-err"); if (!f) return;
+  Array.prototype.forEach.call(f.elements, function (el) { if (el.name && el.value.trim()) data[el.name] = el.value.trim(); });
+  if (!data.name || !data.city) { err.hidden = false; err.textContent = "Впишите город и название площадки"; return; }
+  if (data.site && !/^https?:\/\//i.test(data.site) && /\./.test(data.site) && !/\s/.test(data.site)) data.site = "https://" + data.site;
+  apiJson("POST", "/api/venuebook", { op: "add", data: data }).then(function (x) {
+    if (!x.ok) { err.hidden = false; err.textContent = "Не добавлено: " + ((x.d && x.d.error) || "ошибка"); return; }
+    VB_ROWS.push(x.d.row); VB_VER++;
+    $("pjDlg").close(); toast("Площадка добавлена"); vbOpen(x.d.row.id);
+  }, function () { err.hidden = false; err.textContent = "Не добавлено: " + NO_APP; });
 }
 function vbEdit(focus) {
   var r = vbRec(S.vb.sel); if (!r) return;
@@ -7085,6 +7108,8 @@ function vbAction(t, ev) {
   else if (a === "table-edit") { S.vb.edit = !S.vb.edit; render(); }
   else if (a === "edit") vbEdit(t.getAttribute("data-field"));
   else if (a === "save") vbFormSave();
+  else if (a === "add") vbAdd();
+  else if (a === "add-save") vbAddSave();
   else if (a === "photo") { var inp = $("vbFile"); inp.setAttribute("data-kind", t.getAttribute("data-kind")); inp.click(); }
   else if (a === "unphoto" && r) vbSave2({ op: "media", id: r.id, kind: t.getAttribute("data-kind"), data: "" }, "Фото убрано", vbAfterFile);
   else if (a === "rider") $("vbRiderFile").click();
@@ -12556,7 +12581,7 @@ function plVenueCap(city, venue) {
   var a = typeof MVCAP !== "undefined" && MVCAP[venueKey(city, venue)];
   return a ? { cap: a[0], src: a[1] } : null;
 }
-var PL_CAP_SRC = { manual: "вписано вручную", hall: "по схеме зала (Яндекс)", scheme: "по схеме кассы — её квота" };
+var PL_CAP_SRC = { manual: "вписано вручную", hall: "по схеме зала (Яндекс)", scheme: "по схеме кассы — её квота", book: "из справочника «Площадки»" };
 
 // ---------- «Планирование → Карта» (решения пользователя 13.10): города списка рынка на карте, слои — население,
 // площадки (вместимость), области, конкуренция и насыщенность, логистика; выбранный тур — маршрутом; город с
@@ -12784,10 +12809,44 @@ function tbLogiText(d) {
   var k = tbLogi(d); if (!k) return '<span class="muted">—</span>';
   return k === "transfer" ? 'трансфер · ' + num(d) + ' км' : k === "train" ? 'поезд ≈ ' + Math.max(1, Math.round(d * 1.3 / 60)) + ' ч' : 'авиа · ' + num(d) + ' км';
 }
-function plCityVenues(c) {   // площадки города: из афиши и вписанные в «Площадках»; вместимость — вписанная, иначе по схемам касс
-  var vn = {}; (MR_CITY[c] || []).forEach(function (e) { vn[e.venue] = 1; }); Object.keys(PLAN.venues).forEach(function (k) { if (PLAN.venues[k].city === c) vn[PLAN.venues[k].venue] = 1; });
-  return Object.keys(vn).map(function (v) { var cp = plVenueCap(c, v); return { name: v, cap: cp ? cp.cap : null, src: cp ? cp.src : "", rent: (PLAN.venues[plVenueKey(c, v)] || {}).rent }; })
-    .sort(function (a, b) { return (b.cap || 0) - (a.cap || 0); });
+// Площадки города: из афиши, архива прошедших гастролей, справочника «Площадки → Площадки» и вписанные в финмодели
+// (архив и справочник — решение пользователя 27.10: в подборе были не все залы города). Строка справочника, похожая по
+// названию на зал афиши (vbSame), — тот же зал, не дублируется. Вместимость — вписанная, иначе по схемам касс, иначе
+// «Кол-во мест» из справочника (src "book")
+var PL_ARCH_CITY = null, PL_BOOK_CITY = null, PL_CV = { key: "", m: {} };
+function plArchVenues(c) {
+  if (!PL_ARCH_CITY) { PL_ARCH_CITY = {}; MA.forEach(function (e) { if (e.venue) (PL_ARCH_CITY[e.city] = PL_ARCH_CITY[e.city] || {})[e.venue] = 1; }); }
+  return Object.keys(PL_ARCH_CITY[c] || {});
+}
+function plBookCity(c) {   // строки справочника по городу: город — без регистра, «ё» и пояснений в скобках
+  if (!PL_BOOK_CITY || PL_BOOK_CITY.v !== VB_VER) {
+    var m = {}; VB_ROWS.forEach(function (r) { if (r.city && r.name) (m[vbCityKey(r.city)] = m[vbCityKey(r.city)] || []).push(r); });
+    PL_BOOK_CITY = { v: VB_VER, m: m };
+  }
+  return PL_BOOK_CITY.m[vbCityKey(c)] || [];
+}
+function plCityVenues(c) {
+  var key = VB_VER + "#" + MR.length;   // названия залов афиши, архива и справочника — кэш до правок справочника и смены афиши
+  if (PL_CV.key !== key) PL_CV = { key: key, m: {} };
+  var x = PL_CV.m[c];
+  if (!x) {
+    var vn = {}, vk = {}, book = {};   // book: зал → строка справочника
+    (MR_CITY[c] || []).forEach(function (e) { vn[e.venue] = 1; vk[venueKey(c, e.venue)] = 1; });
+    plArchVenues(c).forEach(function (v) { var k = venueKey(c, v); if (!vk[k]) { vk[k] = 1; vn[v] = 1; } });   // «КЗ «Пенза»» = «КЗ Пенза»: название — как в афише
+    plBookCity(c).forEach(function (b) {
+      var same = Object.keys(vn).filter(function (v) { return v && vbSame(b.name, v, c); })[0];
+      if (!same) { same = b.name; vn[same] = 1; }
+      if (!book[same]) book[same] = b;
+    });
+    x = PL_CV.m[c] = { vn: vn, book: book };
+  }
+  var vn = Object.assign({}, x.vn), book = x.book;
+  Object.keys(PLAN.venues).forEach(function (k) { if (PLAN.venues[k].city === c) vn[PLAN.venues[k].venue] = 1; });
+  return Object.keys(vn).map(function (v) {
+    var cp = plVenueCap(c, v), bs = book[v] ? vbLead(book[v].seats) : null;
+    if (!cp && bs >= 50) cp = { cap: Math.round(bs), src: "book" };
+    return { name: v, cap: cp ? cp.cap : null, src: cp ? cp.src : "", rent: (PLAN.venues[plVenueKey(c, v)] || {}).rent, book: book[v] ? book[v].id : "" };
+  }).sort(function (a, b) { return (b.cap || 0) - (a.cap || 0); });
 }
 // Сведение: статус каждого города, ближайший город гастролей, логистика
 function tbAnalyze(list, p) {

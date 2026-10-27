@@ -14,14 +14,16 @@
                                                           "light", "sound" — специалисты по свету и звуку,
                                                           "media": {"avatar" | "cover": файл?v=метка},
                                                           "rider": {"file", "name" — как назывался у вас, "size", "at"},
-                                                          "edited": [поля, исправленные на сайте], "upd"}]}
+                                                          "edited": [поля, исправленные на сайте], "upd",
+                                                          "added": true — площадка добавлена на сайте, а не из таблицы}]}
 Фото и райдеры — файлами в config/venue_media/ (вне git, в часовой копии вместе с config/).
 
     python3 -m competitors.venuebook import <файл.xlsx>   загрузить из выгрузки Google Таблицы (Файл → Скачать → xlsx):
                                                          xlsx, а не csv — в csv теряются ссылки за словом «Сайт»
                                                          повторная загрузка не затирает исправленное на сайте
     GET  /proto/venue-book.js                             справочник для прототипа (competitors/market_api.py)
-    POST /api/venuebook  {"op": "set", "id", "data": {поле: значение}, "undo"?}   правка полей (undo — отмена ⌘Z / Ctrl+Z)
+    POST /api/venuebook  {"op": "add", "data": {поле: значение}}   новая площадка (город и название обязательны; 27.10)
+                         {"op": "set", "id", "data": {поле: значение}, "undo"?}   правка полей (undo — отмена ⌘Z / Ctrl+Z)
                          {"op": "media", "id", "kind": "avatar" | "cover", "data": data:image/…;base64 | ""}
                          {"op": "rider", "id", "name", "data": data:…;base64 | ""}
     GET  /api/venuebook/file/<файл>                       фото или райдер
@@ -169,6 +171,8 @@ def import_xlsx(path: Path) -> dict:
         else:
             rec = {"id": "", **rec}
         out.append(rec)
+    # добавленные на сайте, которых в таблице нет, остаются; номер не переиспользуется — на него ссылается «Работа»
+    out += [r for r in prev.values() if r.get("added") and r["id"] not in used]
     n_id = max([int(r["id"][1:]) for r in out if r["id"]] + [0])
     for r in out:
         if not r["id"]:
@@ -207,26 +211,54 @@ def _drop(vid: str, kind: str) -> None:
         old.unlink()
 
 
+def _clean(f: str, v, undo: bool = False) -> str:
+    if f not in FIELDS + EXTRA:
+        raise VenueBookError(f"неизвестное поле: {f}")
+    v = _text(str(v if v is not None else ""))
+    if len(v) > TEXT_MAX:
+        raise VenueBookError(f"слишком длинно: не больше {TEXT_MAX} знаков")
+    if f == "edo" and v not in ("", *EDO):
+        raise VenueBookError("ЭДО: полное, только входящий или не работают")
+    if f in ("city", "name") and not v and not undo:   # отмена (⌘Z) возвращает и пустое, как было
+        raise VenueBookError("город и название площадки не могут быть пустыми")
+    return v
+
+
+def _add(d: dict, data) -> dict:
+    """Новая площадка с сайта: город и название обязательны, такой же пары город + название в справочнике быть не должно."""
+    if not isinstance(data, dict):
+        raise VenueBookError("нечего сохранять")
+    for f in data:
+        _clean(f, "x")   # неизвестное поле — ошибка, как в правке
+    rec = {f: _clean(f, data.get(f, "")) for f in FIELDS}
+    rec.update({f: _clean(f, data[f]) for f in EXTRA if data.get(f)})
+    rows = d.setdefault("rows", [])
+    same = next((r for r in rows if _key(r) == _key(rec)), None)
+    if same:
+        raise VenueBookError(f"«{same.get('name')}» в городе {same.get('city')} уже есть в справочнике")
+    n_id = max([int(r["id"][1:]) for r in rows if str(r.get("id", ""))[1:].isdigit()] + [0]) + 1
+    rec = {"id": f"v{n_id}", **rec, "added": True}
+    rows.append(rec)
+    return rec
+
+
 def apply_op(op: dict) -> dict:
     """Одна правка с сайта → обновлённая запись площадки. Ошибка проверки — VenueBookError (текст — для человека)."""
     kind, vid = op.get("op"), str(op.get("id") or "")
     with _lock:
         d = load()
+        if kind == "add":
+            rec = _add(d, op.get("data"))
+            rec["upd"] = datetime.now().isoformat(timespec="seconds")
+            save_json(FILE, d)
+            return rec
         rec = _find(d, vid)
         if kind == "set":
             data = op.get("data")
             if not isinstance(data, dict) or not data:
                 raise VenueBookError("нечего сохранять")
             for f, v in data.items():
-                if f not in FIELDS + EXTRA:
-                    raise VenueBookError(f"неизвестное поле: {f}")
-                v = _text(str(v if v is not None else ""))
-                if len(v) > TEXT_MAX:
-                    raise VenueBookError(f"слишком длинно: не больше {TEXT_MAX} знаков")
-                if f == "edo" and v not in ("", *EDO):
-                    raise VenueBookError("ЭДО: полное, только входящий или не работают")
-                if f in ("city", "name") and not v and not op.get("undo"):   # отмена (⌘Z) возвращает и пустое, как было
-                    raise VenueBookError("город и название площадки не могут быть пустыми")
+                v = _clean(f, v, bool(op.get("undo")))
                 rec[f] = v
                 if f in FIELDS and f not in rec.setdefault("edited", []):
                     rec["edited"].append(f)
