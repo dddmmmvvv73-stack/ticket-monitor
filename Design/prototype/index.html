@@ -1764,10 +1764,10 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .tb-cardk { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0; } .tb-cardk > div { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; }
 .tb-cardin { margin: 12px 0; } .tb-cardh { font-size: 14px; margin: 16px 0 6px; }
 .tb-cmp { list-style: none; padding: 0; margin: 0; font-size: 13px; } .tb-cmp li { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--line); } .tb-cmp li > .num { white-space: nowrap; }
-.pl-gm-regbtn { height: 32px; padding: 0 12px; font-size: 13px; } .pl-gm-regbtn[aria-expanded="true"] { border-color: var(--soot); }
+.pl-gm-regbtn { height: 32px; padding: 0 12px; font-size: 13px; } .pl-gm-regbtn[aria-expanded="true"] { border-color: var(--soot); } .pl-gm-regbtn.on { border-color: var(--soot); font-weight: 600; }
 .pl-gm-reg { padding: 12px 14px; margin-bottom: 10px; }
 .pl-gm-reg-head { display: flex; gap: 8px 14px; align-items: center; flex-wrap: wrap; margin-bottom: 8px; } .pl-gm-reg-head .pl-in { width: 220px; max-width: 100%; text-align: left; }
-.pl-gm-reg-list { columns: 4 200px; column-gap: 20px; max-height: 300px; overflow: auto; }
+.pl-gm-reg-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0 20px; max-height: 320px; overflow-y: auto; overflow-x: hidden; }
 .pl-gm-reg-list label { display: flex; gap: 8px; align-items: center; padding: 3px 0; font-size: 13px; break-inside: avoid; cursor: pointer; }
 .pl-gm-reg-list label[hidden] { display: none; } .pl-gm-reg-list .num { margin-left: auto; }
 .pl-gm-reg-list input:not(:checked) + span { color: var(--muted); text-decoration: line-through; }
@@ -13012,8 +13012,8 @@ function tbAction(a, b) {   // кнопки вкладки (из общего о
   else if (a === "tb-offer") tbOfferDoc(b.getAttribute("data-k"));
   else if (a.indexOf("tb-share") === 0) tbShareAction(a, b);
   else if (a === "tb-card") tbOpenCard(b.getAttribute("data-city"));
-  else if (a === "tb-pkflag") {   // переключатели подбора; «не были и не стоят» и «скрыть не подходит» — включены по умолчанию
-    var fk = b.getAttribute("data-k"), def = fk === "pkFree" || fk === "pkHideNo";
+  else if (a === "tb-pkflag") {   // переключатели подбора; «не были и не стоят» — включён по умолчанию
+    var fk = b.getAttribute("data-k"), def = fk === "pkFree";
     p[fk] = !(p[fk] != null ? p[fk] : def); tbSave(p); tbRe();
   }
   else if (a === "tb-econmore") { PL_PREFS.tbMore = !PL_PREFS.tbMore; plPrefsSave(); tbRe(); }
@@ -13057,6 +13057,7 @@ function tbAction(a, b) {   // кнопки вкладки (из общего о
 var TB_PK = { ok: ["окупается", "#15803d"], edge: ["на грани", "#b45309"], no: ["не окупается", "#b42318"], nohall: ["нет зала", "#78716c"], noprice: ["нет цен", "#78716c"] };
 var TB_PAY = [["all", "все"], ["go", "окупается и на грани"], ["ok", "окупается"], ["edge", "на грани"], ["no", "не окупается"], ["nodata", "нет данных"]];
 var TB_DEC = [["yes", "Подходит", "#15803d"], ["maybe", "На рассмотрении", "#b45309"], ["no", "Не подходит", "#78716c"]];
+var TB_DECF = [["all", "все"], ["none", "без решения"], ["yes", "подходит"], ["maybe", "на рассмотрении"], ["no", "не подходит"]];   // фильтр «Решение» (27.10, вместо «Скрыть «не подходит»»)
 var TB_SRC = { ovr: "правка этого города", econ: "из экономики артиста", venue: "из зала", norm: "норма", city: "по афише", org: "по статьям", zones: "по распоясовке", none: "нет данных" };
 var PK_COLS = [   // столбцы подбора и предложения (CITY_PICK_PLAN.md, п. 2.4); без off — видны по умолчанию
   { id: "city", labels: ["Город", "Гор."], w: 150, left: true }, { id: "venue", labels: ["Зал"], w: 200, left: true },
@@ -13258,14 +13259,17 @@ function tbOfferRows(A) {   // предложение: «подходит», з�
 }
 function tbPickView(L, A, P, p) {
   var t = S.pl.tb, of = tbOfferRows(A), nOf = of.yes.length + of.maybe.length, tab = p.pkTab === "offer" ? "offer" : "all";
-  var q = (t.q || "").trim().toLowerCase(), free = p.pkFree !== false, hide = p.pkHideNo !== false, pay = p.pkPay || "all";
-  var rows = A.rows.filter(function (r) {
+  var q = (t.q || "").trim().toLowerCase(), free = p.pkFree !== false, pay = p.pkPay || "all", decf = p.pkDec || "all", pops = p.pkPop || {};
+  var base = A.rows.filter(function (r) {   // все фильтры, кроме населения — от этих городов считаются числа в меню «Население»
     if (free && r.st !== "free") return false;
     if (r.reg && p.offReg[r.reg]) return false;
-    if (hide && r.pick.dec === "no") return false;
+    if (decf !== "all" && (r.pick.dec || "none") !== decf) return false;
     if (q && r.city.toLowerCase().indexOf(q) < 0) return false;
     return tbPayOk(r, pay);
   });
+  var popOn = CAND_POP.some(function (o) { return pops[o[0]]; });   // как «Население» в «Городах, где его нет»: ничего не отмечено — все
+  S.pl.tbPopBase = base;
+  var rows = popOn ? base.filter(function (r) { return pops[candPop(r.city)]; }) : base;
   var tabs = '<div class="seg tb-pktabs" role="tablist" aria-label="Подбор и предложение">' +
     '<button role="tab" data-pl="tb-set" data-k="pkTab" data-v="all" aria-selected="' + (tab === "all") + '" aria-pressed="' + (tab === "all") + '">Все города <span class="num">' + rows.length + '</span></button>' +
     '<button role="tab" data-pl="tb-set" data-k="pkTab" data-v="offer" aria-selected="' + (tab === "offer") + '" aria-pressed="' + (tab === "offer") + '">Предложение <span class="num">' + nOf + '</span>' + (S.pl.tbNewC ? ' <span class="tb-newc" title="Новые комментарии руководителя">' + S.pl.tbNewC + '</span>' : '') + '</button></div>';
@@ -13276,9 +13280,10 @@ function tbPickView(L, A, P, p) {
       '<label class="pl-lab">Окупаемость ' + plSelect("tb|pkPay", pay, TB_PAY, "Окупаемость") + '</label>' +
       '<input type="search" id="tbQ" class="pl-in pl-text tb-q" placeholder="Найти город" aria-label="Найти город" value="' + esc(t.q || "") + '">' +
       '<button class="btn-ghost pl-gm-regbtn" data-pl="tb-reg" aria-expanded="' + !!t.regOpen + '">Области: ' + (nOff ? 'скрыто ' + nOff : 'все') + ' <span aria-hidden="true">▾</span></button>' +
-      '<button class="an-layer" data-pl="tb-pkflag" data-k="pkHideNo" aria-pressed="' + hide + '">Скрыть «не подходит»</button>' +
+      '<button class="btn-ghost pl-gm-regbtn' + (popOn ? ' on' : '') + '" data-tbpop aria-haspopup="menu" aria-expanded="false" title="Население: крупные, средние, малые">Население: ' + (popOn ? CAND_POP.filter(function (o) { return pops[o[0]]; }).map(function (o) { return o[1].toLowerCase(); }).join(", ") : 'все') + ' <span aria-hidden="true">▾</span></button>' +
+      '<label class="pl-lab">Решение ' + plSelect("tb|pkDec", decf, TB_DECF, "Решение по городу") + '</label>' +
       '<span style="flex-grow:1"></span>' + plColsControl("pk") + '</div>' + (t.regOpen ? tbRegPanel(p) : '');
-  if (!rows.length) return tabs + tools + '<div class="empty" style="margin-top:12px"><h2>Городов нет</h2><p style="margin:0">Смените «Окупаемость» на «все», очистите поиск или включите скрытые области.</p></div>';
+  if (!rows.length) return tabs + tools + '<div class="empty" style="margin-top:12px"><h2>Городов нет</h2><p style="margin:0">Смените «Окупаемость» и «Решение» на «все», снимите «Население», очистите поиск или включите скрытые области.</p></div>';
   return tabs + tools + tbGrid(rows, "pk", { sortable: true, limit: t.limit || 300 });
 }
 function tbOfferView(L, A, P, p, of) {
@@ -14114,6 +14119,24 @@ document.addEventListener("click", function (ev) {
   var first = id === "city" || id === "venue" || id === "reg" ? 1 : -1;
   cp.sort = cur.id !== id ? { id: id, dir: first } : cur.dir === first ? { id: id, dir: -first } : { id: null };
   plPrefsSave(); tbRe();
+});
+function tbPopHtml() {
+  var on = tbPrefs().pkPop || {}, base = S.pl.tbPopBase || [];
+  var item = function (o) {
+    var x = !!on[o[0]], cnt = base.filter(function (r) { return candPop(r.city) === o[0]; }).length;
+    return '<button type="button" class="wk-menu-item' + (x ? ' on' : '') + '" data-tbpop-f="' + o[0] + '" role="menuitemcheckbox" aria-checked="' + x + '"><span class="cand-fl"><i class="cand-cb' + (x ? ' on' : '') + '" aria-hidden="true"></i><span>' + o[1] + '<small>' + o[2] + '</small></span></span><span class="wks-fn">' + cnt + '</span></button>';
+  };
+  return '<div class="wkp-title">Население</div>' + CAND_POP.map(item).join("") +
+    (CAND_POP.some(function (o) { return on[o[0]]; }) ? '<button type="button" class="wk-menu-item cand-freset" data-tbpop-f="reset"><span>Сбросить — все города</span></button>' : '');
+}
+document.addEventListener("click", function (ev) {   // «Население»: меню остаётся открытым — можно отметить несколько
+  var b = ev.target.closest && ev.target.closest("[data-tbpop]");
+  if (b) { if (WKPOP && WKPOP.anchor === b) { wkPopClose(); return; } wkPopOpen(b, "wk-menu cand-fmenu", tbPopHtml(), {}); return; }
+  var it = ev.target.closest && ev.target.closest(".cand-fmenu [data-tbpop-f]"); if (!it || !WKPOP) return;
+  var p = tbPrefs(), k = it.getAttribute("data-tbpop-f"); p.pkPop = p.pkPop || {};
+  if (k === "reset") p.pkPop = {}; else p.pkPop[k] = !p.pkPop[k];
+  tbSave(p); S.pl.tb.limit = 300; tbRe();
+  var nb = document.querySelector("[data-tbpop]"); if (nb) wkPopOpen(nb, "wk-menu cand-fmenu", tbPopHtml(), {}); else wkPopClose();
 });
 var tbQTimer = null;
 document.addEventListener("input", function (ev) {
