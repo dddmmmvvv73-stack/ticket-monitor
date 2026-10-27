@@ -1766,6 +1766,10 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .tb-cardin { margin: 12px 0; } .tb-cardh { font-size: 14px; margin: 16px 0 6px; }
 .tb-cmp { list-style: none; padding: 0; margin: 0; font-size: 13px; } .tb-cmp li { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; border-bottom: 1px solid var(--line); } .tb-cmp li > .num { white-space: nowrap; }
 .pl-gm-regbtn { height: 32px; padding: 0 12px; font-size: 13px; } .pl-gm-regbtn[aria-expanded="true"] { border-color: var(--soot); } .tb-freset { white-space: nowrap; }
+.tb-back { font-size: 14px; } .tb-ahead { align-items: center; } .tb-atitle { margin: 0 8px 0 0; font-size: 22px; }
+.tb-wchip { display: inline-grid; grid-template-columns: auto auto; column-gap: 8px; align-items: center; } .tb-wchip > .sub2:first-child { white-space: nowrap; }
+.tb-wchip > div.sub2 { grid-column: 2; } .tb-awork { gap: 8px 28px; align-items: flex-start; } .tb-wchip .ix-sel, .tb-wchip .dd-btn { max-width: 240px; }
+.tb-grid .ix-sel { max-width: 100%; } .ix-newpop { width: 320px; } .ix-newf { display: grid; gap: 8px; padding: 4px 8px 8px; } .ix-newf .pl-in { width: 100%; text-align: left; }
 /* «Фильтр» и «Столбцы» подбора — рядом и одного вида (решение пользователя 27.10) */
 .tb-icons { display: inline-flex; gap: 6px; align-items: center; }
 .tb-icons .ficon { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink-2); }
@@ -12028,7 +12032,7 @@ if (!PL_PREFS.tcols && (PL_PREFS.vis || PL_PREFS.w || PL_PREFS.order)) {   // н
 }
 function plColSet(s) { return PL_COLSETS[typeof s === "string" && PL_COLSETS[s] ? s : "t"]; }
 function plColPrefs(s) { var k = plColSet(s).key; return PL_PREFS[k] || (PL_PREFS[k] = {}); }
-function plColOn(c, s) { var v = (plColPrefs(s).vis || {})[c.id]; return c.id === "city" || (v == null ? !c.off : v); }
+function plColOn(c, s) { var v = (plColPrefs(s).vis || {})[c.id]; return c.id === "city" || c.lock || (v == null ? !c.off : v); }
 function plColW(c, s) { return (plColPrefs(s).w || {})[c.id] || c.w; }
 function plColsOrdered(s) {   // порядок столбцов — как перетащил пользователь; новые — на своих местах в конце
   var cols = plColSet(s).cols, order = plColPrefs(s).order || [], by = {}; cols.forEach(function (c) { by[c.id] = c; });
@@ -12047,7 +12051,7 @@ function plColsControl(set) {
   return '<div class="pop-anchor cols-anchor"><button class="ficon' + (vis && Object.keys(vis).length ? ' on' : '') + '" data-pl="cols" data-cset="' + set + '" aria-expanded="' + open + '" aria-haspopup="dialog" aria-label="Столбцы таблицы" title="Столбцы таблицы">' +
     '<svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><rect x="2.5" y="3" width="13" height="12" rx="1.8"/><path d="M2.5 7h13M7 7v8M11.5 7v8"/></svg></button>' +
     (open ? '<div class="popover right cols-pop" role="dialog" aria-label="Столбцы таблицы"><div style="font-weight:500;margin-bottom:6px">Показывать столбцы</div>' +
-      plColsOrdered(set).map(function (c) { var lock = c.id === "city"; return '<label class="' + (lock ? 'locked' : '') + '"><input type="checkbox" data-pl-col="' + c.id + '" data-cset="' + set + '"' + (plColOn(c, set) ? ' checked' : '') + (lock ? ' disabled' : '') + '>' + c.labels[0] + '</label>'; }).join("") +
+      plColsOrdered(set).map(function (c) { var lock = c.id === "city" || !!c.lock; return '<label class="' + (lock ? 'locked' : '') + '"><input type="checkbox" data-pl-col="' + c.id + '" data-cset="' + set + '"' + (plColOn(c, set) ? ' checked' : '') + (lock ? ' disabled' : '') + '>' + c.labels[0] + '</label>'; }).join("") +
       '<p class="sub2" style="margin:8px 0 0">Порядок — перетащите заголовок столбца, ширина — его правую границу.</p>' +
       '<button class="btn-ghost" data-pl="cols-reset" data-cset="' + set + '" style="margin-top:10px;width:100%">Вернуть столбцы, порядок и ширину</button></div>' : '') + '</div>';
 }
@@ -12808,19 +12812,19 @@ function tbStatusText(r) {
   if (r.recent.length) parts.push('<span class="tb-st" style="--c:' + TB_ST.recent[1] + '">был ' + esc(human(r.recent.sort().slice(-1)[0])) + '</span>');
   return parts.length ? parts.join(" ") : '<span class="tb-st" style="--c:' + TB_ST.free[1] + '">свободен</span>';
 }
-function plBuild() {
+function plBuild() {   // «Подбор городов»: таблица артистов → экран артиста (решение пользователя 27.10)
   if (typeof MREG === "undefined" && !S.pl.tbRegLoad) { S.pl.tbRegLoad = true; anLoad(function () { if (S.view === "planning" && S.pl.tab === "build") tbRe(); }); }   // области городов — из market-regions.js
-  var t = S.pl.tb, lists = PLAN.lists || {}, ids = Object.keys(lists).sort(function (a, b) { return (lists[b].upd || "") < (lists[a].upd || "") ? -1 : 1; });
+  var t = S.pl.tb, lists = PLAN.lists || {};
   if (!t.draft && t.list && !lists[t.list]) t.list = null;
-  if (!t.draft && !t.list && ids.length) t.list = ids[0];
-  var head = '<div class="tb-head pl-flat">' +
-    (ids.length ? '<label class="pl-lab">Список ' + plSelect("tb|list", t.draft ? "" : t.list, (t.draft ? [["", "— новый —"]] : []).concat(ids.map(function (id) { return [id, lists[id].title]; })), "Список продюсера") + '</label>' : '') +
-    (t.draft ? '' : '<button class="btn-dark" data-pl="tb-new">+ Новый артист</button>' + (t.list ? '<button class="btn-ghost" data-pl="tb-edit">Изменить список</button><button class="btn-ghost" data-pl="tb-del">Удалить</button>' : '')) +
-    '<span style="flex-grow:1"></span><span class="sub2 pl-gm-period" title="Сезон — кнопка «Даты» в шапке: месяц или несколько месяцев подряд">Сезон: <b>' + esc(periodLabel()) + '</b> — «Даты» в шапке</span></div>';
-  if (t.draft) return head + tbEditor(t.draft);
+  var back = '<button class="pj-plain tb-back" data-pl="tb-back">← Все артисты</button>';
+  if (t.draft) return '<div class="tb-head pl-flat">' + back + '</div>' + tbEditor(t.draft);
+  if (!t.list) return tbIndex();
   var L = tbCur();
-  if (!L) return head + '<div class="empty" style="margin-top:16px"><h2>Артистов пока нет</h2><p style="margin:0 0 12px">Назовите артиста и укажите, как он называется в афише. Если продюсер прислал города и даты — вставьте их как есть. Потом впишите гонорар: программа покажет свободные города, где концерт окупается.</p><button class="btn-dark" data-pl="tb-new">+ Новый артист</button></div>';
-  return head + tbResults(L);
+  ixNeedWK();
+  return '<div class="tb-head pl-flat tb-ahead">' + back + '<h2 class="tb-atitle">' + esc(L.title) + '</h2><span style="flex-grow:1"></span>' +
+      '<button class="btn-ghost" data-pl="tb-edit">Изменить</button><button class="btn-ghost" data-pl="tb-del">Удалить</button></div>' +
+    '<div class="tb-head pl-flat tb-awork">' + ixChips(t.list) + '<span style="flex-grow:1"></span>' +
+      '<span class="sub2 pl-gm-period" title="Сезон — кнопка «Даты» в шапке: месяц или несколько месяцев подряд">Сезон: <b>' + esc(periodLabel()) + '</b></span></div>' + tbResults(L);
 }
 function tbEditor(d) {
   var rows = d.rows || [], cnt = {}; rows.forEach(function (r) { cnt[r.status] = (cnt[r.status] || 0) + 1; });
@@ -13001,7 +13005,7 @@ function tbAction(a, b) {   // кнопки вкладки (из общего о
     if (dd.text.trim() && !(dd.rows || []).length) dd.rows = tpParse(dd.text, { cities: tbCities(), today: TODAY, title: dd.project }).rows.map(function (r) { var o = {}; ["city", "date", "date2", "time", "status", "other", "note", "line", "fix", "raw"].forEach(function (k) { if (r[k]) o[k] = r[k]; }); return o; });
     var id = t.editId || plId("l"); PLAN.lists = PLAN.lists || {};
     t.draft = null; t.list = id; t.sel = {};
-    plPut("lists", id, Object.assign({}, t.editId ? PLAN.lists[t.editId] : {}, { title: dd.title, project: dd.project, text: dd.text, rows: dd.rows || [] }), "Список «" + dd.title + "» сохранён");
+    plPut("lists", id, Object.assign({}, t.editId ? PLAN.lists[t.editId] : { created: TODAY }, { title: dd.title, project: dd.project, text: dd.text, rows: dd.rows || [] }), "«" + dd.title + "» сохранён");
   }
   else if (a === "tb-del") { if (!confirm("Удалить список «" + PLAN.lists[t.list].title + "»?")) return; var did = t.list; t.list = null; plDel("lists", did, "Список удалён"); }
   else if (a === "tb-set") { var k = b.getAttribute("data-k"), v = b.getAttribute("data-v"); if (k === "view") { t.view = v; } else { p[k] = v; tbSave(p); } tbRe(); }
@@ -13022,6 +13026,10 @@ function tbAction(a, b) {   // кнопки вкладки (из общего о
     var fk = b.getAttribute("data-k"), def = fk === "pkFree";
     p[fk] = !(p[fk] != null ? p[fk] : def); tbSave(p); tbRe();
   }
+  else if (a === "tb-back") { t.list = null; t.draft = null; S.pl.tbCard = null; closeDrawer(); render(); window.scrollTo(0, 0); }
+  else if (a === "tb-open") { t.list = b.getAttribute("data-id"); t.q = ""; t.limit = 300; S.pl.tbShareOpen = false; render(); window.scrollTo(0, 0); }
+  else if (a === "ix-freset") { p.ixKind = {}; p.ixProj = p.ixTask = p.ixBoss = "all"; t.ixq = ""; tbSave(p); tbRe(); }
+  else if (a === "ix-task-open") { if (WK.tasks[b.getAttribute("data-id")]) wkOpenTask(b.getAttribute("data-id")); }
   else if (a === "tb-freset") { p.pkPay = "all"; p.pkPop = {}; p.pkDec = "all"; p.offReg = {}; t.q = ""; t.limit = 300; tbSave(p); tbRe(); }   // «Не были и не стоят» не трогаем
   else if (a === "tb-econmore") { PL_PREFS.tbMore = !PL_PREFS.tbMore; plPrefsSave(); tbRe(); }
   else if (a === "tb-fill") {
@@ -13055,6 +13063,190 @@ function tbAction(a, b) {   // кнопки вкладки (из общего о
   }
 }
 
+// ---------- «Подбор городов» → таблица артистов (CITY_PICK_INDEX_PLAN.md; решения пользователя 27.10): встречает вкладку,
+// клик — экран артиста. Связь с «Работой»: проект (в одном — несколько артистов) и задача; создать — прямо в ячейке.
+// Тяжёлый расчёт (tbPick) здесь не делаем: всё — из сохранённых полей списка и сводки ссылок (/api/shares/summary).
+var IX_COLS = [
+  { id: "title", labels: ["Артист"], w: 200, left: true, lock: true }, { id: "fee", labels: ["Гонорар", "Гон."], w: 96 },
+  { id: "offer", labels: ["Предложение", "Предл."], w: 140, left: true }, { id: "boss", labels: ["Руководитель", "Рук."], w: 170, left: true },
+  { id: "wproj", labels: ["Проект"], w: 190, left: true }, { id: "wtask", labels: ["Задача"], w: 220, left: true }, { id: "upd", labels: ["Обновлено", "Обн."], w: 96 },
+  { id: "afisha", labels: ["Проект в афише", "В афише"], w: 180, left: true, off: true }, { id: "crew", labels: ["Состав"], w: 70, off: true },
+  { id: "no", labels: ["Не подходит", "Не подх."], w: 90, off: true }, { id: "created", labels: ["Создан"], w: 100, off: true }
+];
+PL_COLSETS.ix = { id: "ix", cols: IX_COLS, key: "ixcols" };
+var IX_TASK = [["all", "Все"], ["none", "Без задачи"], ["has", "С задачей"]], IX_BOSS = [["all", "Все"], ["new", "Есть новые комментарии"], ["never", "Ссылка не отправлялась"]];
+function ixNeedWK() {   // «Работа» на странице «Планирования» может быть не загружена
+  if (WK_OK || S.pl.wkReq || !CAN_SAVE) return;
+  S.pl.wkReq = true;
+  apiJson("GET", "/api/work").then(function (x) { if (x.ok) { WK = x.d; WK_OK = true; if (S.view === "planning" && S.pl.tab === "build") tbRe(); } }, function () { S.pl.wkReq = false; });
+}
+function ixSharesLoad(force) {   // сводка ссылок для руководителя по всем артистам; не чаще раза в минуту
+  var st = S.pl.ixShares;
+  if (!CAN_SAVE || (!force && st && Date.now() - st.at < 60000)) return;
+  S.pl.ixShares = { at: Date.now(), lists: st ? st.lists : {} };
+  apiJson("GET", "/api/shares/summary").then(function (x) {
+    if (!x.ok) return;
+    var was = JSON.stringify(S.pl.ixShares.lists); S.pl.ixShares = { at: Date.now(), lists: x.d.lists || {} };
+    if (was !== JSON.stringify(S.pl.ixShares.lists) && S.view === "planning" && S.pl.tab === "build") tbRe();
+  }, function () {});
+}
+function ixRow(id) {
+  var L = PLAN.lists[id], e = L.econ || {}, n = { yes: 0, maybe: 0, no: 0 }, w = L.work || {}, sh = ((S.pl.ixShares || {}).lists || {})[id] || null, seen = tbShareSeen();
+  Object.keys(L.cities || {}).forEach(function (c) { var d = pickDec(L.cities[c]); if (n[d] != null) n[d]++; });
+  var fresh = !!sh && sh.tokens.some(function (x) { return x.last_at && (!seen[x.token] || Date.parse(x.last_at) > Date.parse(seen[x.token])); });
+  return { id: id, L: L, title: L.title || "", prod: !tbFee(L), fee: planNum(e.fee) || null, n: n, sh: sh, fresh: fresh, wp: w.project || "", wt: w.task || "", upd: L.upd || "" };
+}
+function ixDate(iso) { return iso ? human(iso.slice(0, 10)) : ""; }
+function ixTaskState(t) { return t.done ? "готово" : t.status === "work" ? "в работе" : t.status === "wait" ? "ждёт" : "не начата"; }
+function ixProjSel(r) {
+  var gone = r.wp && WK_OK && !WK.projects[r.wp];
+  return '<select class="pl-sel ix-sel" data-ixw="' + r.id + '|project" aria-label="Проект «Работы»: ' + esc(r.title) + '"><option value="">—</option>' +
+    (WK_OK ? wkProjects().map(function (p) { return '<option value="' + p.id + '"' + (p.id === r.wp ? ' selected' : '') + '>' + esc(p.title) + (wkStageDone(p.stage) ? ' (завершён)' : '') + '</option>'; }).join("")
+      : r.wp ? '<option value="' + r.wp + '" selected>…</option>' : '') +
+    '<option value="+new">+ Новый проект…</option></select>' + (gone ? '<div class="sub2 muted">проект удалён в «Работе»</div>' : '');
+}
+function ixTaskSel(r) {
+  var t = r.wt && WK.tasks[r.wt], gone = r.wt && WK_OK && !t;
+  if (!r.wp || (WK_OK && !WK.projects[r.wp])) return '<span class="muted" title="Сначала выберите проект">—</span>';
+  var ts = WK_OK ? wkTasksOf(r.wp).sort(function (a, b) { return (a.done ? 1 : 0) - (b.done ? 1 : 0) || (a.due || "9999").localeCompare(b.due || "9999"); }) : [];
+  return '<select class="pl-sel ix-sel" data-ixw="' + r.id + '|task" aria-label="Задача «Работы»: ' + esc(r.title) + '"><option value="">—</option>' +
+    ts.map(function (x) { return '<option value="' + x.id + '"' + (x.id === r.wt ? ' selected' : '') + '>' + esc(x.text.length > 60 ? x.text.slice(0, 59) + "…" : x.text) + (x.done ? ' ✓' : '') + '</option>'; }).join("") +
+    (!WK_OK && r.wt ? '<option value="' + r.wt + '" selected>…</option>' : '') + '<option value="+new">+ Новая задача…</option></select>' +
+    (t ? '<div class="sub2">' + ixTaskState(t) + (t.due && !t.done ? ' · ' + esc(wkDueInfo(t.due).text.toLowerCase()) : '') + ' · <button class="pj-plain" data-pl="ix-task-open" data-id="' + esc(r.wt) + '">открыть</button></div>'
+      : gone ? '<div class="sub2 muted">задача удалена в «Работе»</div>' : '');
+}
+function ixCell(c, r) {
+  var dash = '<span class="muted">—</span>', td = function (html, title) { return '<td class="' + (c.left ? 'pl-left' : 'num') + '"' + (title ? ' title="' + esc(title) + '"' : '') + '>' + html + '</td>'; };
+  switch (c.id) {
+    case "title": return td('<button class="ev-title" data-pl="tb-open" data-id="' + r.id + '">' + esc(r.title) + '</button>' + (r.prod ? '<div class="sub2">список продюсера</div>' : r.L.project && r.L.project !== r.title ? '<div class="sub2">' + esc(r.L.project) + '</div>' : ''));
+    case "fee": return td(r.fee ? plShort(r.fee) + (planNum(r.L.econ.cashless) ? '<div class="sub2">+' + r.L.econ.cashless + '%</div>' : '') : dash);
+    case "offer": return td(r.n.yes || r.n.maybe ? (r.n.yes ? r.n.yes + ' подх.' : '') + (r.n.yes && r.n.maybe ? ' · ' : '') + (r.n.maybe ? r.n.maybe + ' рассм.' : '') : dash);
+    case "boss": return td(!r.sh ? '<span class="muted">не отправлено</span>' : 'ссылка ' + ixDate(r.sh.created) + (r.sh.open ? '' : ' · закрыта') + (r.fresh ? ' <span class="tb-newc" title="Новые комментарии руководителя">новое</span>' : '') +
+      (r.sh.ok + r.sh.ask + r.sh.no ? '<div class="sub2">✔ ' + r.sh.ok + ' · ? ' + r.sh.ask + ' · ✖ ' + r.sh.no + '</div>' : ''));
+    case "wproj": return td(ixProjSel(r));
+    case "wtask": return td(ixTaskSel(r));
+    case "upd": return td(ixDate(r.upd) || dash);
+    case "afisha": return td(esc(r.L.project || "—"));
+    case "crew": return td(r.L.econ && r.L.econ.crew != null ? String(r.L.econ.crew) : dash);
+    case "no": return td(r.n.no ? String(r.n.no) : dash);
+    case "created": return td(ixDate(r.L.created) || dash);
+  }
+  return td(dash);
+}
+function ixSortVal(id, r) {
+  switch (id) {
+    case "title": return r.title; case "fee": return r.fee; case "offer": return r.n.yes * 1000 + r.n.maybe || null;
+    case "boss": return r.sh ? Date.parse(r.sh.last_at || r.sh.created) : null; case "wproj": return r.wp && WK.projects[r.wp] ? WK.projects[r.wp].title : null;
+    case "wtask": var t = r.wt && WK.tasks[r.wt]; return t ? (t.done ? "~" : t.due || "9999") : null;
+    case "upd": return r.upd || null; case "afisha": return r.L.project || null; case "crew": return r.L.econ && r.L.econ.crew != null ? +r.L.econ.crew : null;
+    case "no": return r.n.no || null; case "created": return r.L.created || null;
+  }
+  return null;
+}
+function ixFilterOk(r, p, skip) {   // skip — раздел, который не применяем (числа в меню фильтра)
+  var kinds = p.ixKind || {}, anyK = kinds.pick || kinds.prod;
+  if (skip !== "k" && anyK && !(r.prod ? kinds.prod : kinds.pick)) return false;
+  var pj = p.ixProj || "all"; if (skip !== "p" && pj !== "all" && (pj === "none" ? !!r.wp : r.wp !== pj)) return false;
+  var tk = p.ixTask || "all"; if (skip !== "t" && tk !== "all" && (tk === "none" ? !!r.wt : !r.wt)) return false;
+  var bs = p.ixBoss || "all"; if (skip !== "b" && bs !== "all" && (bs === "new" ? !r.fresh : !!r.sh)) return false;
+  return true;
+}
+function ixFiltered(p) { return (p.ixKind && (p.ixKind.pick || p.ixKind.prod)) || [p.ixProj, p.ixTask, p.ixBoss].some(function (v) { return v && v !== "all"; }); }
+function tbIndex() {
+  ixNeedWK(); ixSharesLoad();
+  var p = tbPrefs(), t = S.pl.tb, q = (t.ixq || "").trim().toLowerCase(), ids = Object.keys(PLAN.lists || {});
+  if (!ids.length) return '<div class="empty" style="margin-top:16px"><h2>Артистов пока нет</h2><p style="margin:0 0 12px">Назовите артиста и укажите, как он называется в афише. Если продюсер прислал города и даты — вставьте их как есть. Потом впишите гонорар: программа покажет свободные города, где концерт окупается.</p><button class="btn-dark" data-pl="tb-new">+ Новый артист</button></div>';
+  var base = ids.map(ixRow).filter(function (r) { return !q || (r.title + " " + (r.L.project || "")).toLowerCase().replace(/ё/g, "е").indexOf(q.replace(/ё/g, "е")) >= 0; });
+  S.pl.ixBase = base;
+  var rows = base.filter(function (r) { return ixFilterOk(r, p); }), fOn = ixFiltered(p);
+  var tools = '<div class="tb-tools pl-flat"><input type="search" id="ixQ" class="pl-in pl-text tb-q" placeholder="Найти артиста" aria-label="Найти артиста" value="' + esc(t.ixq || "") + '">' +
+    '<span class="sub2">' + rows.length + ' из ' + ids.length + '</span><span style="flex-grow:1"></span>' +
+    (fOn || q ? '<button class="pj-plain tb-freset" data-pl="ix-freset">Сбросить фильтры</button>' : '') +
+    '<span class="tb-icons"><button type="button" class="wk-sq' + (fOn ? ' on' : '') + '" data-ixpop aria-haspopup="menu" aria-expanded="false" aria-label="Фильтр: вид, проект, задача, руководитель" title="Фильтр: вид, проект, задача, руководитель">' + WKT_ICON.group + (fOn ? '<i class="wk-sq-dot" aria-hidden="true"></i>' : '') + '</button>' +
+    plColsControl("ix") + '</span><button class="btn-dark" data-pl="tb-new">+ Новый артист</button></div>';
+  if (!rows.length) return tools + '<div class="empty" style="margin-top:12px"><h2>Никого не нашлось</h2><p style="margin:0">Ослабьте фильтры — или нажмите «Сбросить фильтры».</p></div>';
+  return tools + tbGrid(rows, "ix", { sortable: true, cell: ixCell, sortVal: ixSortVal, name: function (r) { return r.title; }, defSort: { id: "upd", dir: -1 } });
+}
+function ixPopHtml() {   // меню кнопки-фильтра таблицы артистов
+  var p = tbPrefs(), base = S.pl.ixBase || [], kinds = p.ixKind || {};
+  var cnt = function (skip, f) { return base.filter(function (r) { return ixFilterOk(r, p, skip) && f(r); }).length; };
+  var item = function (key, x, label, n, radio) {
+    return '<button type="button" class="wk-menu-item' + (x ? ' on' : '') + '" data-ixpop-f="' + esc(key) + '" role="' + (radio ? 'menuitemradio' : 'menuitemcheckbox') + '" aria-checked="' + x + '"><span class="cand-fl"><i class="cand-cb' + (radio ? ' tb-rb' : '') + (x ? ' on' : '') + '" aria-hidden="true"></i><span>' + esc(label) + '</span></span><span class="wks-fn">' + n + '</span></button>';
+  };
+  var pj = p.ixProj || "all", linked = {}; base.forEach(function (r) { if (r.wp && WK.projects[r.wp]) linked[r.wp] = 1; });
+  return '<div class="wkp-title">Вид</div>' + item("k:pick", !!kinds.pick, "Подбор для артиста", cnt("k", function (r) { return !r.prod; })) + item("k:prod", !!kinds.prod, "Список продюсера", cnt("k", function (r) { return r.prod; })) +
+    '<div class="wkp-title wk-menu-sep">Проект</div>' + item("p:all", pj === "all", "Все", cnt("p", function () { return true; }), true) + item("p:none", pj === "none", "Без проекта", cnt("p", function (r) { return !r.wp; }), true) +
+      Object.keys(linked).map(function (id) { return item("p:" + id, pj === id, WK.projects[id].title, cnt("p", function (r) { return r.wp === id; }), true); }).join("") +
+    '<div class="wkp-title wk-menu-sep">Задача</div>' + IX_TASK.map(function (o) { return item("t:" + o[0], (p.ixTask || "all") === o[0], o[1], cnt("t", function (r) { return o[0] === "all" || (o[0] === "none" ? !r.wt : !!r.wt); }), true); }).join("") +
+    '<div class="wkp-title wk-menu-sep">Руководитель</div>' + IX_BOSS.map(function (o) { return item("b:" + o[0], (p.ixBoss || "all") === o[0], o[1], cnt("b", function (r) { return o[0] === "all" || (o[0] === "new" ? r.fresh : !r.sh); }), true); }).join("") +
+    (ixFiltered(p) ? '<button type="button" class="wk-menu-item cand-freset" data-ixpop-f="reset"><span>Сбросить — все артисты</span></button>' : '');
+}
+document.addEventListener("click", function (ev) {   // кнопка-фильтр таблицы артистов: меню остаётся открытым
+  var b = ev.target.closest && ev.target.closest("[data-ixpop]");
+  if (b) { if (WKPOP && WKPOP.anchor === b) { wkPopClose(); return; } wkPopOpen(b, "wk-menu cand-fmenu", ixPopHtml(), {}); return; }
+  var it = ev.target.closest && ev.target.closest(".cand-fmenu [data-ixpop-f]"); if (!it || !WKPOP) return;
+  var p = tbPrefs(), k = it.getAttribute("data-ixpop-f"), v = k.slice(2); p.ixKind = p.ixKind || {};
+  if (k === "reset") { p.ixKind = {}; p.ixProj = p.ixTask = p.ixBoss = "all"; }
+  else if (k[0] === "k") p.ixKind[v] = !p.ixKind[v];
+  else p[{ p: "ixProj", t: "ixTask", b: "ixBoss" }[k[0]]] = v;
+  tbSave(p); tbRe();
+  var nb = document.querySelector("[data-ixpop]"); if (nb) wkPopOpen(nb, "wk-menu cand-fmenu", ixPopHtml(), {}); else wkPopClose();
+});
+var ixQTimer = null;
+document.addEventListener("input", function (ev) {
+  if (ev.target.id !== "ixQ") return;
+  S.pl.tb.ixq = ev.target.value; clearTimeout(ixQTimer);
+  ixQTimer = setTimeout(function () { tbRe(); var q = $("ixQ"); if (q) { q.focus(); var n = q.value.length; q.setSelectionRange(n, n); } }, 200);
+});
+// Связь артиста с «Работой»: смена проекта снимает задачу из другого проекта
+function ixSetWork(id, patch, msg) {
+  var L = JSON.parse(JSON.stringify(PLAN.lists[id] || {})); if (!L.title) return;
+  var w = Object.assign({}, L.work || {}, patch);
+  if ("project" in patch && (!w.project || (w.task && WK.tasks[w.task] && WK.tasks[w.task].project !== w.project))) delete w.task;
+  Object.keys(w).forEach(function (k) { if (!w[k]) delete w[k]; });
+  if (Object.keys(w).length) L.work = w; else delete L.work;
+  plPut("lists", id, L, msg);
+}
+function ixNewOpen(anchor, id, kind) {   // окошко «Новый проект» / «Новая задача» у ячейки
+  var L = PLAN.lists[id], proj = kind === "project";
+  wkPopOpen(anchor, "wk-menu ix-newpop", '<div class="wkp-title">' + (proj ? 'Новый проект «Работы»' : 'Новая задача в проекте «' + esc(wkPname((L.work || {}).project)) + '»') + '</div>' +
+    '<div class="ix-newf"><input id="ixNewName" class="pl-in pl-text" value="' + esc(proj ? L.title : "Подбор городов: " + L.title) + '" aria-label="Название">' +
+    (proj ? '' : '<label class="sub2">Срок <input id="ixNewDue" class="pl-in" type="date" aria-label="Срок задачи"></label>') +
+    '<div class="tb-actions"><button class="btn-dark" data-ixnew-ok>Создать</button><button class="btn-ghost" data-ixnew-cancel>Отмена</button></div></div>', { ixNew: { id: id, kind: kind } });
+  setTimeout(function () { var i = $("ixNewName"); if (i) { i.focus(); i.select(); } }, 0);
+}
+function ixNewSave() {
+  var st = WKPOP && WKPOP.ixNew; if (!st) return;
+  var name = ($("ixNewName") || {}).value ? $("ixNewName").value.trim() : "", L = PLAN.lists[st.id]; if (!name || !L) { if ($("ixNewName")) $("ixNewName").focus(); return; }
+  var nid = wkId(st.kind === "project" ? "p" : "t");
+  if (st.kind === "project") wkPut("projects", nid, { title: name, stage: (WK_STAGE[0] || ["idea"])[0], start: "", end: "", note: "", created: wkDay(0) }, "Проект «" + name + "» создан", true);
+  else wkPut("tasks", nid, { text: name, due: ($("ixNewDue") || {}).value || "", project: (L.work || {}).project || "", done: false, created: wkDay(0) }, "Задача создана", true);
+  wkPopClose();
+  ixSetWork(st.id, st.kind === "project" ? { project: nid } : { task: nid });
+}
+document.addEventListener("click", function (ev) {
+  if (!ev.target.closest) return;
+  if (ev.target.closest("[data-ixnew-ok]")) { ev.preventDefault(); ixNewSave(); }
+  else if (ev.target.closest("[data-ixnew-cancel]")) { ev.preventDefault(); wkPopClose(); }
+});
+document.addEventListener("keydown", function (ev) {
+  if (ev.key === "Enter" && ev.target.closest && ev.target.closest(".ix-newpop")) { ev.preventDefault(); ixNewSave(); }
+});
+document.addEventListener("change", function (ev) {   // ячейки и плашки «Проект» / «Задача»
+  var el = ev.target.closest && ev.target.closest("[data-ixw]"); if (!el) return;
+  var q = el.getAttribute("data-ixw").split("|"), v = el.value;
+  if (v === "+new") {   // вернуть выбор и открыть окошко у этой ячейки
+    var cur = (PLAN.lists[q[0]].work || {})[q[1]] || ""; el.value = cur; enhanceSelects(el.parentNode);
+    ixNewOpen(el.nextElementSibling && el.nextElementSibling.classList.contains("dd-btn") ? el.nextElementSibling : el, q[0], q[1]);
+    return;
+  }
+  var patch = {}; patch[q[1]] = v;
+  ixSetWork(q[0], patch);
+});
+function ixChips(id) {   // шапка экрана артиста: проект и задача «Работы» — те же списки, что в таблице
+  var r = ixRow(id);
+  return '<span class="tb-wchip"><span class="sub2">Проект</span>' + ixProjSel(r) + '</span><span class="tb-wchip"><span class="sub2">Задача</span>' + ixTaskSel(r) + '</span>';
+}
 // ---------- «Подбор городов» → экран артиста (как считается — CITY_PICK.md; экран — CITY_PICK_PLAN.md,
 // решения пользователя 26.10). У списка — экономика артиста (гонорар, % сверху, состав…; пустое — нормы). Две вкладки:
 // «Все города» — таблица кандидатов (один фильтр «не были и не стоят», столбцы как в «Турах», сортировка по заголовку) и
@@ -13229,15 +13421,17 @@ function tbCell(c, r) {
 }
 // Таблица на общей системе столбцов (как в «Турах»): выбор, порядок и ширина — свои у набора set; сортировка — по
 // заголовку (o.sortable); o.handle — ручка порядка строк (предложение); o.groups — [{label, rows}] подзаголовками.
+// Другие строки (таблица артистов): o.cell(c, r), o.sortVal(id, r), o.name(r) — для равных, o.defSort — сортировка по умолчанию.
 function tbGrid(rows, set, o) {
   o = o || {};
+  var cellF = o.cell || tbCell, sortF = o.sortVal || tbSortVal, nm = o.name || function (r) { return r.city; };
   var cols = plColsOrdered(set).filter(function (c) { return plColOn(c, set); }), cp = plColPrefs(set), lead = o.handle ? 30 : 0, width = lead;
   cols.forEach(function (c) { width += plColW(c, set); });
-  var sd = o.sortable ? cp.sort || { id: "status", dir: -1 } : null;
+  var sd = o.sortable ? cp.sort || o.defSort || { id: "status", dir: -1 } : null;
   if (sd && sd.id) rows = rows.slice().sort(function (a, b) {
-    var x = tbSortVal(sd.id, a), y = tbSortVal(sd.id, b);
-    if (x == null && y == null) return a.city.localeCompare(b.city, "ru"); if (x == null) return 1; if (y == null) return -1;
-    return (typeof x === "string" ? x.localeCompare(y, "ru") : x - y) * sd.dir || a.city.localeCompare(b.city, "ru");
+    var x = sortF(sd.id, a), y = sortF(sd.id, b);
+    if (x == null && y == null) return nm(a).localeCompare(nm(b), "ru"); if (x == null) return 1; if (y == null) return -1;
+    return (typeof x === "string" ? x.localeCompare(y, "ru") : x - y) * sd.dir || nm(a).localeCompare(nm(b), "ru");
   });
   var lim = o.limit || 1e9, shown = rows.slice(0, lim);
   var th = '<thead><tr>' + (lead ? '<th scope="col" class="pl-act-l"><span class="sr-only">Порядок</span></th>' : '') + cols.map(function (c) {
@@ -13249,9 +13443,9 @@ function tbGrid(rows, set, o) {
       '<span class="resizer" data-plresize="' + c.id + '" data-cset="' + set + '" title="Потяните, чтобы изменить ширину. Двойной клик — вернуть." aria-hidden="true"></span></th>';
   }).join("") + '</tr></thead>';
   var line = function (r) {
-    return '<tr' + (o.handle ? ' data-ofrow="' + esc(r.city) + '" data-ofgrp="' + r.pick.dec + '"' : '') + (S.pl.tbCard === r.city ? ' class="sel"' : '') + '>' +
+    return '<tr' + (o.handle ? ' data-ofrow="' + esc(r.city) + '" data-ofgrp="' + r.pick.dec + '"' : '') + (!o.cell && S.pl.tbCard === r.city ? ' class="sel"' : '') + '>' +
       (lead ? '<td class="pl-handle-td"><button class="pl-handle" data-of-handle="' + esc(r.city) + '" aria-label="Переместить: ' + esc(r.city) + ' (стрелки вверх и вниз)" title="Перетащите, чтобы поменять порядок">⋮⋮</button></td>' : '') +
-      cols.map(function (c) { return tbCell(c, r); }).join("") + '</tr>';
+      cols.map(function (c) { return cellF(c, r); }).join("") + '</tr>';
   };
   var body = (o.groups || [{ rows: shown }]).map(function (g) {
     return (g.label && g.rows.length ? '<tr class="tb-grp"><td colspan="' + (cols.length + (lead ? 1 : 0)) + '">' + g.label + '</td></tr>' : '') + g.rows.map(line).join("");
@@ -14006,7 +14200,7 @@ function plChange(el) {
 function plAction(b) {
   var a = b.getAttribute("data-pl"), id = b.getAttribute("data-id"), copy = function (o) { return JSON.parse(JSON.stringify(o || {})); };
   if (a === "tab") { S.pl.tab = b.getAttribute("data-tab"); S.pl.tour = null; S.pl.tbCard = null; closeDrawer(); render(); }
-  else if (a.indexOf("tb-") === 0) tbAction(a, b);
+  else if (a.indexOf("tb-") === 0 || a.indexOf("ix-") === 0) tbAction(a, b);   // «Подбор городов»: экран артиста и таблица артистов
   else if (a.indexOf("rp-") === 0) rpAction(a, b);
   else if (a === "ana-toggle") { PL_PREFS.ana = PL_PREFS.ana === false; plPrefsSave(); tbRe(); }
   else if (a === "cols") { var cs = b.getAttribute("data-cset") || "t"; S.pl.cols = S.pl.cols === cs ? false : cs; tbRe(); }

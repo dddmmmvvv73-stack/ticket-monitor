@@ -146,7 +146,7 @@ def _zones(v, fields: dict, what: str) -> list:
         raise PlanningError(f"{what}: до 40 поясов")
     return [z for z in (_clean(x or {}, fields, what) for x in v) if z]
 TOUR = {"title": 200, "project": 24, "month": "date", "status": STATUSES, "note": 2000}
-LIST = {"title": 200, "project": 300, "text": 30000, "format": 60}
+LIST = {"title": 200, "project": 300, "text": 30000, "format": 60, "created": "date"}
 ECON = {"fee": "money", "cashless": "pct", "crew": "int", "per_diem": "money", "rider": "money", "author": "money", "rao": "pct",
         "moscow": "money", "kassa": "pct", "fill": "pct", "capMin": "int", "capMax": "int", "ads": "money", "lvl": "money", "per_diem_sum": "money",
         "note": 2000}
