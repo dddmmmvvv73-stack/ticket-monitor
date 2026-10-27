@@ -13135,7 +13135,7 @@ function tbAction(a, b) {   // кнопки вкладки (из общего о
   else if (a === "tb-open") { t.list = b.getAttribute("data-id"); t.q = ""; t.limit = 300; S.pl.tbShareOpen = false; render(); window.scrollTo(0, 0); }
   else if (a === "ix-freset") { p.ixKind = {}; p.ixProj = p.ixTask = p.ixBoss = "all"; t.ixq = ""; tbSave(p); tbRe(); }
   else if (a === "ix-task-open") { if (WK.tasks[b.getAttribute("data-id")]) wkOpenTask(b.getAttribute("data-id")); }
-  else if (a === "tb-freset") { p.pkPay = "all"; p.pkPop = {}; p.pkDec = "all"; p.offReg = {}; t.q = ""; t.limit = 300; tbSave(p); tbRe(); }   // «Не были и не стоят» не трогаем
+  else if (a === "tb-freset") { p.pkPay = "all"; p.pkFd = ""; p.pkPop = {}; p.pkDec = "all"; p.offReg = {}; t.q = ""; t.limit = 300; tbSave(p); tbRe(); }   // «Не были и не стоят» не трогаем
   else if (a === "tb-econmore") { PL_PREFS.tbMore = !PL_PREFS.tbMore; plPrefsSave(); tbRe(); }
   else if (a === "tb-fill") {
     var lf = JSON.parse(JSON.stringify(PLAN.lists[t.list] || {})); if (!lf.title) return;
@@ -13361,6 +13361,28 @@ function ixChips(id) {   // шапка экрана артиста: проект
 var TB_PK = { ok: ["окупается", "#15803d"], edge: ["на грани", "#b45309"], no: ["не окупается", "#b42318"], nohall: ["нет зала", "#78716c"], noprice: ["нет цен", "#78716c"] };
 var TB_PAY = [["all", "все"], ["go", "окупается и на грани"], ["ok", "окупается"], ["edge", "на грани"], ["no", "не окупается"], ["nodata", "нет данных"]];
 var TB_DEC = [["yes", "Подходит", "#15803d"], ["maybe", "На рассмотрении", "#b45309"], ["no", "Не подходит", "#78716c"]];
+// Федеральные округа: область (как в MREG — market-regions.js) → округ; фильтр «Округ» подбора (решение пользователя 27.10)
+var RU_FD = [["", "все"], ["cfo", "Центральный"], ["szfo", "Северо-Западный"], ["yufo", "Южный"], ["skfo", "Северо-Кавказский"],
+  ["pfo", "Приволжский"], ["ufo", "Уральский"], ["sfo", "Сибирский"], ["dfo", "Дальневосточный"]];
+var RU_FD_REG = {
+  cfo: ["Белгородская область", "Брянская область", "Владимирская область", "Воронежская область", "Ивановская область", "Калужская область",
+    "Костромская область", "Курская область", "Липецкая область", "Москва", "Московская область", "Орловская область", "Рязанская область",
+    "Смоленская область", "Тамбовская область", "Тверская область", "Тульская область", "Ярославская область"],
+  szfo: ["Архангельская область", "Вологодская область", "Калининградская область", "Карелия", "Республика Коми", "Ленинградская область",
+    "Мурманская область", "Ненецкий автономный округ", "Новгородская область", "Псковская область", "Санкт-Петербург"],
+  yufo: ["Адыгея", "Астраханская область", "Волгоградская область", "Калмыкия", "Краснодарский край", "Ростовская область",
+    "Автономная Республика Крым", "Севастополь"],
+  skfo: ["Дагестан", "Ингушетия", "Кабардино-Балкария", "Карачаево-Черкесия", "Республика Северная Осетия-Алания", "Ставропольский край", "Чечня"],
+  pfo: ["Республика Башкортостан", "Кировская область", "Марий Эл", "Мордовия", "Нижегородская область", "Оренбургская область",
+    "Пензенская область", "Пермский край", "Самарская область", "Саратовская область", "Татарстан", "Удмуртия", "Ульяновская область", "Чувашия"],
+  ufo: ["Курганская область", "Свердловская область", "Тюменская область", "Ханты-Мансийский автономный округ — Югра", "Челябинская область",
+    "Ямало-Ненецкий автономный округ"],
+  sfo: ["Республика Алтай", "Алтайский край", "Иркутская область", "Кемеровская область", "Красноярский край", "Новосибирская область",
+    "Омская область", "Томская область", "Тыва", "Хакасия"],
+  dfo: ["Амурская область", "Бурятия", "Еврейская автономная область", "Забайкальский край", "Камчатский край", "Магаданская область",
+    "Приморский край", "Сахалинская область", "Хабаровский край", "Чукотский автономный округ", "Якутия"]
+};
+var RU_FD_OF = {}; Object.keys(RU_FD_REG).forEach(function (fd) { RU_FD_REG[fd].forEach(function (r) { RU_FD_OF[r] = fd; }); });
 var TB_DECF = [["all", "все"], ["none", "без решения"], ["yes", "подходит"], ["maybe", "на рассмотрении"], ["no", "не подходит"]];   // фильтр «Решение» (27.10, вместо «Скрыть «не подходит»»)
 var TB_SRC = { ovr: "правка этого города", econ: "из экономики артиста", venue: "из зала", norm: "норма", city: "по афише", org: "по статьям", zones: "по распоясовке", none: "нет данных" };
 var PK_COLS = [   // столбцы подбора и предложения (CITY_PICK_PLAN.md, п. 2.4); без off — видны по умолчанию
@@ -13565,10 +13587,11 @@ function tbOfferRows(A) {   // предложение: «подходит», з�
 }
 function tbPickView(L, A, P, p) {
   var t = S.pl.tb, of = tbOfferRows(A), nOf = of.yes.length + of.maybe.length, tab = p.pkTab === "offer" ? "offer" : "all";
-  var q = (t.q || "").trim().toLowerCase(), free = p.pkFree !== false, pay = p.pkPay || "all", decf = p.pkDec || "all", pops = p.pkPop || {};
+  var q = (t.q || "").trim().toLowerCase(), free = p.pkFree !== false, pay = p.pkPay || "all", decf = p.pkDec || "all", pops = p.pkPop || {}, fd = p.pkFd || "";
   var popOn = CAND_POP.some(function (o) { return pops[o[0]]; });   // как «Население» в «Городах, где его нет»: ничего не отмечено — все
   var base = A.rows.filter(function (r) {   // фильтры строки инструментов
     if (free && r.st !== "free") return false;
+    if (fd && RU_FD_OF[r.reg] !== fd) return false;
     if (r.reg && p.offReg[r.reg]) return false;
     if (q && r.city.toLowerCase().indexOf(q) < 0) return false;
     return tbPayOk(r, pay);
@@ -13580,13 +13603,14 @@ function tbPickView(L, A, P, p) {
     '<button role="tab" data-pl="tb-set" data-k="pkTab" data-v="all" aria-selected="' + (tab === "all") + '" aria-pressed="' + (tab === "all") + '">Все города <span class="num">' + rows.length + '</span></button>' +
     '<button role="tab" data-pl="tb-set" data-k="pkTab" data-v="offer" aria-selected="' + (tab === "offer") + '" aria-pressed="' + (tab === "offer") + '">Предложение <span class="num">' + nOf + '</span>' + (S.pl.tbNewC ? ' <span class="tb-newc" title="Новые комментарии руководителя">' + S.pl.tbNewC + '</span>' : '') + '</button></div>';
   if (tab === "offer") return tabs + tbOfferView(L, A, P, p, of);
-  var nOff = Object.keys(p.offReg).length, fOn = popOn || decf !== "all", fAny = fOn || pay !== "all" || nOff > 0 || !!q;   // включённые фильтры — подсвечены
+  var nOff = Object.keys(p.offReg).length, fOn = popOn || decf !== "all", fAny = fOn || pay !== "all" || !!fd || nOff > 0 || !!q;   // включённые фильтры — подсвечены
   var tools = '<div class="tb-tools pl-flat">' +
       '<button class="an-layer" data-pl="tb-pkflag" data-k="pkFree" aria-pressed="' + free + '" title="Только города, где артист не стоит сейчас и не был за ' + (plCfg().ban_months || 13) + ' мес.">Не были и не стоят</button>' +
       '<label class="pl-lab">Окупаемость ' + plSelect("tb|pkPay", pay, TB_PAY, "Окупаемость") + '</label>' +
+      '<label class="pl-lab">Округ ' + plSelect("tb|pkFd", fd, RU_FD, "Федеральный округ") + '</label>' +
       '<input type="search" id="tbQ" class="pl-in pl-text tb-q" placeholder="Найти город" aria-label="Найти город" value="' + esc(t.q || "") + '">' +
       '<button class="btn-ghost pl-gm-regbtn" data-pl="tb-reg" aria-expanded="' + !!t.regOpen + '">Области: ' + (nOff ? 'скрыто ' + nOff : 'все') + ' <span aria-hidden="true">▾</span></button>' +
-      '<span style="flex-grow:1"></span>' + (fAny ? '<button class="pj-plain tb-freset" data-pl="tb-freset" title="Окупаемость, области, население, решение, поиск — как было">Сбросить фильтры</button>' : '') +
+      '<span style="flex-grow:1"></span>' + (fAny ? '<button class="pj-plain tb-freset" data-pl="tb-freset" title="Окупаемость, округ, области, население, решение, поиск — как было">Сбросить фильтры</button>' : '') +
       '<span class="tb-icons"><button type="button" class="wk-sq' + (fOn ? ' on' : '') + '" data-tbpop aria-haspopup="menu" aria-expanded="false" aria-label="Фильтр: население, решение' + (fOn ? ' — включён' : '') + '" title="Фильтр: население, решение' + (fOn ? ' — включён' : '') + '">' + WKT_ICON.group + (fOn ? '<i class="wk-sq-dot" aria-hidden="true"></i>' : '') + '</button>' +
       plColsControl("pk") + '</span></div>' + (t.regOpen ? tbRegPanel(p) : '');
   if (!rows.length) return tabs + tools + '<div class="empty" style="margin-top:12px"><h2>Городов нет</h2><p style="margin:0">Ослабьте фильтры — или нажмите «Сбросить фильтры» справа.</p></div>';
