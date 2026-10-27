@@ -4,7 +4,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const model = require("../Design/prototype/plan-model.js");
 Object.assign(global, model);   // в браузере plan-model.js и city-pick.js — общие скрипты страницы
-const { PICK_DEFAULTS, pickTier, pickRider, pickQuantile, pickLevel, pickPrice, pickVenue, pickDec, pickInputs, pickCalc, pickTotals } = require("../Design/prototype/city-pick.js");
+const { PICK_DEFAULTS, PICK_ORG, pickTier, pickRider, pickQuantile, pickLevel, pickPrice, pickVenue, pickDec, pickInputs, pickCalc, pickTotals } = require("../Design/prototype/city-pick.js");
 
 const near = (a, b, eps = 0.5) => assert.ok(Math.abs(a - b) <= eps, `${a} ≠ ${b}`);
 
@@ -150,4 +150,11 @@ test("суточные всего: вместо ставки × состав; п
   near(d.r.project.per_diem, 10000);
   const t = pickCalc(pickInputs({ fee: 1e6 }, c, { target: 300000 }), PLAN_DEFAULTS);
   near(t.r.target, 300000);
+});
+
+test("статьи подбора (список пользователя 27.10): все 11 в сумме, в том числе новые — реквизит, гладильщица, сканировка, администратор", () => {
+  assert.equal(PICK_ORG.length, 11);
+  const org = {}; PICK_ORG.forEach(([k], i) => { org[k] = 1000 * (i + 1); });
+  const k = pickCalc(pickInputs({ fee: 1e6 }, { seats: 800, price: 5000, km: 300 }, { org }), PLAN_DEFAULTS);
+  near(k.r.org, 1000 * (11 * 12 / 2));
 });

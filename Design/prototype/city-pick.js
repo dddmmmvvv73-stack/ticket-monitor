@@ -27,6 +27,11 @@ var PICK_DEFAULTS = {
   travel: [[700, 6000], [2000, 15000], [null, 25000]]                      // дорога туда и обратно на человека по расстоянию от Москвы, км
 };
 
+// Статьи расходов города в подборе (список пользователя 27.10); в «Финмодели туров» — свои 8 (PLAN_ORG)
+var PICK_ORG = [["transfer", "Машины по городу / трансфер"], ["hotel", "Проживание"], ["tech", "Тех.райдер"], ["catering", "Закуп / кейтеринг на площадке"],
+  ["props", "Реквизит / Декорации"], ["loaders", "Грузчики"], ["security", "Охрана"], ["services", "Службы площадки"], ["ironing", "Гладильщица"],
+  ["scanning", "Сканировка"], ["admin", "Администратор"]];
+
 function pickTier(tiers, v) {
   for (var i = 0; i < tiers.length; i++) if (tiers[i][0] == null || v <= tiers[i][0]) return tiers[i][1];
   return tiers[tiers.length - 1][1];
@@ -136,5 +141,5 @@ function pickTotals(calcs) {
   return t;
 }
 
-if (typeof module !== "undefined") module.exports = { PICK_DEFAULTS: PICK_DEFAULTS, pickTier: pickTier, pickRider: pickRider, pickQuantile: pickQuantile, pickMid: pickMid,
+if (typeof module !== "undefined") module.exports = { PICK_DEFAULTS: PICK_DEFAULTS, PICK_ORG: PICK_ORG, pickTier: pickTier, pickRider: pickRider, pickQuantile: pickQuantile, pickMid: pickMid,
   pickLevel: pickLevel, pickPrice: pickPrice, pickVenue: pickVenue, pickDec: pickDec, pickInputs: pickInputs, pickCalc: pickCalc, pickTotals: pickTotals };

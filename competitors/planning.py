@@ -48,6 +48,7 @@ from competitors.storage import CONFIG_DIR, load_json, save_json
 FILE = CONFIG_DIR / "planning.json"
 KINDS = ("params", "projects", "regions", "cities", "venues", "tours", "lists", "routes")
 ORG = ("transfer", "hotel", "tech", "catering", "loaders", "security", "services", "other")
+PICK_ORG = ORG + ("props", "ironing", "scanning", "admin")   # статьи расходов города в подборе (список пользователя 27.10)
 SCORES = ("comp", "ads", "attract", "market", "prep")
 STATUSES = ("Черновик", "Планируется", "В процессе", "Подтверждён", "Отменён")
 DECISIONS = ("", "В работу", "Отмена", "Замена города", "Перенос месяца", "Замена площадки")
@@ -196,7 +197,7 @@ def _pick_city(d: dict) -> dict:
         out["dec"] = "no"
     if not out.get("zmode"):
         out.pop("zmode", None)
-    org = _clean(d.get("org") or {}, {o: "money" for o in ORG}, "статьи расходов города")
+    org = _clean(d.get("org") or {}, {o: "money" for o in PICK_ORG}, "статьи расходов города")
     if org:
         out["org"] = org
     if d.get("zones"):

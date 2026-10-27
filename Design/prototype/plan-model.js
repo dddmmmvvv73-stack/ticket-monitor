@@ -64,7 +64,7 @@ function planCalc(x, cfg) {
     author: n(x.author), moscow: n(x.moscow) / cities
   };
   project.total = project.fee + project.cashless + project.per_diem + project.author + project.moscow;
-  var org = 0; PLAN_ORG.forEach(function (o) { org += n((x.org || {})[o[0]]); });
+  var org = 0; Object.keys(x.org || {}).forEach(function (k) { org += n(x.org[k]); });   // все статьи (в туре — PLAN_ORG, в подборе — PICK_ORG)
   var fixed = project.total + org + n(x.rent) + n(x.logistics) + n(x.ads);
   var variable = sales * v;
   var revenue = sales - variable;            // выручка после переменных (как «ВЫРУЧКА» в таблице)

@@ -1754,6 +1754,7 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .tb-decbtn { border: 1px solid var(--line); background: var(--card); color: var(--ink-2); border-radius: 9999px; padding: 6px 14px; font: inherit; font-size: 14px; cursor: pointer; }
 .tb-decbtn[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: #fff; font-weight: 500; }
 .tb-zhead { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; margin: 10px 0 6px; } .tb-zhead .seg { height: 34px; } .tb-zhead .seg button { padding: 0 10px; }
+.tb-cardin .pl-lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }   /* подписи карточки — в одну строку */
 .tb-zones { table-layout: fixed; width: 100%; } .tb-zones .pl-in { width: 100%; min-width: 0; } .tb-zones td, .tb-zones th { padding-left: 4px; padding-right: 4px; } .tb-note { min-height: 64px; }
 .tb-shares { padding: 12px 14px; margin-bottom: 12px; } .tb-shares-head { display: flex; gap: 8px; align-items: center; }
 .tb-share { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 14px; } .tb-share.closed { color: var(--muted); }
@@ -13331,7 +13332,7 @@ function tbOpenCard(city, keep) {   // карточка города: решен
   var sg = function (f) { return "tbc|" + id + "|" + city + "|" + f; }, opened = S.pl.tbGrp || (S.pl.tbGrp = { hall: true, costs: true });   // открыты по умолчанию: зал и расходы
   var line = function (label, f, val, hint) {   // поле: расчётное значение — серым (откуда — в подсказке), правка города — синим, ↺ — вернуть
     var ov = f.indexOf("org.") === 0 ? (o.org || {})[f.slice(4)] != null : src[f] === "ovr";
-    return '<div class="pl-line"><span class="pl-lbl">' + label + (hint ? ' <span class="sub2">' + hint + '</span>' : '') + '</span>' +
+    return '<div class="pl-line"><span class="pl-lbl" title="' + esc(label + (hint ? " — " + hint : "")) + '">' + label + (hint ? ' <span class="sub2">' + hint + '</span>' : '') + '</span>' +   // длинное — троеточием, полное — в подсказке
       plInput(sg(f), ov ? val : null, { ph: ov ? null : val || "", label: label, cls: "pl-sm" + (ov ? " pl-ovr" : ""), title: ov ? TB_SRC.ovr : TB_SRC[src[f]] || "" }) +
       '<span class="pl-src">' + (ov ? '<button class="pj-plain" data-pl="tb-creset" data-city="' + esc(city) + '" data-f="' + f + '" title="Вернуть расчётное значение">↺</button>' : '') + '</span></div>';
   };
@@ -13351,7 +13352,7 @@ function tbOpenCard(city, keep) {   // карточка города: решен
       '</tbody></table><div class="tb-actions"><button class="pj-plain" data-pl="tb-zadd" data-city="' + esc(city) + '">+ пояс</button>' + (tpl.length ? '<button class="pj-plain" data-pl="tb-zvenue" data-city="' + esc(city) + '">пояса площадки</button>' : '') +
       '<span class="sub2">итого ' + num(R.seats) + ' мест · вал ' + plShort(R.gross) + ' · средняя ' + plMoney(R.avg) + '</span></div>' : '');
   var orgOn = Object.keys(o.org || {}).length > 0 || (S.pl.tbOrg || {})[city];
-  var costs = (orgOn ? PLAN_ORG.map(function (a) { return line(a[1], "org." + a[0], (o.org || {})[a[0]], ""); }).join("") + '<div class="tb-actions"><button class="pj-plain" data-pl="tb-orgmode" data-city="' + esc(city) + '" data-v="0">одной суммой</button></div>'
+  var costs = (orgOn ? PICK_ORG.map(function (a) { return line(a[1], "org." + a[0], (o.org || {})[a[0]], ""); }).join("") + '<div class="tb-actions"><button class="pj-plain" data-pl="tb-orgmode" data-city="' + esc(city) + '" data-v="0">одной суммой</button></div>'
       : line("Райдер", "rider", x.org.tech, "") + '<div class="tb-actions"><button class="pj-plain" data-pl="tb-orgmode" data-city="' + esc(city) + '" data-v="1">расписать по статьям</button></div>') +
     line("Аренда", "rent", x.rent, "") + line("Реклама", "ads", x.ads, "") + line("Дорога", "logistics", x.logistics, plKm("Москва", city) != null ? num(plKm("Москва", city)) + ' км от Москвы' : '');
   var scen = function (s) { var y = Object.assign({}, x, { fill: s }); if (x.zones) y.zones = x.zones.map(function (z) { return { name: z.name, price: z.price, seats: z.seats }; }); return pickCalc({ x: y, src: src }, cfg, d).r; };
@@ -13373,7 +13374,6 @@ function tbOpenCard(city, keep) {   // карточка города: решен
         line("Состав на выезде", "crew", x.crew, "") + line("Авторские", "author", x.author, "")) +
       grp("costs", "Расходы города", R.org + R.rent + R.logistics + R.ads, costs) +
       grp("pct", "Проценты от сборов · " + R.varPct.toLocaleString("ru-RU") + "%", null, line("Комиссия касс, %", "kassa", x.kassa, "") + line("Агентские, %", "agent", x.agent, "") + line("РАО/ВОИС, %", "rao", x.rao, "") + '<p class="sub2" style="margin:4px 0 0">Налог — ' + cfg.tax + '% (в «Параметрах»).</p>') +
-      grp("note", "Заметка", null, '<textarea class="tb-text tb-note" rows="3" data-plf="' + esc(sg("note")) + '" placeholder="Контакт площадки, условия, даты…" aria-label="Заметка по городу">' + esc(o.note || "") + '</textarea>') +
     '</div>' +
     (has ? '<div class="pl-water pl-flat">' + wl("Вал · " + num(R.seats) + " мест", R.gross) + wl("Сборы · " + Math.round(R.fillEff) + "%", R.sales, true) +
       wl("− Налог и проценты · " + R.varPct.toLocaleString("ru-RU") + "%", R.variable) + wl("− Гонорар", R.project.fee) + wl("− % сверху к гонорару", R.project.cashless) +
