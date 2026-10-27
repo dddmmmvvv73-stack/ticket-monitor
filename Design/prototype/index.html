@@ -11858,7 +11858,7 @@ var PL_KEY = "ticketmonitor.prototype.planning";
 var PLAN = { params: {}, projects: {}, regions: {}, cities: {}, venues: {}, tours: {}, lists: {}, routes: {} };
 if (!CAN_SAVE) { try { var plSaved = JSON.parse(localStorage.getItem(PL_KEY)); if (plSaved) PLAN = Object.assign(PLAN, plSaved); } catch (e) { /* записей ещё нет */ } }
 S.pl = { tab: "tours", tour: null, row: null, scen: "", adding: false };
-var PL_TABS = [["tours", "Туры"], ["build", "Построение гастролей"], ["map", "Карта"], ["projects", "Проекты"], ["cities", "Города"], ["regions", "Регионы"], ["params", "Параметры"]];
+var PL_TABS = [["tours", "Туры"], ["build", "Подбор городов"], ["map", "Карта"], ["projects", "Проекты"], ["cities", "Города"], ["regions", "Регионы"], ["params", "Параметры"]];
 var PL_STATUS = ["Черновик", "Планируется", "В процессе", "Подтверждён", "Отменён"];
 var PL_DECISION = ["", "В работу", "Отмена", "Замена города", "Перенос месяца", "Замена площадки"];
 function plLoad() {
@@ -12697,7 +12697,7 @@ function plGmLogi(map, layer, c, st) {   // логистика от города
     });
 }
 
-// ---------- «Планирование → Построение гастролей» (запрос пользователя 13.10): продюсер присылает города и даты, где проект
+// ---------- «Планирование → Подбор городов» (до 27.10 — «Построение гастролей»; запрос пользователя 13.10): продюсер присылает города и даты, где проект
 // уже работает в сезоне; список вставляется как есть (разбор — tour-parse.js, проверка и правка — здесь), сохраняется за
 // проектом (PLAN.lists). Два источника: список продюсера и наша база касс (даты проекта в афише рынка), плюс «был недавно»
 // (архив и даты до сезона — за «бан, мес.» из «Параметров»). Сезон — календарь «Даты» в шапке. Свободные города — списком
@@ -12815,11 +12815,11 @@ function plBuild() {
   if (!t.draft && !t.list && ids.length) t.list = ids[0];
   var head = '<div class="tb-head pl-flat">' +
     (ids.length ? '<label class="pl-lab">Список ' + plSelect("tb|list", t.draft ? "" : t.list, (t.draft ? [["", "— новый —"]] : []).concat(ids.map(function (id) { return [id, lists[id].title]; })), "Список продюсера") + '</label>' : '') +
-    (t.draft ? '' : '<button class="btn-dark" data-pl="tb-new">+ Новый список</button>' + (t.list ? '<button class="btn-ghost" data-pl="tb-edit">Изменить список</button><button class="btn-ghost" data-pl="tb-del">Удалить</button>' : '')) +
+    (t.draft ? '' : '<button class="btn-dark" data-pl="tb-new">+ Новый артист</button>' + (t.list ? '<button class="btn-ghost" data-pl="tb-edit">Изменить список</button><button class="btn-ghost" data-pl="tb-del">Удалить</button>' : '')) +
     '<span style="flex-grow:1"></span><span class="sub2 pl-gm-period" title="Сезон — кнопка «Даты» в шапке: месяц или несколько месяцев подряд">Сезон: <b>' + esc(periodLabel()) + '</b> — «Даты» в шапке</span></div>';
   if (t.draft) return head + tbEditor(t.draft);
   var L = tbCur();
-  if (!L) return head + '<div class="empty" style="margin-top:16px"><h2>Списков пока нет</h2><p style="margin:0 0 12px">Назовите артиста и укажите, как он называется в афише. Если продюсер прислал города и даты — вставьте их как есть. Потом впишите гонорар: программа покажет свободные города, где концерт окупается.</p><button class="btn-dark" data-pl="tb-new">+ Новый список</button></div>';
+  if (!L) return head + '<div class="empty" style="margin-top:16px"><h2>Артистов пока нет</h2><p style="margin:0 0 12px">Назовите артиста и укажите, как он называется в афише. Если продюсер прислал города и даты — вставьте их как есть. Потом впишите гонорар: программа покажет свободные города, где концерт окупается.</p><button class="btn-dark" data-pl="tb-new">+ Новый артист</button></div>';
   return head + tbResults(L);
 }
 function tbEditor(d) {
@@ -13055,7 +13055,7 @@ function tbAction(a, b) {   // кнопки вкладки (из общего о
   }
 }
 
-// ---------- «Построение гастролей» → подбор городов для артиста (как считается — CITY_PICK.md; экран — CITY_PICK_PLAN.md,
+// ---------- «Подбор городов» → экран артиста (как считается — CITY_PICK.md; экран — CITY_PICK_PLAN.md,
 // решения пользователя 26.10). У списка — экономика артиста (гонорар, % сверху, состав…; пустое — нормы). Две вкладки:
 // «Все города» — таблица кандидатов (один фильтр «не были и не стоят», столбцы как в «Турах», сортировка по заголовку) и
 // «Предложение» — города, отмеченные «подходит» / «на рассмотрении», в своём порядке; из него — PDF артисту, PDF и ссылка
@@ -13951,7 +13951,7 @@ function plChange(el) {
     tbEditCity(p[2], function (co) { co.zones = co.zones || []; var z = co.zones[+p[3]] = co.zones[+p[3]] || {}; if (zv == null || zv === "") delete z[zf]; else z[zf] = zf === "fill" ? Math.max(0, Math.min(100, zv)) : zv; });
     return;
   }
-  if (kind === "tb") {   // «Построение гастролей»: список, фильтры
+  if (kind === "tb") {   // «Подбор городов»: список, фильтры
     var tbp = tbPrefs();
     if (p[1] === "list") { S.pl.tb.list = el.value || null; S.pl.tb.draft = null; S.pl.tb.sel = {}; S.pl.tbView = null; }
     else { tbp[p[1]] = el.value; tbSave(tbp); }
@@ -14112,7 +14112,7 @@ document.addEventListener("change", function (ev) {   // «Столбцы»: п�
   var c = ev.target.closest && ev.target.closest("[data-pl-col]"); if (!c) return;
   var cp = plColPrefs(c.getAttribute("data-cset") || "t"); cp.vis = cp.vis || {}; cp.vis[c.getAttribute("data-pl-col")] = c.checked; plPrefsSave(); tbRe();
 });
-// «Построение гастролей»: правка разобранных строк, выбор городов, области
+// «Подбор городов»: правка разобранных строк, выбор городов, области
 document.addEventListener("change", function (ev) {
   var el = ev.target; if (!el.closest) return;
   var r = el.closest("[data-tbr]"), t = S.pl.tb;
