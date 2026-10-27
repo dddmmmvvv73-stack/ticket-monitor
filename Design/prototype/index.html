@@ -1756,7 +1756,7 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .tb-zhead { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; margin: 10px 0 6px; } .tb-zhead .seg { height: 34px; } .tb-zhead .seg button { padding: 0 10px; }
 .tb-cardin .pl-lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }   /* подписи карточки — в одну строку */
 .tb-zones { table-layout: fixed; width: 100%; } .tb-zones .pl-in { width: 100%; min-width: 0; } .tb-zones td, .tb-zones th { padding-left: 4px; padding-right: 4px; } .tb-note { min-height: 64px; }
-.tb-shares { padding: 12px 14px; margin-bottom: 12px; } .tb-shares-head { display: flex; gap: 8px; align-items: center; }
+.tb-shares { padding: 12px 14px; margin-bottom: 12px; } .tb-shares-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; } .tb-shares-head .icon-btn { width: 32px; height: 32px; }
 .tb-share { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 14px; } .tb-share.closed { color: var(--muted); }
 .tb-shareurl { width: 320px; max-width: 100%; text-align: left; font-size: 13px; } .tb-sharebase { margin-top: 8px; } .tb-sharebase summary { cursor: pointer; } #tbShareBase { width: 360px; max-width: 100%; text-align: left; }
 .tb-mgr { display: flex; flex-wrap: wrap; gap: 2px 8px; margin-top: 2px; } .tb-mgr.new .tb-st { font-weight: 600; }
@@ -13459,16 +13459,22 @@ function tbShareMarks(A) {   // r.mgr — значок у города в таб
   });
   var gen = by[""]; S.pl.tbGenC = gen ? gen.list : [];
 }
-function tbShareBtn() {
-  return '<button class="btn-ghost" data-pl="tb-share" title="Страница с этим предложением, где руководитель отмечает города и пишет комментарии. Ноутбук должен быть включён, иначе ссылка не откроется">Ссылка для руководителя</button>';
+function tbShareBtn() {   // открывает и закрывает блок ссылок (решение пользователя 27.10: блок можно убрать); новые комментарии — числом
+  var open = !!S.pl.tbShareOpen;
+  return '<button class="btn-ghost" data-pl="tb-sharepanel" aria-expanded="' + open + '" title="Страница с этим предложением, где руководитель отмечает города и пишет комментарии. Ноутбук должен быть включён, иначе ссылка не откроется">Ссылка для руководителя' +
+    (S.pl.tbNewC ? ' <span class="tb-newc" title="Новые комментарии руководителя">' + S.pl.tbNewC + '</span>' : '') + ' <span aria-hidden="true">' + (open ? '▴' : '▾') + '</span></button>';
 }
 function tbSharePanel() {
-  var st = S.pl.tbShares; if (!st || st.list !== S.pl.tb.list || !(st.shares || []).length) return '';
-  var seen = tbShareSeen(), local = /127\.0\.0\.1|localhost/.test(st.base || "");
+  if (!S.pl.tbShareOpen) return '';
+  var st = S.pl.tbShares && S.pl.tbShares.list === S.pl.tb.list ? S.pl.tbShares : { shares: [], base: "" }, has = (st.shares || []).length > 0;
+  var seen = tbShareSeen(), local = !st.base || /127\.0\.0\.1|localhost/.test(st.base);
   var gen = (S.pl.tbGenC || []).slice().reverse();
   return '<section class="card pl-card tb-shares"><div class="tb-shares-head"><b>Ссылки для руководителя</b>' +
-      (S.pl.tbNewC ? '<span class="tb-newc">' + S.pl.tbNewC + '</span> <button class="pj-plain" data-pl="tb-shareseen">прочитано</button>' : '') + '</div>' +
-    (local ? '<p class="sub2" style="margin:4px 0 8px">Ссылка откроется только на этом компьютере, пока не настроен внешний доступ (Tailscale). PDF работает всегда.</p>' : '') +
+      (S.pl.tbNewC ? '<span class="tb-newc">' + S.pl.tbNewC + '</span> <button class="pj-plain" data-pl="tb-shareseen">прочитано</button>' : '') +
+      '<span style="flex-grow:1"></span><button class="btn-dark" data-pl="tb-share">' + (has ? 'Новая версия ссылки' : 'Создать ссылку') + '</button>' +
+      '<button class="icon-btn" data-pl="tb-sharepanel" aria-label="Закрыть блок ссылок" title="Закрыть">' + PJ_ICON.close + '</button></div>' +
+    (has ? '' : '<p class="sub2" style="margin:6px 0 0">Ссылка сохранит предложение, как оно сейчас: города и цифры. Руководитель отметит города и оставит комментарии — они появятся здесь и у городов.</p>') +
+    (has && local ? '<p class="sub2" style="margin:4px 0 8px">Ссылка откроется только на этом компьютере, пока не настроен внешний доступ (Tailscale). PDF работает всегда.</p>' : '') +
     st.shares.slice(0, 5).map(function (s, i) {
       var url = tbShareUrl(s), n = (s.comments || []).length, nn = (s.comments || []).filter(function (c) { return tbShareIsNew(s, c); }).length;
       return '<div class="tb-share' + (s.closed ? ' closed' : '') + '"><span>' + (i === 0 && !s.closed ? '<b>Текущая</b> · ' : '') + 'от ' + new Date(s.created).toLocaleString("ru-RU", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) +
@@ -13482,7 +13488,8 @@ function tbSharePanel() {
 function tbShareAction(a, b) {
   if (!CAN_SAVE) { toast("Ссылка работает только через сайт, не из файла"); return; }
   var id = S.pl.tb.list;
-  if (a === "tb-share") {
+  if (a === "tb-sharepanel") { S.pl.tbShareOpen = !S.pl.tbShareOpen; if (S.pl.tbShareOpen) tbSharesLoad(true); tbRe(); }
+  else if (a === "tb-share") {
     var cx = S.pl.tbCtx, L = tbCur(); if (!cx || !cx.A || !L) return;
     var snap = tbSnapshot(L, cx.A, cx.P); if (!snap.rows.length) { toast("В предложении нет городов"); return; }
     apiJson("POST", "/api/shares", { list: id, snapshot: snap }).then(function (x) {
@@ -13520,15 +13527,25 @@ function tbSnapshot(L, A, P) {
         need: k.need, sales: R.sales, total: R.total, profit: R.profit, be: R.beTickets, beShare: R.beShare, status: k.status, margin: k.margin, note: P2.o.note || "" };
     }) };
 }
-function tbOfferDoc(kind) {   // окно для печати (PDF): артисту — без экономики, руководителю — с экономикой и допущениями
+// Окно документа: «Сохранить PDF» шлёт его HTML (с правками в рамках) на сайт — competitors/pdfdoc.py печатает в PDF и
+// отдаёт файлом (решение пользователя 27.10: только сохранение, печать — потом сам). Руководителю — альбомный лист.
+var TB_PDF_JS = 'document.getElementById("savePdf").onclick=function(){var b=this,t=b.textContent;b.disabled=true;b.textContent="Готовлю PDF…";' +
+  'var d=document.documentElement.cloneNode(true);[].forEach.call(d.querySelectorAll(".bar,script"),function(x){x.remove();});' +
+  '[].forEach.call(d.querySelectorAll("[contenteditable]"),function(x){x.removeAttribute("contenteditable");});' +
+  'fetch(PDF_API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({html:"<!doctype html>"+d.outerHTML,title:document.title,landscape:PDF_LAND})})' +
+  '.then(function(r){if(!r.ok)return r.json().then(function(j){throw new Error(j.error||"ошибка");},function(){throw new Error("сайт не ответил");});return r.blob();})' +
+  '.then(function(bl){var a=document.createElement("a");a.href=URL.createObjectURL(bl);a.download=document.title+".pdf";document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},2000);b.disabled=false;b.textContent=t;})' +
+  '.catch(function(e){alert("PDF не сохранился: "+e.message);b.disabled=false;b.textContent=t;});};';
+function tbOfferDoc(kind) {   // окно документа: артисту — без экономики, руководителю — с экономикой и допущениями
   var cx = S.pl.tbCtx, L = tbCur(); if (!cx || !cx.A || !L) return;
   var snap = tbSnapshot(L, cx.A, cx.P), title = (kind === "artist" ? "Предложение — " : "На согласование — ") + snap.who;
   var w = window.open("", "_blank");
   if (!w) { toast("Браузер не дал открыть окно — разрешите всплывающие окна для этого сайта"); return; }
   w.document.open();
   w.document.write('<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>' + esc(title) + '</title><style>' + OFFER_CSS + '</style></head><body>' +
-    '<div class="bar"><button onclick="window.print()">Сохранить в PDF / печать</button><span class="hint">Текст в рамках можно править прямо здесь перед сохранением.</span></div>' +
-    offerDocBody(snap, kind, { maybe: !!tbPrefs().ofArtMaybe }) + '</body></html>');
+    '<div class="bar"><button id="savePdf">Сохранить PDF</button><span class="hint">Текст в рамках можно поправить перед сохранением.</span></div>' +
+    offerDocBody(snap, kind, { maybe: !!tbPrefs().ofArtMaybe }) +
+    '<script>var PDF_API = ' + JSON.stringify(location.origin + "/api/pdf") + ', PDF_LAND = ' + (kind === "boss") + ';' + TB_PDF_JS + '<\/script></body></html>');
   w.document.close();
 }
 
