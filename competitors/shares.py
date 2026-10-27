@@ -14,6 +14,7 @@ config/shares/_settings.json — {"base": адрес, с которого рук
 Основной сайт (только этот компьютер):
     POST /api/shares                 {"list", "snapshot"} → новая версия; у прошлой версии этого списка — "next"
     GET  /api/shares?list=…          версии списка с комментариями и адрес для ссылок
+    GET  /api/shares/summary         по всем спискам сразу — для таблицы артистов «Подбора городов»
     POST /api/shares/<token>/close   закрыть ссылку
     POST /api/shares/base            {"base"} — адрес для ссылок (после настройки внешнего доступа)
 """
@@ -157,6 +158,38 @@ def add_comment(token: str, city: str, name: str, text: str, decision: str) -> d
     return d
 
 
+def summary() -> dict:
+    """По каждому списку: версий, есть ли открытая, дата последней, последние решения руководителя по городам (ok / ask / no),
+    комментариев, когда последний, и токены с датой последнего комментария — браузер считает новые."""
+    out: dict = {}
+    for p in DIR.glob("*.json"):
+        if p.name.startswith("_"):
+            continue
+        d = load(p.stem)
+        if not d:
+            continue
+        o = out.setdefault(d.get("list") or "", {"versions": 0, "open": False, "created": "", "dec": {}, "comments": 0, "last_at": "", "tokens": []})
+        o["versions"] += 1
+        o["open"] = o["open"] or not d.get("closed")
+        o["created"] = max(o["created"], d.get("created") or "")
+        cs = d.get("comments") or []
+        o["comments"] += len(cs)
+        last = max((c.get("at") or "" for c in cs), default="")
+        o["last_at"] = max(o["last_at"], last)
+        o["tokens"].append({"token": d["token"], "last_at": last, "created": d.get("created") or ""})
+        for c in cs:
+            if c.get("city") and c.get("decision"):
+                prev = o["dec"].get(c["city"])
+                if not prev or c["at"] >= prev[1]:
+                    o["dec"][c["city"]] = [c["decision"], c["at"]]
+    for o in out.values():
+        n = {"ok": 0, "ask": 0, "no": 0}
+        for dec, _ in o.pop("dec").values():
+            n[dec] = n.get(dec, 0) + 1
+        o.update(n)
+    return out
+
+
 def _brief(d: dict) -> dict:
     return {k: d.get(k) for k in ("token", "list", "title", "created", "closed", "prev", "next", "comments")} | {"cities": len(d["snapshot"].get("rows", []))}
 
@@ -169,6 +202,11 @@ def api_create():
     except ShareError as e:
         return jsonify({"error": str(e)}), 400
     return jsonify({"ok": True, "share": _brief(d), "base": base()})
+
+
+@bp.get("/api/shares/summary")
+def api_summary():
+    return jsonify({"base": base(), "lists": summary()})
 
 
 @bp.get("/api/shares")

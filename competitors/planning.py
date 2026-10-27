@@ -16,6 +16,7 @@
      "lists":    {номер: {"title", "project" — название проекта в афише, "text" — список продюсера как прислан,
                   "rows": [{"city", "date", "date2", "time", "status", "other", "note", "line", "fix", "raw"}],
                   "format" — формат для цены города (пусто — по афише проекта),
+                  "work": {"project", "task"} — связь с проектом и задачей «Работы» (config/work.json; решение 27.10),
                   "econ": {"fee", "cashless", "crew", "per_diem", "rider", "author", "rao", "moscow", "kassa", "fill",
                            "capMin", "capMax", "ads", "lvl" — уровень цен артиста ×, "note"} — экономика первого касания,
                   "cities": {город: {"dec" — решение: yes | maybe | no, "ord" — порядок в предложении, "venue", "seats",
@@ -252,6 +253,12 @@ def _validate(kind: str, data: dict) -> dict:
         if not isinstance(rows, list) or len(rows) > 500:
             raise PlanningError("список гастролей: до 500 строк")
         out["rows"] = [_clean(r or {}, LIST_ROW, "строка списка") for r in rows]
+        work = data.get("work") or {}   # связь с «Работой»: номера проекта и задачи (существование не проверяем — другой файл)
+        if not isinstance(work, dict) or any(k not in ("project", "task") or not isinstance(v, str) or not _ID.match(v) for k, v in work.items() if v):
+            raise PlanningError("связь с «Работой»: неверный номер проекта или задачи")
+        work = {k: v for k, v in work.items() if v}
+        if work:
+            out["work"] = work
         econ = _clean(data.get("econ") or {}, ECON, "экономика проекта")
         if econ:
             out["econ"] = econ
