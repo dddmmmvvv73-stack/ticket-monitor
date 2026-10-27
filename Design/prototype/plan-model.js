@@ -5,7 +5,8 @@
 // ▸ ФОРМУЛЫ — ТОЛЬКО ЗДЕСЬ. Страница берёт значения из справочников (проект, город, регион, площадка) и правок строки
 //   тура и зовёт planCalc; сама ничего не считает.
 //
-// Постоянные издержки  = проектные (гонорар + % за безнал от гонорара + суточные × состав × дни + авторские
+// Постоянные издержки  = проектные (гонорар + % за безнал от гонорара + суточные × состав × дни (или суточные всего —
+//                        per_diem_sum, когда состав и ставка неизвестны; подбор городов, решение пользователя 27.10) + авторские
 //                        + московские расходы ÷ городов тура) + организационные (8 статей города) + аренда + логистика
 //                        + реклама
 // Переменные издержки  = сборы × (РАО/ВОИС + налог + комиссия касс + агентские), %
@@ -58,7 +59,8 @@ function planCalc(x, cfg) {
   var v = varPct / 100;
   var cities = Math.max(1, n(x.cities) || 1);
   var project = {
-    fee: n(x.fee), cashless: n(x.fee) * n(x.cashless) / 100, per_diem: n(x.per_diem) * n(x.crew) * Math.max(0, n(x.days)),
+    fee: n(x.fee), cashless: n(x.fee) * n(x.cashless) / 100,
+    per_diem: x.per_diem_sum != null && x.per_diem_sum !== "" ? n(x.per_diem_sum) : n(x.per_diem) * n(x.crew) * Math.max(0, n(x.days)),
     author: n(x.author), moscow: n(x.moscow) / cities
   };
   project.total = project.fee + project.cashless + project.per_diem + project.author + project.moscow;
@@ -136,7 +138,10 @@ function planShift(x, f, d) {
     if (d >= 0) y.org.other = n(y.org.other) + d;
     else if (tot > 0) { var kf = Math.max(0, tot + d) / tot; Object.keys(y.org).forEach(function (k) { y.org[k] = n(y.org[k]) * kf; }); }
   }
-  else if (f === "per_diem") { var k = n(y.crew) * Math.max(1, n(y.days)); if (k > 0) y.per_diem = Math.max(0, n(y.per_diem) + d / k); }
+  else if (f === "per_diem") {
+    if (y.per_diem_sum != null && y.per_diem_sum !== "") y.per_diem_sum = Math.max(0, n(y.per_diem_sum) + d);   // суточные всего — сдвиг суммы
+    else { var k = n(y.crew) * Math.max(1, n(y.days)); if (k > 0) y.per_diem = Math.max(0, n(y.per_diem) + d / k); }
+  }
   else y[f] = Math.max(0, n(y[f]) + d);
   return y;
 }

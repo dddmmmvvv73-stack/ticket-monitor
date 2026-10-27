@@ -146,10 +146,12 @@ def _zones(v, fields: dict, what: str) -> list:
 TOUR = {"title": 200, "project": 24, "month": "date", "status": STATUSES, "note": 2000}
 LIST = {"title": 200, "project": 300, "text": 30000, "format": 60}
 ECON = {"fee": "money", "cashless": "pct", "crew": "int", "per_diem": "money", "rider": "money", "author": "money", "rao": "pct",
-        "moscow": "money", "kassa": "pct", "fill": "pct", "capMin": "int", "capMax": "int", "ads": "money", "lvl": "money", "note": 2000}
+        "moscow": "money", "kassa": "pct", "fill": "pct", "capMin": "int", "capMax": "int", "ads": "money", "lvl": "money", "per_diem_sum": "money",
+        "note": 2000}
 PICK_CITY = {"x": "bool", "dec": ("", "yes", "maybe", "no"), "ord": "int", "venue": 200, "seats": "int", "price": "money", "fill": "pct",
              "rent": "money", "ads": "money", "logistics": "money", "rider": "money", "fee": "money", "cashless": "pct", "per_diem": "money",
-             "crew": "int", "author": "money", "kassa": "pct", "agent": "pct", "rao": "pct", "zmode": "bool", "note": 2000}
+             "crew": "int", "author": "money", "kassa": "pct", "agent": "pct", "rao": "pct", "zmode": "bool", "per_diem_sum": "money",
+             "target": "money", "note": 2000}
 ROUTE = {"title": 200, "month": "date", "text": 30000, "limit": "int", "project": 24}
 LIST_ROW = {"city": 100, "date": "date", "date2": "date", "time": 5, "status": ("ok", "maybe", "nodate", "transit", "other", "note", "title"),
             "other": 200, "note": 300, "line": 500, "fix": 20, "raw": 100}

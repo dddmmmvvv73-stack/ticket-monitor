@@ -151,3 +151,10 @@ test("чувствительность: рост аренды на 10 000 ₽ в
   const m = (f) => Math.max(Math.abs(f.up), Math.abs(f.down));
   assert.ok(s.factors.every((f, i) => i === 0 || m(s.factors[i - 1]) >= m(f)));
 });
+
+test("суточные всего (per_diem_sum) — вместо ставка × состав × дни; сдвиг суточных двигает сумму", () => {
+  const x = { gross: 1000000, seats: 500, fill: 70, fee: 300000, per_diem: 3000, crew: 6, days: 2, per_diem_sum: 25000 };
+  near(planCalc(x).project.per_diem, 25000);
+  near(planCalc({ ...x, per_diem_sum: null }).project.per_diem, 36000);
+  near(planShift(x, "per_diem", 5000).per_diem_sum, 30000);
+});

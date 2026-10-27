@@ -139,3 +139,15 @@ test("распоясовка: места, средняя цена, заполн�
   near(k.r.sales, 6000 * 400 * 0.8 + 3000 * 200 * 0.5);   // 2 220 000
   near(k.need, k.r.fixed / (600 * (k.r.fillEff / 100) * 0.88), 0.01);
 });
+
+test("суточные всего: вместо ставки × состав; правка города важнее экономики, ставка города — важнее суммы экономики", () => {
+  const c = { seats: 800, price: 5000, km: 500 };
+  const a = pickCalc(pickInputs({ fee: 1e6, per_diem: 3000, per_diem_sum: 50000 }, c, {}), PLAN_DEFAULTS);
+  near(a.r.project.per_diem, 50000);
+  const b = pickCalc(pickInputs({ fee: 1e6, per_diem_sum: 50000 }, c, { per_diem_sum: 20000 }), PLAN_DEFAULTS);
+  near(b.r.project.per_diem, 20000);
+  const d = pickCalc(pickInputs({ fee: 1e6, per_diem_sum: 50000 }, c, { per_diem: 2000, crew: 5 }), PLAN_DEFAULTS);
+  near(d.r.project.per_diem, 10000);
+  const t = pickCalc(pickInputs({ fee: 1e6 }, c, { target: 300000 }), PLAN_DEFAULTS);
+  near(t.r.target, 300000);
+});

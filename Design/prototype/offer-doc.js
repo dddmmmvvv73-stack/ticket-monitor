@@ -52,7 +52,7 @@ function offerDocBody(snap, kind, o) {
   var tot = function (label, t) { return kv(label, t.n + ' · прибыль <span class="' + (t.profit < 0 ? 'neg' : 'ok') + '">' + ofMoney(t.profit) + '</span>'); };
   var low = rows.filter(function (r) { return r.priceNote === "мало данных"; }).map(function (r) { return r.city; });
   var nod = rows.filter(function (r) { return !ofHas(r); }).map(function (r) { return r.city; });
-  var cols = '<tr><th>№</th><th>Город</th><th>Зал</th><th class="r">Мест</th><th class="r">Цена города</th><th class="r">Нужна цена</th><th class="r">Сборы</th><th class="r">Расходы</th><th class="r">Прибыль</th><th class="r">В ноль</th><th>Окупаемость</th><th>Решение</th></tr>';
+  var cols = '<tr><th>№</th><th>Город</th><th>Зал</th><th class="r">Мест</th><th class="r">Цена города</th><th class="r">Нужна цена</th><th class="r">Сборы</th><th class="r">Расходы</th><th class="r">Прибыль</th><th class="r">ТБУ</th><th>Окупаемость</th><th>Решение</th></tr>';
   var n = 0, line = function (r) {
     var h = ofHas(r);
     return '<tr><td>' + (++n) + '</td><td>' + ofEsc(r.city) + '<div class="muted">' + ofEsc(r.reg) + '</div></td><td>' + ofEsc(r.venue || "—") + '</td><td class="r">' + (r.seats ? ofNum(r.seats) : "—") + '</td>' +
@@ -67,7 +67,7 @@ function offerDocBody(snap, kind, o) {
     return '<div class="cc"><div class="cc-h"><b>' + (++n) + '. ' + ofEsc(r.city) + '</b><span class="muted">' + ofEsc(r.reg) + '</span><span class="' + ofEsc(r.status) + '">' + (OFFER_ST[r.status] || "—") + ofMargin(r) + '</span></div>' +
       '<div>' + ofEsc(r.venue || "зал уточняется") + (r.seats ? ' · ' + ofNum(r.seats) + ' мест' : '') + '</div>' +
       '<div class="cc-n"><span>Цена города <b>' + ofMoney(r.price) + '</b>' + (r.priceNote ? ' (' + ofEsc(r.priceNote) + ')' : '') + '</span>' + (h ? '<span>Нужна <b>' + ofMoney(r.need) + '</b></span><span>Сборы <b>' + ofMoney(r.sales) + '</b></span>' +
-        '<span>Расходы <b>' + ofMoney(r.total) + '</b></span><span>Прибыль <b class="' + (r.profit < 0 ? 'neg' : '') + '">' + ofMoney(r.profit) + '</b></span>' + (r.be != null ? '<span>В ноль <b>' + ofNum(Math.ceil(r.be)) + ' бил. · ' + Math.round(r.beShare * 100) + '%</b></span>' : '') : '') + '</div>' +
+        '<span>Расходы <b>' + ofMoney(r.total) + '</b></span><span>Прибыль <b class="' + (r.profit < 0 ? 'neg' : '') + '">' + ofMoney(r.profit) + '</b></span>' + (r.be != null ? '<span>ТБУ <b>' + ofNum(Math.ceil(r.be)) + ' бил. · ' + Math.round(r.beShare * 100) + '%</b></span>' : '') : '') + '</div>' +
       '<div data-mgr="' + ofEsc(r.city) + '"></div></div>';
   };
   var cards = function (label, list) { return list.length ? '<div class="cc-g">' + label + ' · ' + list.length + '</div>' + list.map(card).join("") : ''; };

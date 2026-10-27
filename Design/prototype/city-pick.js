@@ -90,6 +90,10 @@ function pickInputs(econ, c, o, d) {
   var fee = pick("fee", [[o.fee, "ovr"], [econ.fee, "econ"]]);
   var cashless = pick("cashless", [[o.cashless, "ovr"], [econ.cashless, "econ"]]);
   var per_diem = pick("per_diem", [[o.per_diem, "ovr"], [econ.per_diem, "econ"]]);
+  // суточные всего (решение пользователя 27.10: состав и ставка неизвестны — вписать сумму): правка города важнее
+  // экономики; ставка города перекрывает сумму из экономики
+  var pdSum = has(o.per_diem_sum) ? [o.per_diem_sum, "ovr"] : has(o.per_diem) ? null : has(econ.per_diem_sum) ? [econ.per_diem_sum, "econ"] : null;
+  src.per_diem_sum = pdSum ? pdSum[1] : "none";
   var author = pick("author", [[o.author, "ovr"], [econ.author, "econ"]]);
   var rao = pick("rao", [[o.rao, "ovr"], [econ.rao, "econ"]]);
   var agent = pick("agent", [[o.agent, "ovr"]]);
@@ -107,6 +111,7 @@ function pickInputs(econ, c, o, d) {
   var logistics = pick("logistics", [[o.logistics, "ovr"], [c.km != null ? crew * pickTier(d.travel, c.km) : null, "norm"]]);
   var kassa = pick("kassa", [[o.kassa, "ovr"], [econ.kassa, "econ"], [d.kassa, "norm"]]);
   var x = { gross: price * seats, seats: seats, fill: fill, fee: fee, cashless: cashless, per_diem: per_diem, crew: crew, days: 1,
+    per_diem_sum: pdSum ? n(pdSum[0]) : null, target: has(o.target) ? n(o.target) : null,
     author: author, rao_on: rao > 0, rao: rao, moscow: n(econ.moscow), cities: Math.max(1, n(c.cities) || 1),
     org: org, rent: rent, logistics: logistics, ads: ads, kassa: kassa, agent: agent };
   if (o.zmode && o.zones && o.zones.length) { x.zones = o.zones; src.price = src.seats = "zones"; }   // распоясовка: вал, места и сборы — по поясам

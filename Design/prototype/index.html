@@ -1754,7 +1754,7 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .tb-decbtn { border: 1px solid var(--line); background: var(--card); color: var(--ink-2); border-radius: 9999px; padding: 6px 14px; font: inherit; font-size: 14px; cursor: pointer; }
 .tb-decbtn[aria-pressed="true"] { background: var(--c); border-color: var(--c); color: #fff; font-weight: 500; }
 .tb-zhead { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; margin: 10px 0 6px; } .tb-zhead .seg { height: 34px; } .tb-zhead .seg button { padding: 0 10px; }
-.tb-zones .pl-in.pl-text { width: 100%; } .tb-note { min-height: 64px; }
+.tb-zones { table-layout: fixed; width: 100%; } .tb-zones .pl-in { width: 100%; min-width: 0; } .tb-zones td, .tb-zones th { padding-left: 4px; padding-right: 4px; } .tb-note { min-height: 64px; }
 .tb-shares { padding: 12px 14px; margin-bottom: 12px; } .tb-shares-head { display: flex; gap: 8px; align-items: center; }
 .tb-share { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; padding: 6px 0; border-top: 1px solid var(--line); font-size: 14px; } .tb-share.closed { color: var(--muted); }
 .tb-shareurl { width: 320px; max-width: 100%; text-align: left; font-size: 13px; } .tb-sharebase { margin-top: 8px; } .tb-sharebase summary { cursor: pointer; } #tbShareBase { width: 360px; max-width: 100%; text-align: left; }
@@ -12094,8 +12094,8 @@ function plTour(id) {
   cols.forEach(function (c) { width += plColW(c); });
   var colgroup = '<colgroup><col style="width:26px">' + cols.map(function (c) { return '<col data-plcol="' + c.id + '" style="width:' + plColW(c) + 'px">'; }).join("") + '<col style="width:76px"></colgroup>';
   var th = '<thead><tr><th scope="col"><span class="sr-only">Порядок</span></th>' + cols.map(function (c) {
-    return '<th scope="col" class="pl-th' + (c.left ? ' pl-left' : '') + '" draggable="true" data-plcolhead="' + c.id + '" data-colset="t" title="' + esc(c.labels[0]) + ' — перетащите, чтобы поменять порядок"><span class="pl-thl">' + esc(plFitLabel(c, plColW(c))) + '</span>' +
-      '<span class="resizer" data-plresize="' + c.id + '" data-colset="t" title="Потяните, чтобы изменить ширину. Двойной клик — вернуть." aria-hidden="true"></span></th>';
+    return '<th scope="col" class="pl-th' + (c.left ? ' pl-left' : '') + '" draggable="true" data-plcolhead="' + c.id + '" data-cset="t" title="' + esc(c.labels[0]) + ' — перетащите, чтобы поменять порядок"><span class="pl-thl">' + esc(plFitLabel(c, plColW(c))) + '</span>' +
+      '<span class="resizer" data-plresize="' + c.id + '" data-cset="t" title="Потяните, чтобы изменить ширину. Двойной клик — вернуть." aria-hidden="true"></span></th>';
   }).join("") + '<th scope="col" class="pl-act"><span class="sr-only">Действия</span></th></tr></thead>';
   var cell = function (c, r, k, sg) {
     var warn = [];
@@ -13065,7 +13065,15 @@ var PK_COLS = [   // столбцы подбора и предложения (CI
   { id: "dec", labels: ["Решение", "Реш."], w: 160, left: true },
   { id: "reg", labels: ["Область", "Обл."], w: 160, left: true, off: true }, { id: "pop", labels: ["Жителей", "Жит."], w: 84, off: true },
   { id: "seats", labels: ["Мест", "М."], w: 70, off: true }, { id: "sales", labels: ["Сборы", "Сб."], w: 88, off: true },
-  { id: "total", labels: ["Расходы", "Расх."], w: 88, off: true }, { id: "be", labels: ["В ноль, билетов", "В ноль"], w: 110, off: true },
+  { id: "total", labels: ["Расходы", "Расх."], w: 88, off: true },
+  // показатели «Туров» (решение пользователя 27.10: ТБУ вместо «в ноль», добавить те, которых нет; свои столбцы подбора — как есть)
+  { id: "beT", labels: ["ТБУ, билетов", "ТБУ бил.", "ТБУ"], w: 84, off: true }, { id: "be", labels: ["ТБУ, % аншлага", "ТБУ %", "%"], w: 80, off: true },
+  { id: "beRub", labels: ["ТБУ продаж", "ТБУ ₽"], w: 92, off: true }, { id: "fill", labels: ["Аншлаг, %", "Аншл. %", "%"], w: 70, off: true },
+  { id: "gross", labels: ["Вал"], w: 88, off: true }, { id: "ads", labels: ["Реклама", "Рекл."], w: 86, off: true },
+  { id: "agent", labels: ["Агентские, %", "Агент. %", "%"], w: 80, off: true }, { id: "variable", labels: ["Переменные", "Перем.", "Пер."], w: 88, off: true },
+  { id: "fixed", labels: ["Постоянные", "Пост.", "Пос."], w: 88, off: true }, { id: "ros", labels: ["Рентабельность, %", "Рентаб. %", "Рент. %", "%"], w: 92, off: true },
+  { id: "roi", labels: ["Окупаемость затрат, %", "Окуп. %", "%"], w: 92, off: true }, { id: "eff", labels: ["Эффективность слота", "Эфф. слота", "Эфф."], w: 92, off: true },
+  { id: "cls", labels: ["Класс", "Кл."], w: 60, off: true },
   { id: "conf", labels: ["Цена: источник", "Источник"], w: 150, left: true, off: true }, { id: "big", labels: ["Крупных концертов", "Крупных", "Кр."], w: 96, off: true },
   { id: "st", labels: ["Статус"], w: 170, left: true, off: true }
 ];
@@ -13148,7 +13156,7 @@ function tbEconHtml(L, id, P) {   // экономика артиста: глав
     f("Состав", "crew", d.crew, "Сколько человек едет. Не знаете — " + d.crew, "pl-xs") +
     '<div class="tb-ef"><span>Заполняемость</span><div class="seg tb-fillseg" role="group" aria-label="Заполняемость">' + cfg.scenarios.map(function (s) { return '<button data-pl="tb-fill" data-v="' + s + '" aria-pressed="' + (+fill === +s) + '">' + s + '%</button>'; }).join("") + '</div></div>';
   var extra = f("Райдер на город", "rider", pickRider(e.fee) || "", "Технический и бытовой. Пусто — от 1 млн гонорара 500 тыс., меньше — половина гонорара (не меньше 100 тыс.)") +
-    f("Суточные на человека", "per_diem", 0, "За день, × состав") + f("Реклама на город", "ads", "по залу", "Пусто — по вместимости зала") +
+    f("Суточные на человека", "per_diem", 0, "За день, × состав") + f("Суточные, всего", "per_diem_sum", "", "Состав и ставка неизвестны — общая сумма на город вместо ставки × состав") + f("Реклама на город", "ads", "по залу", "Пусто — по вместимости зала") +
     f("Московские на тур", "moscow", 0, "Делится на число городов «подходит»") + f("РАО/ВОИС, %", "rao", 0, "% от сборов", "pl-xs") + f("Комиссия касс, %", "kassa", d.kassa, "% от сборов", "pl-xs") +
     f("Уровень цен, ×", "lvl", lv && !lv.manual ? lv.k : lvA ? lvA.k : "—", lvA ? "По нашей афише: середина цены артиста " + num(lvA.price) + " ₽ по " + lvA.n + " датам, типичная гастроль — " + num(lvA.market) + " ₽" : "Артиста с ценами в афише нет — цена города по крупным концертам", "pl-xs") +
     '<label class="tb-ef"' + (P && P.own ? ' title="«До» по умолчанию — самый большой зал артиста в афише: ' + esc(P.own.top.name) + ', ' + num(P.own.top.cap) + '"' : '') + '><span>Зал, мест</span><span class="tb-ef2">' + plInput(sg("capMin"), e.capMin, { ph: d.capMin, label: "Зал от, мест", cls: "pl-xs" }) + ' – ' + plInput(sg("capMax"), e.capMax, { ph: P ? P.capMax : d.capMax, label: "Зал до, мест", cls: "pl-xs" }) + '</span></label>' +
@@ -13166,7 +13174,11 @@ function tbSortVal(id, r) {   // значение для сортировки п
     case "price": return k.price || null; case "need": return h ? k.need : null; case "profit": return h ? R.profit : null;
     case "status": return k.margin; case "dec": return { yes: 3, maybe: 2, no: 0 }[P.dec] != null ? { yes: 3, maybe: 2, no: 0 }[P.dec] : 1;
     case "pop": return r.pop || null; case "seats": return R.seats || null; case "sales": return h ? R.sales : null; case "total": return h ? R.total : null;
-    case "be": return h ? R.beTickets : null; case "conf": return P.pr ? P.pr.n : null; case "big": return P.big.length;
+    case "beT": return h ? R.beTickets : null; case "be": return h ? R.beShare : null; case "beRub": return h ? R.beRub : null;
+    case "fill": return R.fillEff; case "gross": return R.gross || null; case "ads": return R.ads; case "agent": return P.inp.x.agent;
+    case "variable": return h ? R.variable : null; case "fixed": return R.fixed; case "ros": return h ? R.ros : null; case "roi": return h ? R.roi : null;
+    case "eff": return h ? R.eff : null; case "cls": return h ? { S: 5, A: 4, B: 3, C: 2, D: 1 }[R.cls] : null;
+    case "conf": return P.pr ? P.pr.n : null; case "big": return P.big.length;
     case "st": return { free: 0, recent: 1, base: 2, prod: 3 }[r.st];
   }
   return null;
@@ -13188,7 +13200,19 @@ function tbCell(c, r) {
     case "seats": return td(R.seats ? num(R.seats) : dash);
     case "sales": return td(h ? plShort(R.sales) : dash);
     case "total": return td(h ? plShort(R.total) : dash);
-    case "be": return td(h && R.beTickets != null ? num(Math.ceil(R.beTickets)) + '<span class="sub2"> · ' + Math.round(R.beShare * 100) + '%</span>' : dash);
+    case "beT": return td(h && R.beTickets != null ? num(Math.ceil(R.beTickets)) : dash);
+    case "be": return td(h && R.beShare != null ? plPct(R.beShare) : dash, "", h && R.beShare > 1 ? "pl-neg" : "");
+    case "beRub": return td(h ? plShort(R.beRub) : dash);
+    case "fill": return td(Math.round(R.fillEff) + '%');
+    case "gross": return td(R.gross ? plShort(R.gross) : dash);
+    case "ads": return td(plShort(R.ads));
+    case "agent": return td((P.inp.x.agent || 0) + '%');
+    case "variable": return td(h ? plShort(R.variable) : dash);
+    case "fixed": return td(plShort(R.fixed));
+    case "ros": return td(h ? plPct(R.ros) : dash, "", h && R.ros < 0 ? "pl-neg" : "");
+    case "roi": return td(h ? plPct(R.roi) : dash, "", h && R.roi < 0 ? "pl-neg" : "");
+    case "eff": return td(h ? plPct(R.eff) : dash, "", h && R.eff < 0 ? "pl-neg" : "");
+    case "cls": return td(h ? '<span class="pl-cls pl-cls-' + R.cls + '">' + R.cls + '</span>' : dash);
     case "conf": var s = P.inp.src.price; return td(s === "ovr" ? 'правка' : s === "zones" ? 'распоясовка' : P.pr ? (P.pr.src === "region" ? 'по области · ' + P.pr.n : P.pr.n + ' гастр.') + ' · ' + { high: "высокая", mid: "средняя", low: "низкая" }[P.pr.conf] : dash);
     case "big": return td(P.big.length ? String(P.big.length) : '<span class="muted">0</span>', P.big.slice(0, 5).map(function (e) { return e.title + " — " + human(e.date) + ", до " + num(e.pmax) + " ₽"; }).join("\n"));
     case "st": return td(tbStatusText(r));
@@ -13303,11 +13327,16 @@ function tbOpenCard(city, keep) {   // карточка города: решен
   var grp = function (g, title, sum, inner) { return '<details class="pl-grp" data-tbgrp="' + g + '"' + (opened[g] ? ' open' : '') + '><summary><span>' + title + '</span>' + (sum != null ? '<b class="num">' + plMoney(sum) + '</b>' : '') + '</summary><div class="pl-grp-in">' + inner + '</div></details>'; };
   var wl = function (label, sum, b) { return sum ? '<div class="pl-wl"><span>' + label + '</span>' + (b ? '<b class="num">' : '<span class="num">') + plMoney(sum) + (b ? '</b>' : '</span>') + '</div>' : ''; };
   var tile = function (label, val, cls) { return '<div><span class="pl-kl">' + label + '</span><b class="num' + (cls ? ' ' + cls : '') + '">' + val + '</b></div>'; };
+  var kpo = { zoned: !!(o.zmode && o.zones && o.zones.length), target: [sg("target"), o.target],   // поля плиток: средняя цена и вал → правка цены города
+    avg: [sg("price"), o.price, o.price != null ? 'data-pl="tb-creset" data-city="' + esc(city) + '" data-f="price"' : ''], gross: [sg("gross"), null, ''] };
   var vs = r.venues.filter(function (v) { return v.cap; }).slice(0, 30), vkey = P.v && P.v.name ? plVenueKey(city, P.v.name) : "", tpl = vkey && PLAN.venues[vkey] ? PLAN.venues[vkey].zones || [] : [];
   var zm = !!(o.zmode && o.zones && o.zones.length), zs = o.zones || [];
+  var hall = planNum(o.seats != null ? o.seats : P.v ? P.v.cap : 0), left = zm && hall ? hall - R.seats : null;   // как в «Турах»: сколько билетов зала ещё не расписано
+  var leftTxt = left == null ? '' : left > 0 ? '<span class="pl-left-n">не расписано <b class="num">' + num(left) + '</b> из ' + num(hall) + '</span>'
+    : left < 0 ? '<span class="pl-left-n pl-neg">больше зала на <b class="num">' + num(-left) + '</b></span>' : '<span class="pl-left-n pl-ok">расписаны все ' + num(hall) + '</span>';
   var zoneBlock = '<div class="tb-zhead"><span class="pl-lbl">Распоясовка</span><div class="seg" role="group" aria-label="Цена билета"><button data-pl="tb-zmode" data-city="' + esc(city) + '" data-v="0" aria-pressed="' + !zm + '">средняя цена</button><button data-pl="tb-zmode" data-city="' + esc(city) + '" data-v="1" aria-pressed="' + zm + '">по поясам</button></div></div>' +
-    (zm ? '<table class="vtable pl-grid pl-flat tb-zones"><thead><tr><th scope="col">Пояс</th><th scope="col" class="r">Цена</th><th scope="col" class="r">Билетов</th><th scope="col" class="r">Заполн., %</th><th scope="col"><span class="sr-only">Убрать</span></th></tr></thead><tbody>' +
-      zs.map(function (z, i) { var zg = "tbz|" + id + "|" + city + "|" + i; return '<tr><td>' + plTextIn(zg + "|name", z.name, { label: "Пояс", ph: "пояс" }) + '</td><td class="r">' + plInput(zg + "|price", z.price, { label: "Цена", ph: "0", cls: "pl-sm" }) + '</td><td class="r">' + plInput(zg + "|seats", z.seats, { label: "Билетов", ph: "0", cls: "pl-xs" }) + '</td><td class="r">' + plInput(zg + "|fill", z.fill, { label: "Заполняемость пояса", ph: x.fill, cls: "pl-xs" }) + '</td><td><button class="icon-btn" data-pl="tb-zdel" data-city="' + esc(city) + '" data-i="' + i + '" aria-label="Убрать пояс">' + PJ_ICON.close + '</button></td></tr>'; }).join("") +
+    (zm ? (leftTxt ? '<div class="pl-zleft">' + leftTxt + '</div>' : '') + '<table class="vtable pl-grid pl-flat tb-zones"><colgroup><col style="width:24%"><col style="width:16%"><col style="width:13%"><col style="width:11%"><col style="width:14%"><col style="width:14%"><col style="width:32px"></colgroup><thead><tr><th scope="col">Пояс</th><th scope="col" class="r">Цена</th><th scope="col" class="r">Билетов</th><th scope="col" class="r">%</th><th scope="col" class="r">Вал</th><th scope="col" class="r">Сборы</th><th scope="col"><span class="sr-only">Убрать</span></th></tr></thead><tbody>' +
+      zs.map(function (z, i) { var zg = "tbz|" + id + "|" + city + "|" + i; return '<tr><td>' + plTextIn(zg + "|name", z.name, { label: "Пояс", ph: "пояс" }) + '</td><td class="r">' + plInput(zg + "|price", z.price, { label: "Цена", ph: "0", cls: "pl-sm" }) + '</td><td class="r">' + plInput(zg + "|seats", z.seats, { label: "Билетов", ph: "0", cls: "pl-xs" }) + '</td><td class="r">' + plInput(zg + "|fill", z.fill, { label: "Заполняемость пояса", ph: x.fill, cls: "pl-xs" }) + '</td><td class="r num nowrap">' + plShort(((R.zones || [])[i] || {}).gross) + '</td><td class="r num nowrap">' + plShort(((R.zones || [])[i] || {}).sales) + '</td><td><button class="icon-btn" data-pl="tb-zdel" data-city="' + esc(city) + '" data-i="' + i + '" aria-label="Убрать пояс">' + PJ_ICON.close + '</button></td></tr>'; }).join("") +
       '</tbody></table><div class="tb-actions"><button class="pj-plain" data-pl="tb-zadd" data-city="' + esc(city) + '">+ пояс</button>' + (tpl.length ? '<button class="pj-plain" data-pl="tb-zvenue" data-city="' + esc(city) + '">пояса площадки</button>' : '') +
       '<span class="sub2">итого ' + num(R.seats) + ' мест · вал ' + plShort(R.gross) + ' · средняя ' + plMoney(R.avg) + '</span></div>' : '');
   var orgOn = Object.keys(o.org || {}).length > 0 || (S.pl.tbOrg || {})[city];
@@ -13321,14 +13350,15 @@ function tbOpenCard(city, keep) {   // карточка города: решен
       '<button class="icon-btn" data-drawer="close" aria-label="Закрыть">' + PJ_ICON.close + '</button></div>' +
     '<div class="tb-decs" role="group" aria-label="Решение по городу">' + TB_DEC.map(function (dd) { return '<button class="tb-decbtn" data-pl="tb-dec" data-city="' + esc(city) + '" data-v="' + dd[0] + '" aria-pressed="' + (P.dec === dd[0]) + '" style="--c:' + dd[2] + '">' + dd[1] + '</button>'; }).join("") + '</div>' +
     (r.mgrCard || '') +
-    '<div class="tb-cardk">' + tile("Цена города", k.price ? plMoney(k.price) : "—") + tile("Нужна цена", has ? plMoney(k.need) : "—") +
-      tile("Прибыль · " + Math.round(R.fillEff || x.fill) + "%", has ? plShort(R.profit) : "—", has && R.profit < 0 ? "pl-neg" : "") + tile("Выйти в ноль", has && R.beTickets != null ? num(Math.ceil(R.beTickets)) + " бил. · " + Math.round(R.beShare * 100) + "%" : "—") + '</div>' +
-    (has ? '<div class="pl-scens" aria-label="Прибыль по сценариям заполняемости">' + cfg.scenarios.map(function (s) { var z = scen(s); return '<div title="Прибыль при заполняемости ' + s + '%"><span class="pl-kl">' + s + '%</span><b class="num' + (z.profit < 0 ? ' pl-neg' : '') + '">' + plShort(z.profit) + '</b></div>'; }).join("") + '</div>' : '') +
+    '<div class="tb-cardk">' + tile("Цена города", k.price ? plMoney(k.price) : "—") + tile("Нужна цена", has ? plMoney(k.need) : "—") + '</div>' +
+    '<div class="pl-kblock"><div class="pl-kpis">' + plKpiOrder().map(function (kk) { return plKpiTile(kk, R, null, null, kpo); }).join("") + '</div>' +   // как в «Турах» (решение пользователя 27.10)
+      '<div class="pl-scens" aria-label="Прибыль по сценариям заполняемости">' + cfg.scenarios.map(function (s) { var z = scen(s); return '<div title="Прибыль при заполняемости ' + s + '%"><span class="pl-kl">' + s + '%</span><b class="num' + (z.profit < 0 ? ' pl-neg' : '') + '">' + plShort(z.profit) + '</b></div>'; }).join("") + '</div></div>' +
     '<div class="pl-flat tb-cardin">' +
       grp("hall", "Зал и билеты", null, '<div class="pl-line"><span class="pl-lbl">Зал</span><select class="pl-sel" data-plf="' + esc(sg("venue")) + '" aria-label="Зал для расчёта"><option value="">' + esc(o.venue ? "— выбрать сам —" : "авто: " + (P.v ? P.v.name + " · " + num(P.v.cap) : "нет зала")) + '</option>' +
           vs.map(function (v) { return '<option value="' + esc(v.name) + '"' + (o.venue === v.name ? ' selected' : '') + '>' + esc(v.name) + ' · ' + num(v.cap) + (v.src === "manual" ? '' : '*') + '</option>'; }).join("") + '</select><span></span></div>' +
-        (zm ? '' : line("Мест в продаже", "seats", x.seats, "") + line("Средняя цена билета", "price", k.price, "")) + line("Заполняемость, %", "fill", x.fill, "") + zoneBlock) +
+        line(zm ? "Мест в зале" : "Мест в продаже", "seats", zm ? hall : x.seats, "") + (zm ? '' : line("Средняя цена билета", "price", k.price, "")) + line("Заполняемость, %", "fill", x.fill, "") + zoneBlock) +
       grp("artist", "Артист в этом городе", R.project.total, line("Гонорар", "fee", x.fee, "") + line("% сверху к гонорару", "cashless", x.cashless, "") + line("Суточные на человека", "per_diem", x.per_diem, "") +
+        line("Суточные, всего", "per_diem_sum", x.per_diem_sum != null ? x.per_diem_sum : R.project.per_diem, "вместо ставки × состав") +
         line("Состав на выезде", "crew", x.crew, "") + line("Авторские", "author", x.author, "")) +
       grp("costs", "Расходы города", R.org + R.rent + R.logistics + R.ads, costs) +
       grp("pct", "Проценты от сборов · " + R.varPct.toLocaleString("ru-RU") + "%", null, line("Комиссия касс, %", "kassa", x.kassa, "") + line("Агентские, %", "agent", x.agent, "") + line("РАО/ВОИС, %", "rao", x.rao, "") + '<p class="sub2" style="margin:4px 0 0">Налог — ' + cfg.tax + '% (в «Параметрах»).</p>') +
@@ -13347,6 +13377,7 @@ function tbOpenCard(city, keep) {   // карточка города: решен
   var dr = $("drawer");
   if (keep && dr.classList.contains("open")) { var top = dr.scrollTop; dr.innerHTML = html; dr.scrollTop = top; enhanceSelects(dr); }
   else showDrawer(html);
+  plFitAll(dr);
   dr.querySelectorAll("details[data-tbgrp]").forEach(function (el) { el.addEventListener("toggle", function () { opened[el.getAttribute("data-tbgrp")] = el.open; }); });
 }
 function tbMakeTour(Lc, cities) {   // тур в «Финмодель туров»: проект (создаётся из экономики, если нет), города по порядку гастролей, залы и цифры подбора
@@ -13467,7 +13498,8 @@ function tbSnapshot(L, A, P) {
     ["Заполняемость", (e.fill != null ? e.fill : d.fill) + " %"], ["Налог + кассы", cfg.tax + " % + " + (e.kassa != null ? e.kassa : d.kassa) + " %"]];
   if (lv) econ.push(["Уровень цен артиста", "× " + String(lv.k).replace(".", ",") + (lv.manual ? " (вписан)" : " (по " + lv.n + " датам)")]);
   if (planNum(e.rao)) econ.push(["РАО/ВОИС", e.rao + " %"]);
-  if (planNum(e.per_diem)) econ.push(["Суточные", plMoney(e.per_diem)]);
+  if (planNum(e.per_diem_sum)) econ.push(["Суточные на город", plMoney(e.per_diem_sum)]);
+  else if (planNum(e.per_diem)) econ.push(["Суточные на человека", plMoney(e.per_diem)]);
   if (planNum(e.moscow)) econ.push(["Московские на тур", plMoney(e.moscow)]);
   return { v: 1, list: S.pl.tb.list, title: L.title, who: L.project || L.title, period: periodLabel(), created: new Date().toISOString(), econ: econ,
     rows: of.yes.concat(of.maybe).map(function (r) {
@@ -13602,7 +13634,12 @@ var PL_KPI = ["profit", "cls", "eff", "ros", "roi", "beShare", "avg", "seats", "
 var PL_KPI_SHORT = { "Эффективность слота": "Эфф. слота", "Рентабельность": "Рентаб.", "Окупаемость затрат": "Окупаемость", "ТБУ, % от аншлага": "ТБУ, %",
   "Средняя цена билета": "Ср. цена", "Мест в реализацию": "Мест", "ТБУ, билетов": "ТБУ, бил.", "ТБУ продаж": "ТБУ, ₽" };
 function plKpiOrder() { var o = (PL_PREFS.kpi || []).filter(function (k) { return PL_KPI.indexOf(k) >= 0; }); return o.concat(PL_KPI.filter(function (k) { return o.indexOf(k) < 0; })); }
-function plKpiTile(k, c, r, tid) {
+// o — поля плиток для другой карточки (подбор городов): {zoned, avg: [поле, значение, сброс], gross: […], target: […]};
+// сброс — атрибуты кнопки ↺. Без o — строка тура tid.
+function plKpiTile(k, c, r, tid, o) {
+  o = o || { zoned: r.zmode && r.zones && r.zones.length, avg: ["row|" + tid + "|" + r.id + "|avg", r.avg, r.avg != null ? 'data-pl="avg-reset"' : ""],
+    gross: ["ovr|" + tid + "|" + r.id + "|gross", r.ovr && r.ovr.gross != null ? r.ovr.gross : null, (r.ovr && r.ovr.gross != null) || r.avg != null ? 'data-pl="gross-reset"' : ""],
+    target: ["row|" + tid + "|" + r.id + "|target", r.target] };
   var money = function (v) { return v == null || !isFinite(v) ? "—" : Math.abs(v) < 1e5 ? plMoney(v) : '<span class="pl-kl-full">' + plMoney(v) + '</span><span class="pl-kl-short">' + plShort(v) + '\u00a0₽</span>'; };
   var neg = function (v) { return v != null && v < 0 ? ' pl-neg' : ''; }, tile = function (label, val, cls, extra) {
     var short = PL_KPI_SHORT[label];   // узкая панель — короткая подпись (полная — в подсказке)
@@ -13617,21 +13654,20 @@ function plKpiTile(k, c, r, tid) {
     case "roi": return tile("Окупаемость затрат", plPct(c.roi), neg(c.roi));
     case "beShare": return tile("ТБУ, % от аншлага", plPct(c.beShare), c.beShare != null && c.beShare > 1 ? ' pl-neg' : '');
     case "avg":
-      if (r.zmode && r.zones && r.zones.length) return tile("Средняя цена билета", c.avg ? money(c.avg) : "—");   // по распоясовке — считается из поясов
+      if (o.zoned) return tile("Средняя цена билета", c.avg ? money(c.avg) : "—");   // по распоясовке — считается из поясов
       return '<div class="pl-kpi pl-kpi-in" draggable="true" data-plkpi="avg" title="Впишите среднюю цену — вал пересчитается: цена × мест в продаже. Перетащите плитку, чтобы поменять порядок">' +
-        '<span class="pl-kl"><span class="pl-kl-full">Средняя цена билета</span><span class="pl-kl-short">Ср. цена</span>' + (r.avg != null ? ' <button class="pj-plain pl-kreset" data-pl="avg-reset" title="Вернуть вал площадки">↺</button>' : '') + '</span>' +
-        '<span class="pl-kv pl-flat">' + plFitIn("row|" + tid + "|" + r.id + "|avg", r.avg, { ph: c.avg ? Math.round(c.avg) : "цена", label: "Средняя цена билета, ₽ — вал пересчитается" }) + '<small> ₽</small></span></div>';
+        '<span class="pl-kl"><span class="pl-kl-full">Средняя цена билета</span><span class="pl-kl-short">Ср. цена</span>' + (o.avg[2] ? ' <button class="pj-plain pl-kreset" ' + o.avg[2] + ' title="Вернуть расчётное значение">↺</button>' : '') + '</span>' +
+        '<span class="pl-kv pl-flat">' + plFitIn(o.avg[0], o.avg[1], { ph: c.avg ? Math.round(c.avg) : "цена", label: "Средняя цена билета, ₽ — вал пересчитается" }) + '<small> ₽</small></span></div>';
     case "seats": return tile("Мест в реализацию", c.seats ? num(c.seats) : "—");
     case "beT": return tile("ТБУ, билетов", c.beTickets == null ? "—" : num(Math.ceil(c.beTickets)) + '<small> бил.</small>');
     case "gross":
-      if (r.zmode && r.zones && r.zones.length) return tile("Вал", money(c.gross));   // по распоясовке — сумма поясов
-      var gOwn = (r.ovr && r.ovr.gross != null) || r.avg != null;
+      if (o.zoned) return tile("Вал", money(c.gross));   // по распоясовке — сумма поясов
       return '<div class="pl-kpi pl-kpi-in" draggable="true" data-plkpi="gross" title="Впишите вал — пересчитается всё, средняя цена станет вал ÷ мест. Перетащите плитку, чтобы поменять порядок">' +
-        '<span class="pl-kl">Вал' + (gOwn ? ' <button class="pj-plain pl-kreset" data-pl="gross-reset" title="Вернуть вал площадки">↺</button>' : '') + '</span>' +
-        '<span class="pl-kv pl-flat">' + plFitIn("ovr|" + tid + "|" + r.id + "|gross", r.ovr && r.ovr.gross != null ? r.ovr.gross : null, { ph: c.gross ? Math.round(c.gross) : "вал", label: "Вал, ₽ — пересчитается всё" }) + '<small> ₽</small></span></div>';
+        '<span class="pl-kl">Вал' + (o.gross[2] ? ' <button class="pj-plain pl-kreset" ' + o.gross[2] + ' title="Вернуть расчётное значение">↺</button>' : '') + '</span>' +
+        '<span class="pl-kv pl-flat">' + plFitIn(o.gross[0], o.gross[1], { ph: c.gross ? Math.round(c.gross) : "вал", label: "Вал, ₽ — пересчитается всё" }) + '<small> ₽</small></span></div>';
     case "beRub": return tile("ТБУ продаж", money(c.beRub));
     case "target": return '<div class="pl-kpi" draggable="true" data-plkpi="target" title="Сколько билетов продать, чтобы заработать эту прибыль' + (c.tgRub == null ? '' : ': продажи ' + plMoney(c.tgRub)) + '. Перетащите, чтобы поменять порядок">' +
-      '<span class="pl-kl pl-ktg pl-flat"><span class="pl-kl-full">Заработать</span><span class="pl-kl-short">Цель</span> ' + plFitIn("row|" + tid + "|" + r.id + "|target", r.target, { ph: plCfg().target, label: "Продать, чтобы заработать: желаемая прибыль, ₽" }) + '</span>' +
+      '<span class="pl-kl pl-ktg pl-flat"><span class="pl-kl-full">Заработать</span><span class="pl-kl-short">Цель</span> ' + plFitIn(o.target[0], o.target[1], { ph: plCfg().target, label: "Продать, чтобы заработать: желаемая прибыль, ₽" }) + '</span>' +
       '<b class="pl-kv num">' + (c.tgTickets == null ? "—" : num(Math.ceil(c.tgTickets)) + '<small> бил.</small>') + (c.tgShare == null ? '' : '<small class="pl-kx">' + plPct(c.tgShare) + '</small>') + '</b></div>';
   }
   return "";
@@ -13734,12 +13770,12 @@ function plOpenRow(rowId, keep) {
 var plHeadDrag = null;
 document.addEventListener("dragstart", function (ev) {
   var h = ev.target.closest && ev.target.closest("[data-plcolhead], [data-plkpi]"); if (!h || plRowDrag) return;
-  plHeadDrag = { kind: h.hasAttribute("data-plcolhead") ? "col" : "kpi", id: h.getAttribute("data-plcolhead") || h.getAttribute("data-plkpi"), set: h.getAttribute("data-colset") || "t" };
+  plHeadDrag = { kind: h.hasAttribute("data-plcolhead") ? "col" : "kpi", id: h.getAttribute("data-plcolhead") || h.getAttribute("data-plkpi"), set: h.getAttribute("data-cset") || "t" };
   ev.dataTransfer.effectAllowed = "move"; ev.dataTransfer.setData("text/plain", plHeadDrag.id); h.classList.add("pl-dragging");
 });
 document.addEventListener("dragover", function (ev) {
   if (!plHeadDrag) return;
-  var sel = plHeadDrag.kind === "col" ? '[data-plcolhead][data-colset="' + plHeadDrag.set + '"]' : "[data-plkpi]", el = ev.target.closest && ev.target.closest(sel); if (!el) return;
+  var sel = plHeadDrag.kind === "col" ? '[data-plcolhead][data-cset="' + plHeadDrag.set + '"]' : "[data-plkpi]", el = ev.target.closest && ev.target.closest(sel); if (!el) return;
   ev.preventDefault();
   var r = el.getBoundingClientRect(), after = ev.clientX > r.left + r.width / 2;
   document.querySelectorAll(".pl-drop-l, .pl-drop-r").forEach(function (x) { x.classList.remove("pl-drop-l", "pl-drop-r"); });
@@ -13756,7 +13792,7 @@ document.addEventListener("drop", function (ev) {
   var to = list.indexOf(d.over) + (d.after ? 1 : 0); list.splice(to, 0, d.id);
   if (d.kind === "col") plColPrefs(d.set).order = list; else PL_PREFS.kpi = list;
   plPrefsSave(); plDragEnd();
-  if (d.kind === "col") tbRe(); else plOpenRow(S.pl.row, true);
+  if (d.kind === "col") tbRe(); else if (S.pl.tbCard && S.pl.tab === "build") tbOpenCard(S.pl.tbCard, true); else plOpenRow(S.pl.row, true);
 });
 function plDragEnd() { document.querySelectorAll(".pl-drop-l, .pl-drop-r, .pl-dragging").forEach(function (x) { x.classList.remove("pl-drop-l", "pl-drop-r", "pl-dragging"); }); }
 document.addEventListener("dragend", function () { plHeadDrag = null; plDragEnd(); });
@@ -13847,7 +13883,7 @@ function plSetPath(obj, path, val) {
   for (var i = 0; i < p.length - 1; i++) { if (o[p[i]] == null || typeof o[p[i]] !== "object") o[p[i]] = /^\d+$/.test(p[i + 1]) ? [] : {}; o = o[p[i]]; }
   if (val === null || val === "") delete o[p[p.length - 1]]; else o[p[p.length - 1]] = val;
 }
-var PL_NUM = /^(avg|target|rider|price|capMin|capMax|lvl|fee|cashless|per_diem|crew|author|rao|moscow|logistics|kassa|seats|gross|rent|days|fill|ads|agent|tax|base|ban_months|org\.\w+|scenarios\.\d|classes\.\d|weights\.\w+|transfer|hotel|tech|catering|loaders|security|services|other)$/;
+var PL_NUM = /^(avg|target|rider|price|capMin|capMax|lvl|per_diem_sum|fee|cashless|per_diem|crew|author|rao|moscow|logistics|kassa|seats|gross|rent|days|fill|ads|agent|tax|base|ban_months|org\.\w+|scenarios\.\d|classes\.\d|weights\.\w+|transfer|hotel|tech|catering|loaders|security|services|other)$/;
 function plValue(el, field) {
   if (el.type === "checkbox") return el.checked;
   var v = el.value.trim();
@@ -13871,6 +13907,10 @@ function plChange(el) {
       var cf = p[3], cv = cf === "venue" || cf === "dec" ? el.value || null : cf === "note" ? el.value.trim() || null : plValue(el, cf);
       tbEditCity(p[2], function (co, lx) {
         if (cf === "dec") tbSetDec(co, lx, cv || "");
+        else if (cf === "gross") {   // плитка «Вал»: вписанный вал → средняя цена = вал ÷ мест
+          var gr = S.pl.tbCtx.A.rows.filter(function (r) { return r.city === p[2]; })[0], gs = gr ? gr.pick.k.r.seats : 0;
+          if (cv == null) delete co.price; else if (gs) co.price = Math.round(cv / gs);
+        }
         else plSetPath(co, cf, cv == null ? null : cf === "fill" ? Math.max(0, Math.min(100, cv)) : cv);
         if (cf === "venue") { delete co.seats; delete co.zones; delete co.zmode; }
       });
@@ -14144,7 +14184,7 @@ document.addEventListener("mousedown", function (ev) {
   var h = ev.target.closest && ev.target.closest("[data-plresize]"); if (!h) return;
   ev.preventDefault(); ev.stopPropagation();
   var id = h.getAttribute("data-plresize"), col = h.closest("table").querySelector('col[data-plcol="' + id + '"]'); if (!col) return;
-  plDrag = { id: id, set: h.getAttribute("data-colset") || "t", x: ev.clientX, w: col.getBoundingClientRect().width, col: col, table: h.closest("table"), handle: h };
+  plDrag = { id: id, set: h.getAttribute("data-cset") || "t", x: ev.clientX, w: col.getBoundingClientRect().width, col: col, table: h.closest("table"), handle: h };
   h.classList.add("active"); document.body.classList.add("resizing");
 });
 document.addEventListener("mousemove", function (ev) {
@@ -14163,7 +14203,7 @@ document.addEventListener("mouseup", function () {
 });
 document.addEventListener("dblclick", function (ev) {
   var h = ev.target.closest && ev.target.closest("[data-plresize]");
-  if (h) { var cp = plColPrefs(h.getAttribute("data-colset") || "t"); if (cp.w) delete cp.w[h.getAttribute("data-plresize")]; plPrefsSave(); tbRe(); }
+  if (h) { var cp = plColPrefs(h.getAttribute("data-cset") || "t"); if (cp.w) delete cp.w[h.getAttribute("data-plresize")]; plPrefsSave(); tbRe(); }
 });
 // Порядок городов: перетащить строку за ⋮⋮ или стрелками ↑↓ на ней (даты остаются на местах)
 var plRowDrag = null;
