@@ -70,8 +70,14 @@
       action('filter',WKP_IC.filter+'Фильтр',null,'wkp-filter'+(filtered?' on':''),' aria-haspopup="dialog" aria-label="Фильтры воронки"')+(state.mode==='table'?plColsControl('leads'):'')+
       action('add',WKT_ICON.plus,null,'wk-sq wk-sq-add',' aria-label="Новый проект в воронке" title="Новый проект в воронке"')+'</div>';
     var add='<form class="proc-add" data-proc-add="'+id+'"><span aria-hidden="true">+</span><input name="title" maxlength="300" placeholder="Добавить проект — название и Enter" aria-label="Новый проект в воронке" required autocomplete="off"></form>';
-    var body=state.mode==='table'?tbGrid(rows,'leads',{sortable:true,cell:cell,sortVal:sortVal,name:function(r){return r.title;},defSort:{id:'order',dir:1}}).replace('</table></section>','</table></section>'+add):board(rows)+add;
+    var body=state.mode==='table'?fit(tbGrid(rows,'leads',{sortable:true,cell:cell,sortVal:sortVal,name:function(r){return r.title;},defSort:{id:'order',dir:1}})).replace('</table></section>','</table></section>'+add):board(rows)+add;
     return '<div class="proc-funnel'+(state.mode==='table'?' is-table':'')+'">'+bar+body+(!rows.length&&(state.q||filtered)?'<p class="wkp-none">Ничего не нашлось — измените поиск или фильтр.</p>':'')+'</div>';
+  }
+  // таблица — во всю ширину без прокрутки вбок (просьба пользователя 28.10): ширины столбцов — доли от заданных;
+  // на узком экране — не уже 70 % заданного, дальше прокрутка (иначе на телефоне не прочитать)
+  function fit(h) {
+    var sum=0; h.replace(/<col data-plcol="[^"]+" style="width:(\d+)px">/g,function(m,w){sum+=+w;return m;}); if(!sum) return h;
+    return h.replace(/(<table class="[^"]*tb-grid" style=")width:\d+px/,'$1width:100%;min-width:'+Math.round(sum*0.7)+'px').replace(/<col data-plcol="([^"]+)" style="width:(\d+)px">/g,function(m,id,w){return '<col data-plcol="'+id+'" style="width:'+(w/sum*100).toFixed(2)+'%">';});
   }
   function board(rows) {   // колонки и карточки — как канбан «Проектов» (wkpKanban)
     return '<div class="wkp-kb proc-board">'+stages.map(function(s){var list=rows.filter(function(r){return r.stage===s[0];}).sort(function(a,b){return (a.order||0)-(b.order||0);});
@@ -188,6 +194,8 @@
     if(f.hasAttribute('data-lead-log')){ev.preventDefault();var id=f.getAttribute('data-lead-log'),text=f.elements.text.value.trim();if(text)enqueue(async function(){var r=WK.leads[id];await save('leads',id,Object.assign({},r,{log:(r.log||[]).concat([{id:wkId('log'),at:wkStamp(),text:text}])}));panel(id,true);});}
     if(f.hasAttribute('data-proc-edit')){ev.preventDefault();var pid=f.getAttribute('data-proc-edit')||wkId('proc'),file=f.elements.cover.files[0],remove=f.elements.removeCover&&f.elements.removeCover.checked,rec=Object.assign({},WK.procs[pid]||{kind:f.elements.kind.value},{title:f.elements.title.value.trim(),note:f.elements.note.value});if(!rec.title)return;var submit=f.querySelector('button');submit.disabled=true;enqueue(async function(){await save('procs',pid,rec);if(file||remove){var data=file?await new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(reader.result);};reader.onerror=reject;reader.readAsDataURL(file);}):'';WK=await request('/api/work',{op:'media',kind:'procs',id:pid,what:'cover',data:data});}$('pjDlg').close();redraw();}).then(function(){submit.disabled=false;},function(){submit.disabled=false;});}
   });
+  // перед перетаскиванием границы столбца — ширины снова в пикселях: общий обработчик «Планирования» считает в px
+  document.addEventListener('mousedown',function(ev){var h=ev.target.closest&&ev.target.closest('.proc-funnel [data-plresize]');if(!h)return;var t=h.closest('table'),sum=0;t.querySelectorAll('col').forEach(function(c){var w=Math.round(c.getBoundingClientRect().width);c.style.width=w+'px';sum+=w;});t.style.width=sum+'px';t.style.minWidth='';},true);
   var timer;document.addEventListener('input',function(ev){if(ev.target.id!=='procQ')return;state.q=ev.target.value;clearTimeout(timer);timer=setTimeout(function(){redraw();var i=$('procQ');if(i)i.focus();},180);});
   document.addEventListener('keydown',function(ev){var c=ev.target.closest&&ev.target.closest('[data-proc-open]');if(c&&ev.key==='Enter'){ev.preventDefault();c.click();}});
   var drag=null;document.addEventListener('dragstart',function(ev){var c=ev.target.closest&&ev.target.closest('[data-lead-drag]');if(!c)return;drag=c.getAttribute('data-lead-drag');ev.dataTransfer.setData('text/plain',drag);ev.dataTransfer.effectAllowed='move';});

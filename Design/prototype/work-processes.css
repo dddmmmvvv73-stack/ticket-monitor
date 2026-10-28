@@ -41,7 +41,14 @@
 .proc-add input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 14px; color: var(--ink); }
 .proc-add:focus-within { color: var(--ink); box-shadow: 0 0 0 3px rgba(59, 168, 245, .14); }
 
-/* Доска — канбан «Проектов» */
+/* Доска — канбан «Проектов»; на компьютере все этапы в ширину экрана, без прокрутки вбок (28.10) */
+@media (min-width: 900px) {
+  .wkp-kb.proc-board { grid-auto-columns: minmax(0, 1fr); gap: 8px; overflow-x: visible; }
+  .proc-board .wkp-gh .wkp-tag { white-space: normal; height: auto; min-height: 26px; padding-top: 4px; padding-bottom: 4px; line-height: 1.25; font-size: 11px; }
+  .proc-board .wkp-kc.proc-lead { padding: 12px 10px 10px; }
+  .proc-board .wkp-kc-row { flex-wrap: wrap; }
+  .proc-board .wkp-kc-empty { font-size: 12px; text-align: center; }
+}
 .proc-lead .wkp-nm .pj-plain { font-weight: 600; font-size: 14.5px; text-align: left; white-space: normal; }
 .proc-next { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; overflow-wrap: anywhere; }
 .proc-next b { display: inline-flex; align-items: center; gap: 4px; font-weight: 500; }
