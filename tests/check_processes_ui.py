@@ -28,7 +28,7 @@ with sync_playwright() as pw:
     page.locator('#procQ').fill(prefix)
     page.wait_for_function('() => document.querySelectorAll(".tb-grid tbody tr").length === 3')
     page.locator('[data-proc-action="board"]').click()
-    page.locator('[data-lead-drag="'+lid+'"]').drag_to(page.locator('[data-lead-drop="ready"] h3'), source_position={'x':200,'y':12})
+    page.locator('[data-lead-drag="'+lid+'"]').drag_to(page.locator('[data-lead-drop="ready"] .wkp-gh'), source_position={'x':200,'y':12})
     page.wait_for_function('id => WK.leads[id].stage === "ready"', arg=lid)
     page.locator('[data-proc-action="table"]').click()
     page.locator('#procQ').fill(prefix+'А')

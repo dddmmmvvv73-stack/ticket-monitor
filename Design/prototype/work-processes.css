@@ -1,4 +1,92 @@
-/* Компоненты проектов сохранены; новые правила — только для процессов и воронки. */
-.proc-card{cursor:pointer;overflow:hidden}.proc-cover{width:calc(100% + 40px);margin:-20px -20px 12px;height:120px;object-fit:cover}.proc-hero .pj-hero-text{min-width:0}.proc-hero .pj-name{overflow-wrap:anywhere}.proc-hero .pj-hero-in{flex-wrap:wrap}.proc-hero .wk-hstats{flex-wrap:wrap}.proc-hero .pj-back-btn{width:auto;padding:8px 12px}.proc-fields{display:grid;gap:12px}.proc-fields label{display:grid;gap:5px;font-size:13px}.proc-fields input:not([type=checkbox]),.proc-fields select,.proc-fields textarea{width:100%;min-width:0;box-sizing:border-box}.proc-fields textarea{min-height:80px}.proc-add{display:flex;gap:8px;margin:12px 0}.proc-add input{flex:1;min-width:0}.proc-board{display:flex;gap:14px;overflow-x:auto;max-width:100%;padding:6px 0 18px}.proc-column{flex:0 0 245px;background:#f5f5f4;border-radius:12px;padding:12px;min-height:160px}.proc-column h3,.proc-column summary{font-size:13px;margin:0 0 12px}.proc-column:not([open]){min-height:45px}.proc-lead{display:grid;gap:10px;padding:14px;margin-bottom:10px;cursor:grab}.proc-lead button{text-align:left}.proc-over{color:#b42318}.proc-panel{padding:18px;display:grid;gap:20px}.proc-panel .proc-fields{grid-template-columns:1fr 1fr}.proc-panel section{border-top:1px solid #e7e5e4;padding-top:12px}.proc-panel p{overflow-wrap:anywhere}.proc-panel .tb-actions{flex-wrap:wrap}.proc-filter{width:280px;max-width:calc(100vw - 24px);padding:14px}.proc-hints{display:flex;gap:6px;flex-wrap:wrap}.proc-editor{max-width:520px}.tb-grid [data-lead-field]{max-width:100%;min-width:0;width:100%;box-sizing:border-box}.tb-grid input[type=checkbox][data-lead-field]{width:16px}.proc-panel [data-lead-field]{min-width:0}.proc-panel h2{overflow-wrap:anywhere}@media(max-width:600px){.proc-panel .proc-fields{grid-template-columns:1fr}.proc-hero .wk-hstats{gap:8px}.proc-hero .wk-hstat{min-width:70px}.proc-hero .pj-hero-in{padding:62px 16px 20px}.proc-hero .pj-name{font-size:25px}.proc-board{width:100%}.proc-add{max-width:100%}}
+/* «Процессы» — на компонентах «Проектов» (wkp-*, pj-hero, wk-ptabs) и таблиц «Планирования»; здесь — только отличия. */
 
-.proc-tools .cols-anchor{display:inline-block}.proc-tools{flex-wrap:wrap}.proc-tools .cols-pop{max-width:calc(100vw - 32px)}
+/* Список процессов — «Карточки» проектов */
+.proc-card { overflow: hidden; }
+.proc-cover { width: calc(100% + 36px); margin: -20px -18px 6px; height: 110px; object-fit: cover; }
+.proc-note1 { margin: 0; font-size: 12.5px; color: var(--ink-3); overflow-wrap: anywhere; }
+.proc-cards .wkp-card-f { margin-top: auto; }
+.proc-orphans { margin-top: 18px; font-size: 13px; }
+
+/* Шапка: пять плиток воронки в один ряд */
+.proc-hero .pj-hero-text { min-width: 0; }
+.proc-hero .pj-name { overflow-wrap: anywhere; }
+.proc-hnote { margin: 6px 0 0; color: rgba(255, 255, 255, .78); font-size: 14px; }
+.proc-hero5 .wk-hstats { grid-template-columns: repeat(5, 104px); }
+@media (max-width: 1180px) { .proc-hero5 .wk-hstats { grid-template-columns: repeat(3, 104px); } }
+
+/* Панель воронки — как у «Проектов» */
+.proc-tools .cols-anchor { display: inline-flex; }
+.proc-tools .cols-anchor .ficon { width: 38px; height: 38px; border-radius: 10px; }
+.proc-tools .cols-pop { max-width: calc(100vw - 32px); }
+.proc-filter { width: 300px; max-width: calc(100vw - 24px); padding: 14px; }
+.proc-filterf { display: grid; gap: 10px; }
+.proc-filterf .field select { height: 36px; }
+.proc-chk { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+
+/* Таблица: этап — цветная точка, как метки стадий проектов */
+.proc-funnel.is-table .tb-gridwrap { border-bottom-left-radius: 0; border-bottom-right-radius: 0; margin-bottom: 0; }
+.tb-grid [data-lead-field] { max-width: 100%; min-width: 0; width: 100%; box-sizing: border-box; }
+.tb-grid input[type=checkbox][data-lead-field] { width: 22px; }
+.proc-num { -moz-appearance: textfield; }
+.proc-num::-webkit-outer-spin-button, .proc-num::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.proc-stage .dd-text::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ps); margin-right: 7px; vertical-align: 1px; }
+.proc-tt .pj-plain { font-weight: 600; text-align: left; }
+.proc-ell { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.tb-grid td.proc-over .pl-in { color: #b42318; }
+
+/* Строка «+ проект» — продолжение таблицы, как «+ Добавить задачу» */
+.proc-add { display: flex; align-items: center; gap: 8px; height: 46px; padding: 0 14px; box-sizing: border-box; background: var(--card); border: 1px solid var(--line); border-radius: 0 0 14px 14px; color: var(--ink-3); width: fit-content; min-width: min(100%, 520px); max-width: 100%; }
+.proc-funnel.is-table .proc-add { border-top: 0; }
+.proc-funnel:not(.is-table) .proc-add { border-radius: 12px; margin-top: 12px; }
+.proc-add input { flex: 1; min-width: 0; border: 0; outline: none; background: transparent; font: inherit; font-size: 14px; color: var(--ink); }
+.proc-add:focus-within { color: var(--ink); box-shadow: 0 0 0 3px rgba(59, 168, 245, .14); }
+
+/* Доска — канбан «Проектов» */
+.proc-lead .wkp-nm .pj-plain { font-weight: 600; font-size: 14.5px; text-align: left; white-space: normal; }
+.proc-next { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; overflow-wrap: anywhere; }
+.proc-next b { display: inline-flex; align-items: center; gap: 4px; font-weight: 500; }
+.proc-next.over, .proc-next.over b { color: #b42318; }
+.proc-fee { font-size: 13px; font-weight: 500; }
+.proc-lead .wkp-chip { font-size: 11.5px; }
+
+/* Карточка записи */
+.proc-dhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.proc-dhead h2 { margin: 0; font: 600 22px/1.2 var(--display); overflow-wrap: anywhere; }
+.proc-dtags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+.proc-hints { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-radius: 12px; background: #fbefc4; font-size: 13.5px; }
+.proc-hints .btn-dark { height: 32px; padding: 0 14px; }
+.proc-sec h3 { margin: 0 0 10px; font: 600 15px/1.3 var(--ui); }
+.proc-steps { list-style: none; margin: 0; padding: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.proc-steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 11px 14px; border-top: 1px solid var(--line); }
+.proc-steps li:first-child { border-top: 0; }
+.proc-dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; font-weight: 600; color: var(--ink-3); border: 1.5px solid var(--line-strong); box-sizing: border-box; }
+.proc-steps li.done .proc-dot { background: #22a04b; border-color: #22a04b; color: #fff; }
+.proc-steps li.no .proc-dot { background: #fde3e1; border-color: #f3b4ae; color: #b42318; }
+.proc-stx b { display: block; font-size: 14px; font-weight: 600; }
+.proc-stx span { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 2px; overflow-wrap: anywhere; }
+.proc-steps li.done .proc-stx b { color: var(--ink-2); }
+.proc-sact { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: center; max-width: 340px; }
+.proc-sact .btn-ghost, .proc-sact .btn-dark { height: 32px; padding: 0 12px; font-size: 13px; white-space: nowrap; }
+.proc-sact .pj-plain { font-size: 13px; }
+.proc-sact .proc-ell { max-width: 220px; }
+.proc-sact .dd-btn { min-width: 96px; }
+.proc-pair { display: inline-flex; gap: 6px; }
+.proc-pair .pl-in { width: 104px; } .proc-pair .pl-in + .pl-in { width: 64px; }
+.proc-form .field textarea { width: 100%; min-height: 76px; box-sizing: border-box; border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px 12px; font: inherit; height: auto; resize: vertical; }
+.proc-form .field input.pl-in, .proc-form .field select { width: 100%; height: 40px; border: 1px solid var(--line-strong); border-radius: 8px; padding: 0 12px; text-align: left; font-size: 14px; }
+.proc-form .dd-btn.dd-field { width: 100%; height: 40px; }
+.proc-log { margin-bottom: 8px; }
+.proc-log .pl-in { width: 100%; height: 38px; }
+.proc-logl { margin: 0; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13.5px; overflow-wrap: anywhere; }
+.proc-logl .sub2 { display: block; font-size: 12px; }
+.proc-editor .proc-form .form-actions { display: flex; justify-content: flex-end; }
+
+@media (max-width: 600px) {
+  .proc-hero .pj-hero-in { padding: 62px 16px 20px; }   /* под круглыми «назад» и «удалить» */
+  .proc-hero .pj-name { font-size: 25px; }
+  .proc-hero5 .wk-hstats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .proc-steps li { grid-template-columns: 28px minmax(0, 1fr); }
+  .proc-sact { grid-column: 2; justify-content: flex-start; max-width: none; }
+  .proc-add { min-width: 0; width: 100%; }
+  .proc-tools .wkp-search { flex: 1 1 100%; width: auto; order: 5; }
+}
