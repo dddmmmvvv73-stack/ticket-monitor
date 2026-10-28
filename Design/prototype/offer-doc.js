@@ -41,7 +41,7 @@ function offerDocBody(snap, kind, o) {
   var when = snap.created ? new Date(snap.created).toLocaleString("ru-RU", { day: "numeric", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "";
   if (kind === "artist") {
     return '<h1>Предложение по городам</h1><p class="sub">' + ofEsc(snap.who) + ' · период: ' + ofEsc(snap.period) + (when ? ' · ' + ofEsc(when) : '') + '</p>' +
-      '<div class="ed" contenteditable="true">Добрый день! Предлагаем города для концертов в период «' + ofEsc(snap.period) + '». Залы ниже — предварительные; даты и площадки подтверждаем после вашего согласия.</div>' +
+      '<div class="ed" contenteditable="true">Добрый день! Предлагаем города для концертов. Залы ниже предварительные, даты и площадки подтверждаем после вашего согласия.</div>' +
       '<div class="tw"><table><thead><tr><th>№</th><th>Город</th><th>Область</th><th>Площадка</th><th class="r">Мест</th></tr></thead><tbody>' +
       rows.map(function (r, i) { return '<tr><td>' + (i + 1) + '</td><td>' + ofEsc(r.city) + '</td><td>' + ofEsc(r.reg) + '</td><td>' + ofEsc(r.venue || "уточняется") + '</td><td class="r">' + (r.seats ? ofNum(r.seats) : "—") + '</td></tr>'; }).join("") +
       '</tbody></table></div><div class="ed" contenteditable="true">Контакт: </div>';
