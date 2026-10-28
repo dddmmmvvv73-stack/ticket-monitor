@@ -52,7 +52,7 @@
   function cell(c,r) {
     var k=c.id,h;
     if(k==='title') h=link(r.id,r.title);
-    else if(k==='list') h=PLAN.lists[r.list]?action('pick','Открыть →',r.id,'pj-plain'):'<span class="sub2">—</span>';
+    else if(k==='list') h=PLAN.lists[r.list]?action('pick','Открыть →',r.id,'pj-plain'):action('lead-link','связать',r.id,'pj-plain proc-muted');
     else if(k==='task') h=WK.tasks[r.task]?action('task-open',esc(WK.tasks[r.task].text),r.id,'pj-plain proc-ell'):'<span class="sub2">—</span>';
     else if(k==='cities') h=esc((r.cities||[]).map(function(c){return c.city;}).join(', ')||'—');
     else h=field(r,k,c.labels[0],k==='called'?'checkbox':k==='fee'||k==='cashless'?'number':/_at$/.test(k)?'date':null,k==='stage'?stages:k==='ready'?ready:k==='season'?season:null);
@@ -112,14 +112,14 @@
   function panel(id,keep) {
     var r=WK.leads[id];if(!r)return;state.lead=id;var row=Object.assign({id:id},r),L=PLAN.lists[r.list],sh=(((S.pl.ixShares||{}).lists)||{})[r.list];
     // поля, которых нет в «Шагах»: шаги сами правят «позвонил», «готовы» и гонорар
-    var fields=[['next','Следующий шаг',null,null,1],['next_at','Дата шага','date'],['stage','Этап',null,stages],['season','Сезон',null,season],['contact','Контакт',null,null,1],['afisha','Проект в афише'],['source','Источник'],['called_at','Дата звонка','date'],['note','Заметка','textarea',null,1],['list','Подбор городов',null,[['','—']].concat(Object.keys(PLAN.lists).map(function(k){return [k,PLAN.lists[k].title];}))],['task','Задача',null,[['','—']].concat(wkTasksOf('proc:'+r.proc).map(function(t){return [t.id,t.text];}))],['proc','Процесс',null,[['','Без процесса']].concat(records('procs').map(function(p){return [p.id,p.title];})),1]];
+    var fields=[['next','Следующий шаг',null,null,1],['next_at','Дата шага','date'],['stage','Этап',null,stages],['season','Сезон',null,season],['contact','Контакт',null,null,1],['afisha','Проект в афише'],['source','Источник'],['called_at','Дата звонка','date'],['note','Заметка','textarea',null,1],['task','Задача',null,[['','—']].concat(wkTasksOf('proc:'+r.proc).map(function(t){return [t.id,t.text];}))],['proc','Процесс',null,[['','Без процесса']].concat(records('procs').map(function(p){return [p.id,p.title];})),1]];
     var at=stageAt(r.stage),out=r.stage==='declined',sent=sh&&(sh.tokens||[]).length,task=WK.tasks[r.task];
     // шаги процесса по порядку (PROCESSES_PLAN.md, п. 1.4): отметка — что сделано, справа — действие для этого шага
     var steps=[
       [r.called,'Позвонить',r.called?'позвонили'+(r.called_at?' '+wkpShort(r.called_at):''):'отметьте после звонка','<label class="proc-chk">'+field(row,'called','Позвонил','checkbox')+' Позвонил</label>'],
       [r.ready==='yes','Готовы сотрудничать?',r.ready==='yes'?'да — ждут предложения':r.ready==='no'?'нет':'не спросили',field(row,'ready','Готовы',null,ready),r.ready==='no'],
       [!!r.fee,'Гонорар',r.fee?wkMoney(r.fee)+' ₽'+(r.cashless?' + '+r.cashless+' %':''):'узнать у коллектива','<span class="proc-pair">'+field(row,'fee','Гонорар','number').replace('>',' placeholder="гонорар, ₽">')+field(row,'cashless','% сверху','number').replace('>',' placeholder="% сверху">')+'</span>'],
-      [!!L,'Подбор городов',L?'гонорар '+(wkMoney((L.econ||{}).fee)||'—')+' · '+wkPickOffer(L):'финмодели по городам',(L?action('pick','Открыть подбор →',id):action('pick-create','Создать подбор городов',id,'btn-dark'))+(task?action('task-open','Задача: '+esc(task.text)+' →',id,'pj-plain proc-ell'):action('task-create','Создать задачу',id))],
+      [!!L,'Подбор городов',L?'гонорар '+(wkMoney((L.econ||{}).fee)||'—')+' · '+wkPickOffer(L):'финмодели по городам','<span class="proc-link">'+field(row,'list','Подбор городов',null,[['',L?'—':'Связать с подбором…']].concat(Object.keys(PLAN.lists).sort(function(a,b){return (PLAN.lists[a].title||'').localeCompare(PLAN.lists[b].title||'','ru');}).map(function(k){return [k,PLAN.lists[k].title];})))+'</span>'+(L?action('pick','Открыть подбор →',id):(alike(r)?action('link:'+alike(r),'Связать с «'+esc(PLAN.lists[alike(r)].title)+'»',id,'btn-dark'):'')+action('pick-create','Создать новый',id,alike(r)?'btn-ghost':'btn-dark'))+(task?action('task-open','Задача: '+esc(task.text)+' →',id,'pj-plain proc-ell'):action('task-create','Создать задачу',id))],
       [!!sent,'Согласовать с руководителем',!L?'после подбора городов':sh&&sent?'ссылка отправлена · ✔ '+sh.ok+' · ? '+sh.ask+' · ✖ '+sh.no:'ссылка не отправлялась',L?action('pdf','PDF руководителю',id)+shareLink(sh):''],
       [at>=stageAt('offer')&&!out,'Отправить предложение артисту',at>=stageAt('answered')&&!out?'артист ответил':at===stageAt('offer')?'отправлено, ждём ответа':'после согласования',at<stageAt('offer')?action('stage:offer','Отправили',id):r.stage==='offer'?action('stage:answered','Ответили',id):''],
       [!!(r.cities||[]).length,'Возможные города',(r.cities||[]).length?(r.cities.map(function(c){return c.city;}).join(', ')+(r.cities_at?' · '+wkpShort(r.cities_at):'')):'города «подходит» из подбора',L?action('cities',(r.cities||[]).length?'Обновить':'Зафиксировать',id):''],
@@ -134,6 +134,10 @@
     $('drawer').setAttribute('aria-label','Проект в воронке: '+r.title);
     if(keep){var dr=$('drawer'),y=dr.scrollTop,fo=document.activeElement&&dr.contains(document.activeElement)&&document.activeElement.getAttribute('data-lead-field');dr.innerHTML=html;dr.scrollTop=y;enhanceSelects(dr);var back=fo&&dr.querySelector('[data-lead-field="'+fo+'"]');if(back)back.focus({preventScroll:true});}else showDrawer(html);   // ввод по Tab не теряет поле после сохранения
   }
+  // подбор с похожим названием, ещё ни с кем не связанный («Групп На-На» ↔ «Группа На-На»): подсказка в шаге 4
+  function norm(t) { return String(t||'').toLowerCase().replace(/ё/g,'е').replace(/[^a-zа-я0-9]+/g,''); }
+  function dist(a,b) { var d=[],i,j; for(i=0;i<=a.length;i++)d[i]=[i]; for(j=0;j<=b.length;j++)d[0][j]=j; for(i=1;i<=a.length;i++)for(j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1)); return d[a.length][b.length]; }
+  function alike(r) { var t=norm(r.title),best=null,bd=1e9; if(t.length<3)return null; Object.keys(PLAN.lists).forEach(function(k){var L=PLAN.lists[k];if((L.work||{}).lead)return;var x=norm(L.title),d=dist(t,x);if(d<bd&&d<=Math.max(1,Math.floor(Math.max(t.length,x.length)*0.25))){bd=d;best=k;}}); return best; }
   async function linkList(id,lid) {
     var r=WK.leads[id],L=PLAN.lists[lid],old=PLAN.lists[r.list];
     if(L && (L.work||{}).lead && L.work.lead!==id)throw new Error('Этот подбор уже связан с другой записью');
@@ -147,6 +151,7 @@
     else if(a==='task-create') {if(WK.tasks[r.task])return;if(!WK.procs[r.proc])throw new Error('Сначала выберите процесс');var tid=wkId('t');await save('tasks',tid,{text:'Подбор городов: '+r.title,proc:r.proc,due:r.next_at||'',created:wkDay(0)});await save('leads',id,Object.assign({},r,{task:tid}));}
     else if(a==='cities') {var L=PLAN.lists[r.list];if(!L)throw new Error('Подбор удалён');var A=tbAnalyze(L,tbPrefs());tbPick(L,A);var cities=Object.keys(L.cities||{}).filter(function(c){return L.cities[c].dec==='yes';}).map(function(c){var o=L.cities[c],calc=A.rows.find(function(x){return x.city===c;}),p=calc&&calc.pick;return {city:c,venue:o.venue||(p&&p.v?p.v.name:'')||'',price:o.price!=null?o.price:(p&&p.k?p.k.price:null),at:wkDay(0)};});await save('leads',id,Object.assign({},r,{cities:cities,cities_at:wkDay(0)}));}
     else if(a==='project-create') {if(r.stage!=='decided')return;if(WK.projects[r.project])return;var pid=wkId('p');await save('projects',pid,{title:r.title,lead:id,stage:WK_STAGE[0][0],created:wkDay(0)});await save('leads',id,Object.assign({},r,{project:pid}));}
+    else if(a.indexOf('link:')===0) await linkList(id,a.slice(5));
     else if(a.indexOf('stage:')===0) await save('leads',id,Object.assign({},r,{stage:a.slice(6)}));
     else if(a.indexOf('decision:')===0) await save('leads',id,Object.assign({},r,{stage:'decided',season:a.slice(9)}));
     redraw();if(state.lead===id)panel(id,true);
@@ -155,7 +160,7 @@
   document.addEventListener('click',function(ev){
     var op=ev.target.closest&&ev.target.closest('[data-proc-open]');if(op){open(op.getAttribute('data-proc-open'));return;}
     var b=ev.target.closest&&ev.target.closest('[data-proc-action]');if(!b)return;ev.preventDefault();var a=b.getAttribute('data-proc-action'),id=b.getAttribute('data-id');
-    if(a==='lead'){var d=$('pjDlg');if(d&&d.open)d.close();var r=WK.leads[id];if(!r)return;if(r.proc)open(r.proc);else{state.id=null;goView('wkproc');}ixSharesLoad();panel(id);return;}
+    if(a==='lead'||a==='lead-link'){var d=$('pjDlg');if(d&&d.open)d.close();var r=WK.leads[id];if(!r)return;if(r.proc)open(r.proc);else{state.id=null;goView('wkproc');}ixSharesLoad();panel(id);return;}
     if(a==='close'){state.lead=null;closeDrawer();return;}if(a==='back'){state.id=null;redraw();return;}if(a==='new'||a==='edit'){edit(id);return;}
     if(a==='tasks'||a==='funnel'){state.tab=a;redraw();return;}if(a==='add'){var inp=document.querySelector('[data-proc-add] input');if(inp){inp.scrollIntoView({block:'center'});inp.focus();}return;}if(a==='table'||a==='board'){state.mode=a;redraw();return;}
     if(a==='filter'){wkPopOpen(b,'wk-menu proc-filter',filterHtml(),{});return;}if(a==='reset'){state.filters={};wkPopClose();redraw();return;}

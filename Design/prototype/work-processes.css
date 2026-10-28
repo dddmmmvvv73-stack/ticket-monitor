@@ -71,7 +71,9 @@
 .proc-sact .proc-ell { max-width: 220px; }
 .proc-sact .dd-btn { min-width: 96px; }
 .proc-pair { display: inline-flex; gap: 6px; }
-.proc-pair .pl-in { width: 104px; } .proc-pair .pl-in + .pl-in { width: 64px; }
+.proc-link .dd-btn { min-width: 170px; max-width: 220px; }
+.proc-muted { color: var(--ink-3); }
+.proc-pair .pl-in { width: 104px; } .proc-pair .pl-in + .pl-in { width: 86px; }
 .proc-form .field textarea { width: 100%; min-height: 76px; box-sizing: border-box; border: 1px solid var(--line-strong); border-radius: 8px; padding: 10px 12px; font: inherit; height: auto; resize: vertical; }
 .proc-form .field input.pl-in, .proc-form .field select { width: 100%; height: 40px; border: 1px solid var(--line-strong); border-radius: 8px; padding: 0 12px; text-align: left; font-size: 14px; }
 .proc-form .dd-btn.dd-field { width: 100%; height: 40px; }
