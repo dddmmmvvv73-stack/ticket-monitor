@@ -1750,6 +1750,21 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .vtable.tb-grid th.tb-sorted { color: var(--ink); } .tb-sortar { margin-left: 4px; font-size: 11px; }
 .vtable.tb-grid td.pl-left .ev-title { text-align: left; } .tb-decsel { max-width: 100%; }
 .vtable.tb-grid tr.tb-grp > td { background: var(--line-soft, #f5f5f4); font-weight: 600; font-size: 13px; text-align: left; }
+/* «Предложение» по округам (28.10): кнопки округов, заголовок округа со стрелкой — прилипает к верху, когда таблица помещается */
+.tb-ofbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 14px 0 4px; }
+.tb-offds { display: flex; gap: 6px; flex-wrap: wrap; }
+.tb-offds .an-layer .num { opacity: .6; margin-left: 2px; }
+.tb-ofckn { font-size: 13px; color: var(--ink-2); }
+.tb-ofclr { border: 0; background: none; padding: 0; font: inherit; color: var(--ink-2); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.tb-ofwrap.fits { overflow: visible; }
+.tb-ofwrap.fits tr.tb-ofgrp > td { position: sticky; top: 0; z-index: 3; box-shadow: 0 1px 0 var(--line); }
+.tb-ofgh { display: inline-flex; align-items: center; gap: 10px; padding-left: 26px; }   /* флажок — под флажками городов */
+.tb-offold { display: inline-flex; align-items: center; gap: 6px; border: 0; background: none; padding: 2px 0; font: inherit; font-weight: 600; font-size: 13.5px; color: var(--ink); cursor: pointer; }
+.tb-offold svg { transition: transform .15s; } .tb-offold[aria-expanded="false"] svg { transform: rotate(-90deg); }
+.tb-offold .num { font-weight: 500; color: var(--ink-3); }
+.tb-ofck { width: 16px; height: 16px; margin: 0 0 0 4px; vertical-align: middle; accent-color: var(--soot); cursor: pointer; }
+.tb-ofwrap .pl-handle-td { white-space: nowrap; } .tb-ofwrap .pl-handle-td > * { vertical-align: middle; }
+.pl-handle-td .tb-ofck { margin: 0 0 0 2px; }
 .tb-ofsum { display: flex; flex-wrap: wrap; gap: 6px 20px; align-items: center; margin-bottom: 10px; font-size: 14px; }
 .tb-decs { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 4px; }
 .tb-decbtn { border: 1px solid var(--line); background: var(--card); color: var(--ink-2); border-radius: 9999px; padding: 6px 14px; font: inherit; font-size: 14px; cursor: pointer; }
@@ -13133,6 +13148,10 @@ function tbAction(a, b) {   // кнопки вкладки (из общего о
   else if (a === "tb-onmap") { t.view = "map"; S.pl.tbFocus = b.getAttribute("data-city"); tbRe(); var m = $("tbMap"); if (m) m.scrollIntoView({ block: "center" }); }
   else if (a === "tb-tour") tbMakeTour(tbCur(), Object.keys(t.sel));
   else if (a === "tb-offer") tbOfferDoc(b.getAttribute("data-k"));
+  else if (a === "tb-offd") { var os = tbOfSel(), ok = b.getAttribute("data-k"); if (ok === "*") os.fd = {}; else if (os.fd[ok]) delete os.fd[ok]; else os.fd[ok] = 1; tbRe(); }
+  else if (a === "tb-offold") { var fs = tbOfSel(), fk = b.getAttribute("data-k"); if (fs.fold[fk]) delete fs.fold[fk]; else fs.fold[fk] = 1; tbRe(); }
+  else if (a === "tb-ofgroup") { p.ofGroup = b.getAttribute("data-k"); tbSave(p); tbRe(); }
+  else if (a === "tb-ofck-clear") { tbOfSel().ck = {}; tbRe(); }
   else if (a.indexOf("tb-share") === 0) tbShareAction(a, b);
   else if (a === "tb-card") tbOpenCard(b.getAttribute("data-city"));
   else if (a === "tb-pkflag") {   // переключатели подбора; «не были и не стоят» — включён по умолчанию
@@ -13563,7 +13582,7 @@ function tbCell(c, r) {
 function tbGrid(rows, set, o) {
   o = o || {};
   var cellF = o.cell || tbCell, sortF = o.sortVal || tbSortVal, nm = o.name || function (r) { return r.city; };
-  var cols = plColsOrdered(set).filter(function (c) { return plColOn(c, set); }), cp = plColPrefs(set), lead = o.handle ? 30 : 0, width = lead;
+  var cols = plColsOrdered(set).filter(function (c) { return plColOn(c, set); }), cp = plColPrefs(set), lead = o.handle ? (o.check ? 58 : 30) : 0, width = lead;
   cols.forEach(function (c) { width += plColW(c, set); });
   var sd = o.sortable ? cp.sort || o.defSort || { id: "status", dir: -1 } : null;
   if (sd && sd.id) rows = rows.slice().sort(function (a, b) {
@@ -13581,14 +13600,15 @@ function tbGrid(rows, set, o) {
       '<span class="resizer" data-plresize="' + c.id + '" data-cset="' + set + '" title="Потяните, чтобы изменить ширину. Двойной клик — вернуть." aria-hidden="true"></span></th>';
   }).join("") + '</tr></thead>';
   var line = function (r) {
-    return '<tr' + (o.handle ? ' data-ofrow="' + esc(r.city) + '" data-ofgrp="' + r.pick.dec + '"' : '') + (!o.cell && S.pl.tbCard === r.city ? ' class="sel"' : '') + '>' +
-      (lead ? '<td class="pl-handle-td"><button class="pl-handle" data-of-handle="' + esc(r.city) + '" aria-label="Переместить: ' + esc(r.city) + ' (стрелки вверх и вниз)" title="Перетащите, чтобы поменять порядок">⋮⋮</button></td>' : '') +
+    return '<tr' + (o.handle ? ' data-ofrow="' + esc(r.city) + '" data-ofgrp="' + r.pick.dec + '"' + (o.fd ? ' data-offd="' + (RU_FD_OF[r.reg] || "") + '"' : '') : '') + (!o.cell && S.pl.tbCard === r.city ? ' class="sel"' : '') + '>' +
+      (lead ? '<td class="pl-handle-td"><button class="pl-handle" data-of-handle="' + esc(r.city) + '" aria-label="Переместить: ' + esc(r.city) + ' (стрелки вверх и вниз)" title="Перетащите, чтобы поменять порядок">⋮⋮</button>' +
+        (o.check ? '<input type="checkbox" class="tb-ofck" data-ofck="' + esc(r.city) + '"' + (o.check[r.city] ? ' checked' : '') + ' aria-label="Отметить для PDF: ' + esc(r.city) + '">' : '') + '</td>' : '') +
       cols.map(function (c) { return cellF(c, r); }).join("") + '</tr>';
   };
   var body = (o.groups || [{ rows: shown }]).map(function (g) {
-    return (g.label && g.rows.length ? '<tr class="tb-grp"><td colspan="' + (cols.length + (lead ? 1 : 0)) + '">' + g.label + '</td></tr>' : '') + g.rows.map(line).join("");
+    return (g.label && (g.rows.length || g.keep) ? '<tr class="tb-grp' + (g.keep ? ' tb-ofgrp' : '') + '"><td colspan="' + (cols.length + (lead ? 1 : 0)) + '">' + g.label + '</td></tr>' : '') + g.rows.map(line).join("");
   }).join("");
-  return '<section class="card pl-card tb-gridwrap"><table class="vtable pl-grid pl-tour pl-flat tb-grid" style="width:' + width + 'px"><colgroup>' + (lead ? '<col style="width:30px">' : '') +
+  return '<section class="card pl-card tb-gridwrap' + (o.wrap ? ' ' + o.wrap : '') + '"><table class="vtable pl-grid pl-tour pl-flat tb-grid" style="width:' + width + 'px"><colgroup>' + (lead ? '<col style="width:' + lead + 'px">' : '') +
       cols.map(function (c) { return '<col data-plcol="' + c.id + '" style="width:' + plColW(c, set) + 'px">'; }).join("") + '</colgroup>' + th + '<tbody>' + body + '</tbody></table></section>' +
     (rows.length > shown.length ? '<div style="display:flex;justify-content:center;margin-top:10px"><button class="btn-ghost" data-pl="tb-more">Показать ещё (' + (rows.length - shown.length) + ')</button></div>' : '');
 }
@@ -13634,13 +13654,44 @@ function tbOfferView(L, A, P, p, of) {
       '<span>сборы <b class="num">' + plShort(tt.sales) + '</b></span><span>расходы <b class="num">' + plShort(tt.total) + '</b></span>' +
       '<span>прибыль <b class="num' + (tt.profit < 0 ? ' pl-neg' : '') + '">' + plShort(tt.profit) + '</b></span>' +
       (of.maybe.length ? '<button class="an-layer" data-pl="tb-pkflag" data-k="ofMaybe" aria-pressed="' + inc + '">+ на рассмотрении</button>' : '') + '</div>';
+  var s = tbOfSel(), byFd = p.ofGroup !== "dec", all = of.yes.concat(of.maybe), fds = {}, anyFd = Object.keys(s.fd).length;
+  all.forEach(function (r) { var f = RU_FD_OF[r.reg] || ""; fds[f] = (fds[f] || 0) + 1; });
+  var order = RU_FD.map(function (x) { return x[0]; }).filter(function (f) { return f && fds[f]; }).concat(fds[""] ? [""] : []);
+  var pdf = tbOfPdfCities(of, !!p.ofArtMaybe), whole = of.yes.length + (p.ofArtMaybe ? of.maybe.length : 0), nck = all.filter(function (r) { return s.ck[r.city]; }).length;
+  var fdBar = '<div class="tb-ofbar"><div class="tb-offds" role="group" aria-label="Федеральные округа — что показать и что пойдёт в PDF артисту">' +
+      '<button class="an-layer" data-pl="tb-offd" data-k="*" aria-pressed="' + !anyFd + '">Все округа <span class="num">' + all.length + '</span></button>' +
+      order.map(function (f) { return '<button class="an-layer" data-pl="tb-offd" data-k="' + f + '" aria-pressed="' + !!s.fd[f] + '">' + esc(tbFdName(f)) + ' <span class="num">' + fds[f] + '</span></button>'; }).join("") + '</div>' +
+      (nck ? '<span class="tb-ofckn">Отмечено ' + nck + ' <button class="tb-ofclr" data-pl="tb-ofck-clear">снять</button></span>' : '') +
+      '<span style="flex-grow:1"></span><div class="wkp-seg" role="group" aria-label="Группировать города"><button data-pl="tb-ofgroup" data-k="fd" aria-pressed="' + byFd + '">По округам</button><button data-pl="tb-ofgroup" data-k="dec" aria-pressed="' + !byFd + '">По решению</button></div></div>';
   var acts = '<div class="tb-tools pl-flat">' +
-      '<button class="btn-dark" data-pl="tb-offer" data-k="artist" title="Города, площадки, вместимость — без экономики">Предложение артисту (PDF)</button>' +
+      '<button class="btn-dark" data-pl="tb-offer" data-k="artist" title="Города, площадки, вместимость — без экономики. Только видимые округа, а если отмечены города — только они">Предложение артисту (PDF)' + (pdf.length < whole ? ' · ' + pdf.length + ' ' + plural(pdf.length, "город", "города", "городов") : '') + '</button>' +
       (of.maybe.length ? '<button class="an-layer" data-pl="tb-pkflag" data-k="ofArtMaybe" aria-pressed="' + !!p.ofArtMaybe + '" title="Добавить в PDF артисту и «на рассмотрении»">с «на рассмотрении»</button>' : '') +
       '<button class="btn-ghost" data-pl="tb-offer" data-k="boss" title="С экономикой по каждому городу и допущениями">На согласование (PDF)</button>' +
       (typeof tbShareBtn === "function" ? tbShareBtn() : '') + '<span style="flex-grow:1"></span><span class="tb-icons">' + plColsControl("of") + '</span></div>';
-  return sum + acts + (typeof tbSharePanel === "function" ? tbSharePanel() : '') +
-    tbGrid([], "of", { handle: true, groups: [{ label: "Подходит · " + of.yes.length, rows: of.yes }, { label: "На рассмотрении · " + of.maybe.length, rows: of.maybe }] });
+  var shown = function (l) { return l.filter(function (r) { return !anyFd || s.fd[RU_FD_OF[r.reg] || ""]; }); };
+  var groups = byFd ? order.filter(function (f) { return !anyFd || s.fd[f]; }).map(function (f) {   // округ: «подходит», затем «на рассмотрении»
+      var rs = all.filter(function (r) { return (RU_FD_OF[r.reg] || "") === f; }), fold = !!s.fold[f], n = rs.filter(function (r) { return s.ck[r.city]; }).length;
+      return { keep: true, rows: fold ? [] : rs, label: '<span class="tb-ofgh"><input type="checkbox" class="tb-ofck" data-ofckall="' + f + '"' + (n && n === rs.length ? ' checked' : '') + ' aria-label="Отметить все города: ' + esc(tbFdName(f)) + '">' +
+        '<button class="tb-offold" data-pl="tb-offold" data-k="' + f + '" aria-expanded="' + !fold + '"><svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5L6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>' + esc(tbFdName(f)) + ' <span class="num">' + rs.length + '</span></button>' +
+        (n ? '<span class="sub2">отмечено ' + n + '</span>' : '') + '</span>' };
+    }) : [{ label: "Подходит · " + shown(of.yes).length, rows: shown(of.yes) }, { label: "На рассмотрении · " + shown(of.maybe).length, rows: shown(of.maybe) }];
+  setTimeout(tbOfFit, 0);
+  return sum + fdBar + acts + (typeof tbSharePanel === "function" ? tbSharePanel() : '') +
+    tbGrid([], "of", { handle: true, check: s.ck, fd: byFd, wrap: "tb-ofwrap", groups: groups });
+}
+// Округа «Предложения» (решение пользователя 28.10): города по федеральным округам — заголовок с флажком и стрелкой
+// сворачивает округ; кнопки округов — что видно; флажки — свой выбор. PDF артисту — только видимое: выбранные округа,
+// а если отмечены города — только они. PDF и ссылка руководителю — по-прежнему весь список.
+function tbOfSel() { var t = S.pl.tb; if (!t.of || t.of.list !== t.list) t.of = { list: t.list, fd: {}, fold: {}, ck: {} }; return t.of; }
+function tbFdName(f) { var x = RU_FD.filter(function (d) { return d[0] === f && f; })[0]; return x ? x[1] : "Округ не определён"; }
+function tbOfPdfCities(of, withMaybe) {
+  var s = tbOfSel(), anyFd = Object.keys(s.fd).length;
+  var shown = of.yes.concat(withMaybe ? of.maybe : []).filter(function (r) { return !anyFd || s.fd[RU_FD_OF[r.reg] || ""]; });
+  var ck = shown.filter(function (r) { return s.ck[r.city]; });
+  return (ck.length ? ck : shown).map(function (r) { return r.city; });
+}
+function tbOfFit() {   // таблица помещается — без своей прокрутки: тогда заголовки округов прилипают к верху страницы
+  var w = document.querySelector(".tb-ofwrap"); if (w) w.classList.toggle("fits", w.querySelector("table").offsetWidth <= w.clientWidth + 1);
 }
 // Правка города в подборе: копия списка → fn(правки города, список) → без пустого → на сервер
 function tbEditCity(city, fn, msg) {
@@ -13873,6 +13924,7 @@ var TB_PDF_JS = 'document.getElementById("savePdf").onclick=function(){var b=thi
 function tbOfferDoc(kind) {   // окно документа: артисту — без экономики, руководителю — с экономикой и допущениями
   var cx = S.pl.tbCtx, L = tbCur(); if (!cx || !cx.A || !L) return;
   var snap = tbSnapshot(L, cx.A, cx.P), title = (kind === "artist" ? "Предложение — " : "На согласование — ") + snap.who;
+  if (kind === "artist") { var only = {}; tbOfPdfCities(tbOfferRows(cx.A), !!tbPrefs().ofArtMaybe).forEach(function (c) { only[c] = 1; }); snap.rows = snap.rows.filter(function (r) { return only[r.city]; }); }
   var w = window.open("", "_blank");
   if (!w) { toast("Браузер не дал открыть окно — разрешите всплывающие окна для этого сайта"); return; }
   w.document.open();
@@ -14511,12 +14563,15 @@ function tbOrder(cities) {   // новый порядок группы пред�
   cities.forEach(function (c, i) { (lx.cities[c] = lx.cities[c] || {}).ord = i + 1; });
   plPut("lists", id, lx);
 }
-function tbGroupCities(grp) { return [].map.call(document.querySelectorAll('tr[data-ofgrp="' + grp + '"]'), function (tr) { return tr.getAttribute("data-ofrow"); }); }
+function tbGroupCities(grp) {   // весь порядок группы — из данных: часть строк может быть скрыта (свёрнутый округ, фильтр округов)
+  var cx = S.pl.tbCtx; if (cx && cx.A) return (tbOfferRows(cx.A)[grp] || []).map(function (r) { return r.city; });
+  return [].map.call(document.querySelectorAll('tr[data-ofgrp="' + grp + '"]'), function (tr) { return tr.getAttribute("data-ofrow"); });
+}
 var tbRowDrag = null;
 document.addEventListener("mousedown", function (ev) {
   var h = ev.target.closest && ev.target.closest("[data-of-handle]"); if (!h) return;
   var tr = h.closest("tr"); tr.setAttribute("draggable", "true");
-  tbRowDrag = { city: h.getAttribute("data-of-handle"), grp: tr.getAttribute("data-ofgrp"), tr: tr };
+  tbRowDrag = { city: h.getAttribute("data-of-handle"), grp: tr.getAttribute("data-ofgrp"), fd: tr.getAttribute("data-offd"), tr: tr };
 });
 document.addEventListener("dragstart", function (ev) {
   if (!tbRowDrag || ev.target !== tbRowDrag.tr) return;
@@ -14525,6 +14580,7 @@ document.addEventListener("dragstart", function (ev) {
 document.addEventListener("dragover", function (ev) {
   if (!tbRowDrag) return;
   var tr = ev.target.closest && ev.target.closest('tr[data-ofgrp="' + tbRowDrag.grp + '"]'); if (!tr) return;   // только внутри своей группы
+  if (tbRowDrag.fd != null && tr.getAttribute("data-offd") !== tbRowDrag.fd) return;   // и своего округа
   ev.preventDefault();
   var r = tr.getBoundingClientRect(), after = ev.clientY > r.top + r.height / 2;
   document.querySelectorAll(".pl-drop-before, .pl-drop-after").forEach(function (x) { x.classList.remove("pl-drop-before", "pl-drop-after"); });
@@ -14543,10 +14599,19 @@ document.addEventListener("dragend", function () { tbRowDrag = null; });
 document.addEventListener("keydown", function (ev) {
   var h = ev.target.closest && ev.target.closest("[data-of-handle]"); if (!h || (ev.key !== "ArrowUp" && ev.key !== "ArrowDown")) return;
   ev.preventDefault();
-  var c = h.getAttribute("data-of-handle"), list = tbGroupCities(h.closest("tr").getAttribute("data-ofgrp")), from = list.indexOf(c), to = from + (ev.key === "ArrowUp" ? -1 : 1);
-  if (to < 0 || to >= list.length) return;
-  list.splice(from, 1); list.splice(to, 0, c); tbOrder(list);
+  var c = h.getAttribute("data-of-handle"), tr0 = h.closest("tr"), grp = tr0.getAttribute("data-ofgrp"), fd = tr0.getAttribute("data-offd"), up = ev.key === "ArrowUp";
+  var near = [].filter.call(document.querySelectorAll('tr[data-ofgrp="' + grp + '"]'), function (x) { return fd == null || x.getAttribute("data-offd") === fd; }).map(function (x) { return x.getAttribute("data-ofrow"); });
+  var nb = near[near.indexOf(c) + (up ? -1 : 1)]; if (!nb) return;   // сосед в своём округе; порядок — во всей группе
+  var list = tbGroupCities(grp); list.splice(list.indexOf(c), 1); list.splice(list.indexOf(nb) + (up ? 0 : 1), 0, c); tbOrder(list);
   setTimeout(function () { var el = document.querySelector('[data-of-handle="' + CSS.escape(c) + '"]'); if (el) el.focus(); }, 30);
+});
+document.addEventListener("change", function (ev) {   // флажки «Предложения»: город и весь округ
+  var el = ev.target; if (!el.closest || !el.closest(".tb-ofwrap")) return;
+  var s = tbOfSel(), c = el.getAttribute("data-ofck"), f = el.getAttribute("data-ofckall");
+  if (c != null) { if (el.checked) s.ck[c] = 1; else delete s.ck[c]; }
+  else if (f != null && S.pl.tbCtx && S.pl.tbCtx.A) { var of = tbOfferRows(S.pl.tbCtx.A); of.yes.concat(of.maybe).forEach(function (r) { if ((RU_FD_OF[r.reg] || "") === f) { if (el.checked) s.ck[r.city] = 1; else delete s.ck[r.city]; } }); }
+  else return;
+  tbRe();
 });
 // «Карта»: флажок области — показать / скрыть её на карте; поиск по списку областей — без перерисовки
 document.addEventListener("change", function (ev) {
