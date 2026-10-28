@@ -126,7 +126,7 @@
       [r.stage==='decided','Решение',r.stage==='decided'?(r.season==='this'?'этот сезон':r.season==='next'?'следующий сезон':'принято'):'этот или следующий сезон',action('decision:this','Этот сезон',id,r.stage==='decided'&&r.season==='this'?'btn-dark':'btn-ghost')+action('decision:next','Следующий сезон',id,r.stage==='decided'&&r.season==='next'?'btn-dark':'btn-ghost')],
       [!!WK.projects[r.project],'Проект «Работы»',WK.projects[r.project]?'создан':'после решения',r.stage==='decided'?(WK.projects[r.project]?action('project-open','Открыть проект →',id):action('project-create','Создать проект «Работы»',id,'btn-dark')):'']
     ];
-    var html='<div class="proc-dhead"><div><h2>'+esc(r.title)+'</h2><div class="proc-dtags">'+tag(r.stage)+(r.season?'<span class="wkp-pill ps-green">'+esc(wkLabel(season,r.season))+'</span>':'')+'</div></div>'+action('close',PJ_ICON.close,null,'icon-btn',' aria-label="Закрыть карточку"')+'</div>'+
+    var html='<div class="proc-dhead"><div><h2>'+esc(r.title)+'</h2><div class="proc-dtags">'+tag(r.stage)+(r.season?'<span class="wkp-pill ps-green">'+esc(wkLabel(season,r.season))+'</span>':'')+'</div></div>'+'<div class="proc-dbtns">'+action('lead-delete',WKP_TRASH,id,'icon-btn',' aria-label="Удалить из воронки" title="Удалить из воронки"')+action('close',PJ_ICON.close,null,'icon-btn',' aria-label="Закрыть карточку"')+'</div></div>'+
       (hints(r,sh).length?'<div class="proc-hints">'+hints(r,sh).map(function(s){return '<span>Перевести в «'+esc(label(s))+'»?</span>'+action('stage:'+s,'Перевести',id,'btn-dark');}).join('')+'</div>':'')+
       '<section class="proc-sec"><h3>Шаги процесса</h3><ol class="proc-steps">'+steps.map(function(s,i){return '<li class="'+(s[0]?'done':s[4]?'no':'')+'"><span class="proc-dot" aria-hidden="true">'+(s[0]?'✓':s[4]?'✕':i+1)+'</span><div class="proc-stx"><b>'+s[1]+'</b><span>'+esc(s[2])+'</span></div><div class="proc-sact">'+s[3]+'</div></li>';}).join('')+'</ol></section>'+
       '<section class="proc-sec"><h3>Данные</h3><div class="form-grid proc-form">'+fields.map(function(f){return '<div class="field'+(f[4]?' full':'')+'"><label>'+f[1]+'</label>'+field(row,f[0],f[1],f[2],f[3])+'</div>';}).join('')+'</div></section>'+
@@ -138,6 +138,11 @@
   function norm(t) { return String(t||'').toLowerCase().replace(/ё/g,'е').replace(/[^a-zа-я0-9]+/g,''); }
   function dist(a,b) { var d=[],i,j; for(i=0;i<=a.length;i++)d[i]=[i]; for(j=0;j<=b.length;j++)d[0][j]=j; for(i=1;i<=a.length;i++)for(j=1;j<=b.length;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1)); return d[a.length][b.length]; }
   function alike(r) { var t=norm(r.title),best=null,bd=1e9; if(t.length<3)return null; Object.keys(PLAN.lists).forEach(function(k){var L=PLAN.lists[k];if((L.work||{}).lead)return;var x=norm(L.title),d=dist(t,x);if(d<bd&&d<=Math.max(1,Math.floor(Math.max(t.length,x.length)*0.25))){bd=d;best=k;}}); return best; }
+  async function dropLead(id) {   // подбор отвязываем, иначе он остаётся «занятым» удалённой записью (linkList, alike)
+    var L=PLAN.lists[(WK.leads[id]||{}).list];
+    if(L && (L.work||{}).lead===id){var o=JSON.parse(JSON.stringify(L));delete o.work.lead;await request('/api/planning',{op:'put',kind:'lists',id:WK.leads[id].list,data:o});PLAN.lists[WK.leads[id].list]=o;}
+    WK=await request('/api/work',{op:'del',kind:'leads',id:id});
+  }
   async function linkList(id,lid) {
     var r=WK.leads[id],L=PLAN.lists[lid],old=PLAN.lists[r.list];
     if(L && (L.work||{}).lead && L.work.lead!==id)throw new Error('Этот подбор уже связан с другой записью');
@@ -166,6 +171,7 @@
     if(a==='filter'){wkPopOpen(b,'wk-menu proc-filter',filterHtml(),{});return;}if(a==='reset'){state.filters={};wkPopClose();redraw();return;}
     if(a==='pick'||a==='pdf'){openPick(id,a==='pdf');return;}if(a==='task-open'){closeDrawer();state.lead=null;wkOpenTask(WK.leads[id].task);return;}
     if(a==='project-open'){closeDrawer();state.lead=null;goView('work');wkpOpenPage(WK.leads[id].project);return;}
+    if(a==='lead-delete'){var lr=WK.leads[id];if(!lr)return;askConfirm('Удалить «'+lr.title+'» из воронки?',(PLAN.lists[lr.list]||WK.tasks[lr.task]?'Подбор городов и задача останутся, только без связи с записью. ':'')+'Вернуть запись нельзя.','Удалить',function(){enqueue(async function(){await dropLead(id);closeDrawer();state.lead=null;redraw();toast('Удалено из воронки');});});return;}
     if(a==='delete'){var n=leads(id).length;askConfirm('Удалить процесс «'+WK.procs[id].title+'»?','Записи воронки ('+n+'), задачи и заметки останутся без процесса.','Удалить',function(){enqueue(async function(){WK=await request('/api/work',{op:'del',kind:'procs',id:id});state.id=null;redraw();});});return;}
     enqueue(function(){return leadAction(a,id);});
   });

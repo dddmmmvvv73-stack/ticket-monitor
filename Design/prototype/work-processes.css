@@ -52,6 +52,8 @@
 /* Карточка записи */
 .proc-dhead { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
 .proc-dhead h2 { margin: 0; font: 600 22px/1.2 var(--display); overflow-wrap: anywhere; }
+.proc-dbtns { display: flex; gap: 8px; flex-shrink: 0; }
+.proc-dbtns [data-proc-action="lead-delete"]:hover { color: #b42318; border-color: #f3b4ae; }
 .proc-dtags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
 .proc-hints { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; border-radius: 12px; background: #fbefc4; font-size: 13.5px; }
 .proc-hints .btn-dark { height: 32px; padding: 0 14px; }
