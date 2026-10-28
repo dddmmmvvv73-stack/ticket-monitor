@@ -4794,7 +4794,7 @@ function wkProjectPage(pid) {
 function wkPickLinks(field, id) { var ls = PLAN.lists || {}; return Object.keys(ls).filter(function (k) { return (ls[k].work || {})[field] === id; }).map(function (k) { return { id: k, L: ls[k] }; }); }
 function wkPickOffer(L) {
   var n = { yes: 0, maybe: 0 }; Object.keys(L.cities || {}).forEach(function (c) { var d = pickDec(L.cities[c]); if (n[d] != null) n[d]++; });
-  return n.yes || n.maybe ? "предложение: " + (n.yes ? n.yes + " подх." : "") + (n.yes && n.maybe ? " · " : "") + (n.maybe ? n.maybe + " рассм." : "") : tbFee(L) ? "предложения пока нет" : "список продюсера";
+  return n.yes || n.maybe ? "предложение: " + (n.yes ? n.yes + " подх." : "") + (n.yes && n.maybe ? " · " : "") + (n.maybe ? n.maybe + " рассм." : "") : tbFee(L) ? "предложения пока нет" : "гонорар не указан";
 }
 function wkPickBlock(pid) {
   var ls = wkPickLinks("project", pid); if (!ls.length) return "";
@@ -12972,9 +12972,12 @@ function tbEditor(d) {
   return dl + '<section class="card pl-card tb-editor"><div class="tb-meta pl-flat">' +
       '<label class="pl-lab">Название <input class="pl-in pl-text" id="tbTitle" value="' + esc(d.title || "") + '" placeholder="например, «Призрак Оперы — сезон 26/27»" style="min-width:280px"></label>' +
       '<label class="pl-lab">Проект в афише <input class="pl-in pl-text" id="tbProject" list="tbProjList" value="' + esc(d.project || "") + '" placeholder="название, как в «Мероприятиях»" style="min-width:260px" title="По нему ищем даты проекта в нашей базе касс"></label></div>' +
-    '<textarea id="tbText" class="tb-text" rows="10" placeholder="Если есть — список от продюсера как есть (где артист уже работает), например:&#10;Тольятти - 1 февраля&#10;Самара - 2 февраля&#10;Нет списка — оставьте пустым и нажмите «Сохранить»: подбор пойдёт по всем городам">' + esc(d.text || "") + '</textarea>' +
-    '<div class="tb-actions"><button class="btn-' + (rows.length ? 'ghost' : 'dark') + '" data-pl="tb-parse">Разобрать</button><button class="btn-' + (rows.length ? 'dark' : 'ghost') + '" data-pl="tb-save" title="Без списка продюсера — подбор по всем городам: гонорар и прочее — после сохранения">Сохранить</button><button class="btn-ghost" data-pl="tb-cancel">Отмена</button>' +
-      '<span class="sub2">Даты без года — ближайшие будущие. Строки чата («01:06 PM ред.») пропускаются.</span></div></section>' + table;
+    // список продюсера пока скрыт (решение пользователя 28.10): новый артист — сразу на экран подбора, с гонораром
+    '<div class="tb-meta pl-flat">' +
+      '<label class="pl-lab">Гонорар, ₽ <input class="pl-in" id="tbFee" inputmode="numeric" value="' + esc((d.econ || {}).fee ? plFmt(d.econ.fee) : "") + '" placeholder="например, 600 000" style="width:140px;text-align:left"></label>' +
+      '<label class="pl-lab">% сверху <input class="pl-in" id="tbCashless" inputmode="decimal" value="' + esc((d.econ || {}).cashless != null ? d.econ.cashless : "") + '" placeholder="0" style="width:70px;text-align:left"></label></div>' +
+    '<div class="tb-actions"><button class="btn-dark" data-pl="tb-save">Сохранить</button><button class="btn-ghost" data-pl="tb-cancel">Отмена</button>' +
+      '<span class="sub2">Гонорар можно вписать и позже — на странице артиста.</span></div></section>';
 }
 function tbResults(L) {
   var p = tbPrefs(), t = S.pl.tb;
@@ -12984,6 +12987,7 @@ function tbResults(L) {
     S.pl.tbCtx = { A: A0, p: p, P: P0 };
     return tbEconHtml(L, t.list, P0) + tbPickView(L, A0, P0, p);
   }
+  if (!PL_PRODUCER) { S.pl.tbCtx = { p: p }; return tbEconHtml(L, t.list, null) + '<div class="empty" style="margin-top:16px"><h2>Впишите гонорар</h2><p style="margin:0">Как только будет гонорар, здесь появятся свободные города, где концерт окупается, и вкладка «Предложение».</p></div>'; }
   var A = tbAnalyze(L, p), all = A.rows, vis = tbFilter(all, p);
   S.pl.tbCtx = { A: A, vis: vis, visMap: tbFilter(all, Object.assign({}, p, { show: "all" })), p: p };   // на карте — все статусы, слоями
   var prodN = all.filter(function (r) { return r.st === "prod"; }).length, baseN = all.filter(function (r) { return r.base.length; }).length;
@@ -13129,11 +13133,13 @@ function tbAction(a, b) {   // кнопки вкладки (из общего о
     if (!d.rows.length) toast("Не нашли ни одной строки — вставьте список в поле");
   }
   else if (a === "tb-save") {
-    var dd = t.draft; dd.title = $("tbTitle").value.trim() || dd.title || $("tbProject").value.trim() || "Список продюсера"; dd.project = $("tbProject").value.trim(); dd.text = $("tbText").value;
-    if (dd.text.trim() && !(dd.rows || []).length) dd.rows = tpParse(dd.text, { cities: tbCities(), today: TODAY, title: dd.project }).rows.map(function (r) { var o = {}; ["city", "date", "date2", "time", "status", "other", "note", "line", "fix", "raw"].forEach(function (k) { if (r[k]) o[k] = r[k]; }); return o; });
+    var dd = t.draft; dd.title = $("tbTitle").value.trim() || dd.title || $("tbProject").value.trim() || "Новый артист"; dd.project = $("tbProject").value.trim();
+    var base = t.editId ? PLAN.lists[t.editId] : { created: TODAY }, econ = Object.assign({}, base.econ || {});   // список продюсера (text, rows) — как был
+    var fee = +String($("tbFee").value).replace(/[^\d]/g, ""), cl = String($("tbCashless").value).replace(",", ".").trim();
+    if (fee > 0) econ.fee = fee; if (cl !== "" && isFinite(+cl)) econ.cashless = +cl;
     var id = t.editId || plId("l"); PLAN.lists = PLAN.lists || {};
     t.draft = null; t.list = id; t.sel = {};
-    plPut("lists", id, Object.assign({}, t.editId ? PLAN.lists[t.editId] : { created: TODAY }, { title: dd.title, project: dd.project, text: dd.text, rows: dd.rows || [] }), "«" + dd.title + "» сохранён");
+    plPut("lists", id, Object.assign({}, base, { title: dd.title, project: dd.project, text: base.text || "", rows: base.rows || [], econ: econ }), "«" + dd.title + "» сохранён");
   }
   else if (a === "tb-del") { if (!confirm("Удалить список «" + PLAN.lists[t.list].title + "»?")) return; var did = t.list; t.list = null; plDel("lists", did, "Список удалён"); }
   else if (a === "tb-set") { var k = b.getAttribute("data-k"), v = b.getAttribute("data-v"); if (k === "view") { t.view = v; } else { p[k] = v; tbSave(p); } tbRe(); }
@@ -13251,7 +13257,7 @@ function ixTaskSel(r) {
 function ixCell(c, r) {
   var dash = '<span class="muted">—</span>', td = function (html, title) { return '<td class="' + (c.left ? 'pl-left' : 'num') + '"' + (title ? ' title="' + esc(title) + '"' : '') + '>' + html + '</td>'; };
   switch (c.id) {
-    case "title": return td('<button class="ev-title" data-pl="tb-open" data-id="' + r.id + '">' + esc(r.title) + '</button>' + (r.prod ? '<div class="sub2">список продюсера</div>' : r.L.project && r.L.project !== r.title ? '<div class="sub2">' + esc(r.L.project) + '</div>' : ''));
+    case "title": return td('<button class="ev-title" data-pl="tb-open" data-id="' + r.id + '">' + esc(r.title) + '</button>' + (r.prod ? '<div class="sub2">' + (PL_PRODUCER ? 'список продюсера' : 'гонорар не указан') + '</div>' : r.L.project && r.L.project !== r.title ? '<div class="sub2">' + esc(r.L.project) + '</div>' : ''));
     case "fee": return td(r.fee ? plShort(r.fee) + (planNum(r.L.econ.cashless) ? '<div class="sub2">+' + r.L.econ.cashless + '%</div>' : '') : dash);
     case "offer": return td(r.n.yes || r.n.maybe ? (r.n.yes ? r.n.yes + ' подх.' : '') + (r.n.yes && r.n.maybe ? ' · ' : '') + (r.n.maybe ? r.n.maybe + ' рассм.' : '') : dash);
     case "boss": return td(!r.sh ? '<span class="muted">не отправлено</span>' : 'ссылка ' + ixDate(r.sh.created) + (r.sh.open ? '' : ' · закрыта') + (r.fresh ? ' <span class="tb-newc" title="Новые комментарии руководителя">новое</span>' : '') +
@@ -13280,7 +13286,7 @@ function ixSortVal(id, r) {
 }
 function ixFilterOk(r, p, skip) {   // skip — раздел, который не применяем (числа в меню фильтра)
   var kinds = p.ixKind || {}, anyK = kinds.pick || kinds.prod;
-  if (skip !== "k" && anyK && !(r.prod ? kinds.prod : kinds.pick)) return false;
+  if (PL_PRODUCER && skip !== "k" && anyK && !(r.prod ? kinds.prod : kinds.pick)) return false;   // «Вид» — только пока виден список продюсера
   var pj = p.ixProj || "all"; if (skip !== "p" && pj !== "all" && (pj === "none" ? !!r.wp : r.wp !== pj)) return false;
   var tk = p.ixTask || "all"; if (skip !== "t" && tk !== "all" && (tk === "none" ? !!r.wt : !r.wt)) return false;
   var bs = p.ixBoss || "all"; if (skip !== "b" && bs !== "all" && (bs === "new" ? !r.fresh : !!r.sh)) return false;
@@ -13309,8 +13315,8 @@ function ixPopHtml() {   // меню кнопки-фильтра таблицы 
     return '<button type="button" class="wk-menu-item' + (x ? ' on' : '') + '" data-ixpop-f="' + esc(key) + '" role="' + (radio ? 'menuitemradio' : 'menuitemcheckbox') + '" aria-checked="' + x + '"><span class="cand-fl"><i class="cand-cb' + (radio ? ' tb-rb' : '') + (x ? ' on' : '') + '" aria-hidden="true"></i><span>' + esc(label) + '</span></span><span class="wks-fn">' + n + '</span></button>';
   };
   var pj = p.ixProj || "all", linked = {}; base.forEach(function (r) { if (r.wp && WK.projects[r.wp]) linked[r.wp] = 1; });
-  return '<div class="wkp-title">Вид</div>' + item("k:pick", !!kinds.pick, "Подбор для артиста", cnt("k", function (r) { return !r.prod; })) + item("k:prod", !!kinds.prod, "Список продюсера", cnt("k", function (r) { return r.prod; })) +
-    '<div class="wkp-title wk-menu-sep">Проект</div>' + item("p:all", pj === "all", "Все", cnt("p", function () { return true; }), true) + item("p:none", pj === "none", "Без проекта", cnt("p", function (r) { return !r.wp; }), true) +
+  return (PL_PRODUCER ? '<div class="wkp-title">Вид</div>' + item("k:pick", !!kinds.pick, "Подбор для артиста", cnt("k", function (r) { return !r.prod; })) + item("k:prod", !!kinds.prod, "Список продюсера", cnt("k", function (r) { return r.prod; })) : '') +
+    '<div class="wkp-title' + (PL_PRODUCER ? ' wk-menu-sep' : '') + '">Проект</div>' + item("p:all", pj === "all", "Все", cnt("p", function () { return true; }), true) + item("p:none", pj === "none", "Без проекта", cnt("p", function (r) { return !r.wp; }), true) +
       Object.keys(linked).map(function (id) { return item("p:" + id, pj === id, WK.projects[id].title, cnt("p", function (r) { return r.wp === id; }), true); }).join("") +
     '<div class="wkp-title wk-menu-sep">Задача</div>' + IX_TASK.map(function (o) { return item("t:" + o[0], (p.ixTask || "all") === o[0], o[1], cnt("t", function (r) { return o[0] === "all" || (o[0] === "none" ? !r.wt : !!r.wt); }), true); }).join("") +
     '<div class="wkp-title wk-menu-sep">Руководитель</div>' + IX_BOSS.map(function (o) { return item("b:" + o[0], (p.ixBoss || "all") === o[0], o[1], cnt("b", function (r) { return o[0] === "all" || (o[0] === "new" ? r.fresh : !r.sh); }), true); }).join("") +
@@ -13438,6 +13444,7 @@ PL_COLSETS.pk = { id: "pk", cols: PK_COLS, key: "pkcols" };
 PL_COLSETS.of = { id: "of", cols: PK_COLS, key: "ofcols" };
 var TB_CMP = null;
 function tbFee(L) { return !!(L && L.econ && planNum(L.econ.fee) > 0); }
+var PL_PRODUCER = false;   // экран «списка продюсера» (артист без гонорара) — скрыт по решению пользователя 28.10; true — вернуть
 function tbFormat(L) {   // формат для цены города: вписанный в списке, иначе — как у проекта в афише, иначе «Концерт»
   if (L.format) return L.format;
   var key = L.project ? canonPk(projKey(L.project)) : "";
