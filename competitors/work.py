@@ -60,7 +60,7 @@ from datetime import datetime
 from competitors.storage import BASE_DIR, CONFIG_DIR, load_json, save_json
 
 FILE = CONFIG_DIR / "work.json"
-KINDS = ("projects", "tasks", "docs", "tags", "costs", "notes", "shows", "stages", "parties", "goals", "procs", "leads")
+KINDS = ("projects", "tasks", "docs", "tags", "costs", "notes", "shows", "stages", "parties", "goals", "procs", "leads", "objectives", "goalvision")
 # shows — гастроли проекта (решение пользователя 20.10): дата, площадка, город; площадка — из справочника «Площадки → Площадки»
 # (venue — номер записи config/venue_book.json); название и город хранятся копией — строка читается, даже если площадку убрали из справочника
 # Цвета тегов. Красный и оранжевый — только у приоритета (решение пользователя 19.10: полоса слева — по тегу, и красная
@@ -270,6 +270,9 @@ LEAD_LABELS = dict(zip(LEAD_STAGES, ["На входе", "Позвонили", "�
 def _validate(kind: str, d: dict, data: dict) -> dict:
     if not isinstance(d, dict):
         raise WorkError("запись: неверный формат")
+    if kind in ("objectives", "goalvision"):
+        from competitors.goals import validate
+        return validate(kind, d)
     if kind == "procs":
         out = {"title": _text(d.get("title"), "название", 300),
                "kind": _enum(d.get("kind"), ["artists", "venue_dates", "other"], "вид процесса", "other"),
@@ -431,6 +434,16 @@ def apply_op(op: dict) -> dict:
         raise WorkError("неверный номер записи")
     with _lock:
         data = load()
+        if kind in ("objectives", "goalvision") and "expected" in op:
+            current = data[kind].get(oid)
+            if current != op["expected"]:
+                # Retried requests may already have succeeded before a connection failure.
+                retry = op.get("op") == "del" and current is None
+                if op.get("op") == "put" and current:
+                    retry = {k: v for k, v in current.items() if k != "upd"} == _validate(kind, op.get("data") or {}, data)
+                if retry:
+                    return data
+                raise WorkError("цель изменена в другой вкладке; скачайте свои изменения и обновите страницу")
         if op.get("op") == "init" and kind == "procs":
             if not data["procs"]:
                 today = datetime.now().strftime("%Y-%m-%d")

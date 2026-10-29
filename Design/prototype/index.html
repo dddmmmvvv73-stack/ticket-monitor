@@ -2601,6 +2601,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
     <button class="nav-group" type="button" data-grp="work" aria-expanded="true" aria-controls="grp-work">Работа<svg class="nav-chev" width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></button>
     <div class="nav-grp" id="grp-work">
     <a class="nav-item" href="#wkhome" data-view="wkhome"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 7.2L8 2.8l5.5 4.4v6.3a.5.5 0 0 1-.5.5H3a.5.5 0 0 1-.5-.5z"/><path d="M6.4 14v-3.6h3.2V14"/></svg>Обзор</a>
+    <a class="nav-item" href="#wkgoals" data-view="wkgoals"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Цели</a>
     <a class="nav-item" href="#work" data-view="work"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 4.6a1 1 0 0 1 1-1h3.1l1.5 1.6H13a1 1 0 0 1 1 1v5.9a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1z"/></svg>Проекты</a>
     <a class="nav-item" href="#wkproc" data-view="wkproc"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="9" width="5" height="5" rx="1"/><path d="M7 4h5v5M9 12H4V7"/></svg>Процессы</a>
     <a class="nav-item" href="#wkcal" data-view="wkcal"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/><circle cx="8" cy="10.2" r=".9" fill="currentColor" stroke="none"/></svg>Календарь</a>
@@ -2672,7 +2673,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <nav class="bottom-nav" aria-label="Разделы">
   <a href="#city" data-view="city">Город</a><a href="#events" data-view="events">Мероприятия</a><a href="#projects" data-view="projects">Репертуар</a><a href="#work" data-view="work">Проекты</a><button type="button" id="moreBtn" aria-expanded="false" aria-controls="moreSheet">Ещё</button>
 </nav>
-<div class="more-sheet" id="moreSheet" hidden><a href="#wkproc" data-view="wkproc">Процессы</a><a href="#wkhome" data-view="wkhome">Обзор работы</a><a href="#wktasks" data-view="wktasks">Задачи</a><a href="#wkdocs" data-view="wkdocs">Документы</a><a href="#wkparties" data-view="wkparties">Контрагенты</a><a href="#wkcal" data-view="wkcal">Календарь</a><a href="#wknotes" data-view="wknotes">Заметки</a><a href="#archive" data-view="archive">Архив</a><a href="#overview" data-view="overview">Обзор</a><a href="#niches" data-view="niches">Ниши</a><a href="#calendar" data-view="calendar">Календарь событий</a><a href="#new" data-view="new">Новые события</a><a href="#venues" data-view="venues">Площадки</a><a href="#operators" data-view="operators">Билетные операторы</a><a href="#sales" data-view="sales">История продаж</a><a href="#dynamics" data-view="dynamics">Динамика продаж</a><a href="#planning" data-view="planning">Финмодель туров</a><a href="#route" data-view="route">Гастрольный маршрут</a><a href="#settings" data-view="settings">Настройки</a></div>
+<div class="more-sheet" id="moreSheet" hidden><a href="#wkproc" data-view="wkproc">Процессы</a><a href="#wkhome" data-view="wkhome">Обзор работы</a><a href="#wkgoals" data-view="wkgoals">Цели</a><a href="#wktasks" data-view="wktasks">Задачи</a><a href="#wkdocs" data-view="wkdocs">Документы</a><a href="#wkparties" data-view="wkparties">Контрагенты</a><a href="#wkcal" data-view="wkcal">Календарь</a><a href="#wknotes" data-view="wknotes">Заметки</a><a href="#archive" data-view="archive">Архив</a><a href="#overview" data-view="overview">Обзор</a><a href="#niches" data-view="niches">Ниши</a><a href="#calendar" data-view="calendar">Календарь событий</a><a href="#new" data-view="new">Новые события</a><a href="#venues" data-view="venues">Площадки</a><a href="#operators" data-view="operators">Билетные операторы</a><a href="#sales" data-view="sales">История продаж</a><a href="#dynamics" data-view="dynamics">Динамика продаж</a><a href="#planning" data-view="planning">Финмодель туров</a><a href="#route" data-view="route">Гастрольный маршрут</a><a href="#settings" data-view="settings">Настройки</a></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <dialog class="confirm" id="confirmDlg" aria-labelledby="cdTitle" aria-describedby="cdText">
   <h2 id="cdTitle"></h2><p id="cdText" class="sub"></p>
@@ -2698,6 +2699,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <script src="work-notes.js"></script>
 <script src="work-docs.js"></script>
 <script src="work-home.js"></script>
+<script src="work-goals.js"></script>
 <script src="work-processes.js"></script>
 <script src="market-pop.js"></script>
 <script src="venue-cap.js"></script>
@@ -6414,7 +6416,7 @@ document.addEventListener("click", function (ev) {
   }
 });
 // ---------- Группа «Работа» в меню (решение пользователя 20.10): Обзор · Проекты · Календарь · Задачи · Заметки — одни данные (WK)
-var WK_VIEWS = ["wkhome", "work", "wkproc", "wkcal", "wktasks", "wkdocs", "wkparties", "wknotes"];
+var WK_VIEWS = ["wkhome", "wkgoals", "work", "wkproc", "wkcal", "wktasks", "wkdocs", "wkparties", "wknotes"];
 function wkOn() { return WK_VIEWS.indexOf(S.view) >= 0; }
 function wkGate(title) {   // данные раздела — с сервера: без приложения или пока грузятся — заглушка
   if (!CAN_SAVE) return head(title, "") + '<div class="note">Раздел хранится на сервере — откройте сайт через приложение: python3 app.py → http://127.0.0.1:5050/proto/</div>';
@@ -11809,7 +11811,7 @@ function mSplitTools(html) {
 
 // ---------------------------------------------------------------- рендер и события
 // Разделы, которые на телефоне спрятаны в «Ещё»
-var MORE_VIEWS = ["wkproc", "wkhome", "wktasks", "wkdocs", "wkparties", "wkcal", "wknotes", "archive", "overview", "niches", "calendar", "new", "venues", "operators", "sales", "dynamics", "settings", "planning", "route"];
+var MORE_VIEWS = ["wkproc", "wkhome", "wkgoals", "wktasks", "wkdocs", "wkparties", "wkcal", "wknotes", "archive", "overview", "niches", "calendar", "new", "venues", "operators", "sales", "dynamics", "settings", "planning", "route"];
 function render() {
   if (S.wk.wn && S.view !== S.wk.wn.from.view) wnClose(true, true);   // рабочая заметка открыта, а раздел сменили — сохранить и закрыть
   var keepY = wkOn() ? window.scrollY : null;   // «Проекты»: правка не сдвигает страницу (переходы сами прокручивают наверх)
@@ -11818,7 +11820,7 @@ function render() {
   syncMarketView(); S.city = S.m.city;  // раздел — по вкладке «Рынка», если её переключил код; город шапки один на все разделы
   if (location.hash.slice(1) !== viewHash()) history.replaceState(null, "", "#" + viewHash());   // адрес — всегда текущий раздел: его можно скопировать или открыть в новой вкладке
   document.body.classList.toggle("wk-mode", wkOn());
-  document.body.classList.toggle("wh-mode", S.view === "wkhome" && !S.wk.wn);   // «Обзор»: серый фон, как в референсах
+  document.body.classList.toggle("wh-mode", (S.view === "wkhome" || S.view === "wkgoals") && !S.wk.wn);   // «Обзор»: серый фон, как в референсах
   document.body.classList.toggle("wkc-mode", S.view === "wkcal" && !S.wk.wn);
   if (WK_OK) wkStagesSync();   // статусы проектов — свои у пользователя   // разделы «Работы» — без верхней панели рынка (город, период, поиск, сбор; решение пользователя 20.10)
   var ip = $("infoPop"); if (ip) ip.hidden = true;  // элемент под курсором заменится — его подсказка не должна «висеть»
@@ -11836,7 +11838,7 @@ function render() {
   $("dateBtn").style.borderColor = ARCH_ON || S.period === "custom" ? "var(--soot)" : "";
   $("period").style.display = ARCH_ON ? "none" : "";  // «30 дней / 90 дней / Сезон» — про будущее; в архиве период — кнопкой «Даты»
   HEAD_SUB = !isM() && SUBS[S.view] ? subSwitch(S.view) : "";
-  $("view").innerHTML = wkOn() && S.wk.wn ? wnPage() : S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? (vbOn() ? renderVenueBook() : renderVenues()) : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : S.view === "planning" ? renderPlanning() : S.view === "route" ? renderRoute() : S.view === "wkproc" ? WorkProcesses.page() : S.view === "work" ? renderWork() : S.view === "wktasks" ? renderWkTasks() : S.view === "wkdocs" ? renderWkDocs() : S.view === "wkparties" ? WorkDocs.renderParties() : S.view === "wkhome" ? renderWkHome() : S.view === "wkcal" ? renderWkCalendar() : S.view === "wknotes" ? renderWkNotes() : renderEvents();
+  $("view").innerHTML = wkOn() && S.wk.wn ? wnPage() : S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? (vbOn() ? renderVenueBook() : renderVenues()) : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : S.view === "planning" ? renderPlanning() : S.view === "route" ? renderRoute() : S.view === "wkproc" ? WorkProcesses.page() : S.view === "work" ? renderWork() : S.view === "wktasks" ? renderWkTasks() : S.view === "wkdocs" ? renderWkDocs() : S.view === "wkparties" ? WorkDocs.renderParties() : S.view === "wkgoals" ? '<work-goals></work-goals>' : S.view === "wkhome" ? renderWkHome() : S.view === "wkcal" ? renderWkCalendar() : S.view === "wknotes" ? renderWkNotes() : renderEvents();
   $("view").classList.toggle("enter", !!S.enter); S.enter = false; S.colsAnim = false;
   ddClose(false); enhanceSelects(document.querySelector(".top")); enhanceSelects($("view")); vdRestore();
   candApply();  // «Города, где его нет» — счётчик найденного после перерисовки
@@ -14877,7 +14879,7 @@ function renderDynamics() {
   return head("Динамика продаж", "Как идут продажи по кассам · " + cityLabel()) + sfDynamicsBlock() +
     (old ? '<h2 class="sf-sub">Площадки прямого сбора — подробно</h2>' + old : '');
 }
-var VIEWS = ["wkhome", "work", "wkproc", "wkcal", "wktasks", "wkdocs", "wkparties", "wknotes", "overview", "city", "niches", "calendar", "new", "events", "projects", "touring", "favorites", "venues", "operators", "suggest", "archive", "sales", "dynamics", "settings", "market", "planning", "route"];
+var VIEWS = ["wkhome", "wkgoals", "work", "wkproc", "wkcal", "wktasks", "wkdocs", "wkparties", "wknotes", "overview", "city", "niches", "calendar", "new", "events", "projects", "touring", "favorites", "venues", "operators", "suggest", "archive", "sales", "dynamics", "settings", "market", "planning", "route"];
 // Адрес раздела — #раздел или #раздел:версия (#venues:book): меню и вкладки — ссылки, каждый раздел открывается в новой вкладке
 function viewHash() { return S.view + (SUBS[S.view] ? ":" + S.sub[S.view] : ""); }
 function fromHash() {   // раздел из адреса; false — в адресе не раздел
