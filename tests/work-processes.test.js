@@ -18,6 +18,7 @@ test('подсказки не меняют этап: позвонил → «По
   assert.deepEqual(P.hints(r), ['called','discuss']); assert.equal(r.stage,'found');
   assert.deepEqual(P.hints({stage:'ready'}, {versions:1}), ['offer']);
   assert.deepEqual(P.hints({stage:'approve',called:true,ready:'yes'}, {versions:1}), []);
+  assert.deepEqual(P.hints({stage:'called',called:true,ready:'no'}), ['declined']);   // «Готовы: нет» — предложить отказ
 });
 test('фильтр: пора перезвонить, этап, подбор, карточка проекта', () => {
   const r = {stage:'offer',next_at:'2026-10-01',list:'list1',pj:'pabc'};
@@ -30,4 +31,13 @@ test('сезон — сентябрь…апрель; летом «этот се
   assert.deepEqual(P.season('2026-10-29'), {from:'2026-09-01',to:'2027-04-30',next:{from:'2027-09-01',to:'2028-04-30'}});
   assert.equal(P.season('2027-02-10').from, '2026-09-01');
   assert.equal(P.season('2027-06-10').from, '2027-09-01');
+});
+test('фильтр: несколько этапов сразу и «Готовы»; счётчик включённых фильтров', () => {
+  const t='2026-10-29';
+  assert.ok(P.matches({stage:'ready'},{stage:['called','ready']},t) && !P.matches({stage:'offer'},{stage:['called','ready']},t));
+  assert.ok(P.matches({stage:'offer'},{stage:[]},t) && P.matches({stage:'offer'},{stage:'offer'},t));
+  assert.ok(P.matches({ready:'yes'},{ready:'yes'},t) && !P.matches({ready:'no'},{ready:'yes'},t));
+  assert.ok(P.matches({},{ready:'none'},t) && !P.matches({ready:'yes'},{ready:'none'},t));
+  assert.equal(P.fCount({stage:['called','ready'],ready:'yes',show:'',pj:''}), 2);
+  assert.equal(P.fCount({stage:[]}), 0);
 });

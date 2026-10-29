@@ -220,7 +220,7 @@ button.status:hover { color: var(--ink); }
 .resizer { position: absolute; top: 6px; bottom: 6px; right: -4px; width: 9px; cursor: col-resize; z-index: 4; display: flex; justify-content: center; }
 .resizer::before { content: ""; width: 1px; height: 100%; background: var(--line); transition: background 0.12s; }
 .resizer:hover::before, .resizing .resizer.active::before { width: 2px; background: var(--cta); }
-.resizing, .resizing * { cursor: col-resize !important; user-select: none; }
+.resizing, .resizing * { cursor: col-resize !important; -webkit-user-select: none; user-select: none; }   /* Safari 16 — только с префиксом: иначе при перетаскивании границы выделяется строка */
 .info { display: inline-flex; width: 16px; height: 16px; border-radius: 50%; border: 1px solid var(--line-strong); font-size: 10px; align-items: center; justify-content: center; color: var(--muted); cursor: help; position: relative; flex-shrink: 0; }
 .info::after { content: ""; position: absolute; inset: -4px; }  /* мишень 24×24 при видимом кружке 16px */
 .info-pop { position: fixed; z-index: 60; width: 280px; background: var(--ink); color: #fff; font-size: 12px; line-height: 1.45; padding: 8px 10px; border-radius: 8px; pointer-events: none; }
@@ -6143,11 +6143,11 @@ function wkCalHtml() {
     '<div class="wkc-err" hidden>Не похоже на дату — например, 22.10.2026</div>' +
     '<div class="wkc-head"><button type="button" class="icon-btn" data-wkc-nav="-1" aria-label="Предыдущий месяц">‹</button><b>' + WK_MON_NOM[m] + ' ' + y + '</b><button type="button" class="icon-btn" data-wkc-nav="1" aria-label="Следующий месяц">›</button></div>' +
     '<div class="wkc-grid">' + ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map(function (w, i) { return '<span class="wkc-w' + (i > 4 ? ' wknd' : '') + '">' + w + '</span>'; }).join("") + cells + '</div>' +
-    '<div class="wkc-quick">' + [[wkDay(0), "Сегодня"], [wkDay(1), "Завтра"], [wkDay(7), "Через неделю"], ["", "Без срока"]].map(function (q) { return '<button type="button" class="btn-ghost" data-wkc-day="' + q[0] + '">' + q[1] + '</button>'; }).join("") + '</div>';
+    '<div class="wkc-quick">' + (c.quick || [[wkDay(0), "Сегодня"], [wkDay(1), "Завтра"], [wkDay(7), "Через неделю"], ["", "Без срока"]]).map(function (q) { return '<button type="button" class="btn-ghost" data-wkc-day="' + q[0] + '">' + q[1] + '</button>'; }).join("") + '</div>';
 }
-function wkDateOpen(anchor, value, onPick) {
+function wkDateOpen(anchor, value, onPick, quick) {   // quick — свои кнопки под календарём [[дата, подпись]] («Процессы»: «Через 2 дня», «Не нужно»)
   var base = value ? value.split("-") : wkDay(0).split("-");
-  var el = wkPopOpen(anchor, "wk-cal", "", { y: +base[0], m: +base[1] - 1, value: value || "", onPick: onPick });
+  var el = wkPopOpen(anchor, "wk-cal", "", { y: +base[0], m: +base[1] - 1, value: value || "", onPick: onPick, quick: quick });
   el.innerHTML = wkCalHtml(); wkPopPlace();
   var inp = el.querySelector(".wkc-in"); inp.focus(); inp.select();
 }

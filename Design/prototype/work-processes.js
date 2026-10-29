@@ -7,17 +7,21 @@
   var FUNNEL = stages.slice(0,8), OFF = ['reserve','declined'];
   var ready = [['','—'],['yes','Да'],['no','Нет']];
   var SEASON = [[9,'Сен'],[10,'Окт'],[11,'Ноя'],[12,'Дек'],[1,'Янв'],[2,'Фев'],[3,'Мар'],[4,'Апр']];
+  // быстрые задачи записи — столбец «Задачи» (просьба пользователя 29.10); их же предлагают этапы «Ждут предложения» и «Согласование»
+  var TASKS = ['Отправить коллективу подборку городов','Подготовить отчёт по возможным городам для руководителя'];
   var WHY = ['Работают с другим организатором','На эксклюзиве','Нет свободных дат','Не гастролируют','Не устроил гонорар','Не интересно'];
   function off(r) { return OFF.indexOf(r.stage)>=0; }
   // «перезвонить»: дата шага наступила (в резерве — «вернуться к вопросу»); финал и отказ не напоминают
   function due(r, today) { return !!r.next_at && r.next_at<=today && r.stage!=='booking' && r.stage!=='declined'; }
   function counts(rows, today) { var n={total:0,due:0,ready:0,approve:0,booking:0,reserve:0,declined:0}; rows.forEach(function (r) { if(off(r)){n[r.stage]++;return;} n.total++; if(due(r,today))n.due++; if(r.stage in n)n[r.stage]++; }); return n; }
-  function hints(r, sh) { var a=[]; if(r.stage==='found' && r.called) a.push('called'); if(r.ready==='yes' && ['found','called'].indexOf(r.stage)>=0) a.push('discuss'); if(sh && sh.versions && r.stage==='ready') a.push('offer'); return a; }
-  function matches(r, f, today) { return (f.show!=='due' || due(r,today)) && (!f.stage || r.stage===f.stage) && (!f.list || !!r.list===(f.list==='yes')) && (!f.pj || !!r.pj===(f.pj==='yes')); }
+  function hints(r, sh) { var a=[], early=['found','called'].indexOf(r.stage)>=0; if(r.stage==='found' && r.called) a.push('called'); if(r.ready==='yes' && early) a.push('discuss'); if(r.ready==='no' && early) a.push('declined'); if(sh && sh.versions && r.stage==='ready') a.push('offer'); return a; }
+  // этапы в фильтре — несколько сразу (просьба 29.10); «Готовы» — да / нет / не указано
+  function matches(r, f, today) { var st=f.stage?[].concat(f.stage):[]; return (f.show!=='due' || due(r,today)) && (!st.length || st.indexOf(r.stage)>=0) && (!f.ready || (r.ready||'none')===f.ready) && (!f.list || !!r.list===(f.list==='yes')) && (!f.pj || !!r.pj===(f.pj==='yes')); }
+  function fCount(f) { return Object.keys(f).filter(function(k){return Array.isArray(f[k])?f[k].length:!!f[k];}).length; }
   function inList(r, list) { return list==='work' ? !off(r) : r.stage===list; }
   // сезон — сентябрь…апрель; летом «этот сезон» — ближайший
   function season(today) { var y=+today.slice(0,4), m=+today.slice(5,7), s=m<=4?y-1:y; return {from:s+'-09-01',to:(s+1)+'-04-30',next:{from:(s+1)+'-09-01',to:(s+2)+'-04-30'}}; }
-  var api={stages:stages, counts:counts, hints:hints, matches:matches, due:due, inList:inList, season:season};
+  var api={stages:stages, counts:counts, hints:hints, matches:matches, fCount:fCount, due:due, inList:inList, season:season};
   if(typeof module!=='undefined' && module.exports) module.exports=api;
   root.WorkProcesses=api;
   if(typeof document==='undefined') return;
@@ -74,7 +78,28 @@
   function pjCell(r) {
     var p=pjRec(r);
     if(p) return '<span class="proc-pjl">'+pjAva(p)+action('pj-open',esc(p.title),r.id,'pj-plain proc-ell')+'</span>';
-    var s=pjAlike(r); return s?action('pj-link:'+s,'связать: '+esc(MYP.projects[s].title),r.id,'pj-plain proc-sug'):'<span class="sub2">—</span>';
+    var s=pjAlike(r); return '<span class="proc-cellr">'+action('pj-menu',WKT_ICON.plus,r.id,'proc-plus',' aria-haspopup="menu" aria-label="Карточка проекта: выбрать или создать" title="Выбрать или создать карточку проекта"')+(s?action('pj-link:'+s,'связать: '+esc(MYP.projects[s].title),r.id,'pj-plain proc-sug'):'')+'</span>';
+  }
+  function pjMenu(b,id) {   // «+» в столбце «Карточка проекта»: поиск по карточкам «Репертуара» или новая — без боковой карточки
+    var r=WK.leads[id],s=pjAlike(r),used={};records('leads').forEach(function(x){if(x.pj&&x.id!==id)used[x.pj]=x.title;});
+    var ids=Object.keys(MYP.projects||{}).sort(function(a,c){return (a===s?-1:c===s?1:0)||MYP.projects[a].title.localeCompare(MYP.projects[c].title,'ru');});
+    wkPopOpen(b,'wk-menu proc-pjmenu','<div class="wkp-title">Карточка проекта для «'+esc(r.title)+'»</div>'+wkMenuSearch('Найти карточку')+'<div class="proc-mlist">'+
+      ids.map(function(k){var p=MYP.projects[k];return '<button type="button" class="wk-menu-item" data-proc-action="pj-link:'+k+'" data-id="'+id+'" data-q="'+esc(wksNorm(p.title))+'"><span class="proc-fl">'+pjAva(p)+'<span>'+esc(p.title)+(used[k]?'<small>уже у «'+esc(used[k])+'»</small>':k===s?'<small>похоже по названию</small>':'')+'</span></span></button>';}).join('')+
+      '<div class="wk-mnone sub2" hidden>Не нашлось</div></div>'+action('pj-create','+ Создать карточку «'+esc(r.title)+'»',id,'proc-freset'),{});
+    var q=document.querySelector('.proc-pjmenu [data-wk-msearch]'); if(q) q.focus();
+  }
+  function taskMenu(b,id) {
+    wkPopOpen(b,'wk-menu proc-tmenu','<div class="wkp-title">Задача для «'+esc(WK.leads[id].title)+'»</div>'+TASKS.map(function(t,i){return action('task-quick:'+i,esc(t),id,'wk-menu-item');}).join('')+action('task-new','Своя задача…',id,'wk-menu-item proc-muted'),{});
+  }
+  function readyMenu(b,id) {
+    var v=WK.leads[id].ready||'';
+    wkPopOpen(b,'wk-menu proc-rmenu','<div class="wkp-title">Готовы сотрудничать?</div>'+[['yes','Да'],['no','Нет'],['','Не указано']].map(function(o){return '<button type="button" class="wk-menu-item'+(v===o[0]?' on':'')+'" data-proc-action="ready-set:'+o[0]+'" data-id="'+id+'"><span class="proc-fl"><span class="proc-pill '+(o[0]||'none')+'">'+o[1]+'</span></span>'+(v===o[0]?WKT_ICON.check:'<span class="proc-fph"></span>')+'</button>';}).join(''),{});
+  }
+  function taskDue(r) { return r.next_at&&r.next_at>wkDay(0)?r.next_at:wkDay(2); }
+  function setNext(id,v) {   // «перезвонить»: дата шага; «Не нужно» — убрать дату (и «Перезвонить» из текста шага)
+    var r=WK.leads[id]; if(!r) return;
+    var p={next_at:v}; if(v) p.next=cbText(r); else if(/^(Перезвонить|Вернуться к вопросу)$/.test(r.next||'')) p.next='';
+    patch(id,p);
   }
   function openPj(pid) {
     var p=MYP.projects[pid]; if(!p) return;
@@ -87,7 +112,7 @@
     if(PL_COLSETS.leads) return;
     var mk=function(id,key,defs){PL_COLSETS[id]={id:id,key:key,cols:defs.map(function(c,i){return {id:c[0],labels:[c[1]],w:c[2],left:true,lock:i===0,off:!!c[3]};})};};
     // по умолчанию — что нужно для прозвона и «перезвонить»; остальное — «Столбцы таблицы» (ключ leadcols2: набор v2, 29.10)
-    mk('leads','leadcols2',[['title','Проект',220],['stage','Этап',210],['fee','Гонорар',112],['next','Следующий шаг',210],['next_at','Перезвонить',176],['list','Подбор городов',124],['tasks','Задачи',82],['pj','Карточка проекта',190],['called','Позвонил',90,1],['ready','Готовы',96,1],['cashless','% сверху',90,1],['contact','Контакт',200,1],['called_at','Дата звонка',132,1],['source','Источник',180,1],['note','Заметка',220,1],['cities','Возможные города',210,1]]);
+    mk('leads','leadcols2',[['title','Проект',220],['stage','Этап',210],['called','Позвонил',130],['ready','Готовы',90],['fee','Гонорар',112],['next','Следующий шаг',210],['next_at','Перезвонить',176],['list','Подбор городов',124],['tasks','Задачи',100],['pj','Карточка проекта',190],['cashless','% сверху',90,1],['contact','Контакт',200,1],['called_at','Дата звонка',132,1],['source','Источник',180,1],['note','Заметка',220,1],['cities','Возможные города',210,1]]);
     mk('leadsres','leadrescols2',[['title','Проект',220],['why','Почему не сейчас',280],['next_at','Вернуться к вопросу',176],['fee','Гонорар',112],['contact','Контакт',190],['pj','Карточка проекта',190],['back','',184]]);
     mk('leadsdec','leaddeccols2',[['title','Проект',220],['why','Причина отказа',320],['called_at','Дата звонка',132],['contact','Контакт',190],['pj','Карточка проекта',190],['back','',184]]);
   }
@@ -95,48 +120,60 @@
     var v=r[k],attr=' data-lead-field="'+k+'" data-id="'+r.id+'" aria-label="'+esc(title)+'"';
     // списки — фирменные выпадающие сайта (enhanceSelects), поля — как в таблицах «Планирования»
     if(opts) return '<select class="pl-sel"'+attr+'>'+wkOpts(opts.map(function(o){return [o[0],esc(o[1])];}),v||'')+'</select>';
-    if(type==='checkbox') return '<input type="checkbox" class="wk-check"'+attr+(v?' checked':'')+'>';
+    if(type==='checkbox') return '<input type="checkbox" class="wk-check proc-sq"'+attr+(v?' checked':'')+'>';
     if(type==='textarea') return '<textarea class="pl-in pl-text"'+attr+'>'+esc(v||'')+'</textarea>';
     return '<input class="pl-in'+(type==='number'?' proc-num':' pl-text')+'"'+attr+' type="'+(type||'text')+'" value="'+esc(v==null?'':String(v))+'"'+(type==='number'?' min="0" step="any"':'')+'>';
   }
-  function cbBtns(id) { return '<span class="proc-cbq">'+action('cb:2','+2 дня',id,'proc-q',' title="Перезвонить через 2 дня"')+action('cb:7','+7',id,'proc-q',' title="Перезвонить через 7 дней"')+'</span>'; }
+  function dateBtn(kind,id,iso,o) {
+    o=o||{}; var info=o.due&&iso?wkDueInfo(iso):{text:iso?wkpShort(iso):(o.empty||'—'),cls:iso?'':'none'};
+    return '<button type="button" class="wk-datebtn proc-dbtn '+(info.cls||'')+'" data-proc-date="'+kind+'" data-id="'+esc(id)+'" data-wk-val="'+esc(iso||'')+'"'+(o.attrs||'')+' aria-haspopup="dialog" aria-label="'+esc((o.label||'Дата')+': '+(iso?wkpShort(iso):'не задана'))+'">'+(o.icon?WKT_ICON.cal:'')+esc(info.text)+'</button>';
+  }
+  function cbBtns(id,set) { return '<span class="proc-cbq">'+action('cb:2','+2',id,'proc-q',' title="Перезвонить через 2 дня"')+action('cb:7','+7',id,'proc-q',' title="Перезвонить через 7 дней"')+(set?action('cb-clear',PJ_ICON.close,id,'proc-q proc-qx',' title="Перезванивать не нужно — убрать дату" aria-label="Убрать дату"'):'')+'</span>'; }
   function cell(c,r) {
     var k=c.id,h,t0=wkDay(0);
     if(k==='title') h=link(r.id,r.title);
     else if(k==='list') h=PLAN.lists[r.list]?action('pick','Открыть →',r.id,'pj-plain'):action('lead-link','связать',r.id,'pj-plain proc-muted');
-    else if(k==='tasks') { var ts=leadTasks(r.id),o=ts.filter(function(t){return !t.done;}).length; h=ts.length?action('lead','<span class="proc-tn">'+o+'/'+ts.length+'</span>',r.id,'pj-plain',' title="Открытых задач: '+o+' из '+ts.length+'"'):'<span class="sub2">—</span>'; }
+    else if(k==='tasks') { var ts=leadTasks(r.id),o=ts.filter(function(t){return !t.done;}).length; h='<span class="proc-cellr">'+(ts.length?action('lead','<span class="proc-tn">'+o+'/'+ts.length+'</span>',r.id,'pj-plain',' title="Открытых задач: '+o+' из '+ts.length+'"'):'')+action('task-menu',WKT_ICON.plus,r.id,'proc-plus',' aria-haspopup="menu" aria-label="Создать задачу: '+esc(r.title)+'" title="Создать задачу"')+'</span>'; }
+    else if(k==='ready') h=action('ready-pick',r.ready==='yes'?'Да':r.ready==='no'?'Нет':'—',r.id,'proc-pill '+(r.ready||'none'),' aria-haspopup="menu" aria-label="Готовы сотрудничать: '+(r.ready==='yes'?'да':r.ready==='no'?'нет':'не указано')+'" title="Готовы сотрудничать?"');
+    else if(k==='called_at') h=dateBtn('called',r.id,r.called_at,{label:'Дата звонка'});
+    else if(k==='called') h='<span class="proc-cellr">'+field(r,'called',c.labels[0],'checkbox')+(r.called_at?dateBtn('called',r.id,r.called_at,{label:'Дата звонка'}):'')+'</span>';   // дата звонка — сразу у галочки (29.10)
     else if(k==='pj') h=pjCell(r);
     else if(k==='back') h=action('back-work','Вернуть в работу',r.id,'btn-ghost proc-back');
     else if(k==='cities') h=esc((r.cities||[]).map(function(c){return c.city;}).join(', ')||'—');
     else if(k==='why') h=field(r,'why',c.labels[0]).replace('>',' maxlength="1000" placeholder="'+(r.stage==='declined'?'Укажите причину':'—')+'">');
-    else if(k==='next_at') h='<span class="proc-cbw">'+field(r,'next_at',c.labels[0],'date')+(off(r)&&r.stage==='declined'?'':cbBtns(r.id))+'</span>';
+    else if(k==='next_at') h='<span class="proc-cbw">'+dateBtn('next',r.id,r.next_at,{due:r.stage!=='booking'&&r.stage!=='declined',label:c.labels[0]})+(r.stage==='declined'?'':cbBtns(r.id,!!r.next_at))+'</span>';
     else h=field(r,k,c.labels[0],k==='called'?'checkbox':k==='fee'||k==='cashless'?'number':/_at$/.test(k)?'date':null,k==='stage'?stages:k==='ready'?ready:null);
     return '<td class="pl-left'+(k==='stage'?' proc-stage ps-'+(colors[r.stage]||'gray'):'')+(k==='title'?' proc-tt':'')+(k==='why'&&r.stage==='declined'&&!r.why?' proc-nowhy':'')+(k==='next_at'&&due(r,t0)?' proc-over':'')+'">'+h+'</td>';
   }
   function sortVal(k,r) { if(k==='stage')return stageAt(r.stage); if(k==='called')return +!!r.called;if(k==='cities')return (r.cities||[]).length;if(k==='tasks')return leadTasks(r.id).length;if(k==='pj'){var p=pjRec(r);return p?p.title:null;}if(k==='back')return null;return r[k]==null||r[k]===''?null:r[k]; }
   // «Фильтр» — как у «Проектов» (wkpFilterOpen): разделы, пункты, галочка; бывшие плитки шапки — здесь (решение 8, 29.10)
   function filterHtml() {
-    var f=state.filters,rows=leads(state.id).filter(function(r){return !off(r);}),t0=wkDay(0);
-    var item=function(key,val,lbl,n,dot,hot){var on=(f[key]||'')===val;return '<button type="button" class="wk-menu-item'+(on?' on':'')+'" data-proc-action="f:'+key+':'+val+'" role="menuitemradio" aria-checked="'+on+'"><span class="proc-fl">'+(dot?'<i class="proc-fdot ps-'+colors[dot]+'"></i>':'')+lbl+'</span>'+(n!=null?'<span class="proc-fc'+(hot&&n?' hot':'')+'">'+n+'</span>':'')+(on?WKT_ICON.check:'<span class="proc-fph"></span>')+'</button>';};
+    var f=state.filters,all=leads(state.id),rows=all.filter(function(r){return !off(r);}),t0=wkDay(0),c=counts(all,t0),work=state.list==='work';
+    var item=function(key,val,lbl,n,dot,hot,multi){var cur=f[key],on=multi?(val?[].concat(cur||[]).indexOf(val)>=0:!(cur&&[].concat(cur).length)):(key==='view'?state.list:(cur||''))===val;
+      return '<button type="button" class="wk-menu-item'+(on?' on':'')+'" data-proc-action="'+(multi&&val?'fs:':'f:')+key+':'+val+'" role="'+(multi?'menuitemcheckbox':'menuitemradio')+'" aria-checked="'+on+'"><span class="proc-fl">'+(dot?'<i class="proc-fdot ps-'+colors[dot]+'"></i>':'')+lbl+'</span>'+(n!=null?'<span class="proc-fc'+(hot&&n?' hot':'')+'">'+n+'</span>':'')+(on?WKT_ICON.check:'<span class="proc-fph"></span>')+'</button>';};
     var n=function(fn){return rows.filter(fn).length;};
-    return '<div class="wkp-title">Показать</div>'+item('show','','Все в работе',rows.length)+item('show','due','Пора перезвонить',n(function(r){return due(r,t0);}),null,true)+
-      '<div class="wkp-title">Этап</div>'+item('stage','','Все этапы')+FUNNEL.map(function(s){return item('stage',s[0],esc(s[1]),n(function(r){return r.stage===s[0];}),s[0]);}).join('')+
+    // список «В работе · Резерв · Отказы» — здесь же (просьба 29.10); остальные разделы — для «В работе»
+    return '<div class="wkp-title">Список</div>'+item('view','work','В работе',c.total)+item('view','reserve','Резерв',c.reserve)+item('view','declined','Отказы',c.declined)+
+      (!work?'':'<div class="wkp-title">Показать</div>'+item('show','','Все в работе',rows.length)+item('show','due','Пора перезвонить',n(function(r){return due(r,t0);}),null,true)+
+      '<div class="wkp-title">Готовы сотрудничать</div>'+item('ready','','Все')+item('ready','yes','Да',n(function(r){return r.ready==='yes';}))+item('ready','no','Нет',n(function(r){return r.ready==='no';}))+item('ready','none','Не указано',n(function(r){return !r.ready;}))+
+      '<div class="wkp-title">Этап <span class="proc-fhint">· можно несколько</span></div>'+item('stage','','Все этапы',null,null,false,true)+FUNNEL.map(function(s){return item('stage',s[0],esc(s[1]),n(function(r){return r.stage===s[0];}),s[0],false,true);}).join('')+
       '<div class="wkp-title">Подбор городов</div>'+item('list','','Все')+item('list','yes','Есть подбор',n(function(r){return !!r.list;}))+item('list','no','Нет подбора',n(function(r){return !r.list;}))+
       '<div class="wkp-title">Карточка проекта</div>'+item('pj','','Все')+item('pj','yes','Связана',n(function(r){return !!r.pj;}))+item('pj','no','Не связана',n(function(r){return !r.pj;}))+
-      (Object.keys(f).some(function(k){return f[k];})?action('reset','Сбросить фильтры',null,'proc-freset'):'');
+      (fCount(f)?action('reset','Сбросить фильтры',null,'proc-freset'):''));
   }
   function filterOpen() { var b=document.querySelector('.proc-tools [data-proc-action="filter"]'); if(b) wkPopOpen(b,'wk-menu proc-fmenu',filterHtml(),{}); }
   function funnel(id) {
     installCols();
     var all=leads(id),t0=wkDay(0),list=state.list,fl=list==='work'?state.filters:{};
     var rows=all.filter(function(r){return inList(r,list) && matches(r,fl,t0) && (!state.q || [r.title,r.contact,r.why].join(' ').toLowerCase().indexOf(state.q.toLowerCase())>=0);});
-    var nf=Object.keys(state.filters).filter(function(k){return state.filters[k];}).length,n=counts(all,t0);
+    var nf=fCount(state.filters),n=counts(all,t0);
     // панель — как у «Проектов» (wkpBar): вид и список слева; поиск, фильтр, столбцы и «+» справа
     var seg=list!=='work'?'':'<div class="wkp-seg" role="group" aria-label="Вид воронки">'+[['table','Таблица',WKP_VIEWS[1][2]],['board','Доска',WKP_VIEWS[0][2]]].map(function(v){return action(v[0],v[2]+'<span class="wkp-segl">'+v[1]+'</span>',null,'proc-seg',' aria-pressed="'+(state.mode===v[0])+'" title="'+v[1]+'"');}).join('')+'</div>';
-    var lists='<div class="wkp-seg proc-lists" role="group" aria-label="Список">'+[['work','В работе',n.total],['reserve','Резерв',n.reserve],['declined','Отказы',n.declined]].map(function(v){return action('list:'+v[0],'<span class="wkp-segl">'+v[1]+'</span><span class="proc-segn">'+v[2]+'</span>',null,'proc-seg',' aria-pressed="'+(list===v[0])+'"');}).join('')+'</div>';
+    // «В работе · Резерв · Отказы» — в «Фильтре» (просьба 29.10); открыт не «В работе» — плашка с крестиком
+    var lists=list==='work'?'':'<span class="proc-listchip">'+(list==='reserve'?'Резерв':'Отказы')+' · '+(list==='reserve'?n.reserve:n.declined)+action('list:work',PJ_ICON.close,null,'proc-listx',' aria-label="Вернуться к списку «В работе»" title="К списку «В работе»"')+'</span>';
     var bar='<div class="wkp-bar proc-tools">'+seg+lists+'<span class="wkp-sp"></span>'+
       '<label class="wkp-search">'+WKP_IC.search+'<input type="search" id="procQ" value="'+esc(state.q)+'" placeholder="Поиск проектов" aria-label="Найти проект в воронке"></label>'+
-      (list==='work'?action('filter',WKP_IC.filter+'Фильтр'+(nf?'<span class="proc-fn">'+nf+'</span>':''),null,'wkp-filter'+(nf?' on':''),' aria-haspopup="menu" aria-label="Фильтры воронки"'):'')+((state.mode==='table'||list!=='work')?plColsControl(list==='work'?'leads':list==='reserve'?'leadsres':'leadsdec'):'')+
+      action('filter',WKP_IC.filter+(nf?'<span class="proc-fbadge">'+nf+'</span>':''),null,'wk-sq proc-fbtn'+(nf?' on':''),' aria-haspopup="menu" aria-label="Фильтры воронки'+(nf?': включено '+nf:'')+'" title="Фильтры"')+((state.mode==='table'||list!=='work')?plColsControl(list==='work'?'leads':list==='reserve'?'leadsres':'leadsdec'):'')+
       action('add',WKT_ICON.plus,null,'wk-sq wk-sq-add',' aria-label="Новый проект в воронке" title="Новый проект в воронке"')+'</div>';
     // разовый перенос (вопрос пользователю 29.10): «Позвонили» + «Готовы: да» — по логике v2 это «обсуждаем с руководителем»
     var ask=all.filter(function(r){return r.stage==='called'&&r.ready==='yes';}).length,noWhy=all.filter(function(r){return r.stage==='declined'&&!r.why;}).length;
@@ -205,10 +242,11 @@
   function after(id,s) {
     var r=WK.leads[id]; if(!r) return;
     if(s==='offer') askConfirm('Перезвонить через 2 дня?','«'+r.title+'»: предложение отправлено. Дата шага — '+wkpShort(wkDay(2))+', шаг — «Перезвонить».','Да',function(){callback(id,2);});
-    else if(s==='ready'&&!leadTasks(id).some(function(t){return /^Подбор городов/.test(t.text);})) askTask(id,'Подбор городов: '+r.title);
-    else if(s==='approve'&&!leadTasks(id).some(function(t){return /^Согласовать с руководителем/.test(t.text);})) askTask(id,'Согласовать с руководителем: '+r.title);
+    else if(s==='ready'&&!leadTasks(id).some(function(t){return t.text.indexOf(TASKS[0])===0;})) askTask(id,TASKS[0]+' — '+r.title);
+    else if(s==='approve'&&!leadTasks(id).some(function(t){return t.text.indexOf(TASKS[1])===0||/^Согласовать с руководителем/.test(t.text);})) askTask(id,TASKS[1]+' — '+r.title);
   }
-  function callback(id,n) { var r=WK.leads[id]; if(r) patch(id,{next_at:wkDay(n),next:cbText(r)}); }
+  function callback(id,n) { setNext(id,wkDay(n)); }
+  function formDate(name,iso,empty,quick) { return '<button type="button" class="wk-datebtn wk-adddate proc-dbtn'+(iso?' set':'')+'" data-proc-date="form" data-name="'+name+'" data-empty="'+esc(empty)+'" data-quick="'+quick+'" data-wk-val="'+esc(iso)+'" aria-haspopup="dialog">'+WKT_ICON.cal+esc(iso?wkpShort(iso):empty)+'</button>'; }
   function askWhy(id) {
     var r=WK.leads[id];
     pjDialog('proc-dlg','Отказ — '+r.title,'<form data-lead-why="'+id+'" class="proc-dform"><p class="sub2">Запись уйдёт из воронки в список «Отказы»; причина видна и в карточке проекта.</p><div class="proc-whyq">'+WHY.map(function(w){return action('why-q',esc(w),null,'proc-q',' data-v="'+esc(w)+'"');}).join('')+'</div>'+
@@ -218,12 +256,12 @@
   function askHold(id) {
     var r=WK.leads[id];
     pjDialog('proc-dlg','В резерв — '+r.title,'<form data-lead-hold="'+id+'" class="proc-dform"><p class="sub2">Готовы сотрудничать, но сейчас не берём. Запись уйдёт в список «Резерв»; в карточке проекта — статус «Резерв».</p>'+
-      '<textarea name="why" maxlength="1000" placeholder="Почему не сейчас — необязательно" aria-label="Почему не сейчас"></textarea><label class="proc-dl">Вернуться к вопросу<input type="date" name="at" class="pl-in"></label><div class="form-actions">'+action('dlg-close','Отмена')+'<button class="btn-dark">В резерв</button></div></form>');
+      '<textarea name="why" maxlength="1000" placeholder="Почему не сейчас — необязательно" aria-label="Почему не сейчас"></textarea><div class="proc-dl">Вернуться к вопросу<input type="hidden" name="at" value="">'+formDate('at','','указать','hold')+'</div><div class="form-actions">'+action('dlg-close','Отмена')+'<button class="btn-dark">В резерв</button></div></form>');
   }
   function askTask(id,text) {
     var r=WK.leads[id];
     pjDialog('proc-dlg',text?'Создать задачу?':'Новая задача','<form data-lead-task="'+id+'" class="proc-dform"><p class="sub2">Появится во вкладке «Задачи» процесса и в общих «Задачах».</p>'+
-      '<input name="text" class="pl-in" maxlength="1000" required value="'+esc(text||'')+'" placeholder="Что сделать" aria-label="Задача"><label class="proc-dl">Срок<input type="date" name="due" class="pl-in" value="'+(r.next_at&&r.next_at>wkDay(0)?r.next_at:wkDay(2))+'"></label><div class="form-actions">'+action('dlg-close',text?'Не нужно':'Отмена')+'<button class="btn-dark">Создать</button></div></form>');
+      '<input name="text" class="pl-in" maxlength="1000" required value="'+esc(text||'')+'" placeholder="Что сделать" aria-label="Задача"><div class="proc-dl">Срок<input type="hidden" name="due" value="'+taskDue(r)+'">'+formDate('due',taskDue(r),'без срока','task')+'</div><div class="form-actions">'+action('dlg-close',text?'Не нужно':'Отмена')+'<button class="btn-dark">Создать</button></div></form>');
     var t=$('pjDlg').querySelector('input[name=text]'); if(t&&!text) t.focus();
   }
 
@@ -239,7 +277,7 @@
     var answer=isAt('answered')?'<div class="proc-mini"><div class="proc-mh">Города из подбора<span class="wkp-sp"></span>'+(cities.length?cities.filter(function(c){return art(c)==='ok';}).length+' можем · '+cities.filter(function(c){return art(c)==='busy';}).length+' другой организатор':'')+'</div>'+
         (cities.length?'<div class="proc-cities">'+cities.map(function(c){var a=art(c);return '<span class="proc-cname">'+esc(c)+'</span><span class="proc-tg">'+action('art:ok','можем',id,a==='ok'?'on ok':'',' data-c="'+esc(c)+'"')+action('art:busy','другой орг.',id,a==='busy'?'on busy':'',' data-c="'+esc(c)+'"')+'</span>'+(a==='busy'?'<input class="pl-in proc-org" data-art-org="'+esc(c)+'" data-id="'+id+'" maxlength="200" value="'+esc((L.cities[c]||{}).art_org||'')+'" placeholder="Кто работает в городе" aria-label="Организатор в городе '+esc(c)+'">':'');}).join('')+'</div>':'<span class="sub2">'+(L?'В подборе нет городов «подходит».':'Свяжите подбор городов — здесь появятся его города «подходит».')+'</span>')+'</div>'+
       '<div class="proc-mini"><div class="proc-mh">Даты этого сезона · '+wkpShort(se.from)+' — '+wkpShort(se.to)+'<span class="wkp-sp"></span>'+action('date-add','+ Диапазон',id,'proc-q')+'</div>'+
-        ((r.dates||[]).length?r.dates.map(function(d,i){return '<div class="proc-dr"><input type="date" class="pl-in" data-lead-date="'+i+'" data-k="from" data-id="'+id+'" value="'+esc(d.from)+'" aria-label="С"><span>—</span><input type="date" class="pl-in" data-lead-date="'+i+'" data-k="to" data-id="'+id+'" value="'+esc(d.to)+'" aria-label="По"><input class="pl-in proc-drn" data-lead-date="'+i+'" data-k="note" data-id="'+id+'" maxlength="300" value="'+esc(d.note)+'" placeholder="пометка" aria-label="Пометка">'+action('date-del:'+i,PJ_ICON.close,id,'icon-btn proc-x',' aria-label="Убрать диапазон"')+'</div>';}).join(''):'<span class="sub2">Дат на остаток сезона нет.</span>')+'</div>'+
+        ((r.dates||[]).length?r.dates.map(function(d,i){return '<div class="proc-dr">'+dateBtn('range',id,d.from,{attrs:' data-i="'+i+'" data-k="from"',icon:true,empty:'с…',label:'С'})+'<span>—</span>'+dateBtn('range',id,d.to,{attrs:' data-i="'+i+'" data-k="to"',icon:true,empty:'по…',label:'По'})+'<input class="pl-in proc-drn" data-lead-date="'+i+'" data-k="note" data-id="'+id+'" maxlength="300" value="'+esc(d.note)+'" placeholder="пометка" aria-label="Пометка">'+action('date-del:'+i,PJ_ICON.close,id,'icon-btn proc-x',' aria-label="Убрать диапазон"')+'</div>';}).join(''):'<span class="sub2">Дат на остаток сезона нет.</span>')+'</div>'+
       '<div class="proc-mini"><div class="proc-mh">Следующий сезон · '+se.next.from.slice(0,4)+'–'+se.next.to.slice(0,4)+'</div><label class="proc-chk"><input type="checkbox" class="wk-check" data-lead-ns="ok" data-id="'+id+'"'+(ns.ok?' checked':'')+'> Подтвердили возможность гастролей</label>'+
         '<div class="proc-months">'+SEASON.map(function(m){return action('ns-m:'+m[0],m[1],id,(ns.months||[]).indexOf(m[0])>=0?'on':'');}).join('')+'</div><input class="pl-in" data-lead-ns="note" data-id="'+id+'" maxlength="1000" value="'+esc(ns.note||'')+'" placeholder="Комментарий — например, «весна, Поволжье»" aria-label="Следующий сезон: комментарий"></div>':'';
     // шаги по порядку v2 (PROCESSES_PLAN.md, 10.1): отметка — что сделано, справа — действие; ниже — содержимое шага
@@ -251,7 +289,7 @@
         listSel+(L?action('pick','Открыть подбор →',id):(alike(r)?action('link:'+alike(r),'Связать с «'+esc(PLAN.lists[alike(r)].title)+'»',id,'btn-dark'):'')+action('pick-create','Создать подбор',id,alike(r)?'btn-ghost':'btn-dark'))+(r.stage==='ready'?go('offer','Отправили предложение'):''),
         false,'<span class="proc-pair">'+field(row,'fee','Гонорар','number').replace('>',' placeholder="гонорар, ₽">')+field(row,'cashless','% сверху','number').replace('>',' placeholder="% сверху">')+'</span><span class="sub2">'+(pjRec(r)?'→ попадает в карточку проекта':'свяжите карточку проекта — гонорар попадёт и туда')+'</span>'],
       [past('offer'),'Получили предложение — перезвонить',r.next_at?'перезвонить '+wkpShort(r.next_at)+(due(r,t0)?' — пора':''):'дата не задана',r.stage==='offer'?go('answered','Ответили'):'',false,
-        isAt('offer')?'<span class="proc-row"><span class="sub2">Перезвонить через:</span>'+action('cb:2','2 дня',id,'proc-q')+action('cb:7','7 дней',id,'proc-q')+field(row,'next_at','Дата шага','date')+'</span>':''],
+        isAt('offer')?'<span class="proc-row"><span class="sub2">Перезвонить через:</span>'+action('cb:2','2 дня',id,'proc-q')+action('cb:7','7 дней',id,'proc-q')+dateBtn('next',id,r.next_at,{due:true,icon:true,empty:'дата…',label:'Перезвонить'})+(r.next_at?action('cb-clear','Не нужно',id,'proc-q'):'')+'</span>':''],
       [past('answered'),'Ответ коллектива','города · даты этого сезона · следующий сезон',r.stage==='answered'?go('approve','На согласование'):'',false,answer],
       [past('approve'),'Согласование с руководителем',!L?'нужен подбор городов':sent?'ссылка отправлена · ✔ '+sh.ok+' · ? '+sh.ask+' · ✖ '+sh.no:'подробная финмодель по городам → руководитель убирает или оставляет',
         (L&&isAt('answered')?action('pdf','PDF руководителю',id)+shareLink(sh)+action('cities',(r.cities||[]).length?'Обновить возможные города':'Зафиксировать возможные города',id):'')+(r.stage==='approve'?go('booking','Согласовано'):''),false,
@@ -275,7 +313,7 @@
       '<section class="proc-sec"><h3>Шаги процесса</h3><ol class="proc-steps">'+steps.map(function(s,i){var cur=!out&&stageAt(r.stage)===i;return '<li class="'+(s[0]?'done':s[4]?'no':'')+(cur?' cur':'')+'"><span class="proc-dot" aria-hidden="true">'+(s[0]?'✓':s[4]?'✕':i+1)+'</span><div class="proc-stx"><b>'+s[1]+'</b><span>'+esc(s[2])+'</span></div><div class="proc-sact">'+s[3]+'</div>'+(s[5]?'<div class="proc-sfull">'+s[5]+'</div>':'')+'</li>';}).join('')+'</ol></section>'+
       '<section class="proc-sec"><h3>Карточка проекта <span class="sub2">· «Репертуар → Проекты»</span></h3>'+pjSec+'</section>'+
       '<section class="proc-sec"><h3>Задачи записи</h3>'+tasks+'</section>'+
-      '<section class="proc-sec"><h3>Данные</h3><div class="form-grid proc-form">'+fields.map(function(f){return '<div class="field'+(f[4]?' full':'')+'"><label>'+f[1]+'</label>'+field(row,f[0],f[1],f[2],f[3])+'</div>';}).join('')+'</div></section>'+
+      '<section class="proc-sec"><h3>Данные</h3><div class="form-grid proc-form">'+fields.map(function(f){return '<div class="field'+(f[4]?' full':'')+'"><label>'+f[1]+'</label>'+(f[2]==='date'?'<span class="proc-fdate">'+dateBtn(f[0]==='next_at'?'next':'called',id,r[f[0]],{icon:true,due:f[0]==='next_at'&&r.stage!=='booking'&&r.stage!=='declined',empty:'не указана',label:f[1]})+(f[0]==='next_at'&&r.next_at?action('cb-clear','Не нужно',id,'proc-q'):'')+'</span>':field(row,f[0],f[1],f[2],f[3]))+'</div>';}).join('')+'</div></section>'+
       '<section class="proc-sec"><h3>Журнал</h3><form class="proc-log" data-lead-log="'+id+'"><input class="pl-in pl-text" name="text" maxlength="2000" placeholder="Добавить запись — Enter" aria-label="Запись в журнал" required></form>'+(r.log||[]).slice().reverse().map(function(l){return '<p class="proc-logl"><span class="sub2">'+esc(l.at.replace('T',' ').slice(0,16))+'</span>'+esc(l.text)+'</p>';}).join('')+'</section>';
     $('drawer').setAttribute('aria-label','Проект в воронке: '+r.title);
     if(keep){var dr=$('drawer'),y=dr.scrollTop,fo=document.activeElement&&dr.contains(document.activeElement)&&document.activeElement.getAttribute('data-lead-field');dr.innerHTML=html;dr.scrollTop=y;enhanceSelects(dr);var back=fo&&dr.querySelector('[data-lead-field="'+fo+'"]');if(back)back.focus({preventScroll:true});}else showDrawer(html);   // ввод по Tab не теряет поле после сохранения
@@ -319,12 +357,19 @@
   document.addEventListener('click',function(ev){
     var op=ev.target.closest&&ev.target.closest('[data-proc-open]');if(op){open(op.getAttribute('data-proc-open'));return;}
     var b=ev.target.closest&&ev.target.closest('[data-proc-action]');if(!b)return;ev.preventDefault();var a=b.getAttribute('data-proc-action'),id=b.getAttribute('data-id');
+    if(b.closest('.wk-pop')&&!/^fs?:/.test(a))wkPopClose();   // пункт меню выбран — меню закрыть (фильтр остаётся открытым)
+    if(a==='task-menu'){taskMenu(b,id);return;}if(a==='pj-menu'){pjMenu(b,id);return;}if(a==='ready-pick'){readyMenu(b,id);return;}
+    if(a.indexOf('task-quick:')===0){var qr=WK.leads[id],qt=TASKS[+a.slice(11)]+' — '+qr.title;enqueue(async function(){await save('tasks',wkId('t'),{text:qt,proc:qr.proc,lead:id,due:taskDue(qr),created:wkDay(0)});redraw();refreshPanel(id);toast('Задача создана: '+qt);});return;}
+    if(a.indexOf('ready-set:')===0){var rv=a.slice(10);patch(id,{ready:rv}).then(function(){var r=WK.leads[id];if(r&&hints(r).length){var hs=hints(r).filter(function(x){return x==='discuss'||x==='declined';})[0];if(hs)askConfirm('Перевести в «'+label(hs)+'»?','Этап изменится только после подтверждения.','Перевести',function(){setStage(id,hs);});}},function(){});return;}
+    if(a==='cb-clear'){setNext(id,'');return;}
     if(a==='lead'||a==='lead-link'){closeDlg();wkPopClose();var r=WK.leads[id];if(!r)return;if(r.proc){if(S.view!=='wkproc'||state.id!==r.proc)open(r.proc);if(off(r)&&state.list!==r.stage){state.list=r.stage;redraw();}}else{state.id=null;goView('wkproc');}ixSharesLoad();panel(id);return;}
     if(a==='close'){state.lead=null;closeDrawer();return;}if(a==='back'){state.id=null;redraw();return;}if(a==='new'||a==='edit'){edit(id);return;}
     if(a==='tasks'||a==='funnel'){state.tab=a;redraw();return;}if(a==='add'){if(state.list!=='work'){state.list='work';redraw();}var inp=document.querySelector('[data-proc-add] input');if(inp){inp.scrollIntoView({block:'center'});inp.focus();}return;}if(a==='table'||a==='board'){state.mode=a;redraw();return;}
     if(a.indexOf('list:')===0){state.list=a.slice(5);wkPopClose();redraw();return;}
     if(a==='filter'){if(WKPOP&&WKPOP.anchor===b){wkPopClose();return;}filterOpen();return;}
-    if(a.indexOf('f:')===0){var fp=a.split(':');state.filters[fp[1]]=fp[2];redraw();filterOpen();return;}
+    if(a.indexOf('f:view:')===0){state.list=a.slice(7);wkPopClose();redraw();return;}
+    if(a.indexOf('f:')===0){var fp=a.split(':');if(fp[1]==='stage')delete state.filters.stage;else state.filters[fp[1]]=fp[2];redraw();filterOpen();return;}
+    if(a.indexOf('fs:')===0){var sp=a.split(':'),cur=[].concat(state.filters[sp[1]]||[]),ix=cur.indexOf(sp[2]);if(ix>=0)cur.splice(ix,1);else cur.push(sp[2]);state.filters[sp[1]]=cur;redraw();filterOpen();return;}
     if(a==='reset'){state.filters={};wkPopClose();redraw();return;}
     if(a==='ask-yes'){var list=leads(state.id).filter(function(r){return r.stage==='called'&&r.ready==='yes';});enqueue(async function(){for(var i=0;i<list.length;i++)await save('leads',list[i].id,Object.assign({},WK.leads[list[i].id],{stage:'discuss'}));redraw();toast('Перенесено: '+list.length);});return;}
     if(a==='ask-no'){lsSet(ASK_KEY,'no');redraw();return;}
@@ -332,7 +377,7 @@
     if(a==='why-q'){var t=$('pjDlg').querySelector('textarea[name=why]');if(t){t.value=b.getAttribute('data-v');t.focus();}return;}
     if(a==='why'){askWhy(id);return;}if(a==='task-new'){askTask(id,'');return;}
     if(a.indexOf('stage:')===0){setStage(id,a.slice(6));return;}
-    if(a.indexOf('cb:')===0){callback(id,+a.slice(3));return;}
+    if(/^cb:\d+$/.test(a)){callback(id,+a.slice(3));return;}
     if(a==='back-work'){var br=WK.leads[id];patch(id,{stage:br.stage==='declined'?'called':'discuss'});return;}
     if(a==='pick'||a==='pdf'){openPick(id,a==='pdf');return;}
     if(a==='task-open'){var tid=b.getAttribute('data-t')||WK.leads[id].task;closeDrawer();state.lead=null;wkOpenTask(tid);return;}
@@ -340,6 +385,17 @@
     if(a==='lead-delete'){var lr=WK.leads[id];if(!lr)return;askConfirm('Удалить «'+lr.title+'» из воронки?',(PLAN.lists[lr.list]||leadTasks(id).length?'Подбор городов и задачи останутся, только без связи с записью. ':'')+'Вернуть запись нельзя.','Удалить',function(){enqueue(async function(){await dropLead(id);closeDrawer();state.lead=null;redraw();toast('Удалено из воронки');});});return;}
     if(a==='delete'){var n=leads(id).length;askConfirm('Удалить процесс «'+WK.procs[id].title+'»?','Записи воронки ('+n+'), задачи и заметки останутся без процесса.','Удалить',function(){enqueue(async function(){WK=await request('/api/work',{op:'del',kind:'procs',id:id});state.id=null;redraw();});});return;}
     enqueue(function(){return leadAction(a,id,b);});
+  });
+  document.addEventListener('click',function(ev){   // даты — календарь сайта (wkDateOpen) со своими быстрыми кнопками
+    var b=ev.target.closest&&ev.target.closest('[data-proc-date]');if(!b)return;ev.preventDefault();
+    if(WKPOP&&WKPOP.anchor===b){wkPopClose();return;}
+    var kind=b.getAttribute('data-proc-date'),id=b.getAttribute('data-id'),quick,pick;
+    if(kind==='next'){quick=[[wkDay(2),'Через 2 дня'],[wkDay(7),'Через неделю'],['','Не нужно']];pick=function(v){setNext(id,v);};}
+    else if(kind==='called'){quick=[[wkDay(0),'Сегодня'],[wkDay(-1),'Вчера'],['','Без даты']];pick=function(v){var r=WK.leads[id];patch(id,{called_at:v,called:v?true:r.called});};}
+    else if(kind==='range'){var i=+b.getAttribute('data-i'),k=b.getAttribute('data-k');quick=[['','Без даты']];pick=function(v){var ds=(WK.leads[id].dates||[]).map(function(d){return Object.assign({},d);});if(!ds[i])return;ds[i][k]=v;patch(id,{dates:ds},false);};}
+    else {var q=b.getAttribute('data-quick');quick=q==='task'?[[wkDay(0),'Сегодня'],[wkDay(2),'Через 2 дня'],[wkDay(7),'Через неделю'],['','Без срока']]:[[wkDay(7),'Через неделю'],[wkDay(30),'Через месяц'],['','Без даты']];
+      pick=function(v){var f=b.closest('form');f.elements[b.getAttribute('data-name')].value=v;b.setAttribute('data-wk-val',v);b.classList.toggle('set',!!v);b.innerHTML=WKT_ICON.cal+esc(v?wkpShort(v):b.getAttribute('data-empty'));};}
+    wkDateOpen(b,b.getAttribute('data-wk-val'),pick,quick);
   });
   document.addEventListener('change',function(ev){var el=ev.target,id=el.getAttribute&&el.getAttribute('data-id');
     if(el.hasAttribute('data-lead-pj')){var lid=el.getAttribute('data-lead-pj'),pid=el.value;if(pid)enqueue(function(){return leadAction('pj-link:'+pid,lid,el);});return;}
@@ -364,7 +420,8 @@
     if(f.hasAttribute('data-proc-edit')){ev.preventDefault();var pid=f.getAttribute('data-proc-edit')||wkId('proc'),file=f.elements.cover.files[0],remove=f.elements.removeCover&&f.elements.removeCover.checked,rec=Object.assign({},WK.procs[pid]||{kind:f.elements.kind.value},{title:f.elements.title.value.trim(),note:f.elements.note.value});if(!rec.title)return;var submit=f.querySelector('button.btn-dark');submit.disabled=true;enqueue(async function(){await save('procs',pid,rec);if(file||remove){var data=file?await new Promise(function(resolve,reject){var reader=new FileReader();reader.onload=function(){resolve(reader.result);};reader.onerror=reject;reader.readAsDataURL(file);}):'';WK=await request('/api/work',{op:'media',kind:'procs',id:pid,what:'cover',data:data});}$('pjDlg').close();redraw();}).then(function(){submit.disabled=false;},function(){submit.disabled=false;});}
   });
   // перед перетаскиванием границы столбца — ширины снова в пикселях: общий обработчик «Планирования» считает в px
-  document.addEventListener('mousedown',function(ev){var h=ev.target.closest&&ev.target.closest('.proc-funnel [data-plresize]');if(!h)return;var t=h.closest('table'),sum=0;t.querySelectorAll('col').forEach(function(c){var w=Math.round(c.getBoundingClientRect().width);c.style.width=w+'px';sum+=w;});t.style.width=sum+'px';t.style.minWidth='';},true);
+  // замер — по ячейкам заголовка: Safari отдаёт у <col> нулевую ширину, и все столбцы, кроме тянутого, пропадали (29.10)
+  document.addEventListener('mousedown',function(ev){var h=ev.target.closest&&ev.target.closest('.proc-funnel [data-plresize]');if(!h)return;var t=h.closest('table'),ths=t.querySelectorAll('thead th'),cols=t.querySelectorAll('col'),ws=[],sum=0;if(ths.length!==cols.length)return;ths.forEach(function(th){var w=Math.round(th.getBoundingClientRect().width);ws.push(w);sum+=w;});cols.forEach(function(c,i){c.style.width=ws[i]+'px';});t.style.width=sum+'px';t.style.minWidth='';},true);
   var timer;document.addEventListener('input',function(ev){if(ev.target.id!=='procQ')return;state.q=ev.target.value;clearTimeout(timer);timer=setTimeout(function(){redraw();var i=$('procQ');if(i)i.focus();},180);});
   document.addEventListener('keydown',function(ev){var c=ev.target.closest&&ev.target.closest('[data-proc-open]');if(c&&ev.key==='Enter'){ev.preventDefault();c.click();}});
   var drag=null;document.addEventListener('dragstart',function(ev){var c=ev.target.closest&&ev.target.closest('[data-lead-drag]');if(!c)return;drag=c.getAttribute('data-lead-drag');ev.dataTransfer.setData('text/plain',drag);ev.dataTransfer.effectAllowed='move';});
