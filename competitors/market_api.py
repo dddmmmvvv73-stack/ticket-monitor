@@ -8,7 +8,7 @@
     POST /api/market/curation     одна правка {"op": "project"|"venue"|"edit"|"revert"|"filters"|"niche", …}
     GET  /api/market/myprojects   избранные проекты и ваши записи о них (competitors/myprojects.py)
     POST /api/market/myprojects   одна правка {"op": "fav"|"notes"|"profile"|"media"|"seen"|"link"|"skip", …}
-    GET  /api/market/myprojects/media/<файл>   фото проекта (аватар, фон) из config/project_media/
+    GET  /api/market/myprojects/media/<файл>   фото проекта (аватар, фон) и райдеры файлами (?n=имя, &dl=1) из config/project_media/
     GET  /api/sales/detail?keys=… продажи сеанса для карточки — с сервера в Яндекс Облаке по SSH (sales/detail.py)
     GET  /proto/site-data.js      даты с официальных сайтов проектов (competitors/officialsite.py)
     POST /api/market/site/check   {"key"} — разобрать сайт проекта сейчас (кнопка «Проверить», ~10–40 с)
@@ -389,6 +389,8 @@ def myprojects_media(name):
     path = myprojects.media_file(name)
     if not path:
         return jsonify({"error": "нет такого фото"}), 404
+    if "-r" in name and request.args.get("n"):   # райдер файлом: открыть под исходным именем, ?dl=1 — скачать
+        return send_file(path, max_age=86400, as_attachment=request.args.get("dl") == "1", download_name=request.args["n"][:120])
     return send_file(path, max_age=86400)
 
 

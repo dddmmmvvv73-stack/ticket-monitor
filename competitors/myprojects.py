@@ -7,7 +7,8 @@
     {"projects": {номер: {"title", "keys": [ключи проекта], "fav": bool,
                           "note", "links": [{"label", "url"}], "contacts", "skip": [ключи «не то»],
                           "snap": {"at", "dates": [[дата, город, площадка, цена от, цена до], …]},
-                          "profile": {"sub", "about", "crew", "contact", "phone", "site", "vk", "instagram", "tg", "fee", "riders": [{"label", "url"}]},
+                          "profile": {"sub", "about", "crew", "contact", "phone", "site", "vk", "instagram", "tg", "fee",
+                                      "riders": [{"label", "url"} | {"label", "file"} — файл в config/project_media/]},
                           "media": {"avatar" | "cover": имя файла в config/project_media/ с ?v=метка},
                           "cover_y": положение фона по вертикали, 0–100 % (как background-position-y),
                           "rating": {"s": [6 целых 0–3], "at"}, "rating_hist": [прошлые {"s", "at"}, новые в конце],
@@ -31,6 +32,7 @@ from __future__ import annotations
 
 import base64
 import re
+import secrets
 from datetime import datetime
 
 from competitors.storage import CONFIG_DIR, load_json, save_json
@@ -40,7 +42,9 @@ MEDIA_DIR = CONFIG_DIR / "project_media"
 MEDIA_KINDS = ("avatar", "cover")
 MEDIA_MAX = 3 * 1024 * 1024   # байт после декодирования — прототип присылает уже уменьшенное (~100–400 КБ)
 MEDIA_TYPES = {b"\xff\xd8\xff": "jpg", b"\x89PNG": "png", b"RIFF": "webp"}
-MEDIA_NAME = re.compile(r"^p[0-9a-z]{1,20}-(avatar|cover)\.(jpg|png|webp)$")
+MEDIA_NAME = re.compile(r"^p[0-9a-z]{1,20}-(avatar|cover)\.(jpg|png|webp)$|^p[0-9a-z]{1,20}-r[0-9a-f]{8}\.[a-z0-9]{2,5}$")
+RIDER_EXT = {"pdf", "doc", "docx", "xls", "xlsx", "jpg", "jpeg", "png", "webp", "rtf", "odt", "ods", "txt", "zip"}
+RIDER_MAX = 15 * 1024 * 1024   # райдер файлом — из карточки записи воронки «Процессов» (PROCESSES_PLAN.md, 10.7)
 _ID = re.compile(r"^p[0-9a-z]{1,20}$")
 _DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 LIMITS = {"title": 300, "key": 300, "note": 5000, "contacts": 2000, "label": 120, "url": 1000, "links": 30, "dates": 3000,
@@ -102,6 +106,27 @@ def _now() -> str:
 
 def find(projects: dict, key: str) -> str | None:
     return next((pid for pid, p in projects.items() if key in p.get("keys", [])), None)
+
+
+def _linked(pid: str) -> bool:
+    """Карточка связана с записью воронки «Процессов» — её не удаляем, даже если в ней ничего нет (связь — leads.pj)."""
+    from competitors import work
+    return any(r.get("pj") == pid for r in work.load()["leads"].values())
+
+
+def _rider_file(pid: str, op: dict) -> dict:
+    name = _text(op.get("name"), LIMITS["label"], "имя файла")
+    ext = name.rsplit(".", 1)[-1].lower() if "." in name else ""
+    m = re.match(r"^data:[\w.+/-]*;base64,([A-Za-z0-9+/=]+)$", str(op.get("data") or ""))
+    if ext not in RIDER_EXT or not m:
+        raise MyProjectsError("райдер: нужен файл PDF, Word, Excel, картинка или архив")
+    raw = base64.b64decode(m.group(1))
+    if not raw or len(raw) > RIDER_MAX:
+        raise MyProjectsError("райдер: файл до 15 МБ")
+    MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+    fname = f"{pid}-r{secrets.token_hex(4)}.{ext}"
+    (MEDIA_DIR / fname).write_bytes(raw)
+    return {"label": name, "file": fname}
 
 
 def _empty(p: dict) -> bool:
@@ -221,7 +246,7 @@ def apply_op(op: dict) -> tuple[dict, str]:
             p["fav"] = bool(op.get("fav"))
             if p["fav"]:
                 p["snap"] = _snap(op.get("snap") or [])
-            elif _empty(p):
+            elif _empty(p) and not _linked(pid):
                 del projects[pid]
                 save_json(FILE, data)
                 return data, f"«{p['title']}» — убрано из избранного"
@@ -244,7 +269,9 @@ def apply_op(op: dict) -> tuple[dict, str]:
                 p["cover_y"] = round(float(y), 1)
                 note = f"«{p['title']}» — положение фона"
             elif kind == "profile":   # профиль страницы проекта + прежние записи (заметка, ссылки, контакты) — одной правкой
+                files = [r for r in (p.get("profile") or {}).get("riders", []) if r.get("file")]   # райдеры-файлы правятся отдельно
                 p["profile"] = _profile(op)
+                p["profile"]["riders"] += files
                 p["note"] = _text(op.get("note"), LIMITS["note"], "заметка")
                 p["contacts"] = _text(op.get("contacts"), LIMITS["contacts"], "контакты")
                 p["links"] = _links(op.get("links") or [])
@@ -252,7 +279,7 @@ def apply_op(op: dict) -> tuple[dict, str]:
             else:
                 _media(pid, p, str(op.get("kind") or ""), str(op.get("data") or ""))
                 note = f"«{p['title']}» — фото " + ("обновлено" if op.get("data") else "убрано")
-            if not p["fav"] and _empty(p):
+            if not p["fav"] and _empty(p) and not _linked(pid):
                 del projects[pid]
                 save_json(FILE, data)
                 return data, note
@@ -263,11 +290,43 @@ def apply_op(op: dict) -> tuple[dict, str]:
             if created and not _empty(p):  # начали записи о проекте — он сам попадает в избранное
                 p["fav"] = True
                 p["snap"] = _snap(op.get("snap") or [])
-            if not p["fav"] and _empty(p):
+            if not p["fav"] and _empty(p) and not _linked(pid):
                 del projects[pid]
                 save_json(FILE, data)
                 return data, f"«{p['title']}» — записи удалены"
             note = f"«{p['title']}» — записи сохранены"
+    elif kind == "create":   # «Создать карточку» из записи воронки: пустая карточка, связь — у записи (leads.pj)
+        key = _key(op.get("key"))
+        pid = find(projects, key)
+        if not pid:
+            pid = str(op.get("id") or "")
+            if not _ID.match(pid) or pid in projects:
+                raise MyProjectsError("неверный номер новой записи")
+            projects[pid] = {"title": _text(op.get("title"), LIMITS["title"], "название") or key, "keys": [key], "fav": False,
+                             "note": "", "links": [], "contacts": "", "snap": None, "at": _now()}
+        p = projects[pid]
+        note = f"«{p['title']}» — карточка проекта для воронки"
+    elif kind in ("fee", "rider", "rider-del"):   # из воронки «Процессов»: только гонорар / только райдеры — остальной профиль не трогаем
+        pid = str(op.get("id") or "")
+        if pid not in projects:
+            raise MyProjectsError("нет такой карточки проекта")
+        p = projects[pid]
+        pr = p.setdefault("profile", _profile({}))
+        if kind == "fee":
+            pr["fee"] = _text(op.get("fee"), LIMITS["fee"], "гонорар")
+            note = f"«{p['title']}» — гонорар из воронки"
+        elif kind == "rider":
+            if len(pr.setdefault("riders", [])) >= LIMITS["links"]:
+                raise MyProjectsError(f"райдеры: не больше {LIMITS['links']}")
+            pr["riders"].append(_rider_file(pid, op))
+            note = f"«{p['title']}» — райдер загружен"
+        else:
+            f = str(op.get("file") or "")
+            if not MEDIA_NAME.match(f) or not any(r.get("file") == f for r in pr.get("riders", [])):
+                raise MyProjectsError("нет такого файла райдера")
+            pr["riders"] = [r for r in pr["riders"] if r.get("file") != f]
+            (MEDIA_DIR / f).unlink(missing_ok=True)
+            note = f"«{p['title']}» — райдер удалён"
     elif kind in ("seen", "link", "skip"):
         pid = str(op.get("id") or "")
         if pid not in projects:

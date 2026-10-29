@@ -22,7 +22,8 @@
                   "cities": {город: {"dec" — решение: yes | maybe | no, "ord" — порядок в предложении, "venue", "seats",
                              "price", "fill", "rent", "ads", "logistics", "rider", "fee", "cashless", "per_diem", "crew",
                              "author", "kassa", "agent", "rao", "org": {статья: ₽}, "zmode", "zones": [пояс], "note"}}
-                             — правки подбора по городу (старое "x" — вычеркнут — читается как dec «no»)}}}
+                             — правки подбора по городу (старое "x" — вычеркнут — читается как dec «no»);
+                             "art" — ответ коллектива: ok — можем работать | busy — работает другой организатор, "art_org" — кто}}}
                  ← «Построение гастролей»: где проект уже работает по словам продюсера (разбор — tour-parse.js);
                    подбор городов для артиста — city-pick.js (решения пользователя 26.10)
      "routes":   {номер: {"title", "month" — ГГГГ-ММ, "text" — «Город — Площадка — числа» как прислано, "limit" — км переезда,
@@ -153,7 +154,8 @@ ECON = {"fee": "money", "cashless": "pct", "crew": "int", "per_diem": "money", "
 PICK_CITY = {"x": "bool", "dec": ("", "yes", "maybe", "no"), "ord": "int", "venue": 200, "seats": "int", "price": "money", "fill": "pct",
              "rent": "money", "ads": "money", "logistics": "money", "rider": "money", "fee": "money", "cashless": "pct", "per_diem": "money",
              "crew": "int", "author": "money", "kassa": "pct", "agent": "pct", "rao": "pct", "zmode": "bool", "per_diem_sum": "money",
-             "target": "money", "note": 2000}
+             "target": "money", "note": 2000,
+             "art": ("", "ok", "busy"), "art_org": 200}   # ответ коллектива по городу: можем работать / работает другой организатор (29.10)
 ROUTE = {"title": 200, "month": "date", "text": 30000, "limit": "int", "project": 24}
 LIST_ROW = {"city": 100, "date": "date", "date2": "date", "time": 5, "status": ("ok", "maybe", "nodate", "transit", "other", "note", "title"),
             "other": 200, "note": 300, "line": 500, "fix": 20, "raw": 100}

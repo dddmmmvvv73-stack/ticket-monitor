@@ -7,20 +7,33 @@
 .proc-cards .wkp-card-f { margin-top: auto; }
 .proc-orphans { margin-top: 18px; font-size: 13px; }
 
-/* Шапка: пять плиток воронки в один ряд */
+/* Шапка: у воронки плиток нет — числа в «Фильтре» (решение 29.10) */
 .proc-hero .pj-hero-text { min-width: 0; }
 .proc-hero .pj-name { overflow-wrap: anywhere; }
 .proc-hnote { margin: 6px 0 0; color: rgba(255, 255, 255, .78); font-size: 14px; }
-.proc-hero5 .wk-hstats { grid-template-columns: repeat(5, 104px); }
-@media (max-width: 1180px) { .proc-hero5 .wk-hstats { grid-template-columns: repeat(3, 104px); } }
 
 /* Панель воронки — как у «Проектов» */
 .proc-tools .cols-anchor { display: inline-flex; }
 .proc-tools .cols-anchor .ficon { width: 38px; height: 38px; border-radius: 10px; }
 .proc-tools .cols-pop { max-width: calc(100vw - 32px); }
-.proc-filter { width: 300px; max-width: calc(100vw - 24px); padding: 14px; }
-.proc-filterf { display: grid; gap: 10px; }
-.proc-filterf .field select { height: 36px; }
+/* «Фильтр» — меню сайта (wk-menu), как у «Проектов»: числа справа, галочка */
+.proc-fmenu { width: 290px; max-width: calc(100vw - 24px); max-height: min(560px, calc(100vh - 24px)); overflow-y: auto; overscroll-behavior: contain; }
+.proc-fmenu .wkp-title { margin-top: 8px; } .proc-fmenu .wkp-title:first-child { margin-top: 0; }
+.proc-fl { flex: 1; display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.proc-fdot { width: 8px; height: 8px; border-radius: 50%; background: var(--ps); flex-shrink: 0; }
+.proc-fc { color: var(--muted); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.proc-fc.hot { color: #b42318; font-weight: 600; }
+.proc-fph { width: 16px; flex-shrink: 0; }
+.proc-freset { width: 100%; margin-top: 8px; height: 36px; border: 1px solid var(--line-strong); background: var(--card); border-radius: 999px; font: inherit; font-size: 13.5px; cursor: pointer; }
+.proc-fn { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; margin-left: 2px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 11px; font-weight: 600; }
+/* «В работе · Резерв · Отказы» */
+.proc-lists .proc-segn { margin-left: 6px; font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.proc-offnote { margin: 10px 2px 0; font-size: 12.5px; color: var(--muted); }
+.proc-banner { display: flex; align-items: center; gap: 10px 12px; flex-wrap: wrap; padding: 12px 16px; margin-bottom: 14px; border-radius: 14px; background: #eef6ff; border: 1px solid #cfe2ff; font-size: 13.5px; }
+.proc-banner > span { flex: 1 1 260px; }
+.proc-banner.warn { background: #fff4e5; border-color: #ffd9a8; }
+.proc-banner .btn-dark, .proc-banner .btn-ghost { height: 32px; padding: 0 14px; font-size: 13px; white-space: nowrap; }
+.proc-drawer-banner { margin: 14px 0 0; }
 .proc-chk { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
 
 /* Таблица: этап — цветная точка, как метки стадий проектов */
@@ -32,7 +45,22 @@
 .proc-stage .dd-text::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--ps); margin-right: 7px; vertical-align: 1px; }
 .proc-tt .pj-plain { font-weight: 600; text-align: left; }
 .proc-ell { display: block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
-.tb-grid td.proc-over .pl-in { color: #b42318; }
+.tb-grid td.proc-over .pl-in { color: #b42318; font-weight: 500; }
+/* «Перезвонить»: дата + «+2 дня» / «+7» при наведении на строку */
+.proc-cbw { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.proc-cbw .pl-in { flex: 1 1 auto; min-width: 0; }
+.proc-cbq { display: none; gap: 3px; flex-shrink: 0; }
+.tb-grid tr:hover .proc-cbq, .tb-grid tr:focus-within .proc-cbq { display: inline-flex; }
+@media (hover: none) { .proc-cbq { display: inline-flex; } }
+.proc-q { height: 26px; padding: 0 8px; border: 1px solid var(--line-strong); background: var(--card); border-radius: 8px; font: inherit; font-size: 12px; color: var(--ink-2); cursor: pointer; white-space: nowrap; }
+.proc-q:hover { border-color: var(--ink-3); color: var(--ink); }
+.tb-grid td.proc-nowhy .pl-in::placeholder { color: #b42318; font-weight: 500; }
+.proc-tn { display: inline-flex; min-width: 30px; justify-content: center; padding: 1px 6px; border-radius: 7px; background: var(--line-soft); font-size: 12.5px; font-variant-numeric: tabular-nums; }
+.proc-pjl { display: inline-flex; align-items: center; gap: 7px; min-width: 0; max-width: 100%; }
+.proc-ava { width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0; display: inline-grid; place-items: center; overflow: hidden; background: linear-gradient(135deg, #d9c6b8, #8f7d70); color: #fff; font-size: 10px; font-weight: 600; }
+.proc-ava img { width: 100%; height: 100%; object-fit: cover; }
+.proc-sug { color: #2f6fec; text-align: left; white-space: normal; font-size: 13px; }
+.proc-back { height: 30px; padding: 0 12px; font-size: 13px; white-space: nowrap; }
 
 /* Строка «+ проект» — продолжение таблицы, как «+ Добавить задачу» */
 .proc-add { display: flex; align-items: center; gap: 8px; height: 46px; padding: 0 14px; box-sizing: border-box; background: var(--card); border: 1px solid var(--line); border-radius: 0 0 14px 14px; color: var(--ink-3); width: fit-content; min-width: min(100%, 520px); max-width: 100%; }
@@ -44,13 +72,26 @@
 /* Доска — канбан «Проектов»; на компьютере все этапы в ширину экрана, без прокрутки вбок (28.10) */
 @media (min-width: 900px) {
   .wkp-kb.proc-board { grid-auto-columns: minmax(0, 1fr); gap: 8px; overflow-x: visible; }
-  .proc-board .wkp-gh .wkp-tag { white-space: normal; height: auto; min-height: 26px; padding-top: 4px; padding-bottom: 4px; line-height: 1.25; font-size: 11px; }
+  .proc-board .wkp-gh { min-width: 0; }
+  .proc-board .wkp-gh .wkp-tag { display: block; width: 100%; white-space: normal; height: auto; padding: 5px 7px; line-height: 1.3; font-size: 11.5px; letter-spacing: 0; text-transform: none; box-sizing: border-box; overflow-wrap: break-word; }
+  .proc-board .wkp-gh .wkp-tag i { display: inline-block; vertical-align: -1px; margin-right: 5px; }
+  .proc-board .wkp-gh .wkp-tag > span { margin-left: 4px; color: var(--ink-3); font-weight: 500; white-space: nowrap; }
   .proc-board .wkp-kc.proc-lead { padding: 12px 10px 10px; }
   .proc-board .wkp-kc-row { flex-wrap: wrap; }
+  .proc-board .wkp-chips { flex-wrap: wrap; }
+  .proc-board .wkp-nm .pj-plain { overflow-wrap: break-word; }
   .proc-board .wkp-kc-empty { font-size: 12px; text-align: center; }
 }
+@media (min-width: 900px) and (max-width: 1360px) {   /* 8 колонок на узком ноутбуке: меньше полей, мельче метка */
+  .wkp-kb.proc-board { gap: 6px; }
+  .proc-board.wkp-kb .wkp-col { padding-left: 5px; padding-right: 5px; }
+  .proc-board .wkp-gh { padding: 4px 1px 6px; }
+  .proc-board .wkp-gh .wkp-tag { font-size: 11px; padding: 5px 6px; }
+  .proc-board .wkp-kc.proc-lead { padding: 10px 8px 8px; }
+  .proc-board .proc-next, .proc-board .proc-fee { font-size: 12px; }
+}
 .proc-lead .wkp-nm .pj-plain { font-weight: 600; font-size: 14.5px; text-align: left; white-space: normal; }
-.proc-next { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; overflow-wrap: anywhere; }
+.proc-next { font-size: 12.5px; color: var(--ink-2); line-height: 1.4; overflow-wrap: break-word; }
 .proc-next b { display: inline-flex; align-items: center; gap: 4px; font-weight: 500; }
 .proc-next.over, .proc-next.over b { color: #b42318; }
 .proc-fee { font-size: 13px; font-weight: 500; }
@@ -74,6 +115,68 @@
 .proc-stx b { display: block; font-size: 14px; font-weight: 600; }
 .proc-stx span { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 2px; overflow-wrap: anywhere; }
 .proc-steps li.done .proc-stx b { color: var(--ink-2); }
+.proc-steps li.cur { background: #fbfbf8; }
+.proc-steps li.cur .proc-stx b::after { content: "сейчас"; margin-left: 8px; padding: 1px 6px; border-radius: 5px; background: var(--ink); color: #fff; font-size: 10.5px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; vertical-align: 2px; }
+.proc-sfull { grid-column: 2 / -1; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.proc-sfull > .sub2 { font-size: 12.5px; }
+.proc-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.proc-row .pl-in { width: 150px; height: 32px; }
+/* ответ коллектива: города, даты сезона, следующий сезон */
+.proc-mini { border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.proc-mh { display: flex; align-items: center; gap: 8px; font-size: 11.5px; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.proc-cities { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; align-items: center; max-height: 280px; overflow-y: auto; overscroll-behavior: contain; }
+.proc-cname { font-size: 13.5px; overflow-wrap: anywhere; }
+.proc-org { grid-column: 1 / -1; height: 30px; font-size: 13px; }
+.proc-tg { display: inline-flex; gap: 2px; padding: 2px; border-radius: 9px; background: var(--line-soft); }
+.proc-tg button { border: 0; background: none; border-radius: 7px; padding: 3px 8px; font: inherit; font-size: 12px; color: var(--ink-3); cursor: pointer; white-space: nowrap; }
+.proc-tg button.ok { background: #e7f6ec; color: #1a7f3c; font-weight: 600; }
+.proc-tg button.busy { background: #fde3e1; color: #b42318; font-weight: 600; }
+.proc-dr { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.proc-dr input[type=date] { width: 140px; height: 32px; }
+.proc-dr .proc-drn { flex: 1 1 140px; height: 32px; }
+.proc-x { width: 30px; height: 30px; }
+.proc-months { display: flex; gap: 4px; flex-wrap: wrap; }
+.proc-months button { height: 28px; padding: 0 10px; border: 1px solid var(--line-strong); background: var(--card); border-radius: 8px; font: inherit; font-size: 12.5px; cursor: pointer; }
+.proc-months button.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.proc-mini > .pl-in { height: 32px; width: 100%; box-sizing: border-box; }
+/* карточка «Репертуара» и задачи записи */
+.proc-pjbox { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; margin-bottom: 8px; }
+.proc-pjbox .proc-ava { width: 40px; height: 40px; font-size: 14px; }
+.proc-pjt { flex: 1; min-width: 0; display: flex; flex-direction: column; } .proc-pjt b { overflow-wrap: anywhere; }
+.proc-pjbox .btn-ghost, .proc-pjbox .btn-dark { height: 32px; padding: 0 12px; font-size: 13px; }
+.proc-pjbox .proc-link .dd-btn { min-width: 200px; }
+.proc-upl { display: inline-flex; align-items: center; }
+.proc-file { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-radius: 10px; background: var(--line-soft); font-size: 13px; }
+.proc-file a { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.proc-tasks { display: flex; flex-direction: column; }
+.proc-tk { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line); }
+.proc-tk .proc-ell { flex: 1; min-width: 0; }
+.proc-tk.done .proc-ell { color: var(--muted); text-decoration: line-through; }
+.proc-tasks > .pj-plain { margin-top: 8px; align-self: flex-start; font-size: 13px; }
+.proc-red-t { color: #b42318; font-weight: 500; }
+/* окна: отказ, резерв, задача */
+.proc-dform { display: flex; flex-direction: column; gap: 12px; }
+.proc-dform .sub2 { margin: 0; }
+.proc-dform textarea { width: 100%; min-height: 84px; box-sizing: border-box; border: 1px solid var(--line-strong); border-radius: 10px; padding: 10px 12px; font: inherit; resize: vertical; }
+.proc-dform input.pl-in { height: 40px; border: 1px solid var(--line-strong); border-radius: 10px; padding: 0 12px; font-size: 14px; text-align: left; }
+.proc-dl { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--ink-3); }
+.proc-dl .pl-in { width: 170px; }
+.proc-whyq { display: flex; gap: 6px; flex-wrap: wrap; }
+.proc-dform .form-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.btn-dark.proc-red { background: #e5484d; border-color: #e5484d; }
+/* «Репертуар»: «Сотрудничество» на странице проекта и «Пул проектов» */
+.proc-coop { border: 1.5px solid var(--ink); border-radius: 16px; padding: 16px 18px; }
+.proc-coop .pj-h4 { margin-top: 0; }
+.proc-coop .wkp-tag, .proc-pool .wkp-tag { white-space: normal; height: auto; min-height: 24px; padding-top: 3px; padding-bottom: 3px; line-height: 1.25; max-width: 100%; box-sizing: border-box; }
+.proc-coop .btn-ghost { margin-top: 12px; height: 34px; padding: 0 14px; font-size: 13px; }
+.proc-ph { font: 600 18px/1.3 var(--display); margin: 26px 0 10px; }
+.proc-poolw { overflow-x: auto; border: 1px solid var(--line); border-radius: 14px; background: var(--card); }
+.proc-pool { width: 100%; border-collapse: collapse; min-width: 640px; }
+.proc-pool th { text-align: left; font-weight: 500; font-size: 12.5px; color: var(--muted); padding: 9px 12px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+.proc-pool td { padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; font-size: 14px; }
+.proc-pool tr:last-child td { border-bottom: 0; }
+.proc-pool .num { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.proc-pool td .pj-plain { font-weight: 600; text-align: left; }
 .proc-sact { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; align-items: center; max-width: 340px; }
 .proc-sact .btn-ghost, .proc-sact .btn-dark { height: 32px; padding: 0 12px; font-size: 13px; white-space: nowrap; }
 .proc-sact .pj-plain { font-size: 13px; }
@@ -95,9 +198,10 @@
 @media (max-width: 600px) {
   .proc-hero .pj-hero-in { padding: 62px 16px 20px; }   /* под круглыми «назад» и «удалить» */
   .proc-hero .pj-name { font-size: 25px; }
-  .proc-hero5 .wk-hstats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .proc-steps li { grid-template-columns: 28px minmax(0, 1fr); }
   .proc-sact { grid-column: 2; justify-content: flex-start; max-width: none; }
+  .proc-sfull { grid-column: 1 / -1; }
+  .proc-pjbox .proc-link .dd-btn { min-width: 0; width: 100%; }
   .proc-add { min-width: 0; width: 100%; }
   .proc-tools .wkp-search { flex: 1 1 100%; width: auto; order: 5; }
 }

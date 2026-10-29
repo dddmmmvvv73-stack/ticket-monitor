@@ -81,3 +81,17 @@ test('задача процесса в «Что горит» подписана 
   setWork({procs: {proc1: {title:'Поиск проектов'}}, tasks: {t1: {text:'Позвонить', proc:'proc1', due:TODAY}}});
   assert.equal(home.fire()[0].p, 'Поиск проектов');
 });
+
+test('«Что горит»: из воронки «Процессов» — пора перезвонить (просрочено — красным), резерв — «вернуться к вопросу»', () => {
+  setWork({ procs: { pa: { title: 'Поиск проектов' } } });
+  globalThis.WorkProcesses = { dueLeads: () => [
+    { id: 'l1', title: 'Сатья', stage: 'offer', next: 'Перезвонить', next_at: TODAY, proc: 'pa' },
+    { id: 'l2', title: 'Браво', stage: 'offer', next: 'Уточнить даты', next_at: '2026-10-20', proc: 'pa' },
+    { id: 'l3', title: 'Нэнси', stage: 'reserve', next: 'Вернуться к вопросу', next_at: '2026-10-25', proc: 'pa' }] };
+  try {
+    const f = home.fire();
+    assert.deepEqual(f.map((x) => [x.k, x.t, x.sev, x.lead]), [['Перезвонить · 20 окт', 'Браво — Уточнить даты', 'red', 'l2'],
+      ['Вернуться к вопросу · 25 окт', 'Нэнси', 'red', 'l3'], ['Перезвонить · 26 окт', 'Сатья', 'orange', 'l1']]);
+    assert.ok(f.every((x) => x.p === 'Поиск проектов' && x.g === 'tasks'));
+  } finally { delete globalThis.WorkProcesses; }
+});

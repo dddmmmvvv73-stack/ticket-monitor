@@ -31,7 +31,10 @@
                           "sale" — выход в продажу (решение 22.10): пусто — ждём площадку | allowed — площадка разрешила |
                           onsale — в продаже у операторов; "sale_ok", "sale_on" — даты разрешения и выхода в продажу}},
      "procs":    {номер: {"title", "kind": artists | venue_dates | other, "note", "media": {"cover"}, "created", "upd"}},
-     "leads":    {номер: {"proc", "title", "stage", "called", "ready", "fee", "season", "next", "next_at", "list", "task", "project", "cities", "log"}},
+     "leads":    {номер: {"proc", "title", "stage", "called", "ready", "fee", "season", "next", "next_at", "list", "task", "project", "cities", "log",
+                          версия 2 воронки (PROCESSES_PLAN.md, раздел 10, 29.10): "why" — причина отказа / почему в резерве,
+                          "pj" — номер карточки «Репертуара» (config/my_projects.json), "dates": [{"from", "to", "note"}] — даты
+                          коллектива в этом сезоне, "ns": {"ok", "months", "note"} — следующий сезон}},
      "goals":    {номер: {"month" — ГГГГ-ММ, "text", "done", "order", "upd"}}}   ← цели месяца («Обзор», решение пользователя 26.10)
 У проекта — "created" (дата создания: от неё «Обзор» считает, где проект должен быть к дедлайну готовности; у проектов
 до 26.10 — дата первой его задачи). У задачи — "pin" (закреплена в «Фокусе» «Обзора») и "remind" (напомнить в Telegram:
@@ -129,6 +132,14 @@ def load() -> dict:
         if not p.get("created"):
             first = min((t.get("created") or "9" for t in out["tasks"].values() if t.get("project") == pid), default="9")
             p["created"] = first if first != "9" else (p.get("upd") or "")[:10] or datetime.now().strftime("%Y-%m-%d")
+    for lid, r in out["leads"].items():   # воронка до 29.10: «Решение» → «Согласование»; причина отказа была в «Следующем шаге»
+        if r.get("stage") == "decided":
+            r["stage"] = "approve"
+        if r.get("stage") == "declined" and not r.get("why") and r.get("next"):
+            r["why"], r["next"] = r["next"], ""
+        t = out["tasks"].get(r.get("task") or "")
+        if t is not None and not t.get("lead"):   # прежняя одна задача записи — теперь задача знает свою запись
+            t["lead"] = lid
     for d in out["docs"].values():   # документы до 22.10: прежние статусы и «оплачено полностью» — в новые поля
         d["status"] = DOC_STATUS_OLD.get(d.get("status"), d.get("status"))
         if d.pop("pay", None) == "paid" and not d.get("paid"):
@@ -263,8 +274,13 @@ def _owner(d, data) -> dict:
     return {"proc": proc} if proc else {}
 
 
-LEAD_STAGES = ["found", "called", "ready", "offer", "answered", "decided", "declined"]
-LEAD_LABELS = dict(zip(LEAD_STAGES, ["На входе", "Позвонили", "Готовы, ждут предложения", "Получили предложение", "Ответили на предложение", "Решение", "Не готовы / отказ"]))
+# Этапы воронки, версия 2 (решения пользователя 29.10): discuss — готовы, обсуждаем с руководителем; approve — было decided
+# «Решение»; booking — финал; reserve и declined — вне воронки (отказ — только с причиной)
+LEAD_STAGES = ["found", "called", "discuss", "ready", "offer", "answered", "approve", "booking", "reserve", "declined"]
+LEAD_LABELS = dict(zip(LEAD_STAGES, ["На входе", "Позвонили", "Готовы, обсуждаем с руководителем", "Готовы, ждут предложения",
+                                     "Получили предложение", "Ответили на предложение", "Согласование с руководителем",
+                                     "Готово к бронированию площадок", "Резерв", "Отказ"]))
+SEASON_MONTHS = (9, 10, 11, 12, 1, 2, 3, 4)   # сезон — сентябрь…апрель (слова пользователя 29.10)
 
 
 def _validate(kind: str, d: dict, data: dict) -> dict:
@@ -292,7 +308,7 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
         out.update({k: _date(d.get(k), k) for k in ("called_at", "next_at", "cities_at", "created")})
         if not isinstance(d.get("called", False), bool):
             raise WorkError("позвонил: нужно да или нет")
-        out.update(stage=_enum(d.get("stage"), LEAD_STAGES, "этап", "found"), called=d.get("called", False),
+        out.update(stage=_enum("approve" if d.get("stage") == "decided" else d.get("stage"), LEAD_STAGES, "этап", "found"), called=d.get("called", False),
                    ready=_enum(d.get("ready"), ["", "yes", "no"], "готовы", ""),
                    season=_enum(d.get("season"), ["", "this", "next"], "сезон", ""),
                    fee=_amount(d.get("fee")), cashless=_amount(d.get("cashless")),
@@ -308,6 +324,24 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
                 raise WorkError("возможные города: нужен город")
             out["cities"].append({"city": _text(c.get("city"), "город", 100), "venue": _text(c.get("venue"), "зал", 300),
                                   "price": _amount(c.get("price")), "at": _date(c.get("at"), "дата фиксации")})
+        out["why"] = _text(d.get("why"), "причина", 1000)
+        out["pj"] = _ref(d.get("pj"), "карточка проекта")
+        dates = d.get("dates") or []
+        if not isinstance(dates, list) or len(dates) > 50:
+            raise WorkError("даты коллектива: до 50 диапазонов")
+        out["dates"] = []
+        for x in dates:
+            if not isinstance(x, dict):
+                raise WorkError("даты коллектива: неверный формат")
+            r = {"from": _date(x.get("from"), "дата с"), "to": _date(x.get("to"), "дата по"), "note": _text(x.get("note"), "пометка", 300)}
+            if r["from"] and r["to"] and r["to"] < r["from"]:
+                raise WorkError("даты коллектива: «по» раньше «с»")
+            out["dates"].append(r)
+        ns = d.get("ns") or {}
+        months = (ns.get("months") or []) if isinstance(ns, dict) else None
+        if not isinstance(ns, dict) or not isinstance(months, list) or any(m not in SEASON_MONTHS for m in months) or not isinstance(ns.get("ok", False), bool):
+            raise WorkError("следующий сезон: неверный формат")
+        out["ns"] = {"ok": ns.get("ok", False), "months": sorted(set(months), key=SEASON_MONTHS.index), "note": _text(ns.get("note"), "следующий сезон", 1000)}
         return out
     if kind == "projects":
         stages = sorted(data["stages"], key=lambda k: data["stages"][k].get("order", 0))
@@ -380,7 +414,10 @@ def _validate(kind: str, d: dict, data: dict) -> dict:
                "time": _int(d.get("time"), "время", 0, 10 ** 8), "run": _stamp(d.get("run")), "est": _int(d.get("est"), "план", 0, 10 ** 6),
                "tags": [t for t in (d.get("tags") or []) if t in data["tags"]][:12],
                "prio": _enum(d.get("prio"), PRIO, "приоритет", ""), "status": _enum(d.get("status"), STATUS, "статус", ""),
-               "log": _log(d.get("log")), "pin": bool(d.get("pin")), "remind": bool(d.get("remind"))}
+               "log": _log(d.get("log")), "pin": bool(d.get("pin")), "remind": bool(d.get("remind")),
+               "lead": _ref(d.get("lead"), "запись воронки")}   # задача записи воронки (у записи их может быть несколько, 29.10)
+        if out["lead"] and out["lead"] not in data.get("leads", {}):
+            raise WorkError("такой записи воронки нет")
         out.update(_owner(d, data))
         if not out["text"]:
             raise WorkError("у задачи нужен текст")
@@ -471,7 +508,10 @@ def apply_op(op: dict) -> dict:
                             n.pop("proc", None)
             if kind == "leads":
                 prev = data[kind].get(oid) or {}
-                labels = {"stage": "Этап", "called": "Позвонил", "ready": "Готовы", "season": "Сезон"}
+                # отказ — только с причиной (решение 29.10); у старых отказов без причины прочие поля править можно
+                if rec["stage"] == "declined" and not rec["why"] and (prev.get("stage") != "declined" or prev.get("why")):
+                    raise WorkError("отказ: укажите причину")
+                labels = {"stage": "Этап", "called": "Позвонил", "ready": "Готовы", "season": "Сезон", "why": "Причина"}
                 values = {"yes": "да", "no": "нет", "this": "этот сезон", "next": "следующий сезон"}
                 def label(v):
                     if isinstance(v, bool):
@@ -556,6 +596,10 @@ def apply_op(op: dict) -> dict:
                 for r in data["docs"].values():
                     if r.get("cp") == oid:
                         r["cp"] = ""
+            if kind == "leads":   # задачи записи остаются в процессе — без связи с записью
+                for r in data["tasks"].values():
+                    if r.get("lead") == oid:
+                        r["lead"] = ""
             if kind == "tasks":   # рабочие заметки задачи остаются — в проекте, без задачи
                 for n in data["notes"].values():
                     if n.get("task") == oid:

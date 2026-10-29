@@ -83,6 +83,9 @@
     var out = [], t0 = wkDay(0), all = tasks();
     all.filter(late).sort(function (a, b) { return a.due.localeCompare(b.due); }).forEach(function (t) { out.push({ g: 'tasks', sev: 'red', k: 'Просрочено · ' + short(t.due), t: t.text, p: taskOwnerName(t) || 'Без проекта', task: t.id }); });
     all.filter(function (t) { return !t.done && t.due === t0; }).forEach(function (t) { out.push({ g: 'tasks', sev: 'orange', k: 'Сегодня', t: t.text, p: taskOwnerName(t) || 'Без проекта', task: t.id }); });
+    (typeof WorkProcesses !== 'undefined' && WorkProcesses.dueLeads ? WorkProcesses.dueLeads() : []).sort(function (a, b) { return a.next_at.localeCompare(b.next_at); }).forEach(function (r) {   // «перезвонить» из воронки «Процессов» (29.10)
+      out.push({ g: 'tasks', sev: r.next_at < t0 ? 'red' : 'orange', k: (r.stage === 'reserve' ? 'Вернуться к вопросу · ' : 'Перезвонить · ') + short(r.next_at), t: r.title + (r.next && r.next !== 'Перезвонить' && r.next !== 'Вернуться к вопросу' ? ' — ' + r.next : ''), p: ((WK.procs || {})[r.proc] || {}).title || 'Воронка', lead: r.id });
+    });
     active().filter(function (p) { return p.deadline && p.deadline >= t0 && days(t0, p.deadline) <= 7; }).forEach(function (p) { out.push({ g: 'tasks', sev: 'orange', k: 'Дедлайн готовности · ' + short(p.deadline), t: p.title, p: '', proj: p.id }); });
     var by = {};
     ahead().filter(function (s) { return s.sale !== 'onsale' && days(t0, s.date) <= SALE_DAYS; }).forEach(function (s) { (by[s.project] = by[s.project] || []).push(s); });
@@ -152,7 +155,7 @@
       '</div></section>';
   }
   function fireItem(x) {
-    var go = x.task ? ' data-wh-task="' + x.task + '"' : x.proj ? ' data-wh-open="' + x.proj + '"' + (x.tab ? ' data-wh-tab="' + x.tab + '"' : '') : ' data-wh-go="' + (x.g === 'docs' ? 'wkdocs' : 'wktasks') + '"';
+    var go = x.lead ? ' data-proc-action="lead" data-id="' + x.lead + '"' : x.task ? ' data-wh-task="' + x.task + '"' : x.proj ? ' data-wh-open="' + x.proj + '"' + (x.tab ? ' data-wh-tab="' + x.tab + '"' : '') : ' data-wh-go="' + (x.g === 'docs' ? 'wkdocs' : 'wktasks') + '"';
     return '<button type="button" class="wh-fi"' + go + '><i class="wh-sev-' + x.sev + '"></i><span class="wh-fi-b"><span class="wh-fi-k">' + esc(x.k) + '</span><span class="wh-fi-t">' + esc(x.t) + '</span>' + (x.p ? '<span class="wh-fi-p">' + esc(x.p) + '</span>' : '') + '</span>' + ico('chev', 18) + '</button>';
   }
   function moneyCard() {
@@ -399,7 +402,7 @@
     }
     if (b.hasAttribute('data-wh-fireinfo')) {
       if (WKPOP && WKPOP.anchor === b) { wkPopClose(); return; }
-      wkPopOpen(b, 'wk-menu wh-menu wh-infopop', '<div class="wkp-title">Что сюда попадает</div><ul class="wh-rules"><li>Просроченные задачи и задачи на сегодня</li><li>Дедлайн готовности проекта — за 7 дней</li><li>Дата гастролей ближе ' + SALE_DAYS + ' дней, а ещё не «в продаже»</li><li>Неоплаченные счета</li><li>Неподписанные договоры</li></ul>');
+      wkPopOpen(b, 'wk-menu wh-menu wh-infopop', '<div class="wkp-title">Что сюда попадает</div><ul class="wh-rules"><li>Просроченные задачи и задачи на сегодня</li><li>Воронка «Процессов»: пора перезвонить</li><li>Дедлайн готовности проекта — за 7 дней</li><li>Дата гастролей ближе ' + SALE_DAYS + ' дней, а ещё не «в продаже»</li><li>Неоплаченные счета</li><li>Неподписанные договоры</li></ul>');
       return;
     }
     if (b.hasAttribute('data-wh-search')) { var box = b.closest('.wh-search'), inp = box.querySelector('input'); box.classList.add('open'); inp.focus(); return; }
