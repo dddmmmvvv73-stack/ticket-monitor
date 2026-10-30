@@ -1322,6 +1322,19 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wk-snack.show .wk-snack-bar { animation: wk-snack-t 10s linear forwards; }
 @keyframes wk-snack-t { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 @media (max-width: 820px) { .wk-snack { bottom: 88px; } }
+/* Идущая задача — на всех страницах, отдельно от перерисовки раздела. */
+.wk-timer-dock { position: fixed; right: 24px; bottom: 24px; z-index: 18; width: 308px; max-width: calc(100vw - 32px); display: grid; grid-template-columns: minmax(0, 1fr) 40px; align-items: center; gap: 14px; padding: 16px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 8px 32px rgba(17, 12, 46, 0.14); }
+.wk-timer-open { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; border: 0; padding: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+.wk-timer-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; }
+.wk-timer-label i { width: 6px; height: 6px; border-radius: 50%; background: #22966b; flex-shrink: 0; }
+.wk-timer-title { width: 100%; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; font-size: 13px; font-weight: 500; line-height: 1.4; }
+.wk-timer-clock { font-size: 22px; font-weight: 500; line-height: 1.15; letter-spacing: -0.025em; }
+.wk-timer-pause { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--canvas); color: var(--ink); cursor: pointer; }
+.wk-timer-pause:hover { background: var(--line); }
+.wk-timer-open:hover .wk-timer-title { color: #3398e1; }
+.wk-timer-open:focus-visible, .wk-timer-pause:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+@media (max-width: 820px) { .wk-timer-dock { right: 16px; bottom: calc(88px + env(safe-area-inset-bottom, 0px)); padding: 12px 14px; gap: 10px; } }
+@media print { .wk-timer-dock { display: none; } }
 .wk-dlb { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 9px 14px 9px 12px; border: 0; border-radius: 12px; font: inherit; font-size: 13px; color: #fff; cursor: pointer;
   background: linear-gradient(135deg, #f97316, #e5484d); box-shadow: 0 8px 22px rgba(229, 72, 77, 0.35); }
 .wk-dlb:hover { filter: brightness(1.06); }
@@ -4306,7 +4319,7 @@ var WK_CLOSE = [["no", "Нет"], ["got", "Получены"]];
 var WK_DOC_KINDS = ["Договор", "Допсоглашение", "Счёт", "Акт", "УПД", "Счёт-фактура", "Технический райдер", "Бытовой райдер"];
 function wkLoad() {
   if (!CAN_SAVE) return;
-  apiJson("GET", "/api/work").then(function (x) { if (x.ok) { WK = x.d; WK_OK = true; if (wkOn()) render(); } }, function () {});
+  apiJson("GET", "/api/work").then(function (x) { if (x.ok) { WK = x.d; WK_OK = true; wkTimerDock(); if (wkOn()) render(); } }, function () {});
 }
 function wkId(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function wkDay(off) { var d = new Date(); d.setDate(d.getDate() + (off || 0)); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
@@ -4326,10 +4339,10 @@ function wkMoney(n) { return n == null ? "" : String(Math.round(n * 100) / 100).
 // Сохранить запись: сразу на экране, потом на сервере; ошибка — сообщение и данные с сервера заново
 function wkPut(kind, id, rec, msg, quiet) {   // quiet — без перерисовки: курсор остаётся там, куда перешли (Tab)
   if (kind === "tasks" || kind === "notes") rec = WorkProcesses.normalize(rec);
-  WK[kind][id] = rec; if (!quiet) render();
+  WK[kind][id] = rec; wkTimerDock(); if (!quiet) render();
   apiJson("POST", "/api/work", { op: "put", kind: kind, id: id, data: rec }).then(function (x) {
     if (!x.ok) { toast("Не сохранено: " + ((x.d && x.d.error) || "ошибка")); wkLoad(); return; }
-    WK = x.d; if (msg) toast(msg);
+    WK = x.d; wkTimerDock(); if (msg) toast(msg);
   }, function () { toast("Не сохранено: " + NO_APP); wkLoad(); });
 }
 function wkDel(kind, id, msg) {
@@ -5950,14 +5963,38 @@ function wktTable(list, pid) {
     (anyDone ? '<div class="wkt-vp wkt-vp-done" data-vp="done"><table class="wkt"><thead class="wkt-ghost" aria-hidden="true">' + WKT_HEAD + '</thead><tbody>' + group("done", "Готово", done, false, "", true) + '</tbody></table></div>' : '') + '</div>';
 }
 // ---------- Таймер: одна задача за раз — запуск другой останавливает прежнюю
-function wkTimer(id) {
+function wkTimer(id, quiet) {
   var t = WK.tasks[id]; if (!t) return;
-  if (t.run) { var r = Object.assign({}, t); r.time = wkSpent(t); r.run = ""; wkPut("tasks", id, r, "Время записано: " + wkDur(r.time)); return; }
+  if (t.run) { var r = Object.assign({}, t); r.time = wkSpent(t); r.run = ""; wkPut("tasks", id, r, "Время записано: " + wkDur(r.time), quiet); return; }
   Object.keys(WK.tasks).forEach(function (k) { var o = WK.tasks[k]; if (o.run && k !== id) { var s = Object.assign({}, o); s.time = wkSpent(o); s.run = ""; wkPut("tasks", k, s, "", true); } });
-  var n = Object.assign({}, t); n.run = wkStamp(); wkPut("tasks", id, n, "Таймер идёт: «" + t.text + "»");
+  var n = Object.assign({}, t); n.run = wkStamp(); wkPut("tasks", id, n, "Таймер идёт: «" + t.text + "»", quiet);
+}
+// Закреплённый блок использует тот же таймер задачи; пауза не пересоздаёт открытый редактор.
+function wkTimerDock() {
+  var el = $("wkTimerDock"), id = Object.keys(WK.tasks || {}).filter(function (k) { return WK.tasks[k].run && !WK.tasks[k].done; })[0];
+  if (!id) { if (el) el.remove(); return; }
+  if (!el) {
+    el = document.createElement("section"); el.id = "wkTimerDock"; el.className = "wk-timer-dock"; el.setAttribute("aria-label", "Текущая задача");
+    el.innerHTML = '<button type="button" class="wk-timer-open" aria-haspopup="dialog"><span class="wk-timer-label"><i aria-hidden="true"></i>Идёт учёт времени</span>' +
+      '<span class="wk-timer-title"></span><span class="wk-timer-clock num"></span></button>' +
+      '<button type="button" class="wk-timer-pause" aria-label="Поставить таймер на паузу" title="Поставить на паузу">' + WKT_ICON.pause + '</button>';
+    el.querySelector(".wk-timer-open").onclick = function () { wkOpenTask(el.getAttribute("data-task")); };
+    el.querySelector(".wk-timer-pause").onclick = function () {
+      var taskId = el.getAttribute("data-task"), t = WK.tasks[taskId]; if (!t || !t.run) return;
+      wkTimer(taskId, true);
+      document.querySelectorAll("[data-wkt-timer]").forEach(function (b) {
+        if (b.getAttribute("data-wkt-timer") === taskId) b.outerHTML = wkTimeCell(Object.assign({ id: taskId }, WK.tasks[taskId]));
+      });
+    };
+    document.body.appendChild(el);
+  }
+  var t = WK.tasks[id], open = el.querySelector(".wk-timer-open"), title = el.querySelector(".wk-timer-title"), clock = el.querySelector(".wk-timer-clock");
+  el.setAttribute("data-task", id); open.setAttribute("aria-label", "Открыть задачу: " + t.text); open.title = t.text;
+  if (title.textContent !== t.text) title.textContent = t.text;
+  clock.setAttribute("data-wk-tick", id); clock.textContent = wkDur(wkSpent(t), true);
 }
 setInterval(function () {   // идущий таймер — раз в секунду только цифры, без перерисовки
-  if (!wkOn()) return;
+  wkTimerDock();
   document.querySelectorAll("[data-wk-tick]").forEach(function (el) {
     var t = WK.tasks[el.getAttribute("data-wk-tick")]; if (t && t.run) el.textContent = wkDur(wkSpent(t), true);
   });
@@ -11851,6 +11888,7 @@ function render() {
   if (mt) { var mp = mt.parentNode; mp.scrollLeft += mt.getBoundingClientRect().left - mp.getBoundingClientRect().left - 16; }
   renderCal();
   tableFit();
+  wkTimerDock();
 }
 // Шапка таблицы прилипает ровно под верхней панелью (её высота меняется: строка поиска, перенос на узком экране);
 // таблица шире карточки — прокрутка внутри карточки (.ev-wide)
