@@ -1327,12 +1327,16 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wk-timer-open { min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 7px; border: 0; padding: 0; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .wk-timer-label { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 11px; }
 .wk-timer-label i { width: 6px; height: 6px; border-radius: 50%; background: #22966b; flex-shrink: 0; }
+.wk-timer-dock.paused .wk-timer-label i { background: var(--ash); }
 .wk-timer-title { width: 100%; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; font-size: 13px; font-weight: 500; line-height: 1.4; }
 .wk-timer-clock { font-size: 22px; font-weight: 500; line-height: 1.15; letter-spacing: -0.025em; }
 .wk-timer-pause { width: 40px; height: 40px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 50%; background: var(--canvas); color: var(--ink); cursor: pointer; }
 .wk-timer-pause:hover { background: var(--line); }
+.wk-timer-close { position: absolute; top: 6px; right: 6px; width: 26px; height: 26px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--muted); cursor: pointer; }
+.wk-timer-close:hover { background: var(--canvas); color: var(--ink); }
+.wk-timer-pause:disabled, .wk-timer-close:disabled { opacity: 0.5; cursor: wait; }
 .wk-timer-open:hover .wk-timer-title { color: #3398e1; }
-.wk-timer-open:focus-visible, .wk-timer-pause:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
+.wk-timer-open:focus-visible, .wk-timer-pause:focus-visible, .wk-timer-close:focus-visible { outline: 2px solid var(--focus); outline-offset: 4px; }
 @media (max-width: 820px) { .wk-timer-dock { right: 16px; bottom: calc(88px + env(safe-area-inset-bottom, 0px)); padding: 12px 14px; gap: 10px; } }
 @media print { .wk-timer-dock { display: none; } }
 .wk-dlb { display: inline-flex; align-items: center; gap: 8px; margin-top: 12px; padding: 9px 14px 9px 12px; border: 0; border-radius: 12px; font: inherit; font-size: 13px; color: #fff; cursor: pointer;
@@ -4340,10 +4344,10 @@ function wkMoney(n) { return n == null ? "" : String(Math.round(n * 100) / 100).
 function wkPut(kind, id, rec, msg, quiet) {   // quiet — без перерисовки: курсор остаётся там, куда перешли (Tab)
   if (kind === "tasks" || kind === "notes") rec = WorkProcesses.normalize(rec);
   WK[kind][id] = rec; wkTimerDock(); if (!quiet) render();
-  apiJson("POST", "/api/work", { op: "put", kind: kind, id: id, data: rec }).then(function (x) {
-    if (!x.ok) { toast("Не сохранено: " + ((x.d && x.d.error) || "ошибка")); wkLoad(); return; }
-    WK = x.d; wkTimerDock(); if (msg) toast(msg);
-  }, function () { toast("Не сохранено: " + NO_APP); wkLoad(); });
+  return apiJson("POST", "/api/work", { op: "put", kind: kind, id: id, data: rec }).then(function (x) {
+    if (!x.ok) { toast("Не сохранено: " + ((x.d && x.d.error) || "ошибка")); wkLoad(); return false; }
+    WK = x.d; wkTimerDock(); if (msg) toast(msg); return true;
+  }, function () { toast("Не сохранено: " + NO_APP); wkLoad(); return false; });
 }
 function wkDel(kind, id, msg) {
   var rec = WK[kind][id] && JSON.parse(JSON.stringify(WK[kind][id])), linked = [];
@@ -5965,30 +5969,62 @@ function wktTable(list, pid) {
 // ---------- Таймер: одна задача за раз — запуск другой останавливает прежнюю
 function wkTimer(id, quiet) {
   var t = WK.tasks[id]; if (!t) return;
-  if (t.run) { var r = Object.assign({}, t); r.time = wkSpent(t); r.run = ""; wkPut("tasks", id, r, "Время записано: " + wkDur(r.time), quiet); return; }
+  if (t.run) { var r = Object.assign({}, t); r.time = wkSpent(t); r.run = ""; return wkPut("tasks", id, r, "Время записано: " + wkDur(r.time), quiet); }
   Object.keys(WK.tasks).forEach(function (k) { var o = WK.tasks[k]; if (o.run && k !== id) { var s = Object.assign({}, o); s.time = wkSpent(o); s.run = ""; wkPut("tasks", k, s, "", true); } });
-  var n = Object.assign({}, t); n.run = wkStamp(); wkPut("tasks", id, n, "Таймер идёт: «" + t.text + "»", quiet);
+  var n = Object.assign({}, t); n.run = wkStamp(); return wkPut("tasks", id, n, "Таймер идёт: «" + t.text + "»", quiet);
+}
+// На паузе задача остаётся закреплена, в том числе после перезагрузки браузера.
+var WK_TIMER_KEY = "ticketmonitor.work.timerPin", WK_TIMER_BUSY = "";
+var WK_TIMER_PIN = (function () { try { return localStorage.getItem(WK_TIMER_KEY) || ""; } catch (e) { return ""; } })();
+function wkTimerPin(id) {
+  if (WK_TIMER_PIN === id) return;
+  WK_TIMER_PIN = id;
+  try { if (id) localStorage.setItem(WK_TIMER_KEY, id); else localStorage.removeItem(WK_TIMER_KEY); } catch (e) {}
+}
+function wkTimerDockControls(id) {
+  var t = WK.tasks[id]; if (!t) return;
+  document.querySelectorAll("[data-wkt-timer]").forEach(function (b) {
+    if (b.getAttribute("data-wkt-timer") === id) b.outerHTML = wkTimeCell(Object.assign({ id: id }, t));
+  });
+}
+function wkTimerDockAction(unpin) {
+  var el = $("wkTimerDock"), id = el && el.getAttribute("data-task"), t = WK.tasks[id];
+  if (!t || t.done || WK_TIMER_BUSY) return;
+  if (unpin && !t.run) { wkTimerPin(""); wkTimerDock(); return; }
+  WK_TIMER_BUSY = id;
+  wkTimer(id, true).then(function (ok) {
+    WK_TIMER_BUSY = "";
+    // Открепляем только после сохранения остановки: при ошибке блок остаётся.
+    if (unpin && ok && WK_TIMER_PIN === id && WK.tasks[id] && !WK.tasks[id].run) wkTimerPin("");
+    wkTimerDock(); wkTimerDockControls(id);
+  });
+  wkTimerDock(); wkTimerDockControls(id);
 }
 // Закреплённый блок использует тот же таймер задачи; пауза не пересоздаёт открытый редактор.
 function wkTimerDock() {
-  var el = $("wkTimerDock"), id = Object.keys(WK.tasks || {}).filter(function (k) { return WK.tasks[k].run && !WK.tasks[k].done; })[0];
+  var el = $("wkTimerDock"), running = Object.keys(WK.tasks || {}).filter(function (k) { return WK.tasks[k].run && !WK.tasks[k].done; })[0];
+  if (running) wkTimerPin(running);
+  else if (WK_OK && (!WK.tasks[WK_TIMER_PIN] || WK.tasks[WK_TIMER_PIN].done)) wkTimerPin("");
+  var id = running || WK_TIMER_PIN;
+  if (!WK.tasks[id]) id = "";
   if (!id) { if (el) el.remove(); return; }
   if (!el) {
     el = document.createElement("section"); el.id = "wkTimerDock"; el.className = "wk-timer-dock"; el.setAttribute("aria-label", "Текущая задача");
-    el.innerHTML = '<button type="button" class="wk-timer-open" aria-haspopup="dialog"><span class="wk-timer-label"><i aria-hidden="true"></i>Идёт учёт времени</span>' +
+    el.innerHTML = '<button type="button" class="wk-timer-open" aria-haspopup="dialog"><span class="wk-timer-label"><i aria-hidden="true"></i><span class="wk-timer-state"></span></span>' +
       '<span class="wk-timer-title"></span><span class="wk-timer-clock num"></span></button>' +
-      '<button type="button" class="wk-timer-pause" aria-label="Поставить таймер на паузу" title="Поставить на паузу">' + WKT_ICON.pause + '</button>';
+      '<button type="button" class="wk-timer-pause"></button>' +
+      '<button type="button" class="wk-timer-close" aria-label="Открепить задачу и остановить таймер" title="Открепить и остановить">' + PJ_ICON.close + '</button>';
     el.querySelector(".wk-timer-open").onclick = function () { wkOpenTask(el.getAttribute("data-task")); };
-    el.querySelector(".wk-timer-pause").onclick = function () {
-      var taskId = el.getAttribute("data-task"), t = WK.tasks[taskId]; if (!t || !t.run) return;
-      wkTimer(taskId, true);
-      document.querySelectorAll("[data-wkt-timer]").forEach(function (b) {
-        if (b.getAttribute("data-wkt-timer") === taskId) b.outerHTML = wkTimeCell(Object.assign({ id: taskId }, WK.tasks[taskId]));
-      });
-    };
+    el.querySelector(".wk-timer-pause").onclick = function () { wkTimerDockAction(false); };
+    el.querySelector(".wk-timer-close").onclick = function () { wkTimerDockAction(true); };
     document.body.appendChild(el);
   }
   var t = WK.tasks[id], open = el.querySelector(".wk-timer-open"), title = el.querySelector(".wk-timer-title"), clock = el.querySelector(".wk-timer-clock");
+  var paused = !t.run, toggle = el.querySelector(".wk-timer-pause"), action = paused ? "Продолжить учёт времени" : "Поставить таймер на паузу";
+  el.classList.toggle("paused", paused);
+  el.querySelector(".wk-timer-state").textContent = paused ? "На паузе" : "Идёт учёт времени";
+  if (toggle.getAttribute("aria-label") !== action) { toggle.innerHTML = paused ? WKT_ICON.play : WKT_ICON.pause; toggle.setAttribute("aria-label", action); toggle.title = action; }
+  toggle.disabled = !!WK_TIMER_BUSY; el.querySelector(".wk-timer-close").disabled = !!WK_TIMER_BUSY;
   el.setAttribute("data-task", id); open.setAttribute("aria-label", "Открыть задачу: " + t.text); open.title = t.text;
   if (title.textContent !== t.text) title.textContent = t.text;
   clock.setAttribute("data-wk-tick", id); clock.textContent = wkDur(wkSpent(t), true);
