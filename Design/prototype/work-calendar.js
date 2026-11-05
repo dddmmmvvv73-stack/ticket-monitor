@@ -150,6 +150,7 @@
   }
   if (typeof module !== 'undefined' && module.exports) module.exports = { monthDays: monthDays, shift: shift, items: items };
   root.renderWkCalendar = renderCalendar;
+  root.WorkCalendarDates = { monthDays: monthDays, shift: shift };
   if (typeof document === 'undefined') return;
   document.addEventListener('click', function (ev) {
     if (S.view !== 'wkcal' || !ev.target.closest) return;

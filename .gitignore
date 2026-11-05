@@ -8,6 +8,7 @@ config/planning.json
 config/shares/
 # Справочник площадок: контакты, телефоны, почты (competitors/venuebook.py)
 config/venue_book.json
+config/venue_availability.json
 config/venue_media/
 # Telegram-бот: токен — секрет (competitors/telegram.py)
 config/telegram.json

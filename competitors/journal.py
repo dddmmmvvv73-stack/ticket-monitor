@@ -22,7 +22,7 @@ import json
 import secrets
 from datetime import datetime
 
-from competitors import myprojects, planning, venuebook, work
+from competitors import availability, myprojects, planning, venuebook, work
 from competitors.storage import CONFIG_DIR, save_json
 
 DIR = CONFIG_DIR / "history"
@@ -103,6 +103,11 @@ PLAN_KIND = {"params": "Параметры", "projects": "Проект (финм
              "venues": "Площадка (финмодель)", "tours": "Тур", "lists": "Список гастролей", "routes": "Маршрут"}
 
 AREAS = {
+    "availability": {"label": "Свободные даты площадок", "load": availability.load, "file": availability.FILE,
+                     "lock": availability._lock,
+                     "map": lambda d: {f"{k}/{i}": r for k in availability.KINDS for i, r in d.get(k, {}).items()},
+                     "set": _plan_set,
+                     "title": lambda k, r: " · ".join(str(r.get(f, "")) for f in ("city", "venue_name", "date", "month") if r.get(f))},
     "venues": {"label": "Справочник площадок", "load": venuebook.load, "file": venuebook.FILE, "lock": venuebook._lock,
                "map": _venues_map, "set": _venues_set,
                "title": lambda k, r: ", ".join(x for x in (r.get("name"), r.get("city")) if x) or k},
@@ -231,6 +236,11 @@ def restore(eid: str) -> dict:
                     new["edited"].append(k)   # возвращённое значение — тоже правка сайта: повторный импорт его не затрёт
             new["upd"] = datetime.now().isoformat(timespec="seconds")
         a["set"](d, e["key"], new)
+        if e["area"] == "availability":
+            try:
+                availability.validate_state(d)
+            except availability.AvailabilityError as err:
+                raise JournalError(str(err))
         save_json(a["file"], d)
     finally:
         if lock:

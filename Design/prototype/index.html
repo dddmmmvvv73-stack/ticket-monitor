@@ -6,6 +6,7 @@
 <title>Всё схвачено</title>
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="stylesheet" href="work-calendar.css">
+<link rel="stylesheet" href="availability.css">
 <link rel="stylesheet" href="work-home.css">
 <link rel="stylesheet" href="work-processes.css">
 <link rel="stylesheet" href="work-notes.css">
@@ -2641,6 +2642,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
     <button class="nav-item nav-parent" id="repBtn" aria-expanded="false" aria-controls="repSub"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="3.5" cy="12" r="1.5"/><circle cx="12.5" cy="4" r="1.5"/><path d="M5 12h4.5a2 2 0 0 0 0-4h-3a2 2 0 0 1 0-4H11"/></svg>Репертуар<svg class="nav-chev" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 4.5l3 3 3-3"/></svg></button>
     <div class="nav-sub" id="repSub" hidden><a class="nav-item" href="#projects" data-view="projects">Проекты</a><a class="nav-item" href="#touring" data-view="touring">Гастролирует</a><a class="nav-item" href="#favorites" data-view="favorites">Избранное</a><a class="nav-item" href="#suggest" data-view="suggest">Подсказки <span class="sub2" id="sgCount"></span></a><a class="nav-item" href="#pool" data-view="pool">Пул проектов</a></div>
     <a class="nav-item" href="#venues" data-view="venues"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 14V6l6-4 6 4v8M6 14v-4h4v4"/></svg>Площадки</a>
+    <a class="nav-item" href="#availability" data-view="availability"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5 1.5v3M11 1.5v3M5 10l2 2 4-4"/></svg>Свободные даты</a>
     <a class="nav-item" href="#operators" data-view="operators"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M5 2v4M11 2v4M3.5 6h9v2.5a4.5 4.5 0 0 1-9 0z"/><path d="M8 13v1.5"/></svg>Билетные операторы</a>
     <a class="nav-item" href="#archive" data-view="archive"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="2" y="2.5" width="12" height="3.5" rx="1"/><path d="M3 6v7.5h10V6M6.5 9h3"/></svg>Архив</a>
     </div>
@@ -2690,7 +2692,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <nav class="bottom-nav" aria-label="Разделы">
   <a href="#city" data-view="city">Город</a><a href="#events" data-view="events">Мероприятия</a><a href="#projects" data-view="projects">Репертуар</a><a href="#work" data-view="work">Проекты</a><button type="button" id="moreBtn" aria-expanded="false" aria-controls="moreSheet">Ещё</button>
 </nav>
-<div class="more-sheet" id="moreSheet" hidden><a href="#wkproc" data-view="wkproc">Процессы</a><a href="#wkhome" data-view="wkhome">Обзор работы</a><a href="#wkgoals" data-view="wkgoals">Цели</a><a href="#wktasks" data-view="wktasks">Задачи</a><a href="#wkdocs" data-view="wkdocs">Документы</a><a href="#wkparties" data-view="wkparties">Контрагенты</a><a href="#wkcal" data-view="wkcal">Календарь</a><a href="#wknotes" data-view="wknotes">Заметки</a><a href="#pool" data-view="pool">Пул проектов</a><a href="#archive" data-view="archive">Архив</a><a href="#overview" data-view="overview">Обзор</a><a href="#niches" data-view="niches">Ниши</a><a href="#calendar" data-view="calendar">Календарь событий</a><a href="#new" data-view="new">Новые события</a><a href="#venues" data-view="venues">Площадки</a><a href="#operators" data-view="operators">Билетные операторы</a><a href="#sales" data-view="sales">История продаж</a><a href="#dynamics" data-view="dynamics">Динамика продаж</a><a href="#planning" data-view="planning">Финмодель туров</a><a href="#route" data-view="route">Гастрольный маршрут</a><a href="#settings" data-view="settings">Настройки</a></div>
+<div class="more-sheet" id="moreSheet" hidden><a href="#wkproc" data-view="wkproc">Процессы</a><a href="#wkhome" data-view="wkhome">Обзор работы</a><a href="#wkgoals" data-view="wkgoals">Цели</a><a href="#wktasks" data-view="wktasks">Задачи</a><a href="#wkdocs" data-view="wkdocs">Документы</a><a href="#wkparties" data-view="wkparties">Контрагенты</a><a href="#wkcal" data-view="wkcal">Календарь</a><a href="#wknotes" data-view="wknotes">Заметки</a><a href="#pool" data-view="pool">Пул проектов</a><a href="#archive" data-view="archive">Архив</a><a href="#overview" data-view="overview">Обзор</a><a href="#niches" data-view="niches">Ниши</a><a href="#calendar" data-view="calendar">Календарь событий</a><a href="#new" data-view="new">Новые события</a><a href="#venues" data-view="venues">Площадки</a><a href="#availability" data-view="availability">Свободные даты</a><a href="#operators" data-view="operators">Билетные операторы</a><a href="#sales" data-view="sales">История продаж</a><a href="#dynamics" data-view="dynamics">Динамика продаж</a><a href="#planning" data-view="planning">Финмодель туров</a><a href="#route" data-view="route">Гастрольный маршрут</a><a href="#settings" data-view="settings">Настройки</a></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <dialog class="confirm" id="confirmDlg" aria-labelledby="cdTitle" aria-describedby="cdText">
   <h2 id="cdTitle"></h2><p id="cdText" class="sub"></p>
@@ -2712,6 +2714,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <script src="tour-parse.js"></script>
 <script src="route-plan.js"></script>
 <script src="work-calendar.js"></script>
+<script src="availability.js"></script>
 <script src="vendor/tiptap-3.30.0.min.js"></script>
 <script src="work-notes.js"></script>
 <script src="work-docs.js"></script>
@@ -4806,7 +4809,7 @@ function wkProjectPage(pid) {
       : S.wk.ptab === "costs" ? '<div class="wk-pbody">' + wkCostsTable(wkCostsOf(pid), pid) + '</div>'
       : S.wk.ptab === "shows" ? '<div class="wk-pbody">' + wkShowsTable(pid) + '</div>'
       : '<div class="wk-split"><div class="wk-split-main">' + wktTable(wkTasksOf(pid), pid) + '</div><aside class="wk-split-side" aria-label="Календарь сроков и фокус">' + wkCalBlock(pid) + wkFocusBlock(pid) + '</aside></div>') +
-    wkNotesGrid(pid);
+    '<div class="av-project-entry"><button type="button" class="btn-ghost" data-av="open" data-project="' + esc(pid) + '">Свободные даты площадок →</button></div>' + wkNotesGrid(pid);
 }
 // «Подбор городов» в «Работе» (CITY_PICK_INDEX_PLAN.md, п. 2.6; решение пользователя 27.10): артисты, привязанные к проекту
 // или задаче, — «Открыть →» ведёт на экран артиста, «✕ Отвязать» убирает связь (сам подбор остаётся)
@@ -7038,6 +7041,7 @@ function vbPage(r) {
       '<div class="pj-hero-text"><h1 class="pj-name">' + esc(r.name || "Без названия") + '</h1>' +
         '<p class="pj-sub">' + esc([r.city, r.legal].filter(Boolean).join(" · ")) + '</p>' +
         '<div class="pj-actions">' +
+          '<button type="button" class="pj-btn primary" data-av="open" data-venue="' + esc(r.id) + '">Свободные даты</button>' +
           (phone ? '<a class="pj-btn primary" href="' + phone.href + '">' + PJ_ICON.phone + phone.text + '</a>' : '') +
           (mail ? '<a class="pj-btn pj-icon" href="mailto:' + esc(mail) + '" aria-label="Написать: ' + esc(mail) + '" title="' + esc(mail) + '">' + VB_MAIL_ICON + '</a>' : '') +
           (/^https?:\/\//.test(r.site) ? '<a class="pj-btn pj-icon" href="' + esc(r.site) + '" target="_blank" rel="noopener" aria-label="Сайт площадки" title="' + esc(vbHost(r.site)) + '">' + PJ_ICON.site + '</a>' : '') +
@@ -7319,11 +7323,18 @@ var JR_FIELD = { title: "Название", rows: "Строки тура", note:
   amount: "Сумма", pay: "Оплата", closing: "Закрывающие", created: "Создана", doc: "Текст заметки", task: "Задача", log: "Журнал задачи", type: "Тип заметки", sale: "Продажи", sale_ok: "Разрешено", sale_on: "В продаже с", cp: "Контрагент", inv: "Счёт", orig_out: "Оригинал отправили", orig_in: "Оригинал получили",
   legal: "Юрлицо", inn: "ИНН", service: "Услуга", edo: "ЭДО", contact: "Контакт", phone: "Телефон", email: "Почта", venue: "Площадка", pin: "Закреплена в фокусе", remind: "Напомнить", order: "Порядок" };
 function jrLabel(area, f) {
+  if (area === "availability") { var avLabels = {free:"Свободные числа",busy:"Занятые числа",mode:"Полнота ответа",asof:"Дата ответа",void:"Ответ отменён",artist:"Артист",author:"Кто уточнил",until:"Подтвердить до",next:"Следующий звонок",venue_name:"Название площадки",city:"Город",confirmation:"Подтверждение",status_at:"Дата состояния",response:"Ответ площадки",response_prev:"Прежнее состояние запроса"}; if (avLabels[f]) return avLabels[f]; }
   if (area === "venues") { var c = VB_COLS.filter(function (x) { return x.id === f; })[0]; if (c) return c.label; }
   return JR_FIELD[f] || f;
 }
 function jrVal(area, f, v) {
   if (v == null || v === "") return '<span class="muted">пусто</span>';
+  if (area === "availability") {
+    if ((f === "free" || f === "busy") && Array.isArray(v)) return esc(v.join(", ") || "нет");
+    if (f === "status" || f === "response_prev") v = ({hold:"Наш резерв",confirmed:"Бронь",cancelled:"Снято",call:"Нужно позвонить",waiting:"Ждём ответа",answered:"Ответ получен"})[v] || v;
+    if (f === "mode") v = v === "full" ? "Весь месяц" : "Отдельные даты";
+    if (f === "project") v = wkPname(v) || v;
+  }
   if (area === "venues" && f === "edo") v = vbEdoText(v) || v;
   if (area === "work" && f === "time") return wkDur(v);
   if (area === "work" && f === "tags" && Array.isArray(v)) return esc(v.map(function (x) { return WK.tags[x] ? WK.tags[x].name : x; }).join(", ") || "—");
@@ -7373,7 +7384,7 @@ function jrRestore(id, after) {
       if (r && d.record) { Object.keys(r).forEach(function (k) { delete r[k]; }); Object.assign(r, d.record); }
       else if (!r && d.record) VB_ROWS.push(d.record);
       else if (r && !d.record) VB_ROWS.splice(VB_ROWS.indexOf(r), 1);
-    } else if (d.area === "planning") plLoad(); else if (d.area === "work") wkLoad(); else myLoad();
+    } else if (d.area === "planning") plLoad(); else if (d.area === "work") wkLoad(); else if (d.area === "availability") Availability.load(); else myLoad();
     toast("Возвращено как было — это тоже записано в журнал");
     if (after) after();
   }, function () { toast("Не вернулось: " + NO_APP); });
@@ -11581,6 +11592,9 @@ function enhanceSelects(root) {
   });
 }
 function ddOpen(btn) {
+  // Список внутри modal dialog должен быть в его top layer, иначе браузер считает его неактивным.
+  var host = btn.closest("dialog[open]") || document.body;
+  if (ddPop.parentNode !== host) host.appendChild(ddPop);
   var sel = btn._sel, items = [], n = 0, many = sel.options.length > 12 || sel.hasAttribute("data-dd-search");   // data-dd-search — поиск всегда (проекты в фильтрах)
   var opt = function (o) { var id = "dd-o-" + (n++); items.push(o); return '<div class="dd-opt" role="option" id="' + id + '" data-i="' + (items.length - 1) + '" aria-selected="' + (o.selected) + '">' + esc(o.text) + (o.selected ? '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>' : '') + '</div>'; };
   var html = "";
@@ -11886,7 +11900,7 @@ function mSplitTools(html) {
 
 // ---------------------------------------------------------------- рендер и события
 // Разделы, которые на телефоне спрятаны в «Ещё»
-var MORE_VIEWS = ["wkproc", "wkhome", "wkgoals", "wktasks", "wkdocs", "wkparties", "wkcal", "wknotes", "pool", "archive", "overview", "niches", "calendar", "new", "venues", "operators", "sales", "dynamics", "settings", "planning", "route"];
+var MORE_VIEWS = ["availability", "wkproc", "wkhome", "wkgoals", "wktasks", "wkdocs", "wkparties", "wkcal", "wknotes", "pool", "archive", "overview", "niches", "calendar", "new", "venues", "operators", "sales", "dynamics", "settings", "planning", "route"];
 function render() {
   if (S.wk.wn && S.view !== S.wk.wn.from.view) wnClose(true, true);   // рабочая заметка открыта, а раздел сменили — сохранить и закрыть
   var keepY = wkOn() ? window.scrollY : null;   // «Проекты»: правка не сдвигает страницу (переходы сами прокручивают наверх)
@@ -11894,9 +11908,9 @@ function render() {
   archMode(S.view === "archive");
   syncMarketView(); S.city = S.m.city;  // раздел — по вкладке «Рынка», если её переключил код; город шапки один на все разделы
   if (location.hash.slice(1) !== viewHash()) history.replaceState(null, "", "#" + viewHash());   // адрес — всегда текущий раздел: его можно скопировать или открыть в новой вкладке
-  document.body.classList.toggle("wk-mode", wkOn());
+  document.body.classList.toggle("wk-mode", wkOn() || S.view === "availability");
   document.body.classList.toggle("wh-mode", (S.view === "wkhome" || S.view === "wkgoals") && !S.wk.wn);   // «Обзор»: серый фон, как в референсах
-  document.body.classList.toggle("wkc-mode", S.view === "wkcal" && !S.wk.wn);
+  document.body.classList.toggle("wkc-mode", S.view === "availability" || S.view === "wkcal" && !S.wk.wn);
   if (WK_OK) wkStagesSync();   // статусы проектов — свои у пользователя   // разделы «Работы» — без верхней панели рынка (город, период, поиск, сбор; решение пользователя 20.10)
   var ip = $("infoPop"); if (ip) ip.hidden = true;  // элемент под курсором заменится — его подсказка не должна «висеть»
   document.querySelectorAll("[data-view]").forEach(function (b) { if (b.getAttribute("data-view") === S.view) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
@@ -11913,7 +11927,7 @@ function render() {
   $("dateBtn").style.borderColor = ARCH_ON || S.period === "custom" ? "var(--soot)" : "";
   $("period").style.display = ARCH_ON ? "none" : "";  // «30 дней / 90 дней / Сезон» — про будущее; в архиве период — кнопкой «Даты»
   HEAD_SUB = !isM() && SUBS[S.view] ? subSwitch(S.view) : "";
-  $("view").innerHTML = wkOn() && S.wk.wn ? wnPage() : S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? (vbOn() ? renderVenueBook() : renderVenues()) : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : S.view === "pool" ? WorkProcesses.poolPage() : S.view === "planning" ? renderPlanning() : S.view === "route" ? renderRoute() : S.view === "wkproc" ? WorkProcesses.page() : S.view === "work" ? renderWork() : S.view === "wktasks" ? renderWkTasks() : S.view === "wkdocs" ? renderWkDocs() : S.view === "wkparties" ? WorkDocs.renderParties() : S.view === "wkgoals" ? '<work-goals></work-goals>' : S.view === "wkhome" ? renderWkHome() : S.view === "wkcal" ? renderWkCalendar() : S.view === "wknotes" ? renderWkNotes() : renderEvents();
+  $("view").innerHTML = wkOn() && S.wk.wn ? wnPage() : S.view === "archive" ? renderArchive() : isM() ? renderMarket() : S.view === "overview" ? renderOverview() : S.view === "niches" ? renderNiches() : S.view === "settings" ? renderSettings() : S.view === "sales" ? renderSales() : S.view === "venues" ? (vbOn() ? renderVenueBook() : renderVenues()) : S.view === "dynamics" ? renderDynamics() : S.view === "archive" ? renderArchive() : S.view === "operators" ? renderOperators() : S.view === "suggest" ? renderSuggest() : S.view === "pool" ? WorkProcesses.poolPage() : S.view === "availability" ? Availability.render() : S.view === "planning" ? renderPlanning() : S.view === "route" ? renderRoute() : S.view === "wkproc" ? WorkProcesses.page() : S.view === "work" ? renderWork() : S.view === "wktasks" ? renderWkTasks() : S.view === "wkdocs" ? renderWkDocs() : S.view === "wkparties" ? WorkDocs.renderParties() : S.view === "wkgoals" ? '<work-goals></work-goals>' : S.view === "wkhome" ? renderWkHome() : S.view === "wkcal" ? renderWkCalendar() : S.view === "wknotes" ? renderWkNotes() : renderEvents();
   $("view").classList.toggle("enter", !!S.enter); S.enter = false; S.colsAnim = false;
   ddClose(false); enhanceSelects(document.querySelector(".top")); enhanceSelects($("view")); vdRestore();
   candApply();  // «Города, где его нет» — счётчик найденного после перерисовки
@@ -14955,7 +14969,7 @@ function renderDynamics() {
   return head("Динамика продаж", "Как идут продажи по кассам · " + cityLabel()) + sfDynamicsBlock() +
     (old ? '<h2 class="sf-sub">Площадки прямого сбора — подробно</h2>' + old : '');
 }
-var VIEWS = ["wkhome", "wkgoals", "work", "wkproc", "wkcal", "wktasks", "wkdocs", "wkparties", "wknotes", "overview", "city", "niches", "calendar", "new", "events", "projects", "touring", "favorites", "venues", "operators", "suggest", "pool", "archive", "sales", "dynamics", "settings", "market", "planning", "route"];
+var VIEWS = ["availability", "wkhome", "wkgoals", "work", "wkproc", "wkcal", "wktasks", "wkdocs", "wkparties", "wknotes", "overview", "city", "niches", "calendar", "new", "events", "projects", "touring", "favorites", "venues", "operators", "suggest", "pool", "archive", "sales", "dynamics", "settings", "market", "planning", "route"];
 // Адрес раздела — #раздел или #раздел:версия (#venues:book): меню и вкладки — ссылки, каждый раздел открывается в новой вкладке
 function viewHash() { return S.view + (SUBS[S.view] ? ":" + S.sub[S.view] : ""); }
 function fromHash() {   // раздел из адреса; false — в адресе не раздел
