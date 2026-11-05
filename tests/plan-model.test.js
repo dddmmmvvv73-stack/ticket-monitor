@@ -10,6 +10,28 @@ const near = (a, b, eps = 0.5) => assert.ok(Math.abs(a - b) <= eps, `${a} ≠ ${
 // Здесь «себестоимость» — гонорар, затраты региона — логистика, 11 % — налог (остальные ставки 0).
 const cfg11 = { ...PLAN_DEFAULTS, tax: 11 };
 
+test("службы площадки отдельно от организационных служб; свои расходы рекламы входят в расчёты и аналитику", () => {
+  const x = {gross:1000000,seats:500,fill:70,fee:100000,org:{services:3000,props:4000,ironing:500,scanning:600,admin:700,other:200},
+    rent:50000,venue_services:12000,ads:20000,ad_items:[{name:'Таргет',amount:7000},{name:'Афиши',amount:3000}]};
+  const r = planCalc(x);
+  assert.equal(r.org,9000); assert.equal(r.rent,50000); assert.equal(r.venue_services,12000); assert.equal(r.ads,30000);
+  assert.equal(r.fixed,201000); assert.equal(r.profit,r.sales-r.variable-201000);
+  const items = planItems(r,x,PLAN_DEFAULTS);
+  near(items.reduce((s,a)=>s+a.sum,0),r.total);
+  assert.equal(items.find(a=>a.id==='services').group,'org');
+  assert.equal(items.find(a=>a.id==='venue_services').group,'rent');
+  assert.deepEqual(items.filter(a=>a.group==='ads').map(a=>[a.label,a.sum]),[['Рекламный бюджет',20000],['Таргет',7000],['Афиши',3000]]);
+  const otherCity = {...x,ad_items:[{name:'Афиши',amount:1000},{name:'Радио',amount:4000}]};
+  const otherItems = planItems(planCalc(otherCity),otherCity,PLAN_DEFAULTS);
+  assert.equal(items.find(a=>a.label==='Афиши').id,otherItems.find(a=>a.label==='Афиши').id,'одна статья в разных городах объединяется');
+  assert.notEqual(items.find(a=>a.label==='Таргет').id,otherItems.find(a=>a.label==='Радио').id,'разные статьи на одной позиции не смешиваются');
+  const down = planShift(x,'ads',-25000);
+  near(planCalc(down).ads,5000); near(planCalc(down).profit-r.profit,25000);
+  near(planCalc(planShift(x,'ads',10000)).profit-r.profit,-10000);
+  assert.equal(x.ad_items[0].amount,7000,'анализ чувствительности не меняет исходные расходы');
+  assert.equal(planCalc({...x,ad_items:[]}).profit-r.profit,10000,'удаление своих статей уменьшает расходы');
+});
+
 test("Синяя птица, Новый Уренгой (КСЦ «Газодобытчик») — как в таблице", () => {
   const r = planCalc({ gross: 1582000, seats: 576, fill: 95, fee: 500000, rent: 100000, ads: 105000, logistics: 80000, cities: 1 }, cfg11);
   near(r.fixed, 785000);

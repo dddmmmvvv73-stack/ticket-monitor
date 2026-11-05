@@ -10,7 +10,7 @@
      "projects": {номер: {"title", "key", "fee", "cashless", "per_diem", "crew", "author", "rao_on", "rao", "moscow", "note"}},
      "regions":  {номер: {"title", "logistics", "note"}},
      "cities":   {город: {"region", "kassa", "org": {"transfer"…"other"}, "note"}},
-     "venues":   {ключ площадки «город|название»: {"city", "venue", "seats", "gross", "rent", "note",
+     "venues":   {ключ площадки «город|название»: {"city", "venue", "seats", "gross", "rent", "venue_services", "note",
                   "zones": [{"name", "seats"}] — шаблон поясов зала}},   ← раздел «Площадки»
      "tours":    {номер: {"title", "project", "month", "status", "note", "rows": [строка]}},
      "lists":    {номер: {"title", "project" — название проекта в афише, "text" — список продюсера как прислан,
@@ -29,7 +29,7 @@
      "routes":   {номер: {"title", "month" — ГГГГ-ММ, "text" — «Город — Площадка — числа» как прислано, "limit" — км переезда,
                   "project" — номер проекта, "trips" — {вариант: {"dep", "ret"}} выезд из Москвы и возвращение, если не день в день}}
                  ← «Построение гастрольного маршрута» (route-plan.js)
-    строка тура: {"id", "city", "venue", "date", "days", "fill", "ads", "agent",
+    строка тура: {"id", "city", "venue", "date", "days", "fill", "ads", "ad_items": [{"name", "amount"}], "agent",
                   "ovr": {поле справочника: значение — правка в этой строке},
                   "scores": {"comp", "ads", "attract", "market", "prep"}, "cannibal", "region_ban", "last_show", "decision", "note",
                   "zmode": вал по распоясовке, "zones": [{"name", "price", "seats", "fill" — своя заполняемость пояса}]}
@@ -49,8 +49,8 @@ from competitors.storage import CONFIG_DIR, load_json, save_json
 
 FILE = CONFIG_DIR / "planning.json"
 KINDS = ("params", "projects", "regions", "cities", "venues", "tours", "lists", "routes")
-ORG = ("transfer", "hotel", "tech", "catering", "loaders", "security", "services", "other")
-PICK_ORG = ORG + ("props", "ironing", "scanning", "admin")   # статьи расходов города в подборе (список пользователя 27.10)
+ORG = ("transfer", "hotel", "tech", "catering", "props", "loaders", "security", "services", "ironing", "scanning", "admin", "other")
+PICK_ORG = ORG  # одинаковые статьи подбора и тура; services остаётся отдельным от venue_services
 SCORES = ("comp", "ads", "attract", "market", "prep")
 STATUSES = ("Черновик", "Планируется", "В процессе", "Подтверждён", "Отменён")
 DECISIONS = ("", "В работу", "Отмена", "Замена города", "Перенос месяца", "Замена площадки")
@@ -132,9 +132,9 @@ PROJECT = {"title": 200, "key": 300, "fee": "money", "cashless": "pct", "per_die
            "rao_on": "bool", "rao": "pct", "moscow": "money", "note": 2000}
 REGION = {"title": 120, "logistics": "money", "note": 1000}
 CITY = {"region": 24, "kassa": "pct", "note": 1000}
-VENUE = {"city": 100, "venue": 200, "seats": "int", "gross": "money", "rent": "money", "note": 1000}
+VENUE = {"city": 100, "venue": 200, "seats": "int", "gross": "money", "rent": "money", "venue_services": "money", "note": 1000}
 OVR = {"seats": "int", "gross": "money", "rent": "money", "logistics": "money", "kassa": "pct", "fee": "money", "cashless": "pct",
-       "per_diem": "money", "crew": "int", "author": "money", "rao": "pct", "moscow": "money", **{o: "money" for o in ORG}}
+       "per_diem": "money", "crew": "int", "author": "money", "rao": "pct", "moscow": "money", "venue_services": "money", **{o: "money" for o in ORG}}
 ROW = {"id": 24, "city": 100, "venue": 300, "date": "date", "days": "int", "fill": "pct", "ads": "money", "agent": "pct",
        "cannibal": "bool", "region_ban": "bool", "last_show": "date", "decision": DECISIONS, "note": 1000, "zmode": "bool", "target": "money", "avg": "money"}
 ZONE = {"name": 60, "price": "money", "seats": "int", "fill": "pct"}
@@ -190,6 +190,11 @@ def _row(r: dict) -> dict:
         out["scores"] = sc
     if r.get("zones"):
         out["zones"] = _zones(r["zones"], ZONE, "распоясовка")
+    if "ad_items" in r:
+        items = r["ad_items"]
+        if not isinstance(items, list) or len(items) > 40:
+            raise PlanningError("реклама: до 40 своих статей")
+        out["ad_items"] = [_clean(a, {"name": 120, "amount": "money"}, "статья рекламы") for a in items]
     return out
 
 

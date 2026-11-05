@@ -152,9 +152,10 @@ test("суточные всего: вместо ставки × состав; п
   near(t.r.target, 300000);
 });
 
-test("статьи подбора (список пользователя 27.10): все 11 в сумме, в том числе новые — реквизит, гладильщица, сканировка, администратор", () => {
-  assert.equal(PICK_ORG.length, 11);
+test("подбор и тур: одинаковые статьи, включая реквизит, гладильщицу, сканировку, администратора и прежние прочие", () => {
+  assert.deepEqual(PICK_ORG, model.PLAN_ORG);
+  assert.equal(PICK_ORG.length, 12);
   const org = {}; PICK_ORG.forEach(([k], i) => { org[k] = 1000 * (i + 1); });
   const k = pickCalc(pickInputs({ fee: 1e6 }, { seats: 800, price: 5000, km: 300 }, { org }), PLAN_DEFAULTS);
-  near(k.r.org, 1000 * (11 * 12 / 2));
+  near(k.r.org, 1000 * (12 * 13 / 2));
 });
