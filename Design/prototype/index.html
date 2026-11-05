@@ -12220,6 +12220,7 @@ var PL_TCOLS = [   // labels: полное название → сокращен
   { id: "total", labels: ["Расходы", "Расх.", "Р."], w: 78 }, { id: "profit", labels: ["Прибыль", "Приб.", "Пр."], w: 86 },
   { id: "ros", labels: ["Рентабельность, %", "Рентаб. %", "Рент. %", "%"], w: 92, off: true }, { id: "roi", labels: ["Окупаемость затрат, %", "Окуп. %", "%"], w: 92, off: true },
   { id: "be", labels: ["ТБУ, % аншлага", "ТБУ %", "%"], w: 70, off: true }, { id: "beT", labels: ["ТБУ, билетов", "ТБУ бил.", "ТБУ"], w: 76, off: true },
+  { id: "beRub", labels: ["ТБУ продаж", "ТБУ ₽"], w: 100, off: true },
   { id: "cls", labels: ["Класс", "Кл."], w: 54 }, { id: "expert", labels: ["Экспертная оценка", "Эксп. оценка", "Эксп."], w: 96 }, { id: "decision", labels: ["Решение", "Реш."], w: 92 }
 ];
 var PL_PREFS_KEY = "ticketmonitor.prototype.planning.cols";
@@ -12367,6 +12368,7 @@ function plTour(id) {
       case "roi": return '<span class="' + (k.roi != null && k.roi < 0 ? 'pl-neg' : '') + '">' + plPct(k.roi) + '</span>';
       case "be": return '<span class="' + (k.beShare != null && k.beShare > 1 ? 'pl-neg' : '') + '">' + plPct(k.beShare) + '</span>';
       case "beT": return k.beTickets == null ? '—' : num(Math.ceil(k.beTickets));
+      case "beRub": return plShort(k.beRub);
       case "cls": return '<span class="pl-cls pl-cls-' + k.cls + '">' + k.cls + '</span>';
       case "expert": return k.score == null ? '<span class="muted">—</span>' : k.score.toLocaleString("ru-RU");
       case "decision": return plSelect(sg("decision"), r.decision || "", PL_DECISION.map(function (d) { return [d, d || "—"]; }), "Решение");
@@ -12377,7 +12379,7 @@ function plTour(id) {
     var k = calcs[i], sg = function (f) { return "row|" + id + "|" + r.id + "|" + f; };
     return '<tr data-plrow="' + r.id + '" class="' + (S.pl.row === r.id ? 'sel ' : '') + (selection.ids[r.id] ? 'pl-row-selected' : '') + '"><td class="pl-handle-td"><button class="pl-handle" data-pl-handle="' + r.id + '" aria-label="Переместить город: ' + esc(r.city || "без названия") + ' (стрелки вверх и вниз)" title="Перетащите, чтобы поменять порядок городов. Даты остаются на местах.">⋮⋮</button>' +
       (selection.active ? '<input type="checkbox" class="pl-row-check" data-pl-select="' + r.id + '" aria-label="Выделить: ' + esc((r.city || "без города") + (r.venue ? ' · ' + r.venue.split('|').slice(1).join('|') : '')) + '"' + (selection.ids[r.id] ? ' checked' : '') + '>' : '') + '</td>' +
-      cols.map(function (c) { return '<td class="' + (c.left ? 'pl-left' : 'num') + (/^(sales|total|profit|gross|variable|fixed|avg|ros|roi|be|beT)$/.test(c.id) ? ' nowrap' : '') + '">' + cell(c, r, k, sg) + '</td>'; }).join("") +
+      cols.map(function (c) { return '<td class="' + (c.left ? 'pl-left' : 'num') + (/^(sales|total|profit|gross|variable|fixed|avg|ros|roi|be|beT|beRub)$/.test(c.id) ? ' nowrap' : '') + '">' + cell(c, r, k, sg) + '</td>'; }).join("") +
       '<td class="pl-act"><button class="icon-btn" data-pl="row-open" data-id="' + r.id + '" aria-label="Карточка города: показатели, статьи, распоясовка" title="Карточка города">' + PJ_ICON.chart + '</button><button type="button" class="icon-btn pl-row-more" data-pl="row-menu" data-id="' + r.id + '" aria-label="Действия строки: ' + esc(r.city || "без города") + '" aria-haspopup="menu" aria-expanded="false" title="Действия строки">⋯</button><button class="icon-btn" data-pl="row-del" data-id="' + r.id + '" aria-label="Убрать город из тура" title="Убрать город">' + PJ_ICON.close + '</button></td></tr>';
   }).join("");
   var totals = { sales: tt.sales, total: tt.total, profit: tt.profit, gross: tt.gross };
