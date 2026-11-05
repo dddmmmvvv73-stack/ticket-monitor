@@ -30,6 +30,7 @@ from competitors.market_api import bp as market_api
 from competitors.github_api import bp as github_api
 from competitors.shares import bp as shares_api
 from competitors.pdfdoc import bp as pdf_api
+from competitors.tour_export import bp as tour_export_api
 from competitors.availability import bp as availability_api
 from competitors import vladimirkoncert
 from competitors.classifier import FORMATS, GENRES, SPHERES
@@ -48,6 +49,7 @@ app.register_blueprint(market_api)  # прототип на /proto/ и ручн�
 app.register_blueprint(github_api)  # сбор на GitHub из интерфейса: запуск, ход, обновление данных
 app.register_blueprint(shares_api)  # ссылки для руководителя: снимки предложения и комментарии (страница — share_app.py)
 app.register_blueprint(pdf_api)  # PDF документов подбора городов: «Сохранить PDF» в окне документа
+app.register_blueprint(tour_export_api)  # рабочие сметы туров .xlsx с формулами
 app.register_blueprint(availability_api)  # общие свободные даты площадок, прозвон, резервы и брони
 
 ON_SERVER = os.environ.get("TM_ON_SERVER") == "1"

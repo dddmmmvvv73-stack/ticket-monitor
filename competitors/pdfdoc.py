@@ -15,7 +15,7 @@ import re
 
 from flask import Blueprint, jsonify, request, send_file
 
-HTML_MAX = 3_000_000   # байт
+HTML_MAX = 12_000_000   # байт; полные сметы большого тура включают все свои статьи
 
 bp = Blueprint("pdfdoc", __name__)
 
@@ -29,7 +29,7 @@ def render(html: str, landscape: bool = False) -> bytes:
             page = browser.new_page()
             page.route("**/*", lambda route: route.abort())   # документ самодостаточен: без сети
             page.set_content(html, wait_until="load")
-            return page.pdf(format="A4", landscape=landscape, print_background=True,
+            return page.pdf(format="A4", landscape=landscape, print_background=True, prefer_css_page_size=True,
                             margin={"top": "12mm", "bottom": "12mm", "left": "10mm", "right": "10mm"})
         finally:
             browser.close()
@@ -47,7 +47,7 @@ def api_pdf():
     if not isinstance(html, str) or not html.strip():
         return jsonify({"error": "нет документа"}), 400
     if len(html.encode()) > HTML_MAX:
-        return jsonify({"error": "документ больше 3 МБ"}), 400
+        return jsonify({"error": "документ больше 12 МБ"}), 400
     try:
         pdf = render(html, bool(body.get("landscape")))
     except Exception as e:   # Chromium не запустился и т. п. — сказать в окне документа

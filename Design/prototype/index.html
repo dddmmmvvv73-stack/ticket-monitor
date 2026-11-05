@@ -1638,6 +1638,10 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pl-row-more { font-size: 22px; line-height: 1; }
 .pl-row-selection { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 10px 14px; margin: 0 0 12px; border: 1px solid #d6e6fa; border-radius: 10px; background: #f5f9ff; font-size: 13px; }
 .pl-row-selection b { margin-right: auto; }
+.pl-export-field { display: grid; gap: 6px; margin: 0 0 16px; }
+.pl-export.pj-dlg[open] { animation: none; } /* фиксированные списки сразу используют координаты окна */
+.pl-export .pl-check { margin: 10px 0; }
+.pl-export-status { min-height: 20px; margin: 12px 0 0; color: var(--muted); font-size: 13px; }
 .vtable.pl-tour th.pl-drop-l { box-shadow: inset 2px 0 0 #1d6fae; } .vtable.pl-tour th.pl-drop-r { box-shadow: inset -2px 0 0 #1d6fae; }
 .vtable.pl-tour th.pl-dragging { opacity: 0.5; }
 /* Карточка города: сетка показателей 3 × 4, плитки переставляются перетаскиванием */
@@ -2724,6 +2728,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <script src="site-data.js"></script>
 <script src="project-rating.js"></script>
 <script src="plan-model.js"></script>
+<script src="tour-export.js"></script>
 <script src="city-pick.js"></script>
 <script src="offer-doc.js"></script>
 <script src="tour-parse.js"></script>
@@ -12331,7 +12336,7 @@ function plTour(id) {
     (tt.sales > 0 ? '<span>рентабельность <b class="num">' + plPct(tt.profit / tt.sales) + '</b></span>' : '') + (clsTxt ? '<span>' + clsTxt + '</span>' : '') + '</div>';
   var tools = '<div class="pl-tools"><div class="pl-scen"><span class="sub2">Заполняемость:</span><div class="an-tabs" role="tablist" aria-label="Сценарий заполняемости">' +
     [["", "по строкам"]].concat(cfg.scenarios.map(function (s) { return [String(s), s + "%"]; })).map(function (s) {
-      return '<button role="tab" data-pl="scen" data-v="' + s[0] + '" aria-selected="' + (String(scen || "") === s[0]) + '">' + s[1] + '</button>'; }).join("") + '</div></div>' + plColsControl("t") + '</div>';
+      return '<button role="tab" data-pl="scen" data-v="' + s[0] + '" aria-selected="' + (String(scen || "") === s[0]) + '">' + s[1] + '</button>'; }).join("") + '</div></div><div style="display:flex;align-items:center;gap:12px"><button type="button" class="btn-ghost" data-pl="export-menu" aria-haspopup="menu" aria-expanded="false"' + (!rows.length ? ' disabled' : '') + '>Экспорт</button>' + plColsControl("t") + '</div></div>';
   var cityList = '<datalist id="plCities">' + plCityOptions().map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + '</datalist>';
   var leadWidth = selection.active ? 52 : 26, actionWidth = 110;   // три кнопки по 30 px и отступы по 10 px
   var cols = plColsOrdered("t").filter(function (c) { return plColOn(c, "t"); }), width = leadWidth + actionWidth;
@@ -14553,9 +14558,46 @@ function plChange(el) {
   plSetPath(rec, field, plValue(el, field));
   plPut(kind, p[1], rec);
 }
+function plExportOpen(format) {
+  var tid = S.pl.tour, tour = PLAN.tours[tid]; if (!tour || !(tour.rows || []).length) return;
+  var ids = Object.keys(plRowSelection(tour,tid).ids), excel = format === "xlsx";
+  var html = '<p class="sub2" style="margin:0 0 18px">' + esc(tour.title) + '</p>' +
+    '<label class="pl-export-field"><span>Строки тура</span><select id="plExportScope" aria-label="Строки для экспорта"><option value="all">Весь тур · ' + tour.rows.length + '</option><option value="selected"' + (ids.length ? ' selected' : ' disabled') + '>Только выделенные · ' + ids.length + '</option></select></label>' +
+    '<label class="pl-export-field"><span>Заполняемость</span><select id="plExportScenario" aria-label="Заполняемость для экспорта">' + [["","По строкам"]].concat(plCfg().scenarios.map(function(n){return [String(n),n+"% для всех строк"]; })).map(function(a){return '<option value="'+a[0]+'"'+(String(S.pl.scen || "")===a[0]?' selected':'')+'>'+a[1]+'</option>';}).join('') + '</select></label>' +
+    '<label class="pl-check"><input type="checkbox" id="plExportDetails" checked' + (excel ? ' disabled' : '') + '> Подробные сметы с расшифровкой расходов</label>' +
+    '<label class="pl-check"><input type="checkbox" id="plExportZones"> ' + (excel ? 'Развернуть распоясовку в Excel' : 'Включить распоясовку') + '</label>' +
+    '<p class="sub2">' + (excel ? 'Два связанных листа: сводка и сметы. Синие ячейки — для ввода, показатели пересчитываются формулами. Изменения остаются в файле.' : 'Сводка тура и отдельная смета каждого города с площадкой. Суммы фиксируются на момент выгрузки.') + '</p>' +
+    '<p id="plExportStatus" class="pl-export-status" role="status" aria-live="polite"></p><div class="form-actions"><button type="button" class="btn-dark" id="plExportSave">Скачать ' + (excel ? 'Excel' : 'PDF') + '</button><button type="button" class="btn-ghost" data-pj="close">Отмена</button></div>';
+  var dlg = pjDialog("pl-export", "Экспорт сметы · " + (excel ? "Excel" : "PDF"), html), token = {}; dlg._plExport = token; enhanceSelects(dlg);
+  dlg.querySelector("#plExportSave").onclick = async function () {
+    var button = this, status = dlg.querySelector("#plExportStatus"); if (button.disabled) return;
+    var current = PLAN.tours[tid]; if (!current) { status.textContent = "Тур больше не найден. Откройте его заново."; return; }
+    try {
+      var scenario = dlg.querySelector("#plExportScenario").value, cfg = plCfg();
+      var snap = tourExportSnapshot(current, {rowIds:dlg.querySelector("#plExportScope").value === "selected" ? ids : null, cfg:cfg,
+        project:(PLAN.projects[current.project] || {}).title, scenario:scenario ? scenario+"% для всех строк" : "По строкам",
+        details:excel || dlg.querySelector("#plExportDetails").checked, zones:dlg.querySelector("#plExportZones").checked}, function(r){ return plRowInputs(current,r,scenario).x; });
+      var title = "Смета — " + snap.title, payload = excel ? snap : {html:tourExportHtml(snap),title:title,landscape:true};
+      button.disabled = true; status.textContent = excel ? "Готовлю Excel с формулами…" : "Готовлю PDF…";
+      var response = await fetch(excel ? "/api/planning/export.xlsx" : "/api/pdf", {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});
+      if (!response.ok) { var error = await response.json().catch(function(){return {};}); throw new Error(error.error || "Сайт не смог подготовить файл"); }
+      var blob = await response.blob(), url = URL.createObjectURL(blob), link = document.createElement("a");
+      link.href = url; link.download = title.replace(/[\\/:*?"<>|\x00-\x1f]/g," ").slice(0,120) + (excel ? ".xlsx" : ".pdf"); document.body.appendChild(link); link.click();
+      setTimeout(function(){ URL.revokeObjectURL(url); link.remove(); },2000);
+      if (dlg.open && dlg._plExport === token) dlg.close(); toast(excel ? "Смета Excel готова" : "Смета PDF готова");
+    } catch(e) { status.textContent = "Не получилось скачать: " + e.message; }
+    finally { button.disabled = false; }
+  };
+}
 function plAction(b) {
   var a = b.getAttribute("data-pl"), id = b.getAttribute("data-id"), copy = function (o) { return JSON.parse(JSON.stringify(o || {})); };
   if (a === "tab") { S.pl.tab = b.getAttribute("data-tab"); S.pl.tour = null; S.pl.tbCard = null; closeDrawer(); render(); }
+  else if (a === "export-menu") {
+    if (WKPOP && WKPOP.anchor === b) { wkPopClose(); return; }
+    var ep = wkPopOpen(b, "wk-menu", '<div class="wkp-title">Смета тура</div><button type="button" class="wk-menu-item" data-pl="export-open" data-format="pdf" role="menuitem">PDF — сводка и сметы</button><button type="button" class="wk-menu-item" data-pl="export-open" data-format="xlsx" role="menuitem">Excel — сметы с формулами</button>');
+    ep.setAttribute("role", "menu"); ep.querySelector("button").focus();
+  }
+  else if (a === "export-open") { wkPopClose(); plExportOpen(b.getAttribute("data-format")); }
   else if (a.indexOf("tb-") === 0 || a.indexOf("ix-") === 0) tbAction(a, b);   // «Подбор городов»: экран артиста и таблица артистов
   else if (a.indexOf("rp-") === 0) rpAction(a, b);
   else if (a === "ana-toggle") { PL_PREFS.ana = PL_PREFS.ana === false; plPrefsSave(); tbRe(); }
