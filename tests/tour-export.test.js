@@ -60,7 +60,7 @@ test('PDF: средняя цена и вал в сводке, показател
   const snap=tourExportSnapshot(tour,{...meta,rowIds:['r1']},()=>x),html=tourExportHtml(snap);
   const summary=html.match(/<section class="summary">([\s\S]*?)<\/section>/)[1];
   const heads=Array.from(summary.matchAll(/<th>(.*?)<\/th>/g),m=>m[1]);
-  assert.equal(heads[3],'Средняя цена билета, ₽');assert.equal(heads[5],'Вал, ₽');
+  assert.equal(heads[3],'Ср. цена билета, ₽');assert.equal(heads[5],'Вал, ₽');
   const cells=Array.from(summary.match(/<tbody><tr>([\s\S]*?)<\/tr>/)[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g),m=>m[1]);
   assert.equal(cells.length,13);assert.equal(cells[3],(2000).toLocaleString('ru-RU'));
   assert.equal(cells[5],(1000000).toLocaleString('ru-RU'));
