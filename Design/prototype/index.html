@@ -1585,8 +1585,11 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pl-grp-in { padding: 0 0 10px 14px; }
 .pl-line { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(110px, auto); gap: 4px 12px; align-items: center; padding: 4px 0; font-size: 13px; }
 .pl-lbl { color: var(--ink-2); }
-.pl-line.pl-ad-item { grid-template-columns: minmax(0, 1fr) 86px 30px; margin-top: 7px; }
-.pl-ad-item .pl-in { min-width: 0; width: 100%; }
+.pl-tour-expenses .pl-line { grid-template-columns: minmax(0, 1fr) 108px 32px; }
+.pl-tour-expenses .pl-line > .pl-in { min-width: 0; width: 100% !important; max-width: 100%; }
+.pl-tour-expenses .pl-line > :nth-child(3) { grid-column: auto; justify-self: end; }
+.pl-tour-expenses .pl-line > .num { text-align: right; }
+.pl-tour-expenses .pl-expense-item > .icon-btn { width: 28px; height: 28px; }
 .pl-tour-hall .pl-line { grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr) 24px; }
 .pl-tour-hall .dd-btn { min-width: 0; max-width: 100%; }
 .pl-src { font-size: 12px; color: var(--muted); text-align: right; } .pl-src .pj-plain { font-size: 12px; }
@@ -1601,7 +1604,7 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .pl-params { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 16px; align-items: start; }
 .pl-params h2 { margin-bottom: 8px; }
 @media (max-width: 640px) { .pl-line { grid-template-columns: minmax(0, 1fr) auto; } .pl-line > :nth-child(3) { grid-column: 1 / -1; text-align: left; } .pl-in.pl-title { min-width: 0; } }
-.pl-ad-item > :nth-child(3),.pl-tour-hall .pl-line > :nth-child(3) { grid-column: auto; }
+.pl-tour-hall .pl-line > :nth-child(3) { grid-column: auto; }
 /* «Планирование» — поля без рамок: тонкая линия снизу, темнее при наведении, синяя при вводе (решение пользователя 12.10) */
 .pl-flat .pl-in { border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; padding: 0 2px; height: 30px; }
 .pl-flat .pl-in:hover { border-bottom-color: var(--ink-3); }
@@ -12129,7 +12132,7 @@ function plRowInputs(tour, row, scen) {
   var autoCap = row.venue && !vn.seats ? plVenueCap(row.venue.split("|")[0], row.venue.split("|").slice(1).join("|")) : null;
   var x = { gross: v("gross", vn.gross), seats: v("seats", vn.seats != null ? vn.seats : autoCap ? autoCap.cap : null), fill: fill, fee: v("fee", pr.fee), cashless: v("cashless", pr.cashless),
     per_diem: v("per_diem", pr.per_diem), crew: v("crew", pr.crew), days: row.days || 1, author: v("author", pr.author), rao_on: !!pr.rao_on, rao: v("rao", pr.rao),
-    moscow: v("moscow", pr.moscow), cities: (tour.rows || []).length, org: org, rent: v("rent", vn.rent), venue_services: v("venue_services", vn.venue_services), logistics: v("logistics", rg.logistics), ads: row.ads, ad_items: row.ad_items || [],
+    moscow: v("moscow", pr.moscow), cities: (tour.rows || []).length, org: org, rent: v("rent", vn.rent), venue_services: v("venue_services", vn.venue_services), logistics: v("logistics", rg.logistics), ads: row.ads, ad_items: row.ad_items || [], cost_items: row.cost_items || {},
     kassa: v("kassa", ct.kassa), agent: row.agent, target: row.target };
   if (row.avg != null && !(row.zmode && row.zones && row.zones.length)) { x.gross = planNum(row.avg) * planNum(x.seats); src.gross = "avg"; }   // вал = введённая средняя цена × мест
   if (row.zmode && row.zones && row.zones.length)   // распоясовка; сценарий тура (50/70/90) — одна заполняемость для всех поясов
@@ -14204,7 +14207,15 @@ function plOpenRow(rowId, keep) {
       plInput(sg(f), o ? val : null, { ph: o ? null : val, label: label, cls: "pl-sm" + (o ? " pl-ovr" : ""), title: o ? "Правка в этом туре" : src[f] === "ref" ? "Из справочника: " + refName : "Пусто в справочнике: " + refName }) +
       '<span class="pl-src">' + (o ? '<button class="pj-plain" data-pl="ovr-reset" data-f="' + f + '" title="Вернуть значение справочника (' + esc(refName) + ')">↺</button>' : '') + '</span></div>';
   };
-  var grp = function (title, sum, inner, open) { return '<details class="pl-grp"' + (open ? ' open' : '') + '><summary><span>' + title + '</span>' + (sum == null ? '' : '<b class="num">' + plMoney(sum) + '</b>') + '</summary><div class="pl-grp-in">' + inner + '</div></details>'; };
+  var custom = function (group) {
+    var path = group === "ads" ? "ad_items" : "cost_items." + group, items = planExpenseItems(r, group), pct = group === "variable";
+    return items.map(function (a, i) { return '<div class="pl-line pl-expense-item">' +
+      plTextIn(rs(path + "." + i + ".name"), a.name, {label:"Название своей статьи", ph:pct ? "Название статьи (%)" : "Название расхода", maxLength:120}) +
+      plInput(rs(path + "." + i + ".amount"), a.amount, {label:pct ? "Ставка своей статьи, % от сборов" : "Сумма своей статьи, ₽", cls:"pl-sm", ph:"0", title:pct ? "Процент от сборов" : "Сумма в рублях"}) +
+      '<button class="icon-btn" data-pl="expense-del" data-group="' + group + '" data-i="' + i + '" aria-label="Удалить свою статью">' + PJ_ICON.close + '</button></div>'; }).join("") +
+      '<button class="pj-plain" data-pl="expense-add" data-group="' + group + '"' + (items.length >= 40 ? ' disabled' : '') + '>+ Добавить статью' + (pct ? ' (%)' : '') + '</button>';
+  };
+  var grp = function (title, sum, inner, open, group) { return '<details class="pl-grp"' + (group ? ' data-cost-section="' + group + '"' : '') + (open ? ' open' : '') + '><summary><span>' + title + '</span>' + (sum == null ? '' : '<b class="num">' + plMoney(sum) + '</b>') + '</summary><div class="pl-grp-in">' + inner + (group ? custom(group) : '') + '</div></details>'; };
   var prName = c.inp.refs.project.title ? "проект «" + c.inp.refs.project.title + "»" : "проект", ctName = r.city ? "город " + r.city : "город", vnName = "площадка", rgName = c.inp.refs.region.title ? "регион «" + c.inp.refs.region.title + "»" : "регион";
   var p = c.project, vn = PLAN.venues[r.venue] || {};
   // распоясовка: сколько билетов зала ещё не расписано по поясам
@@ -14241,11 +14252,10 @@ function plOpenRow(rowId, keep) {
     '<div class="pl-flat pl-tour-hall">' + grp("Зал и билеты", null,
       '<div class="pl-line"><span class="pl-lbl">Зал</span>' + plSelect(rs("venue"), r.venue, plVenueOptions(r.city), "Зал для расчёта") + '<span></span></div>' +
       line(r.zmode ? "Мест в зале" : "Мест в продаже", "seats", r.zmode ? hall : x.seats, vnName) +
-      (r.zmode ? '' : '<div class="pl-line"><span class="pl-lbl">Средняя цена билета</span>' + plInput(rs("avg"), r.avg, { ph: c.avg, label: "Средняя цена билета", cls: "pl-sm" }) + '<span></span></div>' +
-        (r.avg != null ? '<div class="pl-line"><span class="pl-lbl">Вал = ' + num(planNum(r.avg)) + ' ₽ × ' + num(planNum(x.seats)) + ' мест</span><span class="num">' + plMoney(x.gross) + '</span><span class="pl-src"><button class="pj-plain" data-pl="avg-reset" title="Вернуть вал площадки">↺</button></span></div>' : line("Вал площадки", "gross", x.gross, vnName))) +
+      (r.zmode ? '' : '<div class="pl-line"><span class="pl-lbl">Средняя цена билета</span>' + plInput(rs("avg"), r.avg, { ph: c.avg, label: "Средняя цена билета", cls: "pl-sm" }) + '<span></span></div>') +
       '<div class="pl-line"><span class="pl-lbl">Заполняемость, %</span>' + plInput(rs("fill"), r.fill, { ph: x.fill, label: "Заполняемость, %", cls: "pl-sm" }) + '<span></span></div>', true) + '</div>' +
     zoneBlock +
-    '<div class="pl-water pl-flat">' +
+    '<div class="pl-water pl-flat pl-tour-expenses">' +
       '<div class="pl-wl"><span>Вал</span><span class="num">' + plMoney(c.gross) + '</span></div>' +
       '<div class="pl-wl"><span>Сборы · ' + Math.round(c.fillEff) + '%</span><b class="num">' + plMoney(c.sales) + '</b></div>' +
       grp("− Переменные · " + c.varPct.toLocaleString("ru-RU") + "%", c.variable,
@@ -14253,20 +14263,16 @@ function plOpenRow(rowId, keep) {
         (x.rao_on ? line("Ставка РАО / ВОИС, %", "rao", x.rao, prName) : '') +
         '<div class="pl-line"><span class="pl-lbl">Налог</span><span class="num">' + plFmt(cfg.tax) + '%</span><span></span></div>' +
         line("Комиссия касс, %", "kassa", x.kassa, ctName) +
-        '<div class="pl-line"><span class="pl-lbl">Агентские, %</span>' + plInput(rs("agent"), r.agent, { label: "Агентские, %", cls: "pl-sm" }) + '<span></span></div>') +
+        '<div class="pl-line"><span class="pl-lbl">Агентские, %</span>' + plInput(rs("agent"), r.agent, { label: "Агентские, %", cls: "pl-sm" }) + '<span></span></div>', false, "variable") +
       grp("− Проектные", p.total,
         line("Гонорар", "fee", x.fee, prName) + line("% за безнал", "cashless", x.cashless, prName, p.cashless ? plMoney(p.cashless) : "") +
         line("Суточные, ставка", "per_diem", x.per_diem, prName) + line("Состав, чел.", "crew", x.crew, prName, p.per_diem ? plMoney(p.per_diem) : "") +
         '<div class="pl-line"><span class="pl-lbl">Дней в городе</span>' + plInput(rs("days"), r.days, { ph: 1, label: "Дней в городе", cls: "pl-sm" }) + '<span></span></div>' +
-        line("Авторские", "author", x.author, prName) + line("Московские, на тур", "moscow", x.moscow, prName, p.moscow ? "÷ " + x.cities + " = " + plMoney(p.moscow) : "")) +
-      grp("− Организационные", c.org, PLAN_ORG.map(function (o) { return line(o[1], o[0], x.org[o[0]], ctName); }).join("")) +
-      grp("− Аренда", c.rent + c.venue_services, line("Аренда", "rent", x.rent, vnName) + line("Службы площадки", "venue_services", x.venue_services, vnName)) +
-      grp("− Логистика", c.logistics, line("Логистика", "logistics", x.logistics, rgName)) +
-      grp("− Реклама", c.ads, '<div class="pl-line"><span class="pl-lbl">Рекламный бюджет</span>' + plInput(rs("ads"), r.ads, { label: "Рекламный бюджет", cls: "pl-sm" }) + '<span></span></div>' +
-        (r.ad_items || []).map(function (a, i) { return '<div class="pl-line pl-ad-item">' + plTextIn(rs("ad_items." + i + ".name"), a.name, { label: "Название статьи рекламы", ph: "Название расхода", maxLength: 120 }) +
-          plInput(rs("ad_items." + i + ".amount"), a.amount, { label: "Сумма статьи рекламы", cls: "pl-sm", ph: "0" }) +
-          '<button class="icon-btn" data-pl="ad-del" data-i="' + i + '" aria-label="Удалить статью рекламы">' + PJ_ICON.close + '</button></div>'; }).join("") +
-        '<button class="pj-plain" data-pl="ad-add"' + ((r.ad_items || []).length >= 40 ? ' disabled' : '') + '>+ Добавить статью</button>') +
+        line("Авторские", "author", x.author, prName) + line("Московские, на тур", "moscow", x.moscow, prName, p.moscow ? "÷ " + x.cities + " = " + plMoney(p.moscow) : ""), false, "project") +
+      grp("− Организационные", c.org, PLAN_ORG.map(function (o) { return line(o[1], o[0], x.org[o[0]], ctName); }).join(""), false, "org") +
+      grp("− Аренда", c.rent + c.venue_services, line("Аренда", "rent", x.rent, vnName) + line("Службы площадки", "venue_services", x.venue_services, vnName), false, "rent") +
+      grp("− Логистика", c.logistics, line("Логистика", "logistics", x.logistics, rgName), false, "logistics") +
+      grp("− Реклама", c.ads, '<div class="pl-line"><span class="pl-lbl">Рекламный бюджет</span>' + plInput(rs("ads"), r.ads, { label: "Рекламный бюджет", cls: "pl-sm" }) + '<span></span></div>', false, "ads") +
       '<div class="pl-wl pl-tot"><span>Итоговые расходы</span><b class="num">' + plMoney(c.total) + '</b></div>' +
       '<div class="pl-wl pl-res"><span>Прибыль</span><b class="num' + (c.profit < 0 ? ' pl-neg' : '') + '">' + plMoney(c.profit) + '</b></div></div>' +
     '<details class="pl-score pl-flat"' + (S.pl.scoreOpen ? ' open' : '') + ' data-pl-score><summary><span>Оценка кандидата</span><span class="sub2">' +
@@ -14412,7 +14418,7 @@ function plSetPath(obj, path, val) {
   for (var i = 0; i < p.length - 1; i++) { if (o[p[i]] == null || typeof o[p[i]] !== "object") o[p[i]] = /^\d+$/.test(p[i + 1]) ? [] : {}; o = o[p[i]]; }
   if (val === null || val === "") delete o[p[p.length - 1]]; else o[p[p.length - 1]] = val;
 }
-var PL_NUM = /^(avg|target|rider|price|capMin|capMax|lvl|per_diem_sum|fee|cashless|per_diem|crew|author|rao|moscow|logistics|kassa|seats|gross|rent|venue_services|days|fill|ads|ad_items\.\d+\.amount|agent|tax|base|ban_months|org\.\w+|scenarios\.\d|classes\.\d|weights\.\w+|transfer|hotel|tech|catering|props|loaders|security|services|ironing|scanning|admin|other)$/;
+var PL_NUM = /^(avg|target|rider|price|capMin|capMax|lvl|per_diem_sum|fee|cashless|per_diem|crew|author|rao|moscow|logistics|kassa|seats|gross|rent|venue_services|days|fill|ads|ad_items\.\d+\.amount|cost_items\.(variable|project|org|rent|logistics)\.\d+\.amount|agent|tax|base|ban_months|org\.\w+|scenarios\.\d|classes\.\d|weights\.\w+|transfer|hotel|tech|catering|props|loaders|security|services|ironing|scanning|admin|other)$/;
 function plValue(el, field) {
   if (el.type === "checkbox") return el.checked;
   var v = el.value.trim();
@@ -14513,11 +14519,14 @@ function plAction(b) {
   else if (a === "cols") { var cs = b.getAttribute("data-cset") || "t"; S.pl.cols = S.pl.cols === cs ? false : cs; tbRe(); }
   else if (a === "gross-reset") { var tg = copy(PLAN.tours[S.pl.tour]), rg = (tg.rows || []).filter(function (x) { return x.id === S.pl.row; })[0]; if (!rg) return; delete rg.avg; if (rg.ovr) { delete rg.ovr.gross; if (!Object.keys(rg.ovr).length) delete rg.ovr; } plPut("tours", S.pl.tour, tg, "Вал — снова из площадки"); }
   else if (a === "avg-reset") { var ta = copy(PLAN.tours[S.pl.tour]), ra = (ta.rows || []).filter(function (x) { return x.id === S.pl.row; })[0]; if (!ra) return; delete ra.avg; plPut("tours", S.pl.tour, ta, "Вал — снова из площадки"); }
-  else if (a === "ad-add" || a === "ad-del") {
+  else if (a === "expense-add" || a === "expense-del") {
+    var group = b.getAttribute("data-group"); if (PLAN_COST_SECTIONS.indexOf(group) < 0) return;
     var at = copy(PLAN.tours[S.pl.tour]), ar = (at.rows || []).filter(function (x) { return x.id === S.pl.row; })[0]; if (!ar) return;
-    ar.ad_items = ar.ad_items || [];
-    if (a === "ad-add") { if (ar.ad_items.length >= 40) return; ar.ad_items.push({}); }
-    else { var ai = +b.getAttribute("data-i"); if (!Number.isInteger(ai) || ai < 0 || ai >= ar.ad_items.length) return; ar.ad_items.splice(ai, 1); }
+    if (group === "ads") ar.ad_items = ar.ad_items || [];
+    else { ar.cost_items = ar.cost_items || {}; ar.cost_items[group] = ar.cost_items[group] || []; }
+    var items = planExpenseItems(ar, group);
+    if (a === "expense-add") { if (items.length >= 40) return; items.push({}); }
+    else { var ai = +b.getAttribute("data-i"); if (!Number.isInteger(ai) || ai < 0 || ai >= items.length) return; items.splice(ai, 1); }
     plPut("tours", S.pl.tour, at);
   }
   else if (a === "gm-layer") {

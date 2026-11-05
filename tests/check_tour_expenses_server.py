@@ -16,6 +16,7 @@ with tempfile.TemporaryDirectory() as tmp:
         'city':'Город проверки','venue':'Зал','rent':10000,'venue_services':2000}})
     row = {'id':'r1','city':'Город проверки','ovr':dict(org, venue_services=3000),
            'ads':5000,'ad_items':[{}, {'name':'Таргет','amount':1200.5}, {'name':'Афиши','amount':0}],
+           'cost_items':{g:[{}, {'name':'Своя статья','amount':2.5 if g=='variable' else 1200}] for g in p.COST_SECTIONS},
            'zmode':True,'zones':[{'name':'Первый','seats':100,'price':1500,'fill':70}]}
     tour = {'title':'Тур проверки','rows':[row]}
     p.apply_op({'op':'put','kind':'tours','id':'t1','data':tour})
@@ -24,10 +25,18 @@ with tempfile.TemporaryDirectory() as tmp:
     assert saved['venues']['Город проверки|Зал']['venue_services'] == 2000
     actual = saved['tours']['t1']['rows'][0]
     assert actual['ovr'] == row['ovr'] and actual['ad_items'] == row['ad_items']
+    assert actual['cost_items'] == row['cost_items']
     assert actual['zones'] == row['zones']
     # Другая правка тура сохраняет все новые расходы и прежнюю распоясовку.
     changed = copy.deepcopy(saved['tours']['t1']); changed['note'] = 'другая правка'
     p.apply_op({'op':'put','kind':'tours','id':'t1','data':changed})
+    assert p.load()['tours']['t1']['rows'][0] == actual
+    for groups in [[], {'unknown':[]}, {'rent':[{'amount':-1}]}, {'variable':[{'amount':101}]},
+                   {'org':[None]}, {'project':[{}]*41}, {'logistics':[{'amount':'1200'}]}]:
+        invalid = copy.deepcopy(tour); invalid['rows'][0]['cost_items'] = groups
+        try: p.apply_op({'op':'put','kind':'tours','id':'t1','data':invalid})
+        except p.PlanningError: pass
+        else: raise AssertionError(f'Недопустимые статьи приняты: {groups}')
     assert p.load()['tours']['t1']['rows'][0] == actual
     for items in ['bad', [None], [{'name':'x','amount':-1}], [{'name':'x','amount':True}],
                   [{'name':'x','amount':'100'}], [{'name':'x'*121}], [{}]*41]:

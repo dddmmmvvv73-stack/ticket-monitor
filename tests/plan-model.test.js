@@ -10,6 +10,23 @@ const near = (a, b, eps = 0.5) => assert.ok(Math.abs(a - b) <= eps, `${a} ≠ ${
 // Здесь «себестоимость» — гонорар, затраты региона — логистика, 11 % — налог (остальные ставки 0).
 const cfg11 = { ...PLAN_DEFAULTS, tax: 11 };
 
+test("свои статьи всех разделов: рубли и проценты, итоги, аналитика и чувствительность без двойного учёта", () => {
+  const x = {gross:1000000,seats:500,fill:50,fee:100000,org:{services:1000},rent:10000,venue_services:2000,logistics:3000,
+    ads:4000,ad_items:[{name:'Радио',amount:1000}],cost_items:{
+      variable:[{name:'Своя комиссия',amount:2.5}],project:[{name:'Доплата',amount:500}],
+      org:[{name:'Курьер',amount:600}],rent:[{name:'Уборка',amount:700}],logistics:[{name:'Багаж',amount:800}]}};
+  const r = planCalc(x), old = planCalc({...x,cost_items:{}});
+  assert.equal(r.varPct,4.5); assert.equal(r.variable,22500); assert.equal(r.fixed,123600); assert.equal(r.profit,353900);
+  assert.equal(r.project.total,100500); assert.equal(r.org,1600); assert.equal(r.rent,10700); assert.equal(r.logistics,3800); assert.equal(r.ads,5000);
+  assert.equal(old.profit-r.profit,15100);
+  const items=planItems(r,x,PLAN_DEFAULTS);
+  near(items.reduce((sum,a)=>sum+a.sum,0),r.total);
+  assert.equal(items.find(a=>a.label==='Своя комиссия').sum,12500);
+  for(const group of ['org','rent','logistics','ads']) near(planCalc(planShift(x,group,-500)).profit-r.profit,500);
+  assert.equal(x.cost_items.variable[0].amount,2.5);
+  assert.deepEqual(x.ad_items,[{name:'Радио',amount:1000}]);
+});
+
 test("службы площадки отдельно от организационных служб; свои расходы рекламы входят в расчёты и аналитику", () => {
   const x = {gross:1000000,seats:500,fill:70,fee:100000,org:{services:3000,props:4000,ironing:500,scanning:600,admin:700,other:200},
     rent:50000,venue_services:12000,ads:20000,ad_items:[{name:'Таргет',amount:7000},{name:'Афиши',amount:3000}]};

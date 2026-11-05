@@ -34,6 +34,9 @@ var PLAN_SCORES = [["comp", "Конкуренция", "5 — конкурент�
   ["prep", "Простота подготовки", "Сколько сил уйдёт на организацию"]];
 
 function planNum(v) { var n = typeof v === "number" ? v : parseFloat(String(v == null ? "" : v).replace(/\s/g, "").replace(",", ".")); return isFinite(n) ? n : 0; }
+var PLAN_COST_SECTIONS = ["variable", "project", "org", "rent", "logistics", "ads"];
+function planExpenseItems(x, group) { return group === "ads" ? x.ad_items || [] : (x.cost_items || {})[group] || []; }
+function planExpenseSum(x, group) { return planExpenseItems(x, group).reduce(function (sum, a) { return sum + planNum(a.amount); }, 0); }
 
 // Класс даты по прибыли и финансовая оценка 1–5 (S — 5 … D — 1)
 function planClass(profit, cfg) {
@@ -57,7 +60,7 @@ function planCalc(x, cfg) {
     });
   } else sales = gross * fill;
   var avg = seats > 0 ? gross / seats : 0;
-  var varPct = (x.rao_on ? n(x.rao) : 0) + n(cfg.tax) + n(x.kassa) + n(x.agent);
+  var varPct = (x.rao_on ? n(x.rao) : 0) + n(cfg.tax) + n(x.kassa) + n(x.agent) + planExpenseSum(x, "variable");
   var v = varPct / 100;
   var cities = Math.max(1, n(x.cities) || 1);
   var project = {
@@ -65,10 +68,12 @@ function planCalc(x, cfg) {
     per_diem: x.per_diem_sum != null && x.per_diem_sum !== "" ? n(x.per_diem_sum) : n(x.per_diem) * n(x.crew) * Math.max(0, n(x.days)),
     author: n(x.author), moscow: n(x.moscow) / cities
   };
-  project.total = project.fee + project.cashless + project.per_diem + project.author + project.moscow;
+  project.extra = planExpenseSum(x, "project");
+  project.total = project.fee + project.cashless + project.per_diem + project.author + project.moscow + project.extra;
   var org = 0; Object.keys(x.org || {}).forEach(function (k) { org += n(x.org[k]); });   // все статьи (в туре — PLAN_ORG, в подборе — PICK_ORG)
-  var adsExtra = (x.ad_items || []).reduce(function (sum, a) { return sum + n(a.amount); }, 0), ads = n(x.ads) + adsExtra;
-  var fixed = project.total + org + n(x.rent) + n(x.venue_services) + n(x.logistics) + ads;
+  org += planExpenseSum(x, "org");
+  var ads = n(x.ads) + planExpenseSum(x, "ads"), rent = n(x.rent) + planExpenseSum(x, "rent"), logistics = n(x.logistics) + planExpenseSum(x, "logistics");
+  var fixed = project.total + org + rent + n(x.venue_services) + logistics + ads;
   var variable = sales * v;
   var revenue = sales - variable;            // выручка после переменных (как «ВЫРУЧКА» в таблице)
   var profit = revenue - fixed;
@@ -79,7 +84,7 @@ function planCalc(x, cfg) {
   var cl = planClass(profit, cfg);
   return {
     gross: gross, seats: seats, zones: zones, fillEff: gross > 0 ? sales / gross * 100 : n(x.fill),
-    avg: avg, sales: sales, varPct: varPct, variable: variable, project: project, org: org, rent: n(x.rent), venue_services: n(x.venue_services), logistics: n(x.logistics), ads: ads,
+    avg: avg, sales: sales, varPct: varPct, variable: variable, project: project, org: org, rent: rent, venue_services: n(x.venue_services), logistics: logistics, ads: ads,
     fixed: fixed, total: fixed + variable, revenue: revenue, profit: profit,
     beTickets: beTickets, beRub: beTickets == null ? null : beTickets * avg, beShare: beTickets == null || !seats ? null : beTickets / seats,
     target: target, tgTickets: tgTickets, tgRub: tgTickets == null ? null : tgTickets * avg, tgShare: tgTickets == null || !seats ? null : tgTickets / seats,
@@ -117,9 +122,12 @@ function planItems(r, x, cfg) {
   add("author", "Авторские", "project", r.project.author); add("moscow", "Московские расходы", "project", r.project.moscow);
   add("per_diem", "Суточные", "perdiem", r.project.per_diem);
   PLAN_ORG.forEach(function (o) { add(o[0], o[1], "org", n((x.org || {})[o[0]])); });
-  add("rent", "Аренда", "rent", r.rent); add("venue_services", "Службы площадки", "rent", r.venue_services);
-  add("logistics", "Логистика", "logistics", r.logistics); add("ads", "Рекламный бюджет", "ads", n(x.ads));
+  add("rent", "Аренда", "rent", n(x.rent)); add("venue_services", "Службы площадки", "rent", r.venue_services);
+  add("logistics", "Логистика", "logistics", n(x.logistics)); add("ads", "Рекламный бюджет", "ads", n(x.ads));
   (x.ad_items || []).forEach(function (a) { var label = a.name || "Своя статья рекламы"; add("ad_item:" + label.trim().toLowerCase(), label, "ads", n(a.amount)); });
+  PLAN_COST_SECTIONS.filter(function (g) { return g !== "ads"; }).forEach(function (g) {
+    planExpenseItems(x, g).forEach(function (a) { var label = a.name || "Своя статья"; add("custom:" + g + ":" + label.trim().toLowerCase(), label, g, g === "variable" ? s * n(a.amount) / 100 : n(a.amount)); });
+  });
   add("tax", "Налог", "variable", s * n(cfg.tax) / 100); add("kassa", "Комиссия касс", "variable", s * n(x.kassa) / 100);
   if (x.rao_on) add("rao", "РАО/ВОИС", "variable", s * n(x.rao) / 100);
   add("agent", "Агентские", "variable", s * n(x.agent) / 100);
@@ -139,14 +147,15 @@ function planShift(x, f, d) {
     else y.gross = Math.max(0, n(y.gross) + d * n(y.seats));
   } else if (f === "org") {   // рост — в «прочие»; снижение — всех организационных статей поровну в долях (не ниже нуля)
     y.org = y.org || {};
-    var tot = 0; Object.keys(y.org).forEach(function (k) { tot += n(y.org[k]); });
+    var tot = planExpenseSum(y, "org"); Object.keys(y.org).forEach(function (k) { tot += n(y.org[k]); });
     if (d >= 0) y.org.other = n(y.org.other) + d;
-    else if (tot > 0) { var kf = Math.max(0, tot + d) / tot; Object.keys(y.org).forEach(function (k) { y.org[k] = n(y.org[k]) * kf; }); }
+    else if (tot > 0) { var kf = Math.max(0, tot + d) / tot; Object.keys(y.org).forEach(function (k) { y.org[k] = n(y.org[k]) * kf; }); planExpenseItems(y,"org").forEach(function (a) { a.amount = n(a.amount) * kf; }); }
   }
-  else if (f === "ads" && d < 0 && y.ad_items && y.ad_items.length) {
-    var totalAds = n(y.ads) + y.ad_items.reduce(function (sum, a) { return sum + n(a.amount); }, 0);
-    var factorAds = totalAds > 0 ? Math.max(0, totalAds + d) / totalAds : 0;
-    y.ads = n(y.ads) * factorAds; y.ad_items.forEach(function (a) { a.amount = n(a.amount) * factorAds; });
+  else if (["ads","rent","logistics"].indexOf(f) >= 0 && d < 0) {
+    var totalCost = n(y[f]) + planExpenseSum(y, f) + (f === "rent" ? n(y.venue_services) : 0);
+    var factorCost = totalCost > 0 ? Math.max(0, totalCost + d) / totalCost : 0;
+    y[f] = n(y[f]) * factorCost; planExpenseItems(y,f).forEach(function (a) { a.amount = n(a.amount) * factorCost; });
+    if (f === "rent") y.venue_services = n(y.venue_services) * factorCost;
   }
   else if (f === "per_diem") {
     if (y.per_diem_sum != null && y.per_diem_sum !== "") y.per_diem_sum = Math.max(0, n(y.per_diem_sum) + d);   // суточные всего — сдвиг суммы
@@ -172,5 +181,5 @@ function planSensitivity(xs, cfg, steps) {
   return { base: base, factors: out };
 }
 
-if (typeof module !== "undefined") module.exports = { PLAN_DEFAULTS: PLAN_DEFAULTS, PLAN_ORG: PLAN_ORG, PLAN_SCORES: PLAN_SCORES, PLAN_GROUPS: PLAN_GROUPS, PLAN_FACTORS: PLAN_FACTORS,
+if (typeof module !== "undefined") module.exports = { PLAN_DEFAULTS: PLAN_DEFAULTS, PLAN_ORG: PLAN_ORG, PLAN_SCORES: PLAN_SCORES, PLAN_GROUPS: PLAN_GROUPS, PLAN_FACTORS: PLAN_FACTORS, PLAN_COST_SECTIONS: PLAN_COST_SECTIONS, planExpenseItems: planExpenseItems, planExpenseSum: planExpenseSum,
   planNum: planNum, planClass: planClass, planCalc: planCalc, planScore: planScore, planBanned: planBanned, planItems: planItems, planShift: planShift, planSensitivity: planSensitivity };

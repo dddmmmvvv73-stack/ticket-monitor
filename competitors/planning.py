@@ -30,6 +30,7 @@
                   "project" — номер проекта, "trips" — {вариант: {"dep", "ret"}} выезд из Москвы и возвращение, если не день в день}}
                  ← «Построение гастрольного маршрута» (route-plan.js)
     строка тура: {"id", "city", "venue", "date", "days", "fill", "ads", "ad_items": [{"name", "amount"}], "agent",
+                  "cost_items": {раздел: [{"name", "amount"}]} — variable (%), project, org, rent, logistics (рубли),
                   "ovr": {поле справочника: значение — правка в этой строке},
                   "scores": {"comp", "ads", "attract", "market", "prep"}, "cannibal", "region_ban", "last_show", "decision", "note",
                   "zmode": вал по распоясовке, "zones": [{"name", "price", "seats", "fill" — своя заполняемость пояса}]}
@@ -51,6 +52,7 @@ FILE = CONFIG_DIR / "planning.json"
 KINDS = ("params", "projects", "regions", "cities", "venues", "tours", "lists", "routes")
 ORG = ("transfer", "hotel", "tech", "catering", "props", "loaders", "security", "services", "ironing", "scanning", "admin", "other")
 PICK_ORG = ORG  # одинаковые статьи подбора и тура; services остаётся отдельным от venue_services
+COST_SECTIONS = ("variable", "project", "org", "rent", "logistics")  # реклама хранится в прежнем ad_items
 SCORES = ("comp", "ads", "attract", "market", "prep")
 STATUSES = ("Черновик", "Планируется", "В процессе", "Подтверждён", "Отменён")
 DECISIONS = ("", "В работу", "Отмена", "Замена города", "Перенос месяца", "Замена площадки")
@@ -178,6 +180,12 @@ def _params(d: dict) -> dict:
     return out
 
 
+def _expense_items(items, what, variable=False):
+    if not isinstance(items, list) or len(items) > 40:
+        raise PlanningError(f"{what}: до 40 своих статей")
+    return [_clean(a, {"name": 120, "amount": "pct" if variable else "money"}, what) for a in items]
+
+
 def _row(r: dict) -> dict:
     out = _clean(r, ROW, "строка тура")
     if not _ID.match(out.get("id", "")):
@@ -191,10 +199,12 @@ def _row(r: dict) -> dict:
     if r.get("zones"):
         out["zones"] = _zones(r["zones"], ZONE, "распоясовка")
     if "ad_items" in r:
-        items = r["ad_items"]
-        if not isinstance(items, list) or len(items) > 40:
-            raise PlanningError("реклама: до 40 своих статей")
-        out["ad_items"] = [_clean(a, {"name": 120, "amount": "money"}, "статья рекламы") for a in items]
+        out["ad_items"] = _expense_items(r["ad_items"], "статья рекламы")
+    if "cost_items" in r:
+        groups = r["cost_items"]
+        if not isinstance(groups, dict) or any(g not in COST_SECTIONS for g in groups):
+            raise PlanningError("Неизвестный раздел своих расходов")
+        out["cost_items"] = {g: _expense_items(items, "свои расходы", g == "variable") for g, items in groups.items()}
     return out
 
 
