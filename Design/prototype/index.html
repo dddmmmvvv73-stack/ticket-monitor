@@ -1631,6 +1631,13 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .vtable.pl-tour .pl-act { position: sticky; right: 0; background: var(--card); z-index: 2; text-align: right; white-space: nowrap; box-shadow: -10px 0 10px -10px rgba(12, 10, 9, 0.18); }
 .vtable.pl-tour thead .pl-act { cursor: default; }
 .vtable.pl-tour tr.sel .pl-act { background: inherit; }
+.vtable.pl-tour tr.pl-row-selected { background: #eef5ff; }
+.vtable.pl-tour tr.pl-row-selected .pl-act { background: inherit; }
+.pl-row-check { width: 16px; height: 16px; vertical-align: middle; margin: 0 3px; accent-color: #2589fa; cursor: pointer; }
+.vtable.pl-tour .pl-handle-td { white-space: nowrap; }
+.pl-row-more { font-size: 22px; line-height: 1; }
+.pl-row-selection { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 10px 14px; margin: 0 0 12px; border: 1px solid #d6e6fa; border-radius: 10px; background: #f5f9ff; font-size: 13px; }
+.pl-row-selection b { margin-right: auto; }
 .vtable.pl-tour th.pl-drop-l { box-shadow: inset 2px 0 0 #1d6fae; } .vtable.pl-tour th.pl-drop-r { box-shadow: inset -2px 0 0 #1d6fae; }
 .vtable.pl-tour th.pl-dragging { opacity: 0.5; }
 /* Карточка города: сетка показателей 3 × 4, плитки переставляются перетаскиванием */
@@ -12275,8 +12282,39 @@ function plFitAll(root) { (root || document).querySelectorAll("input.pl-fit").fo
 document.addEventListener("input", function (ev) {   // подчёркивание растёт вместе с текстом
   if (ev.target.classList && ev.target.classList.contains("pl-fit")) plFitEl(ev.target);
 });
+function plCloneTourRow(tour, rowId, newId) {
+  var next = JSON.parse(JSON.stringify(tour)), rows = next.rows || [], at = rows.findIndex(function (r) { return r.id === rowId; });
+  if (at < 0) throw new Error("Строка больше не найдена. Обновите тур.");
+  if (rows.length >= 300) throw new Error("В одном туре может быть до 300 строк.");
+  if (!/^[a-z0-9]{1,24}$/.test(newId) || rows.some(function (r) { return r.id === newId; })) throw new Error("Не удалось создать номер копии.");
+  var duplicate = JSON.parse(JSON.stringify(rows[at])); duplicate.id = newId;
+  rows.splice(at + 1, 0, duplicate); next.rows = rows; return next;
+}
+function plRowSelection(tour, id) {
+  var s = S.pl.rowSelection;
+  if (!s || s.tour !== id) s = S.pl.rowSelection = { tour: id, active: false, ids: {} };
+  var have = {}; (tour.rows || []).forEach(function (r) { have[r.id] = true; });
+  Object.keys(s.ids).forEach(function (rid) { if (!have[rid]) delete s.ids[rid]; });
+  return s;
+}
+function plRowMenu(anchor, rowId) {
+  var tour = PLAN.tours[S.pl.tour], row = tour && (tour.rows || []).find(function (r) { return r.id === rowId; }); if (!row) return;
+  var selected = plRowSelection(tour, S.pl.tour).ids[rowId];
+  var menu = wkPopOpen(anchor, "wk-menu", '<div class="wkp-title">' + esc(row.city || "Город не выбран") + '</div>' +
+    '<button type="button" class="wk-menu-item" role="menuitem" data-pl="row-copy" data-id="' + rowId + '"' + (tour.rows.length >= 300 ? ' disabled title="В туре уже 300 строк"' : '') + '>Копировать строку</button>' +
+    '<button type="button" class="wk-menu-item" role="menuitem" data-pl="row-select" data-id="' + rowId + '">' + (selected ? 'Снять выделение' : 'Выделить строку') + '</button>');
+  menu.setAttribute("role", "menu"); menu.setAttribute("aria-label", "Действия строки тура");
+  menu.addEventListener("keydown", function (ev) {
+    if (["ArrowDown","ArrowUp","Home","End"].indexOf(ev.key) < 0) return;
+    ev.preventDefault(); var buttons = Array.from(menu.querySelectorAll("button:not(:disabled)")), n = buttons.indexOf(document.activeElement);
+    var at = ev.key === "Home" ? 0 : ev.key === "End" ? buttons.length - 1 : (n + (ev.key === "ArrowDown" ? 1 : -1) + buttons.length) % buttons.length;
+    if (buttons[at]) buttons[at].focus();
+  });
+  var first = menu.querySelector("button:not(:disabled)"); if (first) first.focus();
+}
 function plTour(id) {
   var t = PLAN.tours[id], cfg = plCfg(), scen = S.pl.scen, rows = t.rows || [];
+  var selection = plRowSelection(t, id), selectedRows = rows.filter(function (r) { return selection.ids[r.id]; });
   var projOpts = Object.keys(PLAN.projects).map(function (pid) { return [pid, PLAN.projects[pid].title]; });
   var calcs = rows.map(function (r) { return plRowCalc(t, r, scen); }), tt = plTourTotals(t, scen);
   var clsTxt = ["S", "A", "B", "C", "D"].filter(function (c) { return tt.cls[c]; }).map(function (c) { return c + " " + tt.cls[c]; }).join(" · ");
@@ -12294,10 +12332,11 @@ function plTour(id) {
     [["", "по строкам"]].concat(cfg.scenarios.map(function (s) { return [String(s), s + "%"]; })).map(function (s) {
       return '<button role="tab" data-pl="scen" data-v="' + s[0] + '" aria-selected="' + (String(scen || "") === s[0]) + '">' + s[1] + '</button>'; }).join("") + '</div></div>' + plColsControl("t") + '</div>';
   var cityList = '<datalist id="plCities">' + plCityOptions().map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + '</datalist>';
-  var cols = plColsOrdered("t").filter(function (c) { return plColOn(c, "t"); }), width = 26 + 76;
+  var leadWidth = selection.active ? 52 : 26, actionWidth = 132;
+  var cols = plColsOrdered("t").filter(function (c) { return plColOn(c, "t"); }), width = leadWidth + actionWidth;
   cols.forEach(function (c) { width += plColW(c); });
-  var colgroup = '<colgroup><col style="width:26px">' + cols.map(function (c) { return '<col data-plcol="' + c.id + '" style="width:' + plColW(c) + 'px">'; }).join("") + '<col style="width:76px"></colgroup>';
-  var th = '<thead><tr><th scope="col"><span class="sr-only">Порядок</span></th>' + cols.map(function (c) {
+  var colgroup = '<colgroup><col style="width:' + leadWidth + 'px">' + cols.map(function (c) { return '<col data-plcol="' + c.id + '" style="width:' + plColW(c) + 'px">'; }).join("") + '<col style="width:' + actionWidth + 'px"></colgroup>';
+  var th = '<thead><tr><th scope="col"><span class="sr-only">Порядок</span>' + (selection.active ? '<input type="checkbox" class="pl-row-check" data-pl-select-all aria-label="Выделить все строки тура"' + (rows.length && selectedRows.length === rows.length ? ' checked' : '') + '>' : '') + '</th>' + cols.map(function (c) {
     return '<th scope="col" class="pl-th' + (c.left ? ' pl-left' : '') + '" draggable="true" data-plcolhead="' + c.id + '" data-cset="t" title="' + esc(c.labels[0]) + ' — перетащите, чтобы поменять порядок"><span class="pl-thl">' + esc(plFitLabel(c, plColW(c))) + '</span>' +
       '<span class="resizer" data-plresize="' + c.id + '" data-cset="t" title="Потяните, чтобы изменить ширину. Двойной клик — вернуть." aria-hidden="true"></span></th>';
   }).join("") + '<th scope="col" class="pl-act"><span class="sr-only">Действия</span></th></tr></thead>';
@@ -12336,9 +12375,10 @@ function plTour(id) {
   };
   var body = rows.map(function (r, i) {
     var k = calcs[i], sg = function (f) { return "row|" + id + "|" + r.id + "|" + f; };
-    return '<tr data-plrow="' + r.id + '" class="' + (S.pl.row === r.id ? 'sel' : '') + '"><td class="pl-handle-td"><button class="pl-handle" data-pl-handle="' + r.id + '" aria-label="Переместить город: ' + esc(r.city || "без названия") + ' (стрелки вверх и вниз)" title="Перетащите, чтобы поменять порядок городов. Даты остаются на местах.">⋮⋮</button></td>' +
+    return '<tr data-plrow="' + r.id + '" class="' + (S.pl.row === r.id ? 'sel ' : '') + (selection.ids[r.id] ? 'pl-row-selected' : '') + '"><td class="pl-handle-td"><button class="pl-handle" data-pl-handle="' + r.id + '" aria-label="Переместить город: ' + esc(r.city || "без названия") + ' (стрелки вверх и вниз)" title="Перетащите, чтобы поменять порядок городов. Даты остаются на местах.">⋮⋮</button>' +
+      (selection.active ? '<input type="checkbox" class="pl-row-check" data-pl-select="' + r.id + '" aria-label="Выделить: ' + esc((r.city || "без города") + (r.venue ? ' · ' + r.venue.split('|').slice(1).join('|') : '')) + '"' + (selection.ids[r.id] ? ' checked' : '') + '>' : '') + '</td>' +
       cols.map(function (c) { return '<td class="' + (c.left ? 'pl-left' : 'num') + (/^(sales|total|profit|gross|variable|fixed|avg|ros|roi|be|beT)$/.test(c.id) ? ' nowrap' : '') + '">' + cell(c, r, k, sg) + '</td>'; }).join("") +
-      '<td class="pl-act"><button class="icon-btn" data-pl="row-open" data-id="' + r.id + '" aria-label="Карточка города: показатели, статьи, распоясовка" title="Карточка города">' + PJ_ICON.chart + '</button><button class="icon-btn" data-pl="row-del" data-id="' + r.id + '" aria-label="Убрать город из тура" title="Убрать город">' + PJ_ICON.close + '</button></td></tr>';
+      '<td class="pl-act"><button class="icon-btn" data-pl="row-open" data-id="' + r.id + '" aria-label="Карточка города: показатели, статьи, распоясовка" title="Карточка города">' + PJ_ICON.chart + '</button><button type="button" class="icon-btn pl-row-more" data-pl="row-menu" data-id="' + r.id + '" aria-label="Действия строки: ' + esc(r.city || "без города") + '" aria-haspopup="menu" aria-expanded="false" title="Действия строки">⋯</button><button class="icon-btn" data-pl="row-del" data-id="' + r.id + '" aria-label="Убрать город из тура" title="Убрать город">' + PJ_ICON.close + '</button></td></tr>';
   }).join("");
   var totals = { sales: tt.sales, total: tt.total, profit: tt.profit, gross: tt.gross };
   var foot = rows.length ? '<tfoot><tr><td></td>' + cols.map(function (c, i) {
@@ -12351,7 +12391,8 @@ function plTour(id) {
   if (!PLAN.projects[t.project]) hints.push('У тура не выбран проект.');
   if (!Object.keys(PLAN.cities).length) hints.push('Организационные затраты и комиссия касс — во вкладке <button class="pj-plain" data-pl="tab" data-tab="cities">«Города»</button>, логистика — в <button class="pj-plain" data-pl="tab" data-tab="regions">«Регионах»</button>.');
   if (!Object.keys(PLAN.venues).length) hints.push('Места в продаже, вал, аренда и пояса зала — в разделе <button class="pj-plain" data-pl="go-venues">«Площадки»</button>.');
-  return head1 + sum + (hints.length ? plNote(hints.join(" ")) : '') + tools + cityList +
+  var selectionBar = selection.active ? '<div class="pl-row-selection" role="region" aria-label="Выбранные строки тура"><b>Выбрано: ' + selectedRows.length + '</b><button type="button" class="btn-ghost" data-pl="rows-delete"' + (!selectedRows.length ? ' disabled' : '') + '>Удалить выбранные</button><button type="button" class="pj-plain" data-pl="rows-unselect">Снять выделение</button></div>' : '';
+  return head1 + sum + (hints.length ? plNote(hints.join(" ")) : '') + tools + selectionBar + cityList +
     '<section class="card pl-card pl-card-fit"><table class="vtable pl-grid pl-tour pl-flat" style="width:' + width + 'px">' + colgroup + th + '<tbody>' + body + '</tbody>' + foot + '</table>' + empty + '</section>' +
     '<div class="pl-under"><button class="btn-dark" data-pl="row-add">+ Город</button>' +
       (rows.length ? '<button class="btn-ghost pl-map-btn" data-pl="map" aria-expanded="' + !!PL_PREFS.map + '" aria-controls="plMapSec">' + PJ_ICON.an_route + (PL_PREFS.map ? 'Скрыть карту' : 'Показать на карте') + '</button>' : '') + '</div>' +
@@ -14601,6 +14642,39 @@ function plAction(b) {
     setTimeout(function () { var el = document.querySelector('[data-plf="row|' + S.pl.tour + '|' + rid + '|city"]'); if (el) el.focus(); }, 30);
   }
   else if (a === "row-del") { var t2 = copy(PLAN.tours[S.pl.tour]); t2.rows = (t2.rows || []).filter(function (x) { return x.id !== id; }); if (S.pl.row === id) { S.pl.row = null; closeDrawer(); } plPut("tours", S.pl.tour, t2, "Город убран из тура"); }
+  else if (a === "row-menu") { if (WKPOP && WKPOP.anchor === b) wkPopClose(); else plRowMenu(b, id); }
+  else if (a === "row-copy") {
+    var ct = S.pl.tour, source = PLAN.tours[ct]; if (!source) return;
+    var cid; do { cid = plId("r"); } while ((source.rows || []).some(function (r) { return r.id === cid; }));
+    try { var cloned = plCloneTourRow(source, id, cid); } catch (err) { toast(err.message); return; }
+    wkPopClose(); closeDrawer(); S.pl.row = cid; plPut("tours", ct, cloned, "Строка скопирована");
+    setTimeout(function () {
+      if (S.pl.tour !== ct) return;
+      var tr = document.querySelector('[data-plrow="' + cid + '"]'); if (!tr) return;
+      var venue = tr.querySelector('[data-plf$="|venue"]'), target = venue && venue.nextElementSibling;
+      if (target && !target.classList.contains("dd-btn")) target = null;
+      tr.scrollIntoView({ block: "nearest" }); if (target || venue) (target || venue).focus({ preventScroll: true });
+    }, 0);
+  }
+  else if (a === "row-select") {
+    var st = PLAN.tours[S.pl.tour]; if (!st || !(st.rows || []).some(function (r) { return r.id === id; })) return;
+    var ss = plRowSelection(st, S.pl.tour); ss.active = true;
+    if (ss.ids[id]) delete ss.ids[id]; else ss.ids[id] = true;
+    wkPopClose(); tbRe();
+  }
+  else if (a === "rows-unselect") { S.pl.rowSelection = { tour: S.pl.tour, active: false, ids: {} }; wkPopClose(); tbRe(); }
+  else if (a === "rows-delete") {
+    var dt = S.pl.tour, ds = plRowSelection(PLAN.tours[dt], dt), selected = Object.keys(ds.ids); if (!selected.length) return;
+    wkPopClose(); askConfirm("Удалить выбранные строки?", "Из тура будут удалены строки: " + selected.length + ". Все данные этих строк будут удалены.", "Удалить", function () {
+      if (!PLAN.tours[dt]) return;
+      var latest = copy(PLAN.tours[dt]); latest.rows = (latest.rows || []).filter(function (r) { return selected.indexOf(r.id) < 0; });
+      if (S.pl.tour === dt) {
+        if (selected.indexOf(S.pl.row) >= 0) { S.pl.row = null; closeDrawer(); }
+        S.pl.rowSelection = { tour: dt, active: false, ids: {} };
+      }
+      plPut("tours", dt, latest, "Выбранные строки удалены");
+    });
+  }
   else if (a === "row-open") { S.pl.vz = null; S.pl.vzOpen = false; S.pl.tbCard = null; plOpenRow(id); }
   else if (a === "ovr-reset" || a === "score") {
     var t3 = copy(PLAN.tours[S.pl.tour]), row = (t3.rows || []).filter(function (x) { return x.id === S.pl.row; })[0]; if (!row) return;
@@ -14628,6 +14702,15 @@ document.addEventListener("click", function (ev) {
 document.addEventListener("change", function (ev) {   // «Столбцы»: показать / скрыть
   var c = ev.target.closest && ev.target.closest("[data-pl-col]"); if (!c) return;
   var cp = plColPrefs(c.getAttribute("data-cset") || "t"); cp.vis = cp.vis || {}; cp.vis[c.getAttribute("data-pl-col")] = c.checked; plPrefsSave(); tbRe();
+});
+document.addEventListener("change", function (ev) {
+  var el = ev.target;
+  if (S.view !== "planning" || S.pl.tab !== "tours" || !el.matches("[data-pl-select], [data-pl-select-all]")) return;
+  var tour = PLAN.tours[S.pl.tour]; if (!tour) return;
+  var selection = plRowSelection(tour, S.pl.tour); selection.active = true;
+  var ids = el.hasAttribute("data-pl-select-all") ? (tour.rows || []).map(function (r) { return r.id; }) : [el.getAttribute("data-pl-select")];
+  ids.forEach(function (id) { if (el.checked) selection.ids[id] = true; else delete selection.ids[id]; });
+  wkPopClose(); tbRe();
 });
 // «Подбор городов»: правка разобранных строк, выбор городов, области
 document.addEventListener("change", function (ev) {
