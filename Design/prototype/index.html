@@ -1628,7 +1628,7 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .vtable.pl-tour td.pl-left .dd-btn { max-width: 100%; }
 .vtable.pl-tour .dd-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* кнопки «карточка» и «убрать» — всегда у правого края таблицы (новые столбцы встают перед ними) */
-.vtable.pl-tour .pl-act { position: sticky; right: 0; background: var(--card); z-index: 2; text-align: right; white-space: nowrap; box-shadow: -10px 0 10px -10px rgba(12, 10, 9, 0.18); }
+.vtable.pl-tour .pl-act { position: sticky; right: 0; background: var(--card); z-index: 2; padding-left: 10px; text-align: right; white-space: nowrap; box-shadow: -10px 0 10px -10px rgba(12, 10, 9, 0.18); }
 .vtable.pl-tour thead .pl-act { cursor: default; }
 .vtable.pl-tour tr.sel .pl-act { background: inherit; }
 .vtable.pl-tour tr.pl-row-selected { background: #eef5ff; }
@@ -12333,7 +12333,7 @@ function plTour(id) {
     [["", "по строкам"]].concat(cfg.scenarios.map(function (s) { return [String(s), s + "%"]; })).map(function (s) {
       return '<button role="tab" data-pl="scen" data-v="' + s[0] + '" aria-selected="' + (String(scen || "") === s[0]) + '">' + s[1] + '</button>'; }).join("") + '</div></div>' + plColsControl("t") + '</div>';
   var cityList = '<datalist id="plCities">' + plCityOptions().map(function (c) { return '<option value="' + esc(c) + '">'; }).join("") + '</datalist>';
-  var leadWidth = selection.active ? 52 : 26, actionWidth = 132;
+  var leadWidth = selection.active ? 52 : 26, actionWidth = 110;   // три кнопки по 30 px и отступы по 10 px
   var cols = plColsOrdered("t").filter(function (c) { return plColOn(c, "t"); }), width = leadWidth + actionWidth;
   cols.forEach(function (c) { width += plColW(c); });
   var colgroup = '<colgroup><col style="width:' + leadWidth + 'px">' + cols.map(function (c) { return '<col data-plcol="' + c.id + '" style="width:' + plColW(c) + 'px">'; }).join("") + '<col style="width:' + actionWidth + 'px"></colgroup>';
