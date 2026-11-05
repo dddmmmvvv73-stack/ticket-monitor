@@ -13756,16 +13756,16 @@ function tbOfferView(L, A, P, p, of) {
   var s = tbOfSel(), byFd = p.ofGroup !== "dec", all = of.yes.concat(of.maybe), fds = {}, anyFd = Object.keys(s.fd).length;
   all.forEach(function (r) { var f = RU_FD_OF[r.reg] || ""; fds[f] = (fds[f] || 0) + 1; });
   var order = RU_FD.map(function (x) { return x[0]; }).filter(function (f) { return f && fds[f]; }).concat(fds[""] ? [""] : []);
-  var pdf = tbOfPdfCities(of, !!p.ofArtMaybe), whole = of.yes.length + (p.ofArtMaybe ? of.maybe.length : 0), nck = all.filter(function (r) { return s.ck[r.city]; }).length;
-  var fdBar = '<div class="tb-ofbar"><div class="tb-offds" role="group" aria-label="Федеральные округа — что показать и что пойдёт в PDF артисту">' +
+  var pdf = tbOfPdfCities(of, !!p.ofArtMaybe), bossPdf = tbOfPdfCities(of, true), nck = all.filter(function (r) { return s.ck[r.city]; }).length;
+  var fdBar = '<div class="tb-ofbar"><div class="tb-offds" role="group" aria-label="Федеральные округа — города для документов и ссылки руководителю">' +
       '<button class="an-layer" data-pl="tb-offd" data-k="*" aria-pressed="' + !anyFd + '">Все округа <span class="num">' + all.length + '</span></button>' +
       order.map(function (f) { return '<button class="an-layer" data-pl="tb-offd" data-k="' + f + '" aria-pressed="' + !!s.fd[f] + '">' + esc(tbFdName(f)) + ' <span class="num">' + fds[f] + '</span></button>'; }).join("") + '</div>' +
       (nck ? '<span class="tb-ofckn">Отмечено ' + nck + ' <button class="tb-ofclr" data-pl="tb-ofck-clear">снять</button></span>' : '') +
       '<span style="flex-grow:1"></span><div class="wkp-seg" role="group" aria-label="Группировать города"><button data-pl="tb-ofgroup" data-k="fd" aria-pressed="' + byFd + '">По округам</button><button data-pl="tb-ofgroup" data-k="dec" aria-pressed="' + !byFd + '">По решению</button></div></div>';
   var acts = '<div class="tb-tools pl-flat">' +
-      '<button class="btn-dark" data-pl="tb-offer" data-k="artist" title="Города, площадки, вместимость — без экономики. Только видимые округа, а если отмечены города — только они">Предложение артисту (PDF)' + (pdf.length < whole ? ' · ' + pdf.length + ' ' + plural(pdf.length, "город", "города", "городов") : '') + '</button>' +
+      '<button class="btn-dark" data-pl="tb-offer" data-k="artist" title="Города, площадки, вместимость — без экономики. Только выбранные округа, а если отмечены города — только они"' + (!pdf.length ? ' disabled' : '') + '>Предложение артисту (PDF) · ' + pdf.length + ' ' + plural(pdf.length, "город", "города", "городов") + '</button>' +
       (of.maybe.length ? '<button class="an-layer" data-pl="tb-pkflag" data-k="ofArtMaybe" aria-pressed="' + !!p.ofArtMaybe + '" title="Добавить в PDF артисту и «на рассмотрении»">с «на рассмотрении»</button>' : '') +
-      '<button class="btn-ghost" data-pl="tb-offer" data-k="boss" title="С экономикой по каждому городу и допущениями">На согласование (PDF)</button>' +
+      '<button class="btn-ghost" data-pl="tb-offer" data-k="boss" title="С экономикой по выбранным городам. Только выбранные округа, а если отмечены города — только они"' + (!bossPdf.length ? ' disabled' : '') + '>На согласование (PDF) · ' + bossPdf.length + ' ' + plural(bossPdf.length, "город", "города", "городов") + '</button>' +
       (typeof tbShareBtn === "function" ? tbShareBtn() : '') + '<span style="flex-grow:1"></span><span class="tb-icons">' + plColsControl("of") + '</span></div>';
   var shown = function (l) { return l.filter(function (r) { return !anyFd || s.fd[RU_FD_OF[r.reg] || ""]; }); };
   var groups = byFd ? order.filter(function (f) { return !anyFd || s.fd[f]; }).map(function (f) {   // округ: «подходит», затем «на рассмотрении»
@@ -13784,10 +13784,9 @@ function tbOfferView(L, A, P, p, of) {
 function tbOfSel() { var t = S.pl.tb; if (!t.of || t.of.list !== t.list) t.of = { list: t.list, fd: {}, fold: {}, ck: {} }; return t.of; }
 function tbFdName(f) { var x = RU_FD.filter(function (d) { return d[0] === f && f; })[0]; return x ? x[1] : "Округ не определён"; }
 function tbOfPdfCities(of, withMaybe) {
-  var s = tbOfSel(), anyFd = Object.keys(s.fd).length;
+  var s = tbOfSel(), anyFd = Object.keys(s.fd).length, anyCk = Object.keys(s.ck).some(function (c) { return s.ck[c]; });
   var shown = of.yes.concat(withMaybe ? of.maybe : []).filter(function (r) { return !anyFd || s.fd[RU_FD_OF[r.reg] || ""]; });
-  var ck = shown.filter(function (r) { return s.ck[r.city]; });
-  return (ck.length ? ck : shown).map(function (r) { return r.city; });
+  return shown.filter(function (r) { return !anyCk || s.ck[r.city]; }).map(function (r) { return r.city; });
 }
 function tbOfFit() {   // таблица помещается — без своей прокрутки: тогда заголовки округов прилипают к верху страницы
   var w = document.querySelector(".tb-ofwrap"); if (w) w.classList.toggle("fits", w.querySelector("table").offsetWidth <= w.clientWidth + 1);
@@ -13953,11 +13952,12 @@ function tbSharePanel() {
   var st = S.pl.tbShares && S.pl.tbShares.list === S.pl.tb.list ? S.pl.tbShares : { shares: [], base: "" }, has = (st.shares || []).length > 0;
   var seen = tbShareSeen(), local = !st.base || /127\.0\.0\.1|localhost/.test(st.base);
   var gen = (S.pl.tbGenC || []).slice().reverse();
+  var cx = S.pl.tbCtx, count = cx && cx.A ? tbOfPdfCities(tbOfferRows(cx.A), true).length : 0;
   return '<section class="card pl-card tb-shares"><div class="tb-shares-head"><b>Ссылки для руководителя</b>' +
       (S.pl.tbNewC ? '<span class="tb-newc">' + S.pl.tbNewC + '</span> <button class="pj-plain" data-pl="tb-shareseen">прочитано</button>' : '') +
-      '<span style="flex-grow:1"></span><button class="btn-dark" data-pl="tb-share">' + (has ? 'Новая версия ссылки' : 'Создать ссылку') + '</button>' +
+      '<span style="flex-grow:1"></span><button class="btn-dark" data-pl="tb-share"' + (!count ? ' disabled' : '') + '>' + (has ? 'Новая версия ссылки' : 'Создать ссылку') + ' · ' + count + ' ' + plural(count, "город", "города", "городов") + '</button>' +
       '<button class="icon-btn" data-pl="tb-sharepanel" aria-label="Закрыть блок ссылок" title="Закрыть">' + PJ_ICON.close + '</button></div>' +
-    (has ? '' : '<p class="sub2" style="margin:6px 0 0">Ссылка сохранит предложение, как оно сейчас: города и цифры. Руководитель отметит города и оставит комментарии — они появятся здесь и у городов.</p>') +
+    '<p class="sub2" style="margin:6px 0 0">Новая ссылка сохранит города из выбранных округов; если стоят галочки — только отмеченные. Руководитель отметит города и оставит комментарии — они появятся здесь и у городов.</p>' +
     (has && local ? '<p class="sub2" style="margin:4px 0 8px">Ссылка откроется только на этом компьютере, пока не настроен внешний доступ (Tailscale). PDF работает всегда.</p>' : '') +
     st.shares.slice(0, 5).map(function (s, i) {
       var url = tbShareUrl(s), n = (s.comments || []).length, nn = (s.comments || []).filter(function (c) { return tbShareIsNew(s, c); }).length;
@@ -13975,7 +13975,7 @@ function tbShareAction(a, b) {
   if (a === "tb-sharepanel") { S.pl.tbShareOpen = !S.pl.tbShareOpen; if (S.pl.tbShareOpen) tbSharesLoad(true); tbRe(); }
   else if (a === "tb-share") {
     var cx = S.pl.tbCtx, L = tbCur(); if (!cx || !cx.A || !L) return;
-    var snap = tbSnapshot(L, cx.A, cx.P); if (!snap.rows.length) { toast("В предложении нет городов"); return; }
+    var snap = tbSnapshot(L, cx.A, cx.P); if (!snap.rows.length) { toast("Для согласования нет городов. Проверьте галочки и выбранные округа."); return; }
     apiJson("POST", "/api/shares", { list: id, snapshot: snap }).then(function (x) {
       if (!x.ok) { toast("Не создано: " + (x.d.error || "ошибка")); return; }
       toast("Новая версия ссылки готова — скопируйте адрес"); tbSharesLoad(true);
@@ -13993,8 +13993,9 @@ function tbShareAction(a, b) {
   }
 }
 // Снимок предложения — одни и те же строки и цифры для PDF и для ссылки руководителю (offer-doc.js)
-function tbSnapshot(L, A, P) {
+function tbSnapshot(L, A, P, kind) {
   var e = L.econ || {}, d = PICK_DEFAULTS, cfg = plCfg(), of = tbOfferRows(A), lv = P && P.lv;
+  var selected = new Set(tbOfPdfCities(of, kind !== "artist" || !!tbPrefs().ofArtMaybe));
   var econ = [["Гонорар", plMoney(e.fee)], ["% сверху к гонорару", (e.cashless || 0) + " %"],
     ["Райдер на город", e.rider != null ? plMoney(e.rider) : plMoney(pickRider(e.fee)) + " (норма)"], ["Состав на выезде", e.crew != null ? e.crew + " чел." : d.crew + " чел. (не знаем)"],
     ["Заполняемость", (e.fill != null ? e.fill : d.fill) + " %"], ["Налог + кассы", cfg.tax + " % + " + (e.kassa != null ? e.kassa : d.kassa) + " %"]];
@@ -14004,7 +14005,7 @@ function tbSnapshot(L, A, P) {
   else if (planNum(e.per_diem)) econ.push(["Суточные на человека", plMoney(e.per_diem)]);
   if (planNum(e.moscow)) econ.push(["Московские на тур", plMoney(e.moscow)]);
   return { v: 1, list: S.pl.tb.list, title: L.title, who: L.project || L.title, period: periodLabel(), created: new Date().toISOString(), econ: econ,
-    rows: of.yes.concat(of.maybe).map(function (r) {
+    rows: of.yes.concat(of.maybe).filter(function (r) { return selected.has(r.city); }).map(function (r) {
       var P2 = r.pick, k = P2.k, R = k.r, s = P2.inp.src.price;
       return { city: r.city, reg: r.reg || "", dec: P2.dec, venue: P2.v ? P2.v.name : "", seats: R.seats || 0, price: k.price || null,
         priceNote: s === "ovr" ? "правка" : s === "zones" ? "распоясовка" : P2.pr && P2.pr.conf === "low" ? "мало данных" : "",
@@ -14022,8 +14023,8 @@ var TB_PDF_JS = 'document.getElementById("savePdf").onclick=function(){var b=thi
   '.catch(function(e){alert("PDF не сохранился: "+e.message);b.disabled=false;b.textContent=t;});};';
 function tbOfferDoc(kind) {   // окно документа: артисту — без экономики, руководителю — с экономикой и допущениями
   var cx = S.pl.tbCtx, L = tbCur(); if (!cx || !cx.A || !L) return;
-  var snap = tbSnapshot(L, cx.A, cx.P), title = (kind === "artist" ? "Предложение — " : "На согласование — ") + snap.who;
-  if (kind === "artist") { var only = {}; tbOfPdfCities(tbOfferRows(cx.A), !!tbPrefs().ofArtMaybe).forEach(function (c) { only[c] = 1; }); snap.rows = snap.rows.filter(function (r) { return only[r.city]; }); }
+  var snap = tbSnapshot(L, cx.A, cx.P, kind), title = (kind === "artist" ? "Предложение — " : "На согласование — ") + snap.who;
+  if (!snap.rows.length) { toast("Для документа нет городов. Проверьте галочки и выбранные округа."); return; }
   var w = window.open("", "_blank");
   if (!w) { toast("Браузер не дал открыть окно — разрешите всплывающие окна для этого сайта"); return; }
   w.document.open();
