@@ -55,3 +55,23 @@ test('распоясовка учитывает собственные проц�
   assert.equal(scenario.rows[0].calc.sales,225000);
   assert.equal(input.zones[0].fill,50);
 });
+
+test('PDF: средняя цена и вал в сводке, показатели в таблице, итоги групп после расходов', () => {
+  const snap=tourExportSnapshot(tour,{...meta,rowIds:['r1']},()=>x),html=tourExportHtml(snap);
+  const summary=html.match(/<section class="summary">([\s\S]*?)<\/section>/)[1];
+  const heads=Array.from(summary.matchAll(/<th>(.*?)<\/th>/g),m=>m[1]);
+  assert.equal(heads[3],'Средняя цена билета, ₽');assert.equal(heads[5],'Вал, ₽');
+  const cells=Array.from(summary.match(/<tbody><tr>([\s\S]*?)<\/tr>/)[1].matchAll(/<td[^>]*>([\s\S]*?)<\/td>/g),m=>m[1]);
+  assert.equal(cells.length,13);assert.equal(cells[3],(2000).toLocaleString('ru-RU'));
+  assert.equal(cells[5],(1000000).toLocaleString('ru-RU'));
+  assert.match(html,/<table class="metrics-table"><thead><tr><th>Показатель<\/th><th class="num">Значение<\/th>/);
+  assert.ok(!html.includes('<div class="metrics">'));
+  const groups=Array.from(html.matchAll(/<tr class="group"><td colspan="3">(.*?)<\/td><\/tr>([\s\S]*?)<tr class="group-total"><td colspan="2">Итого (.*?)<\/td>/g));
+  assert.equal(groups.length,6);
+  for(const g of groups){assert.equal(g[3],g[1].toLowerCase());assert.ok(g[2].includes('class="num"'));}
+  const org=groups.find(g=>g[1]==='Организационные');assert.ok(org[2].includes('Своя встреча'));
+  const mixed=tourExportSnapshot(tour,{...meta,rowIds:['r1','r2']},r=>r.id==='r1'?x:{...x,gross:300000,seats:100});
+  const footer=tourExportHtml(mixed).match(/<tfoot>([\s\S]*?)<\/tfoot>/)[1];
+  assert.ok(footer.includes((1300000).toLocaleString('ru-RU')));
+  assert.ok(footer.includes((2167).toLocaleString('ru-RU')),'средняя цена итога взвешена по местам');
+});
