@@ -1828,6 +1828,8 @@ button.pj-row-in:focus-visible { outline: 2px solid var(--focus); outline-offset
 .tb-grid .ix-sel { max-width: 100%; } .ix-newpop { width: 320px; } .ix-newf { display: grid; gap: 8px; padding: 4px 8px 8px; } .ix-newf .pl-in { width: 100%; text-align: left; }
 /* «Фильтр» и «Столбцы» подбора — рядом и одного вида (решение пользователя 27.10) */
 .tb-icons { display: inline-flex; gap: 6px; align-items: center; }
+.tb-icons .cols-anchor { display: inline-block; }   /* таблицы подбора остаются таблицами и на узком экране */
+.tb-icons .cols-pop { max-height: min(440px, 70vh); overflow-y: auto; }
 .tb-icons .ficon { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--card); color: var(--ink-2); }
 .tb-icons .ficon:hover, .tb-icons .ficon[aria-expanded="true"] { border-color: var(--ink-3); color: var(--ink); background: var(--card); }
 .cand-cb.tb-rb { border-radius: 50%; }
@@ -13575,7 +13577,9 @@ var PK_COLS = [   // столбцы подбора и предложения (CI
   { id: "profit", labels: ["Прибыль", "Приб."], w: 92 }, { id: "status", labels: ["Окупаемость", "Окуп."], w: 124, left: true },
   { id: "dec", labels: ["Решение", "Реш."], w: 160, left: true },
   { id: "reg", labels: ["Область", "Обл."], w: 160, left: true, off: true }, { id: "pop", labels: ["Жителей", "Жит."], w: 84, off: true },
-  { id: "seats", labels: ["Мест", "М."], w: 70, off: true }, { id: "sales", labels: ["Сборы", "Сб."], w: 88, off: true },
+  { id: "seats", labels: ["Мест", "М."], w: 70, off: true },
+  { id: "avg", labels: ["Средняя цена билета", "Ср. цена", "Ср."], w: 110, off: true },
+  { id: "sales", labels: ["Сборы", "Сб."], w: 88, off: true },
   { id: "total", labels: ["Расходы", "Расх."], w: 88, off: true },
   // показатели «Туров» (решение пользователя 27.10: ТБУ вместо «в ноль», добавить те, которых нет; свои столбцы подбора — как есть)
   { id: "beT", labels: ["ТБУ, билетов", "ТБУ бил.", "ТБУ"], w: 84, off: true }, { id: "be", labels: ["ТБУ, % аншлага", "ТБУ %", "%"], w: 80, off: true },
@@ -13683,7 +13687,7 @@ function tbSortVal(id, r) {   // значение для сортировки п
   var P = r.pick, k = P.k, R = k.r, h = tbHas(k);
   switch (id) {
     case "city": return r.city; case "venue": return P.v ? P.v.name : null; case "reg": return r.reg || null;
-    case "price": return k.price || null; case "need": return h ? k.need : null; case "profit": return h ? R.profit : null;
+    case "price": case "avg": return k.price || null; case "need": return h ? k.need : null; case "profit": return h ? R.profit : null;
     case "status": return k.margin; case "dec": return { yes: 3, maybe: 2, no: 0 }[P.dec] != null ? { yes: 3, maybe: 2, no: 0 }[P.dec] : 1;
     case "pop": return r.pop || null; case "seats": return R.seats || null; case "sales": return h ? R.sales : null; case "total": return h ? R.total : null;
     case "beT": return h ? R.beTickets : null; case "be": return h ? R.beShare : null; case "beRub": return h ? R.beRub : null;
@@ -13702,6 +13706,9 @@ function tbCell(c, r) {
     case "city": return td('<button class="ev-title" data-pl="tb-card" data-city="' + esc(r.city) + '" title="Карточка города">' + esc(r.city) + '</button>' + (r.mgr ? r.mgr : ''));
     case "venue": return td(P.v && R.seats ? esc(P.v.name) + '<div class="sub2 num">' + num(R.seats) + ' мест</div>' : '<span class="muted">нет зала</span>', P.v ? P.v.name : "");
     case "price": return td(k.price ? plMoney(k.price) : dash);
+    case "avg":
+      if (P.inp.src.price === "zones") return td(k.price ? plMoney(k.price) : dash, "Средняя цена по распоясовке — измените цены поясов в карточке города");
+      return td(plFitIn("tbc|" + id + "|" + r.city + "|price", P.o.price, { ph: k.price ? Math.round(k.price) : "—", label: "Средняя цена билета: " + r.city + ", ₽" }), "Впишите среднюю цену — расчёт обновится. Очистите поле, чтобы вернуть расчётную цену");
     case "need": return td(h ? plMoney(k.need) : dash);
     case "profit": return td(h ? plShort(R.profit) : dash, "", h && R.profit < 0 ? "pl-neg" : "");
     case "status": return td('<button class="tb-pkbtn" data-pl="tb-card" data-city="' + esc(r.city) + '" title="Расчёт по городу">' + tbPkBadge(k) + '</button>');
