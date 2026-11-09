@@ -11,7 +11,7 @@
 каждая правка — в журнале изменений (competitors/journal.py, область «work»), её можно вернуть.
     {"projects": {номер: {"title", "stage", "start", "end", "deadline" — дедлайн готовности проекта, "note", "upd",
                           "media": {"avatar" | "cover": файл?v=метка},
-                          "pfiles": {"rider" | "logistics" | "timing": {"file", "name", "size", "at"}}}},
+                          "pfiles": {"rider" | "hospitality" | "logistics" | "timing": {"file", "name", "size", "at"}}}},
      "tasks":    {номер: {"text", "due", "project" или "proc" (взаимоисключающие), "done", "done_at", "note", "created", "upd",
                           "desc" — описание, "subs": [{"id", "text", "done"}] — подзадачи,
                           "time" — затрачено, секунд; "run" — таймер идёт с (ISO-время) или пусто; "est" — план, минут,
@@ -108,8 +108,8 @@ MEDIA_DIR = CONFIG_DIR / "work_media"   # фото проектов (миниа�
 MEDIA_KINDS = ("avatar", "cover")
 PHOTO_MAX = 3 * 1024 * 1024
 PHOTO_TYPES = {b"\xff\xd8\xff": "jpg", b"\x89PNG": "png", b"RIFF": "webp"}
-FILE_NAME = re.compile(r"^[a-z0-9]{3,40}-(avatar|cover|rider|logistics|timing|f[0-9a-f]{8})\.[a-z0-9]{2,5}$")   # f… — файл рабочей заметки
-DOC_KINDS = ("rider", "logistics", "timing")   # документы проекта: технический райдер, логистика, тайминг
+FILE_NAME = re.compile(r"^[a-z0-9]{3,40}-(avatar|cover|rider|hospitality|logistics|timing|f[0-9a-f]{8})\.[a-z0-9]{2,5}$")   # f… — файл рабочей заметки
+DOC_KINDS = ("rider", "hospitality", "logistics", "timing")   # документы проекта: технический и бытовой райдеры, логистика, тайминг
 DOC_EXT = {"pdf", "doc", "docx", "xls", "xlsx", "jpg", "jpeg", "png", "webp", "rtf", "odt", "ods", "txt", "zip"}
 DOC_MAX = 15 * 1024 * 1024
 NOTE_EXT = DOC_EXT | {"gif", "csv", "ppt", "pptx"}
@@ -547,7 +547,7 @@ def apply_op(op: dict) -> dict:
             if not media:
                 p.pop("media", None)
             p["upd"] = datetime.now().isoformat(timespec="seconds")
-        elif op.get("op") == "pfile":   # документ проекта: what — rider | logistics | timing; name — имя файла; data — base64 (пусто — убрать)
+        elif op.get("op") == "pfile":   # документ проекта: what — rider | hospitality | logistics | timing; name — имя файла; data — base64 (пусто — убрать)
             p = data["projects"].get(oid)
             what = str(op.get("what") or "")
             if kind != "projects" or not p or what not in DOC_KINDS:

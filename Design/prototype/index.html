@@ -1307,7 +1307,8 @@ button.wkt-pill.run .wkt-clock::before { content: ""; display: inline-block; wid
 .wkd-meta .wk-datebtn { margin-left: 0; }
 .wkp-lbl { display: block; font-size: 12px; color: var(--ink-3); margin-bottom: 6px; }
 .wkp-dates { display: flex; flex-wrap: wrap; gap: 4px 18px; font-size: 13px; color: var(--muted); } .wkp-dates .wk-datebtn { margin-left: 0; }
-.wkp-docs { display: grid; gap: 10px; }
+#wkpForm { grid-template-columns: minmax(0, 1fr); }
+.wkp-docs { display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
 .wkp-doc > span { border-radius: 10px; }
 .wkv-dlg { width: min(960px, calc(100vw - 32px)); }
 .wkv-frame { width: 100%; height: min(72vh, 900px); border: 1px solid var(--line); border-radius: 12px; background: #f4f3f1; }
@@ -4781,7 +4782,8 @@ document.addEventListener("drop", function (ev) {
   if (WK.projects[id] && WK.projects[id].stage !== st) { wkSetField("projects", id, "stage", st); toast("«" + WK.projects[id].title + "» — " + wkLabel(WK_STAGE, st).toLowerCase()); }
 });
 function wkMedia(p, kind) { return p && p.media && p.media[kind] ? "/api/work/file/" + p.media[kind] : ""; }
-var WKP_DOCS = [["rider", "Технический райдер", '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M9.5 1.8H4.2a1 1 0 00-1 1v10.4a1 1 0 001 1h7.6a1 1 0 001-1V5.1z"/><path d="M9.5 1.8v3.3h3.3M5.6 8h1.6M8.8 8h1.6M5.6 10.6h4.8"/></svg>'],
+var WKP_DOCS = [["rider", "Технический райдер", '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 2v5m0 3v4M8 2v2m0 3v7M12.5 2v7m0 3v2M2 7h3M6.5 4h3M11 9h3"/><path d="M2 7v3h3V7M6.5 4v3h3V4M11 9v3h3V9"/></svg>'],
+  ["hospitality", "Бытовой райдер", '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M9.5 1.8H4.2a1 1 0 00-1 1v10.4a1 1 0 001 1h7.6a1 1 0 001-1V5.1z"/><path d="M9.5 1.8v3.3h3.3M5.6 8h1.6M8.8 8h1.6M5.6 10.6h4.8"/></svg>'],
   ["logistics", "Логистика", '<svg width="17" height="17" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M1.8 4.5h9v7.5h-9zM10.8 7.2h3.2l2.2 2.6V12h-5.4z"/><circle cx="5" cy="13.2" r="1.5" fill="var(--soot, #1c1917)"/><circle cx="13.4" cy="13.2" r="1.5" fill="var(--soot, #1c1917)"/></svg>'],
   ["timing", "Тайминг", '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8.6" r="5.6"/><path d="M8 5.6v3l2 1.4M6.4 1.6h3.2"/></svg>']];
 var WKP_TRASH = '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.8 4.2h10.4M6.4 4.2V2.6h3.2v1.6M4.2 4.2l.7 9.2h6.2l.7-9.2M6.6 6.8v4.2M9.4 6.8v4.2"/></svg>';
@@ -4923,7 +4925,7 @@ function wkFocusBlock(pid) {
   })() : '<div class="wkf-calm">На сегодня срочного нет — просроченных и горящих задач нет.</div>';
   return '<div class="wkm wkf"><div class="wkm-head"><h3>Фокус</h3></div>' + hero + list("Просрочено", over, "over") + list("Сегодня", today) + list("Скоро срок · 3 дня", soon) + '</div>';
 }
-// Окно «Редактировать проект»: название, стадия, даты, фото, документы (райдер, логистика, тайминг)
+// Окно «Редактировать проект»: название, стадия, даты, фото, документы (технический и бытовой райдеры, логистика, тайминг)
 function wkProjEditHtml(pid) {
   var p = WK.projects[pid], ph = function (kind, label) {
     var src = wkMedia(p, kind);
