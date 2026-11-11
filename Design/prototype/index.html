@@ -8780,10 +8780,10 @@ function fmtSphere(fmt) {
   if (!(fmt in FMT_SPHERE)) FMT_SPHERE[fmt] = mTop(mCount(MR.filter(function (e) { return e.format === fmt; }), "sphere"), 1)[0] || "";
   return FMT_SPHERE[fmt];
 }
-function mComp(city, from, to, fmt, genre, win) {
+function mComp(city, from, to, fmt, genre, win, cityIndex) {
   var sph = fmtSphere(fmt), lo = addDays(from, -win), hi = addDays(to, win), idx = {}, same = [];
   daysList(from, to).forEach(function (d) { idx[d] = 0; });
-  (MRV_CITY[city] || []).forEach(function (e) {
+  ((cityIndex || MRV_CITY)[city] || []).forEach(function (e) {
     if (e.date < lo || e.date > hi) return;
     var sim = e.format === fmt ? (genre ? (e.genre === genre ? 1 : 0.6) : 1) : (e.sphere === sph ? 0.3 : 0);
     if (!sim) return;
@@ -10272,7 +10272,7 @@ function geoKm(a, b) {
 // Кандидаты: города списка без этого проекта. «По пути» — город между двумя соседними остановками, куда
 // можно заехать без большого крюка (крюк ≤ 150 км или 35% перегона) и между ними есть свободный день.
 function mCandidates(p) {
-  var stops = []; p.l.forEach(function (e) { var s = stops[stops.length - 1]; if (!s || s.city !== e.city) stops.push({ city: e.city, date: e.date, last: e.date }); else s.last = e.date; });
+  var cityIndex = p.marketCities || MRV_CITY, stops = []; p.l.forEach(function (e) { var s = stops[stops.length - 1]; if (!s || s.city !== e.city) stops.push({ city: e.city, date: e.date, last: e.date }); else s.last = e.date; });
   var out = [];
   MK.cities.forEach(function (c) {
     if (p.cities.indexOf(c) >= 0) return;
@@ -10297,12 +10297,12 @@ function mCandidates(p) {
     if (c0.from) {
       if (c0.from < TODAY) c0.from = TODAY;
       if (c0.to >= c0.from) {
-        var comp = mComp(c, c0.from, c0.to, p.format, "", 3), bd = bestDates(comp, c0.from, c0.to, 1)[0] || daysList(c0.from, c0.to).map(function (d) { return { d: d, v: comp.idx[d] }; }).sort(function (a, b) { return a.v - b.v; })[0];
+        var comp = mComp(c, c0.from, c0.to, p.format, "", 3, cityIndex), bd = bestDates(comp, c0.from, c0.to, 1)[0] || daysList(c0.from, c0.to).map(function (d) { return { d: d, v: comp.idx[d] }; }).sort(function (a, b) { return a.v - b.v; })[0];
         c0.best = bd; c0.sameN = comp.same.filter(function (e) { return e.date >= c0.from && e.date <= c0.to; }).length;
       } else c0.from = null;
     }
-    c0.price = median((MRV_CITY[c] || []).filter(function (e) { return e.format === p.format; }).map(function (e) { return e.pmin; }));
-    c0.events = (MRV_CITY[c] || []).length;
+    c0.price = median((cityIndex[c] || []).filter(function (e) { return e.format === p.format; }).map(function (e) { return e.pmin; }));
+    c0.events = (cityIndex[c] || []).length;
     out.push(c0);
   });
   var rank = { path: 0, start: 1, end: 1, near: 2, far: 3 };
@@ -10965,6 +10965,7 @@ function mProjectDetail(k) {
   var past = MA.filter(function (a) { return aliases.indexOf(a.pk) >= 0; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
   var cities = mUniq(l.concat(past), "city"), fmt = mostOf(l, "format"), genre = mostOf(l, "genre");
   var p = { k: k, l: l, cities: cities, format: fmt, genre: genre, title: mostOf(l, "title") };
+  if (workspace) p.marketCities = MR_CITY;   // база независима от состояния и фильтров открытой ранее афиши
   var cands = mCandidates(p);
   if (S.m.candFor !== k) { S.m.candFor = k; S.m.candQ = ""; S.m.candFo = ""; S.m.candOn = {}; }  // поиск и фильтр «Городов, где его нет» — свои у каждого проекта
   var foN = {}; cands.forEach(function (c) { foN[MK.fo[c.city]] = (foN[MK.fo[c.city]] || 0) + 1; });
@@ -11107,8 +11108,45 @@ function openMDrawer(i) {
 }
 function mGo(patch) { S.m.vfocus = null; for (var k in patch) S.m[k] = patch[k]; S.m.limit = 200; S.m.filter = "all"; buildCitySelect(); render(); window.scrollTo(0, 0); }
 
+// Действия общей карточки доступны и в афише, и в отдельной базе; фильтры рынка остаются у рынка.
+function pjSharedAction(t) {
+  var base = ProjectWorkspace.active(), route = t.getAttribute("data-proute"), card = t.getAttribute("data-vopen") || t.getAttribute("data-vproj"), a = t.getAttribute("data-maction");
+  if (t.hasAttribute("data-fav")) { myToggleFav(t.getAttribute("data-fav"), t.getAttribute("data-title")); return true; }
+  if (route || card) {
+    if (base) { closeDrawer(); if (route) ProjectWorkspace.openAnalysis(route); else ProjectWorkspace.returnToCard(card); return true; }
+    if (t.hasAttribute("data-vopen")) { S.sub.projects = "all"; S.m.project = null; }
+    S.m.anFrom = route && S.m.vproj === route ? route : null;
+    if (route) { S.sub.projects = "tour"; S.m.vproj = null; S.m.project = S.m.psel = route; S.m.candAll = false; }
+    else S.m.vproj = S.m.vsel = card;
+    S.m.datesAll = false; S.m.myEdit = false; S.enter = true; closeDrawer(); render(); window.scrollTo(0, 0); return true;
+  }
+  if (a === "proj-back") {
+    if (base) { closeDrawer(); ProjectWorkspace.returnToCard(S.m.project); }
+    else { S.m.project = null; S.m.anFrom = null; S.m.candAll = false; render(); window.scrollTo(0, 0); }
+    return true;
+  }
+  if (a === "vproj-back") {
+    if (base) { closeDrawer(); ProjectWorkspace.back(); }
+    else { S.m.vproj = null; S.m.myEdit = false; render(); window.scrollTo(0, 0); }
+    return true;
+  }
+  if (a === "cand-all" || a === "dates-all") { S.m[a === "cand-all" ? "candAll" : "datesAll"] = true; render(); return true; }
+  if (base && t.hasAttribute("data-mproj")) { closeDrawer(); ProjectWorkspace.openAnalysis(t.getAttribute("data-mproj")); return true; }
+  if (base && t.hasAttribute("data-mcity-go")) {
+    S.period = "custom"; S.from = t.getAttribute("data-from"); S.to = t.getAttribute("data-to"); S.m.myFormat = t.getAttribute("data-fmt"); S.m.myGenre = t.getAttribute("data-genre"); S.m.day = null; S.view = "city";
+    mGo({ tab: "city", city: t.getAttribute("data-mcity-go"), venue: "" }); return true;
+  }
+  if (t.hasAttribute("data-mopen")) { openMDrawer(+t.getAttribute("data-mopen")); return true; }
+  return false;
+}
+
 $("view").addEventListener("click", function (ev) {
-  if (!isM() || ev.target.closest(".resizer") || ev.target.closest("a")) return;
+  if (ev.target.closest(".resizer") || ev.target.closest("a")) return;
+  if (isM() || ProjectWorkspace.active()) {
+    var shared = ev.target.closest("[data-fav],[data-vproj],[data-vopen],[data-proute],[data-maction],[data-mproj],[data-mopen],[data-mcity-go]");
+    if (shared && pjSharedAction(shared)) return;
+  }
+  if (!isM()) return;
   var pr = ev.target.closest("[data-mprice],[data-mprice-preset],[data-mprice-done],[data-mprice-reset]");
   if (pr) { mPriceAction(pr); return; }
   var t = ev.target.closest("[data-mcur-show],[data-mproject-type],[data-martist-type],[data-fav],[data-my],[data-vproj],[data-vopen],[data-proute],[data-mtab],[data-mf],[data-msort],[data-psort],[data-vsort],[data-fsort],[data-mset],[data-mopen],[data-maction],[data-mclear],[data-msph],[data-mproj],[data-mcity],[data-mcity-go],[data-mweekcity],[data-mwk],[data-vdstep],[data-pseg],[data-pall],[data-ptop],[data-ptopall],.seg-btn,[data-mday],[data-mweek],[data-mvenue],.cell-btn,tr[data-mi]");
@@ -11116,15 +11154,7 @@ $("view").addEventListener("click", function (ev) {
   if (t.hasAttribute("data-mcur-show")) { CUR.filters.show = t.getAttribute("data-mcur-show"); curSave({ op: "filters", filters: CUR.filters }); return; }
   if (t.hasAttribute("data-mproject-type")) { mMarkProject(t); return; }
   if (t.hasAttribute("data-martist-type")) { mMarkArtist(t); return; }
-  if (t.hasAttribute("data-fav")) { myToggleFav(t.getAttribute("data-fav"), t.getAttribute("data-title")); return; }
   if (t.hasAttribute("data-my")) { myAction(t); return; }
-  if (t.hasAttribute("data-vproj") || t.hasAttribute("data-vopen") || t.hasAttribute("data-proute")) {  // страница проекта: витрина или маршрут
-    var vk = t.getAttribute("data-vproj") || t.getAttribute("data-vopen"), rk = t.getAttribute("data-proute");
-    if (t.hasAttribute("data-vopen")) { S.sub.projects = "all"; S.m.project = null; }
-    S.m.anFrom = rk && S.m.vproj === rk ? rk : null;   // «Аналитика» открыта со страницы проекта — «назад» вернёт на неё
-    if (rk) { S.sub.projects = "tour"; S.m.vproj = null; S.m.project = S.m.psel = rk; S.m.candAll = false; } else { S.m.vproj = S.m.vsel = vk; }
-    S.m.datesAll = false; S.m.myEdit = false; S.enter = true; closeDrawer(); render(); window.scrollTo(0, 0); return;
-  }
   if (t.getAttribute("data-maction") === "all-reset") {
     mTabKeys().forEach(function (k) { S.m[k] = M_TAB_DEFAULT[k]; });
     S.q = ""; $("q").value = ""; S.m.limit = 200; S.m.priceOpen = false;
@@ -11154,10 +11184,6 @@ $("view").addEventListener("click", function (ev) {
   else if (t.hasAttribute("data-mday") && S.m.tab === "city") mDayModal(t.getAttribute("data-mday"), t.getAttribute("data-mday-venue"));
   else if (t.hasAttribute("data-mday")) { var iso = t.getAttribute("data-mday"); if (S.m.tab === "city" || S.m.tab === "cal") { S.m.day = S.m.day === iso ? null : iso; render(); var dp = document.querySelector(".day-panel"); if (dp && S.m.day) dp.scrollIntoView({ block: "nearest", behavior: "smooth" }); } else { S.period = "custom"; S.from = S.to = iso; mGo({ tab: "table" }); } }
   else if (t.getAttribute("data-maction") === "day-close") { S.m.day = null; render(); }
-  else if (t.getAttribute("data-maction") === "proj-back") { S.m.project = null; S.m.anFrom = null; S.m.candAll = false; render(); window.scrollTo(0, 0); }
-  else if (t.getAttribute("data-maction") === "vproj-back") { S.m.vproj = null; S.m.myEdit = false; render(); window.scrollTo(0, 0); }
-  else if (t.getAttribute("data-maction") === "cand-all") { S.m.candAll = true; render(); }
-  else if (t.getAttribute("data-maction") === "dates-all") { S.m.datesAll = true; render(); }
   else if (t.hasAttribute("data-msph")) { var sp = t.getAttribute("data-msph"); S.m.openSph = S.m.openSph === sp ? null : sp; render(); }
   else if (t.hasAttribute("data-mproj")) { S.sub.projects = "tour"; S.m.project = S.m.psel = t.getAttribute("data-mproj"); S.m.candAll = false; S.m.datesAll = false; S.m.tab = "projects"; S.enter = true; closeDrawer(); render(); window.scrollTo(0, 0); }
   else if (t.hasAttribute("data-mcity-go")) { S.period = "custom"; S.from = t.getAttribute("data-from"); S.to = t.getAttribute("data-to"); S.m.myFormat = t.getAttribute("data-fmt"); S.m.myGenre = t.getAttribute("data-genre"); S.m.day = null; mGo({ tab: "city", city: t.getAttribute("data-mcity-go"), venue: "" }); }
@@ -11191,7 +11217,6 @@ $("view").addEventListener("click", function (ev) {
     mGo(p);
     if (cat === "Не определено" && dim === "genre") { S.m.filter = "nogenre"; render(); }
   }
-  else if (t.hasAttribute("data-mopen")) openMDrawer(+t.getAttribute("data-mopen"));
   else if (t.hasAttribute("data-mi")) openMDrawer(+t.getAttribute("data-mi"));
 });
 $("view").addEventListener("change", function (ev) {
@@ -11240,11 +11265,11 @@ function mMarkVenue(el) {
   curSave({ op: "venue", city: city, venue: venue, type: type }, venue + " — " + (type ? VTYPE[type] : "авто"));
 }
 $("drawer").addEventListener("click", function (ev) {
-  if (!isM()) return;
+  if (!isM() && !ProjectWorkspace.active()) return;
   var t = ev.target.closest("[data-drawer],[data-mproject-type],[data-martist-type],[data-mproj],[data-fav]"); if (!t) return;
+  if (pjSharedAction(t)) return;
   if (t.hasAttribute("data-mproject-type")) { mMarkProject(t); return; }
   if (t.hasAttribute("data-martist-type")) { mMarkArtist(t); return; }
-  if (t.hasAttribute("data-fav")) { myToggleFav(t.getAttribute("data-fav"), t.getAttribute("data-title")); return; }
   if (t.hasAttribute("data-mproj")) {  // «Открыть проект» в карточке мероприятия — раздел «Проекты», карточка проекта
     S.sub.projects = "tour"; S.m.project = S.m.psel = t.getAttribute("data-mproj"); S.m.candAll = false; S.m.datesAll = false; S.m.tab = "projects";
     S.enter = true; closeDrawer(); render(); window.scrollTo(0, 0); return;
@@ -11255,7 +11280,7 @@ $("drawer").addEventListener("click", function (ev) {
   else if (a === "msave") mSaveForm();
   else if (a === "mrevert") { S.m.editing = false; curSave({ op: "revert", key: e.key }, "Вернули данные парсера"); showDrawer(mDrawer(MR[S.m.sel])); }
 });
-$("drawer").addEventListener("change", function (ev) { if (isM() && ev.target.hasAttribute("data-mvenue-type")) mMarkVenue(ev.target); });
+$("drawer").addEventListener("change", function (ev) { if ((isM() || ProjectWorkspace.active()) && ev.target.hasAttribute("data-mvenue-type")) mMarkVenue(ev.target); });
 
 // ---------- Рынок: ручная разметка, фильтр «гастроль / местное / цена», правки мероприятий, архив гастролей
 // Разметка хранится в config/market_curation.json: прототип, открытый через приложение (http://127.0.0.1:5050/proto/),

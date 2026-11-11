@@ -1,12 +1,13 @@
 /* Постоянная база репертуара. Афиша, архив и сбор сайтов используют прежние данные и обработчики. */
 (function (g) {
   'use strict';
-  var state = { scope: 'mine', q: '', format: '', status: '', only: '', order: 'title', tabs: {}, periods: {}, pending: '', pendingTab: '', pendingAnalysis: '', busy: false };
+  var state = { scope: 'mine', q: '', format: '', status: '', only: '', order: 'title', tabs: {}, returnTabs: {}, periods: {}, pending: '', pendingTab: '', pendingAnalysis: '', busy: false };
   var editor = null, draftTimer = null, searchTimer = null, draftSession;
   try { draftSession = sessionStorage.getItem('ticketmonitor.projectDraftSession'); if (!draftSession) { draftSession = crypto.randomUUID(); sessionStorage.setItem('ticketmonitor.projectDraftSession', draftSession); } } catch (_) { draftSession = String(Date.now()) + Math.random(); }
   var STAGES = Object.fromEntries(WorkProcesses.stages);
   function active() { return S.view === 'projectbase'; }
-  function key() { return S.sub.projects === 'tour' ? S.m.project : S.m.vproj; }
+  function projectKey(k) { var r = myRec(k); return r ? r.keys[0] : k; }
+  function key() { return projectKey(S.sub.projects === 'tour' ? S.m.project : S.m.vproj); }
   function rec() { return myRec(key()); }
   function button(action, label, cls, attrs) { return '<button type="button" class="' + (cls || 'btn-ghost') + '" data-pw="' + action + '"' + (attrs || '') + '>' + label + '</button>'; }
   function val(v) { return esc(v || '—'); }
@@ -14,7 +15,9 @@
   function leads(id) { return Object.keys(WK.leads || {}).map(function (k) { return Object.assign({ id: k }, WK.leads[k]); }).filter(function (r) { return id && r.pj === id; }); }
   function norm(s) { return String(s || '').toLowerCase().replace(/ё/g, 'е'); }
   function redraw() { var y = scrollY; render(); scrollTo(0, y); }
-  function open(k, tab) { state.pending = state.pendingTab = state.pendingAnalysis = ''; state.tabs[k] = tab || 'profile'; S.view = 'projectbase'; S.sub.projects = 'all'; S.m.project = null; S.m.vproj = k; render(); scrollTo(0, 0); }
+  function open(k, tab) { k = projectKey(k); state.pending = state.pendingTab = state.pendingAnalysis = ''; state.tabs[k] = tab || 'profile'; S.view = 'projectbase'; S.sub.projects = 'all'; S.m.project = null; S.m.vproj = k; S.m.datesAll = false; S.m.myEdit = false; render(); scrollTo(0, 0); }
+  function back() { state.pending = state.pendingTab = state.pendingAnalysis = ''; S.m.vproj = S.m.project = S.m.anFrom = null; S.m.myEdit = false; S.sub.projects = 'all'; S.view = 'projectbase'; render(); scrollTo(0, 0); }
+  function returnToCard(k) { if (!k) { back(); return; } k = projectKey(k); S.m.anFrom = null; open(k, state.returnTabs[k] || 'analysis'); }
   function tabOf(k) { return state.tabs[k] || 'profile'; }
   function tabs(k) { var t = tabOf(k); return '<div class="pw-tabs" role="tablist" aria-label="Карточка проекта">' + [['profile', 'Профиль'], ['dates', 'Афиша'], ['analysis', 'Аналитика'], ['work', 'Связанные работы']].map(function (x) { return button('tab', esc(x[1]), 'pw-tab', ' role="tab" data-tab="' + x[0] + '" aria-selected="' + (t === x[0]) + '"'); }).join('') + '</div>'; }
   function currentPeriod() { var k = key() || ''; return state.periods[k] || { from: '', to: '' }; }
@@ -67,7 +70,9 @@
     return '<div class="pw-connected">' + s + '</div>';
   }
   function analysisTools(o) {
-    return '<p class="sub2">Маршрут, цены, площадки и официальный сайт открываются в привычной аналитике проекта.</p><div class="pw-side-actions">' + AN_TABS.map(function (x) { return button('analysis-open', esc(x[1]), 'btn-ghost', ' data-tab="' + x[0] + '"'); }).join('') + '</div>' +
+    var empty = !o.l.some(inPeriod);
+    return (empty ? '<p class="note" role="status">' + (o.l.length ? 'За выбранный период нет мероприятий. Выберите «Все даты», чтобы открыть аналитику.' : 'В афише пока нет мероприятий этого проекта. Можно подключить официальный сайт.') + '</p>' : '') +
+      '<p class="sub2">Маршрут, цены, площадки и официальный сайт открываются в привычной аналитике проекта.</p><div class="pw-side-actions">' + AN_TABS.map(function (x) { return button('analysis-open', esc(x[1]), 'btn-ghost', ' data-tab="' + x[0] + '"'); }).join('') + '</div>' +
       (periodActive() ? '<p class="sub2">Период: ' + esc(periodLabel()) + '</p>' + button('period-clear', 'Все даты', 'pj-plain') : '') +
       (!o.l.length ? siteSection(o.k, o.title) : '');
   }
@@ -81,10 +86,13 @@
     return o.hero + '<div class="pj-grid"><div class="pj-main">' + o.list + '</div><aside class="pj-aside" aria-label="О проекте">' + o.aside + extra + '</aside></div>';
   }
   function openAnalysis(k, tab) {
-    state.tabs[k] = 'analysis'; S.view = 'projectbase'; S.sub.projects = 'tour'; S.m.anFrom = k; S.m.vproj = null; S.m.project = k; S.m.anTab = tab || 'route'; render(); scrollTo(0, 0);
+    k = projectKey(k); if (S.sub.projects !== 'tour' || !S.m.project) state.returnTabs[k] = tabOf(k);
+    state.tabs[k] = 'analysis'; S.view = 'projectbase'; S.sub.projects = 'tour'; S.m.anFrom = k; S.m.vproj = null; S.m.project = k; S.m.psel = k; S.m.candAll = false; S.m.datesAll = false; S.m.anTab = tab || 'route'; render(); scrollTo(0, 0);
   }
   function emptyAnalysis(k) {
-    S.m.project = null; S.m.vproj = k; S.sub.projects = 'all'; state.tabs[k] = 'analysis'; return mShowcaseDetail(k);
+    k = projectKey(k); S.m.project = null; S.m.vproj = k; S.sub.projects = 'all'; state.tabs[k] = 'analysis';
+    var id = myFind(k); if (id) history.replaceState(null, '', '#projectbase:card:' + id + ':analysis');
+    return mShowcaseDetail(k);
   }
   function database() {
     var market = S.view === 'touring' || state.scope === 'market', fav = S.view === 'favorites';
@@ -114,7 +122,7 @@
   }
   function renderWorkspace() {
     if (!MY_READY) return head('Моя база', '') + '<p class="sub">Загружаем вашу базу…</p>' + button('reload', 'Повторить загрузку', 'btn-ghost');
-    if (state.pending) { var r = MYP.projects[state.pending]; if (r) { S.m.vproj = r.keys[0]; S.m.project = null; S.sub.projects = 'all'; if (state.pendingAnalysis) { S.m.project = r.keys[0]; S.m.vproj = null; S.sub.projects = 'tour'; S.m.anTab = state.pendingAnalysis; state.pendingAnalysis = ''; } if (state.pendingTab) { state.tabs[r.keys[0]] = state.pendingTab; state.pendingTab = ''; } } else { var id = state.pending; state.pending = ''; return head('Проект не найден', '') + '<p>Карточка ' + esc(id) + ' недоступна.</p>' + button('back', 'Все проекты', 'btn-ghost'); } state.pending = ''; }
+    if (state.pending) { var r = MYP.projects[state.pending]; if (r) { S.m.vproj = r.keys[0]; S.m.project = null; S.sub.projects = 'all'; if (state.pendingAnalysis) { S.m.project = r.keys[0]; S.m.vproj = null; S.sub.projects = 'tour'; S.m.anFrom = r.keys[0]; S.m.anTab = state.pendingAnalysis; state.pendingAnalysis = ''; } if (state.pendingTab) { state.tabs[r.keys[0]] = state.pendingTab; state.pendingTab = ''; } } else { var id = state.pending; state.pending = ''; return head('Проект не найден', '') + '<p>Карточка ' + esc(id) + ' недоступна.</p>' + button('back', 'Все проекты', 'btn-ghost'); } state.pending = ''; }
     if (S.sub.projects === 'tour' && S.m.project) { state.tabs[S.m.project] = 'analysis'; return mProjectDetail(S.m.project); }
     if (S.m.vproj) return mShowcaseDetail(S.m.vproj);
     return database();
@@ -161,7 +169,7 @@
   async function action(b) {
     var a = b.dataset.pw, k = key();
     if (a === 'reload') await myLoad();
-    else if (a === 'back') { S.m.vproj = S.m.project = null; S.view = 'projectbase'; S.sub.projects = 'all'; state.pending = ''; render(); scrollTo(0, 0); }
+    else if (a === 'back') back();
     else if (a === 'scope') { state.scope = b.dataset.scope; S.view = 'projectbase'; S.sub.projects = 'all'; S.m.project = S.m.vproj = null; state.limit = 150; redraw(); }
     else if (a === 'open') open(b.dataset.key);
     else if (a === 'changes') { open(b.dataset.key, 'dates'); S.m.pjMode = 'chg'; redraw(); }
@@ -210,7 +218,7 @@
   });
   window.addEventListener('beforeunload', function (e) { storeDraft(); if (editor && (dirty() || editor.busy)) { e.preventDefault(); e.returnValue = ''; } });
   function relatedLine(kind, id) { var names = Object.keys(MYP.projects).filter(function (pid) { return linkedIds(MYP.projects[pid], kind).indexOf(id) >= 0 || leads(pid).some(function (l) { return kind === 'lists' ? l.list === id : kind === 'work' && l.project === id; }); }).map(function (pid) { var r = MYP.projects[pid]; return button('open', esc(r.title), 'pj-plain', ' data-key="' + esc(r.keys[0]) + '"'); }); return names.length ? '<div class="wk-pick">Репертуар: ' + names.join(' · ') + '</div>' : ''; }
-  g.ProjectWorkspace = { open: open, relatedLine: relatedLine, active: active, render: renderWorkspace, card: card, openAnalysis: openAnalysis, emptyAnalysis: emptyAnalysis, inPeriod: inPeriod, periodActive: periodActive, periodLabel: periodLabel, clearPeriod: clearPeriod,
+  g.ProjectWorkspace = { open: open, back: back, returnToCard: returnToCard, relatedLine: relatedLine, active: active, render: renderWorkspace, card: card, openAnalysis: openAnalysis, emptyAnalysis: emptyAnalysis, inPeriod: inPeriod, periodActive: periodActive, periodLabel: periodLabel, clearPeriod: clearPeriod,
     editorOpened: editorOpened, editorBusy: function () { return editor && editor.busy; }, editorRevision: function () { return editor ? editor.rev : 0; }, profileVersion: function(k, fallback) { return editor && editor.key === k ? editor.rev : fallback; }, editorSaving: editorSaving, editorDone: editorDone, closeDialog: closeDialog, saved: saved, saveError: saveError,
     hash: function () {
       if (!active()) return null;
