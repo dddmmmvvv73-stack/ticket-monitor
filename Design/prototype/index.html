@@ -13040,9 +13040,16 @@ function plCityVenues(c) {
     return { name: v, cap: cp ? cp.cap : null, src: cp ? cp.src : "", rent: (PLAN.venues[plVenueKey(c, v)] || {}).rent, book: book[v] ? book[v].id : "" };
   }).sort(function (a, b) { return (b.cap || 0) - (a.cap || 0); });
 }
+// Пустой «Проект в афише» — сверяем точное название подбора. Явное название всегда приоритетнее.
+function tbProjectKey(list) { return canonPk(projKey(String(list.project || "").trim() || list.title || "")); }
+function tbAfishaNotice(L, A) {
+  var source = String(L.project || "").trim() || L.title || "", n = A.rows.filter(function (r) { return r.st !== "free"; }).length;
+  if (!A.matched) return '<div class="note" role="status">В афише и архиве не найден проект «' + esc(source) + '». Фильтр «Не были и не стоят» не может проверить выступления артиста. Нажмите «Изменить» и укажите «Проект в афише»; если данных ещё нет — добавьте афишу в карточке проекта.</div>';
+  return '<div class="tb-info"><span>Сверка с афишей: <b>' + esc(source) + '</b> · ' + A.nb + ' дат в выбранном сезоне · ' + n + ' городов заняты или были недавно</span></div>';
+}
 // Сведение: статус каждого города, ближайший город гастролей, логистика
 function tbAnalyze(list, p) {
-  var rg = mRange(), from = rg[0], to = rg[1], key = list.project ? canonPk(projKey(list.project)) : "";
+  var rg = mRange(), from = rg[0], to = rg[1], key = tbProjectKey(list);
   var banFrom = (function () { var d = new Date(from + "T00:00:00Z"); d.setUTCMonth(d.getUTCMonth() - (plCfg().ban_months || 13)); return d.toISOString().slice(0, 10); })();
   var prod = {}, base = {}, recent = {}, stops = [], out = 0;
   (list.rows || []).forEach(function (r) {
@@ -13051,14 +13058,15 @@ function tbAnalyze(list, p) {
     (prod[r.city] = prod[r.city] || []).push(r);
     if (r.date) stops.push({ city: r.city, date: r.date, src: "prod" });
   });
-  var nb = 0;
+  var nb = 0, matched = 0;
   if (key) {
     MR.forEach(function (e) {
       if (e.pk !== key || e.offList) return;
+      matched++;
       if (e.date >= from && e.date <= to) { (base[e.city] = base[e.city] || []).push(e); stops.push({ city: e.city, date: e.date, src: "base" }); nb++; }
       else if (e.date < from && e.date >= banFrom) (recent[e.city] = recent[e.city] || []).push(e.date);
     });
-    MA.forEach(function (a) { if (a.pk === key && a.date >= banFrom && a.date < from) (recent[a.city] = recent[a.city] || []).push(a.date); });
+    MA.forEach(function (a) { if (canonPk(a.pk) !== key) return; matched++; if (a.date >= banFrom && a.date < from) (recent[a.city] = recent[a.city] || []).push(a.date); });
   }
   stops.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
   var uni = {}; (MK.cities || []).forEach(function (c) { uni[c] = 1; });
@@ -13082,7 +13090,7 @@ function tbAnalyze(list, p) {
       pop: pop, venues: vs, maxCap: vs.length && vs[0].cap ? vs[0].cap : null, near: near, win: win, comp: comp, logi: near ? tbLogi(near.d) : "" });
   });
   var baseOnly = Object.keys(base).filter(function (c) { return !prod[c]; });
-  return { rows: rows, stops: stops, key: key, nb: nb, out: out, baseOnly: baseOnly, from: from, to: to };
+  return { rows: rows, stops: stops, key: key, nb: nb, matched: matched, out: out, baseOnly: baseOnly, from: from, to: to };
 }
 function tbFilter(rows, p) {   // фильтры списка и карты; города гастролей (продюсер, база) не скрываются областями
   var n = function (v) { return v == null || v === "" ? null : planNum(v); };
@@ -13140,7 +13148,7 @@ function tbEditor(d) {
     }).join("") + '</tbody></table></section>' : '';
   return dl + '<section class="card pl-card tb-editor"><div class="tb-meta pl-flat">' +
       '<label class="pl-lab">Название <input class="pl-in pl-text" id="tbTitle" value="' + esc(d.title || "") + '" placeholder="например, «Призрак Оперы — сезон 26/27»" style="min-width:280px"></label>' +
-      '<label class="pl-lab">Проект в афише <input class="pl-in pl-text" id="tbProject" list="tbProjList" value="' + esc(d.project || "") + '" placeholder="название, как в «Мероприятиях»" style="min-width:260px" title="По нему ищем даты проекта в нашей базе касс"></label></div>' +
+      '<label class="pl-lab">Проект в афише <input class="pl-in pl-text" id="tbProject" list="tbProjList" value="' + esc(d.project || "") + '" placeholder="пусто — используем название подбора" style="min-width:260px" title="Точное название из афиши. Если пусто, ищем по названию подбора; опечатки и другие программы нужно связать явно."></label></div>' +
     // список продюсера пока скрыт (решение пользователя 28.10): новый артист — сразу на экран подбора, с гонораром
     '<div class="tb-meta pl-flat">' +
       '<label class="pl-lab">Гонорар, ₽ <input class="pl-in" id="tbFee" inputmode="numeric" value="' + esc((d.econ || {}).fee ? plFmt(d.econ.fee) : "") + '" placeholder="например, 600 000" style="width:140px;text-align:left"></label>' +
@@ -13154,7 +13162,7 @@ function tbResults(L) {
     var A0 = tbAnalyze(L, Object.assign({}, p, { all: false })), P0 = tbPick(L, A0);
     if (typeof tbShareMarks === "function") tbShareMarks(A0);
     S.pl.tbCtx = { A: A0, p: p, P: P0 };
-    return tbEconHtml(L, t.list, P0) + tbPickView(L, A0, P0, p);
+    return tbEconHtml(L, t.list, P0) + tbAfishaNotice(L, A0) + tbPickView(L, A0, P0, p);
   }
   if (!PL_PRODUCER) { S.pl.tbCtx = { p: p }; return tbEconHtml(L, t.list, null) + '<div class="empty" style="margin-top:16px"><h2>Впишите гонорар</h2><p style="margin:0">Как только будет гонорар, здесь появятся свободные города, где концерт окупается, и вкладка «Предложение».</p></div>'; }
   var A = tbAnalyze(L, p), all = A.rows, vis = tbFilter(all, p);
@@ -13618,7 +13626,7 @@ function tbFee(L) { return !!(L && L.econ && planNum(L.econ.fee) > 0); }
 var PL_PRODUCER = false;   // экран «списка продюсера» (артист без гонорара) — скрыт по решению пользователя 28.10; true — вернуть
 function tbFormat(L) {   // формат для цены города: вписанный в списке, иначе — как у проекта в афише, иначе «Концерт»
   if (L.format) return L.format;
-  var key = L.project ? canonPk(projKey(L.project)) : "";
+  var key = tbProjectKey(L);
   return (key ? mostOf(MR.filter(function (e) { return e.pk === key; }), "format") : "") || "Концерт";
 }
 function tbCmp(fmt) {   // гастроли того же формата с ценами: по городам и по областям (афиша + архив); кэш до правок разметки
