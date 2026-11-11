@@ -35,14 +35,15 @@ import re
 import secrets
 from datetime import datetime
 
-from competitors.storage import CONFIG_DIR, load_json, save_json
+from competitors.storage import CONFIG_DIR, JsonLock, load_json, save_json
 
 FILE = CONFIG_DIR / "my_projects.json"
+_lock = JsonLock(lambda: FILE)
 MEDIA_DIR = CONFIG_DIR / "project_media"
 MEDIA_KINDS = ("avatar", "cover")
 MEDIA_MAX = 3 * 1024 * 1024   # байт после декодирования — прототип присылает уже уменьшенное (~100–400 КБ)
 MEDIA_TYPES = {b"\xff\xd8\xff": "jpg", b"\x89PNG": "png", b"RIFF": "webp"}
-MEDIA_NAME = re.compile(r"^p[0-9a-z]{1,20}-(avatar|cover)\.(jpg|png|webp)$|^p[0-9a-z]{1,20}-r[0-9a-f]{8}\.[a-z0-9]{2,5}$")
+MEDIA_NAME = re.compile(r"^p[0-9a-z]{1,20}-(avatar|cover)(-[0-9a-f]{8})?\.(jpg|png|webp)$|^p[0-9a-z]{1,20}-r[0-9a-f]{8}\.[a-z0-9]{2,5}$")
 RIDER_EXT = {"pdf", "doc", "docx", "xls", "xlsx", "jpg", "jpeg", "png", "webp", "rtf", "odt", "ods", "txt", "zip"}
 RIDER_MAX = 15 * 1024 * 1024   # райдер файлом — из карточки записи воронки «Процессов» (PROCESSES_PLAN.md, 10.7)
 _ID = re.compile(r"^p[0-9a-z]{1,20}$")
@@ -55,9 +56,13 @@ class MyProjectsError(ValueError):
     pass
 
 
+class MyProjectsConflict(MyProjectsError):
+    pass
+
+
 def load() -> dict:
     data = load_json(FILE, {})
-    return {"projects": data.get("projects") or {}}
+    return {**data, "projects": data.get("projects") or {}}
 
 
 def _text(v, limit: int, what: str) -> str:
@@ -123,14 +128,17 @@ def _rider_file(pid: str, op: dict) -> dict:
     raw = base64.b64decode(m.group(1))
     if not raw or len(raw) > RIDER_MAX:
         raise MyProjectsError("райдер: файл до 15 МБ")
+    kind = op.get("rider_kind") or "other"
+    if kind not in ("technical", "hospitality", "other"):
+        raise MyProjectsError("неизвестный вид райдера")
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
     fname = f"{pid}-r{secrets.token_hex(4)}.{ext}"
     (MEDIA_DIR / fname).write_bytes(raw)
-    return {"label": name, "file": fname}
+    return {"label": name, "file": fname, "kind": kind}
 
 
 def _empty(p: dict) -> bool:
-    return not (p.get("note") or p.get("links") or p.get("contacts") or any((p.get("profile") or {}).values()) or p.get("media")
+    return not (p.get("saved") or p.get("note") or p.get("links") or p.get("contacts") or any((p.get("profile") or {}).values()) or p.get("media")
                 or p.get("rating") or p.get("site"))
 
 
@@ -155,7 +163,7 @@ def _profile(op: dict) -> dict:
             "crew": _text(op.get("crew"), LIMITS["crew"], "состав на выезде"), "contact": _text(op.get("contact"), LIMITS["contact"], "контакт"),
             "phone": _text(op.get("phone"), LIMITS["phone"], "телефон"), "site": _url(op.get("site")),
             "vk": _url(op.get("vk")), "instagram": _url(op.get("instagram")), "tg": _url(op.get("tg")),
-            "fee": _text(op.get("fee"), LIMITS["fee"], "гонорар"), "riders": _links(op.get("riders") or [])}
+            "fee": _text(op.get("fee"), LIMITS["fee"], "гонорар"), "format": _text(op.get("format"), 120, "формат"), "riders": _links(op.get("riders") or [])}
 
 
 def _media(pid: str, p: dict, kind: str, data: str) -> None:
@@ -174,13 +182,12 @@ def _media(pid: str, p: dict, kind: str, data: str) -> None:
         ext = next((e for sig, e in MEDIA_TYPES.items() if raw.startswith(sig)), None)
         if not ext:
             raise MyProjectsError("фото: файл не похож на изображение")
-    for old in MEDIA_DIR.glob(f"{pid}-{kind}.*"):
-        old.unlink()
+    # Прежние версии остаются для журнала и резервных копий.
     if not data:
         media.pop(kind, None)
         return
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
-    name = f"{pid}-{kind}.{ext}"
+    name = f"{pid}-{kind}-{secrets.token_hex(4)}.{ext}"
     (MEDIA_DIR / name).write_bytes(raw)
     media[kind] = f"{name}?v={int(datetime.now().timestamp())}"
 
@@ -226,9 +233,20 @@ def _site(p: dict, op: dict, key: str) -> str:
 
 
 def apply_op(op: dict) -> tuple[dict, str]:
+    with _lock:
+        return _apply_op(op)
+
+
+def _apply_op(op: dict) -> tuple[dict, str]:
     """Одна правка от прототипа; возвращает всё хранилище и подпись для журнала."""
     data, kind = load(), op.get("op")
     projects = data["projects"]
+    current_id = find(projects, str(op.get("key") or "")) or str(op.get("id") or "")
+    current = projects.get(current_id)
+    if current and kind == "profile" and "expected" not in op:
+        raise MyProjectsConflict("Карточка обновлена. Перечитайте данные перед сохранением; ваш черновик останется.")
+    if current and "expected" in op and op["expected"] != current.get("rev", 0):
+        raise MyProjectsConflict("Карточку изменили в другом окне. Перечитайте данные и примените ваш черновик повторно.")
     if kind in ("fav", "notes", "profile", "media", "coverpos", "rating", "site", "siteconfirm", "sitepick", "siteoff"):
         key = _key(op.get("key"))
         pid = find(projects, key)
@@ -246,10 +264,6 @@ def apply_op(op: dict) -> tuple[dict, str]:
             p["fav"] = bool(op.get("fav"))
             if p["fav"]:
                 p["snap"] = _snap(op.get("snap") or [])
-            elif _empty(p) and not _linked(pid):
-                del projects[pid]
-                save_json(FILE, data)
-                return data, f"«{p['title']}» — убрано из избранного"
             note = f"«{p['title']}» — " + ("в избранном" if p["fav"] else "убрано из избранного")
         elif kind in ("profile", "media", "coverpos", "rating", "site", "siteconfirm", "sitepick", "siteoff"):
             if kind.startswith("site"):
@@ -269,8 +283,21 @@ def apply_op(op: dict) -> tuple[dict, str]:
                 p["cover_y"] = round(float(y), 1)
                 note = f"«{p['title']}» — положение фона"
             elif kind == "profile":   # профиль страницы проекта + прежние записи (заметка, ссылки, контакты) — одной правкой
+                name = _text(op.get("name", p["title"]), LIMITS["title"], "название")
+                if not name:
+                    raise MyProjectsError("нужно название проекта")
+                if name != p["title"]:
+                    from competitors.curation import project_key
+                    new_key = project_key(name)
+                    other = find(projects, new_key)
+                    if other and other != pid:
+                        raise MyProjectsError("Карточка с таким названием уже существует")
+                    if new_key and new_key not in p["keys"]:
+                        p["keys"].append(new_key)
+                    p["title"] = name
+                p["saved"] = True
                 files = [r for r in (p.get("profile") or {}).get("riders", []) if r.get("file")]   # райдеры-файлы правятся отдельно
-                p["profile"] = _profile(op)
+                p["profile"] = {**(p.get("profile") or {}), **_profile(op)}
                 p["profile"]["riders"] += files
                 p["note"] = _text(op.get("note"), LIMITS["note"], "заметка")
                 p["contacts"] = _text(op.get("contacts"), LIMITS["contacts"], "контакты")
@@ -279,10 +306,6 @@ def apply_op(op: dict) -> tuple[dict, str]:
             else:
                 _media(pid, p, str(op.get("kind") or ""), str(op.get("data") or ""))
                 note = f"«{p['title']}» — фото " + ("обновлено" if op.get("data") else "убрано")
-            if not p["fav"] and _empty(p) and not _linked(pid):
-                del projects[pid]
-                save_json(FILE, data)
-                return data, note
         else:
             p["note"] = _text(op.get("note"), LIMITS["note"], "заметка")
             p["contacts"] = _text(op.get("contacts"), LIMITS["contacts"], "контакты")
@@ -290,13 +313,13 @@ def apply_op(op: dict) -> tuple[dict, str]:
             if created and not _empty(p):  # начали записи о проекте — он сам попадает в избранное
                 p["fav"] = True
                 p["snap"] = _snap(op.get("snap") or [])
-            if not p["fav"] and _empty(p) and not _linked(pid):
-                del projects[pid]
-                save_json(FILE, data)
-                return data, f"«{p['title']}» — записи удалены"
             note = f"«{p['title']}» — записи сохранены"
-    elif kind == "create":   # «Создать карточку» из записи воронки: пустая карточка, связь — у записи (leads.pj)
-        key = _key(op.get("key"))
+    elif kind == "create":   # из воронки или непосредственно из «Моей базы»
+        from competitors.curation import project_key
+        title = _text(op.get("title"), LIMITS["title"], "название")
+        if op.get("manual") and not title:
+            raise MyProjectsError("нужно название проекта")
+        key = _key((project_key(title) or "manual:" + str(op.get("id") or "")) if op.get("manual") else op.get("key"))
         pid = find(projects, key)
         if not pid:
             pid = str(op.get("id") or "")
@@ -305,8 +328,37 @@ def apply_op(op: dict) -> tuple[dict, str]:
             projects[pid] = {"title": _text(op.get("title"), LIMITS["title"], "название") or key, "keys": [key], "fav": False,
                              "note": "", "links": [], "contacts": "", "snap": None, "at": _now()}
         p = projects[pid]
-        note = f"«{p['title']}» — карточка проекта для воронки"
-    elif kind in ("fee", "rider", "rider-del"):   # из воронки «Процессов»: только гонорар / только райдеры — остальной профиль не трогаем
+        if op.get("manual"):
+            p["saved"] = True
+        note = f"«{p['title']}» — карточка проекта создана"
+    elif kind in ("register", "connections"):
+        key = _key(op.get("key"))
+        pid = find(projects, key)
+        if not pid:
+            pid = str(op.get("id") or "")
+            if not _ID.match(pid) or pid in projects:
+                raise MyProjectsError("неверный номер карточки")
+            projects[pid] = {"title": _text(op.get("title"), LIMITS["title"], "название") or key, "keys": [key], "at": _now()}
+        p = projects[pid]
+        p["saved"] = True
+        if kind == "connections":
+            target, oid, on = op.get("kind"), str(op.get("target") or ""), op.get("on", True)
+            if target not in ("lists", "tours", "work") or not re.fullmatch(r"[a-z0-9]{1,24}", oid):
+                raise MyProjectsError("неверная связь проекта")
+            links = p.setdefault("connections", {}).setdefault(target, [])
+            if on:
+                from competitors import planning, work
+                records = work.load()["projects"] if target == "work" else planning.load()[target]
+                if oid not in records:
+                    raise MyProjectsError("связанная запись больше не существует")
+                if oid not in links:
+                    if len(links) >= 300:
+                        raise MyProjectsError("до 300 связей каждого вида")
+                    links.append(oid)
+            elif oid in links:
+                links.remove(oid)
+        note = f"«{p['title']}» — " + ("связи обновлены" if kind == "connections" else "в моей базе")
+    elif kind in ("fee", "rider", "rider-del"):
         pid = str(op.get("id") or "")
         if pid not in projects:
             raise MyProjectsError("нет такой карточки проекта")
@@ -316,16 +368,23 @@ def apply_op(op: dict) -> tuple[dict, str]:
             pr["fee"] = _text(op.get("fee"), LIMITS["fee"], "гонорар")
             note = f"«{p['title']}» — гонорар из воронки"
         elif kind == "rider":
-            if len(pr.setdefault("riders", [])) >= LIMITS["links"]:
+            if len(pr.setdefault("riders", [])) >= LIMITS["links"] and not op.get("replace"):
                 raise MyProjectsError(f"райдеры: не больше {LIMITS['links']}")
-            pr["riders"].append(_rider_file(pid, op))
+            replace = str(op.get("replace") or "")
+            if replace and not any(r.get("file") == replace for r in pr["riders"]):
+                raise MyProjectsError("заменяемый райдер больше не существует")
+            new = _rider_file(pid, op)
+            if replace:
+                pr["riders"] = [new if r.get("file") == replace else r for r in pr["riders"]]
+            else:
+                pr["riders"].append(new)
             note = f"«{p['title']}» — райдер загружен"
         else:
             f = str(op.get("file") or "")
             if not MEDIA_NAME.match(f) or not any(r.get("file") == f for r in pr.get("riders", [])):
                 raise MyProjectsError("нет такого файла райдера")
             pr["riders"] = [r for r in pr["riders"] if r.get("file") != f]
-            (MEDIA_DIR / f).unlink(missing_ok=True)
+            # Файл остаётся на диске: возврат через журнал восстанавливает и рабочую ссылку.
             note = f"«{p['title']}» — райдер удалён"
     elif kind in ("seen", "link", "skip"):
         pid = str(op.get("id") or "")
@@ -352,5 +411,58 @@ def apply_op(op: dict) -> tuple[dict, str]:
     else:
         raise MyProjectsError("неизвестная операция")
     p["upd"] = _now()
+    p["rev"] = p.get("rev", 0) + 1
     save_json(FILE, data)
     return data, note
+
+
+def connect_existing(write: bool = False) -> list[dict]:
+    """Связи без повторного ввода: только однозначные ключи артиста или уже заданная воронка. Сначала dry run."""
+    import copy
+    from competitors import curation, journal, planning, work
+    with _lock:
+        data, plan, wk = load(), planning.load(), work.load()
+        before = copy.deepcopy(data["projects"])
+        owners = {}
+        for pid, p in data["projects"].items():
+            for key in p.get("keys", []):
+                owners.setdefault(key, set()).add(pid)
+        def match(name):
+            ids = owners.get(curation.project_key(name), set())
+            return next(iter(ids)) if len(ids) == 1 else None
+        additions = []
+        def add(pid, kind, oid):
+            if pid not in data["projects"]:
+                return
+            p = data["projects"][pid]
+            ids = p.setdefault("connections", {}).setdefault(kind, [])
+            if oid not in ids:
+                ids.append(oid)
+                additions.append({"card": pid, "title": p["title"], "kind": kind, "id": oid})
+        for oid, item in plan["lists"].items():
+            pid = match(item.get("project") or item.get("title", ""))
+            if pid:
+                add(pid, "lists", oid)
+        for oid, tour in plan["tours"].items():
+            econ = plan["projects"].get(tour.get("project"), {})
+            ids = owners.get(econ.get("key"), set())
+            pid = next(iter(ids)) if len(ids) == 1 else match(econ.get("title", ""))
+            if pid:
+                add(pid, "tours", oid)
+        for lead in wk["leads"].values():
+            pid = lead.get("pj")
+            if lead.get("list") in plan["lists"]:
+                add(pid, "lists", lead["list"])
+            if lead.get("project") in wk["projects"]:
+                add(pid, "work", lead["project"])
+        for oid, project in wk["projects"].items():
+            lead = wk["leads"].get(project.get("lead"), {})
+            if lead.get("pj"):
+                add(lead["pj"], "work", oid)
+        if write and additions:
+            affected = {a["card"] for a in additions}
+            for pid in affected:
+                data["projects"][pid]["rev"] = data["projects"][pid].get("rev", 0) + 1
+            save_json(FILE, data)
+            journal.record("projects", before, note="Связи существующих проектов: однозначные названия и воронка")
+        return additions

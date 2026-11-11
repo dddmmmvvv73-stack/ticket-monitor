@@ -26,7 +26,7 @@ from competitors import availability, myprojects, planning, venuebook, work
 from competitors.storage import CONFIG_DIR, save_json
 
 DIR = CONFIG_DIR / "history"
-NOISE = {"upd", "edited", "at", "snap", "rating_hist"}   # служебное — не показываем и не возвращаем
+NOISE = {"upd", "edited", "at", "snap", "rating_hist", "rev"}   # служебное — не показываем и не возвращаем
 FILES = {"media", "rider", "pfiles"}                               # файлы: отмечаем, не возвращаем
 MONTHS_READ = 13                                         # сколько месячных файлов читать при показе
 
@@ -115,7 +115,7 @@ AREAS = {
                  "lock": planning._lock, "map": _plan_map, "set": _plan_set,
                  "title": lambda k, r: PLAN_KIND.get(k.split("/")[0], "") + " · " + str(r.get("title") or r.get("venue") or r.get("city")
                                                                                     or k.split("/", 1)[1])},
-    "projects": {"label": "Карточки проектов", "load": myprojects.load, "file": myprojects.FILE, "lock": None,
+    "projects": {"label": "Карточки проектов", "load": myprojects.load, "file": myprojects.FILE, "lock": myprojects._lock,
                  "map": _proj_map, "set": _proj_set, "title": lambda k, r: str(r.get("title") or k)},
     "work": {"label": "Проекты: задачи и документы", "load": work.load, "file": work.FILE, "lock": work._lock,
              "map": _work_map, "set": _work_set,
@@ -226,7 +226,7 @@ def restore(eid: str) -> dict:
                 raise JournalError("записи больше нет — сначала верните её удаление")
             new = copy.deepcopy(cur)
             for k, v in (e["before"] or {}).items():
-                if k in FILES:
+                if k in FILES and not (e["area"] == "projects" and k == "media"):
                     continue
                 if v is None:
                     new.pop(k, None)
@@ -235,6 +235,8 @@ def restore(eid: str) -> dict:
                 if e["area"] == "venues" and k in venuebook.FIELDS and k not in new.setdefault("edited", []):
                     new["edited"].append(k)   # возвращённое значение — тоже правка сайта: повторный импорт его не затрёт
             new["upd"] = datetime.now().isoformat(timespec="seconds")
+        if new is not None and e["area"] == "projects":
+            new["rev"] = (cur or {}).get("rev", 0) + 1
         a["set"](d, e["key"], new)
         if e["area"] == "availability":
             try:
@@ -242,8 +244,11 @@ def restore(eid: str) -> dict:
             except availability.AvailabilityError as err:
                 raise JournalError(str(err))
         save_json(a["file"], d)
+        if e["area"] == "projects":
+            record(e["area"], before_map, note="возврат", restored=eid)
     finally:
         if lock:
             lock.release()
-    record(e["area"], before_map, note="возврат", restored=eid)
+    if e["area"] != "projects":
+        record(e["area"], before_map, note="возврат", restored=eid)
     return {"area": e["area"], "key": e["key"], "record": new}

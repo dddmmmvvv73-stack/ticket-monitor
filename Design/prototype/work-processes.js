@@ -448,6 +448,7 @@
       row('Даты',[n?n+' '+plural(n,'диапазон','диапазона','диапазонов')+' в этом сезоне':'',(r.ns||{}).ok?'следующий сезон подтверждён':''].filter(Boolean).join(' · '))+
       '</dl>'+action('lead','Открыть в воронке →',r.id,'btn-ghost')+'</section>';
   };
+  api.stages=stages.map(function(s){return s.slice();});
   api.poolPage=function() {
     if(!CAN_SAVE) return head('Пул проектов','')+'<div class="note">Раздел хранится на сервере — откройте сайт через приложение.</div>';
     if(!ensureWK()) return head('Пул проектов','')+'<div class="sub">Загружаем…</div>';

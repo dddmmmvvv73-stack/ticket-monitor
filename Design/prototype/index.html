@@ -2634,6 +2634,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
   .mp-price { margin-inline-start: 0; }
 }
 </style>
+<link rel="stylesheet" href="project-workspace.css">
 </head>
 <body>
 <div class="shell">
@@ -2752,6 +2753,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <script src="market-pop.js"></script>
 <script src="venue-cap.js"></script>
 <script src="venue-book.js"></script>
+<script src="project-workspace.js"></script>
 <script>
 // ---------------------------------------------------------------- данные конкурентов
 // competitors-data.js (CD): через приложение (/proto/) собирается из data/competitors при каждом открытии —
@@ -4354,7 +4356,7 @@ var WK_CLOSE = [["no", "Нет"], ["got", "Получены"]];
 var WK_DOC_KINDS = ["Договор", "Допсоглашение", "Счёт", "Акт", "УПД", "Счёт-фактура", "Технический райдер", "Бытовой райдер"];
 function wkLoad() {
   if (!CAN_SAVE) return;
-  apiJson("GET", "/api/work").then(function (x) { if (x.ok) { WK = x.d; WK_OK = true; wkTimerDock(); if (wkOn()) render(); } }, function () {});
+  apiJson("GET", "/api/work").then(function (x) { if (x.ok) { WK = x.d; WK_OK = true; wkTimerDock(); if (wkOn() || ProjectWorkspace.active()) render(); } }, function () {});
 }
 function wkId(p) { return p + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function wkDay(off) { var d = new Date(); d.setDate(d.getDate() + (off || 0)); return d.getFullYear() + "-" + ("0" + (d.getMonth() + 1)).slice(-2) + "-" + ("0" + d.getDate()).slice(-2); }
@@ -4826,7 +4828,7 @@ function wkProjectPage(pid) {
         '<div class="wk-hstat done"><b class="num">' + done + '<small>/' + all.length + '</small></b><span>выполнено</span><i class="wk-hbar"><em style="width:' + pct + '%"></em></i></div>' +
       '</div></div></section>';
   var filtOn = S.wk.groupBy === "due" || !!S.wk.prioF;
-  return hero + WorkProcesses.projectLine(p) + wkPickBlock(pid) +
+  return hero + ProjectWorkspace.relatedLine("work", pid) + WorkProcesses.projectLine(p) + wkPickBlock(pid) +
     '<div class="wk-ptabs-row"><div class="mtabs subtabs wk-ptabs" role="tablist" aria-label="Разделы проекта">' + [["tasks", "Задачи", s.open], ["shows", "Гастроли", wkShowsOf(pid).length], ["docs", "Документы", wkDocsOf(pid).length], ["costs", "Расходы", wkCostsOf(pid).length]].map(function (t) {
       return '<button role="tab" data-wk-ptab="' + t[0] + '" aria-selected="' + (S.wk.ptab === t[0]) + '">' + t[1] + (t[2] ? ' <span class="wk-tabn">' + t[2] + '</span>' : '') + '</button>'; }).join("") + '</div>' +
       (S.wk.ptab === "tasks" ? '<div class="wk-tabtools"><button type="button" class="wk-sq' + (filtOn ? ' on' : '') + '" data-wkt-groupmenu aria-haspopup="menu" aria-label="Фильтры и группировка задач" title="Фильтры и группировка">' + WKT_ICON.group + (filtOn ? '<i class="wk-sq-dot" aria-hidden="true"></i>' : '') + '</button>' +
@@ -8361,6 +8363,7 @@ function renderOperators() {
 }
 
 function renderMarket() {
+  if (ProjectWorkspace.active()) return ProjectWorkspace.render();
   if (!MR.length) return head("Рынок", "Снимок афиши не загружен") + '<div class="empty"><h2>Нет файла market-data.js</h2><p style="margin:0">Он лежит рядом с index.html.</p></div>';
   mVisible(); M_COUNT = null;
   var detail = function () { return S.sub.projects === "tour" ? S.m.project : S.m.vproj; };
@@ -9784,10 +9787,10 @@ function pjPage(k, id, rec, keys, l, title) {
   if (S.m.pjModeFor !== k) { S.m.pjModeFor = k; S.m.pjMode = "list"; }
   var fav = myIsFav(k);
   if (S.m.pjMode === "chg" && !fav) S.m.pjMode = "list";
-  var mode = S.m.pjMode, arch = mode === "arch", lp = l.filter(inPeriod), pastP = past.filter(inPeriod), cut = S.period !== "all" && mode !== "chg";
+  var mode = S.m.pjMode, arch = mode === "arch", lp = l.filter(ProjectWorkspace.inPeriod), pastP = past.filter(ProjectWorkspace.inPeriod), cut = ProjectWorkspace.periodActive() && mode !== "chg";
   var src = arch ? pastP : lp, all = S.m.datesAll, rows = all ? src : src.slice(0, PJ_ROWS);
   var kind = 'Мероприятия', df = fav ? myDiff(rec) : null, nChg = df ? df.n + df.passed.length : 0;
-  var periodNote = cut ? '<div class="pj-sum"><span><b>' + esc(periodLabel()) + '</b></span><span><b class="num">' + src.length + '</b> из ' + (arch ? past.length : l.length) + '</span>' +
+  var periodNote = cut ? '<div class="pj-sum"><span><b>' + esc(ProjectWorkspace.periodLabel()) + '</b></span><span><b class="num">' + src.length + '</b> из ' + (arch ? past.length : l.length) + '</span>' +
     '<button class="pj-plain" data-pj="period-all">Все даты</button></div>' : '';
   var chgNote = mode === "chg" ? '<div class="pj-sum"><span>с <b>' + (df.since ? human(df.since.slice(0, 10)) : '—') + '</b></span>' +
       (df.added.length ? '<span><b class="num">' + df.added.length + '</b> ' + plural(df.added.length, "новая", "новые", "новых") + '</span>' : '') +
@@ -9829,8 +9832,7 @@ function pjPage(k, id, rec, keys, l, title) {
         : '<span class="muted">пока пусто — копится с ' + human(MK.first) + '</span>') + '</dd>' +
     '</dl></section>';
 
-  return hero +
-    '<div class="pj-grid"><div class="pj-main">' + list + '</div><aside class="pj-aside" aria-label="О проекте">' + aside + '</aside></div>';
+  return ProjectWorkspace.card({k:k, id:id, rec:rec, keys:keys, l:l, past:past, title:title, list:list, aside:aside});
 }
 
 // Окно даты — на странице проекта вместо правой карточки: главное по одному выступлению; подробности (продажи по
@@ -10049,16 +10051,18 @@ function pjDialog(cls, label, html) {
   if (!d) {
     d = document.createElement("dialog"); d.id = "pjDlg"; document.body.appendChild(d);
     d.addEventListener("click", function (ev) {
-      if (ev.target === d) { d.close(); return; }
+      if (ev.target === d) { ProjectWorkspace.closeDialog(d); return; }
       var m = ev.target.closest("[data-mproject-type],[data-martist-type]");   // разметка в окне «Редактировать»
       if (m) { if (m.hasAttribute("data-mproject-type")) mMarkProject(m); else mMarkArtist(m); pjTourRefresh(); return; }
       var t = ev.target.closest("[data-pj]"); if (t) pjAction(t);
     });
+    d.addEventListener("cancel", function (ev) { ev.preventDefault(); ProjectWorkspace.closeDialog(d); });
     d.addEventListener("change", function (ev) { if (ev.target.hasAttribute("data-mvenue-type")) { mMarkVenue(ev.target); pjTourRefresh(); } });
   }
   d.className = "pj-dlg " + cls; d.setAttribute("aria-label", label);   // класс заново — и «широкий» вид с панелью продаж сброшен
   d.innerHTML = '<div class="pj-dlg-head"><h2>' + esc(label) + '</h2><button class="icon-btn" data-pj="close" aria-label="Закрыть">' + PJ_ICON.close + '</button></div><div class="pj-dlg-body">' + html + '</div>';
   if (!d.open) d.showModal();
+  if (cls === "pj-edit") ProjectWorkspace.editorOpened();
   return d;
 }
 var PJ_ORG_ADD = '<div class="form-actions" style="justify-content:center"><button class="btn-dark" data-pj="orgadd">+ Назначить организатора</button></div>';
@@ -10127,9 +10131,10 @@ function pjTourRefresh() { var b = $("pjTour"); if (b) b.outerHTML = pjTourHtml(
 function pjEditHtml() {
   var rec = myRec(S.pj.k), pr = rec && rec.profile || {}, f = function (id, label, v, attrs) { return '<div class="field"><label for="pj-' + id + '">' + label + '</label><input id="pj-' + id + '" name="' + id + '" value="' + esc(v || "") + '" ' + (attrs || "") + '></div>'; };
   return '<form id="pjForm" class="myform" novalidate>' +
-    '<div class="pj-ph-row">' + pjPh(rec, "avatar") + pjPh(rec, "cover") + '</div>' +
+    f("name", "Название проекта", rec ? rec.title : S.pj.title, 'maxlength="300"') + '<div class="pj-ph-row">' + pjPh(rec, "avatar") + pjPh(rec, "cover") + '</div>' +
     f("sub", "Подзаголовок", pr.sub, 'maxlength="200" placeholder="Например: шоу-проект, кавер-группа из Москвы"') +
     '<div class="field"><label for="pj-about">Описание</label><textarea id="pj-about" name="about" rows="6" maxlength="10000" placeholder="О чём проект, состав, история, чем отличается">' + esc(pr.about || "") + '</textarea></div>' +
+    f("format", "Формат", pr.format || mostOf(S.pj.l || [], "format"), 'maxlength="120" placeholder="Концерт, спектакль, стендап…"') +
     f("crew", "Состав на выезде", pr.crew, 'maxlength="200" placeholder="Например: 8 человек — 5 артистов, звукорежиссёр, директор, техник"') +
     '<div class="pj-2col">' + f("contact", "Контакт", pr.contact, 'maxlength="200" placeholder="Имя, роль"') + f("phone", "Телефон", pr.phone, 'type="tel" maxlength="60" placeholder="+7 …"') + '</div>' +
     '<div class="pj-2col">' + f("site", "Официальный сайт", pr.site, 'maxlength="1000" placeholder="https://…"') + f("fee", "Гонорар", pr.fee, 'maxlength="300" placeholder="Например: 350 000 ₽ + райдер"') + '</div>' +
@@ -10156,9 +10161,10 @@ function pjSave() {
   });
   if (bad) { err.hidden = false; err.textContent = "Не похоже на ссылку: нужен адрес вида https://… (у Telegram и Instagram можно @имя)"; bad.setAttribute("aria-describedby", "pj-err"); bad.focus(); return; }
   var g = function (n) { return f.elements[n].value.trim(); };
-  $("pjDlg").close();
-  mySave({ op: "profile", key: S.pj.k, title: S.pj.title, sub: g("sub"), about: g("about"), crew: g("crew"), contact: g("contact"), phone: g("phone"), site: soc.site, vk: soc.vk, instagram: soc.instagram, tg: soc.tg,
-    fee: g("fee"), riders: lists.riders, links: lists.links, contacts: g("contacts"), note: g("note") }, "Страница проекта сохранена");
+  if (ProjectWorkspace.editorBusy()) return;
+  ProjectWorkspace.editorSaving();
+  mySave({ op: "profile", expected: ProjectWorkspace.editorRevision(), key: S.pj.k, title: S.pj.title, name: g("name"), format: g("format"), sub: g("sub"), about: g("about"), crew: g("crew"), contact: g("contact"), phone: g("phone"), site: soc.site, vk: soc.vk, instagram: soc.instagram, tg: soc.tg,
+    fee: g("fee"), riders: lists.riders, links: lists.links, contacts: g("contacts"), note: g("note") }, "Страница проекта сохранена").then(function (d) { if (d) ProjectWorkspace.editorDone(); });
 }
 // Положение фона шапки: режим «потянуть вверх-вниз» (мышь, палец, стрелки ↑↓), «Готово» — сохранить (0–100 %)
 function pjRepos() {
@@ -10207,7 +10213,7 @@ function pjPhoto(file, kind) {
 }
 function pjAction(t) {
   var a = t.getAttribute("data-pj");
-  if (a === "close") $("pjDlg").close();
+  if (a === "close") ProjectWorkspace.closeDialog($("pjDlg"));
   else if (a === "edit") { var d = pjDialog("pj-edit", "Редактировать страницу", pjEditHtml()); var n = d.querySelector("#pj-" + (t.getAttribute("data-field") || "sub")); if (n) n.focus(); }
   else if (a === "date") pjOpenDate(+t.getAttribute("data-i"));
   else if (a === "evedit") pjEditEvent(+t.getAttribute("data-i"));
@@ -10221,7 +10227,7 @@ function pjAction(t) {
   else if (a === "an-flip") { S.m.anFlip = !S.m.anFlip; t.classList.toggle("flipped", S.m.anFlip); t.setAttribute("aria-pressed", S.m.anFlip); var tp = t.getAttribute(S.m.anFlip ? "data-tip-back" : "data-tip-front"); t.title = tp; t.setAttribute("aria-label", tp); }   // без перерисовки — переворот виден
   else if (a.indexOf("site-") === 0) siteAction(a, t);
   else if (a === "an-tab") { S.m.anTab = t.getAttribute("data-tab"); var y5 = window.scrollY; render(); window.scrollTo(0, y5); }
-  else if (a === "period-all") { S.period = "all"; S.from = S.to = null; render(); }
+  else if (a === "period-all") { ProjectWorkspace.clearPeriod(); render(); }
   else if (a === "mode") { var y = window.scrollY; S.m.pjMode = t.getAttribute("data-mode"); S.m.datesAll = false; render(); window.scrollTo(0, y); }   // экран остаётся на месте
   else if (a === "seen") { var rid = myFind(S.pj.k); if (rid) mySave({ op: "seen", id: rid, snap: mySnap(myEvents(MYP.projects[rid].keys)) }, "Отмечено: просмотрено"); }
   else if (a === "orgedit") pjOrgEditor(+t.getAttribute("data-i"));
@@ -10233,7 +10239,7 @@ function pjAction(t) {
   else if (a === "sales") pjdSalesToggle(t);
   else if (a === "rating") { S.pjRate = null; pjDialog("pj-rate", "Оценка проекта · " + S.pj.title, pjRatingHtml()); }
   else if (a === "rate-set") pjRateSet(t);
-  else if (a === "rate-save") { if (ptValid(S.pjRate)) { mySave({ op: "rating", key: S.pj.k, title: S.pj.title, s: S.pjRate.slice() }, "Оценка сохранена: " + ptLabel(ptTypeOf(S.pjRate))); $("ptView").innerHTML = pjRateView(S.pjRate, myRec(S.pj.k)); } }
+  else if (a === "rate-save") { if (ptValid(S.pjRate)) { mySave({ op: "rating", key: S.pj.k, title: S.pj.title, s: S.pjRate.slice() }, "Оценка сохранена: " + ptLabel(ptTypeOf(S.pjRate))).then(function (d) { if (d && $("ptView")) $("ptView").innerHTML = pjRateView(S.pjRate, myRec(S.pj.k)); }); } }
   else if (a === "orgs") pjDialog("pj-orgs", "Организаторы · " + S.pj.orgs.length, pjOrgsHtml());
   else if (a === "contacts") pjDialog("pj-contacts", "Контакты", pjContactsHtml());
   else if (a === "save") pjSave();
@@ -10611,7 +10617,7 @@ function siteSync() {
     var st = states[k];
     if (!st.confirmed || !MSITE[k]) return;
     var c = siteCompare(k, st), own = MR.filter(function (e) { return e.pk === k; }), first = (st.at || TODAY).slice(0, 10);
-    var base = { title: mostOf(own, "title") || st.title || k, sphere: mostOf(own, "sphere") || "", format: mostOf(own, "format") || "", genre: mostOf(own, "genre") || "" };
+    var base = { title: mostOf(own, "title") || st.title || k, sphere: mostOf(own, "sphere") || "", format: mostOf(own, "format") || ((myRec(k) || {}).profile || {}).format || "", genre: mostOf(own, "genre") || "" };
     c.rows.forEach(function (o) {
       if (o.st === "match" || (o.st === "conflict" && o.pick !== "site")) return;
       if (o.st === "conflict") o.e.forEach(function (e) { e.pkSite = e.pk; e.pk = ""; });   // «верно на сайте»: строка кассы уходит из проекта, в рынке остаётся
@@ -10741,20 +10747,17 @@ function siteAction(a, t) {
     var inp = $("siteUrl"), err = $("siteUrlErr"), v = pjUrl(inp.value);
     if (!/^https?:\/\/[^\s\/]+\.[^\s\/]+/i.test(v)) { err.hidden = false; err.textContent = "Вставьте адрес страницы, например https://rondotour.ru/"; inp.setAttribute("aria-invalid", "true"); inp.focus(); return; }
     S.m.siteEdit = null; S.m.siteF = "all";
-    mySave({ op: "site", key: k, title: S.pj.title, url: v });
-    if (CAN_SAVE) setTimeout(function () { siteCheckNow(k); }, 300); else siteCheckNow(k);   // сначала ссылка дойдёт до сервера
+    mySave({ op: "site", key: k, title: S.pj.title, url: v }).then(function (d) { if (d) siteCheckNow(k); });
   } else if (a === "site-recheck") siteCheckNow(k);
   else if (a === "site-confirm") {
     var added = siteCompare(k, st).rows.filter(function (o) { return o.st === "new"; }).length;
-    mySave({ op: "siteconfirm", key: k, title: S.pj.title });
-    siteResync("Сайт подключён: в проект " + plural(added, "добавлена", "добавлены", "добавлено") + " " + added + " " + plural(added, "дата", "даты", "дат"));
+    mySave({ op: "siteconfirm", key: k, title: S.pj.title }, "Сайт подключён: " + added + " новых дат");
   } else if (a === "site-edit") { S.m.siteEdit = k; render(); var i2 = $("siteUrl"); if (i2) i2.focus(); }
   else if (a === "site-cancel") { S.m.siteEdit = null; render(); }
-  else if (a === "site-off") { mySave({ op: "siteoff", key: k, title: S.pj.title }); S.m.siteEdit = null; siteResync("Сайт убран: даты с него больше не учитываются"); }
+  else if (a === "site-off") { S.m.siteEdit = null; mySave({ op: "siteoff", key: k, title: S.pj.title }, "Сайт отключён"); }
   else if (a === "site-pick") {
     var v2 = t.getAttribute("data-v");
-    mySave({ op: "sitepick", key: k, title: S.pj.title, date: t.getAttribute("data-date"), v: v2 });
-    siteResync(v2 === "site" ? "Принята дата сайта" : v2 === "kassa" ? "Оставлена дата касс" : "");
+    mySave({ op: "sitepick", key: k, title: S.pj.title, date: t.getAttribute("data-date"), v: v2 }, v2 === "site" ? "Принята дата сайта" : v2 === "kassa" ? "Оставлена дата касс" : "Выбор снят");
   } else if (a === "site-f") { S.m.siteF = t.getAttribute("data-f"); var y = window.scrollY; render(); window.scrollTo(0, y); }
   else if (a === "site-alias") curSave({ op: "alias", title: t.getAttribute("data-title"), target: t.getAttribute("data-target") }, "«" + t.getAttribute("data-title") + "» — тот же проект");
 }
@@ -10853,7 +10856,7 @@ function anPage(k, l, past, p, cands, foN) {
   } else if (tab === "venues") body = '<div class="an-legacy">' + mRouteVenues(l, 8) + '</div>';
   else if (tab === "site") body = siteSection(k, title);
   else body = '<div class="an-legacy">' + mCandTable(cands, foN, l, fmt, genre) + '</div>';
-  return hero + nav + body;
+  return ProjectWorkspace.analysis(k, rec, title, l, body, AN_TABS.map(tabBtn).join(""), tiles);
 }
 // Фон шапки «Аналитики» без фото (вариант Б): схема России и маршрут тура — светлыми линиями по тёмному
 function anRouteBg(l) {
@@ -10955,9 +10958,10 @@ function candApply() {
 $("view").addEventListener("input", function (ev) { if (ev.target.hasAttribute("data-cand-q")) { S.m.candQ = ev.target.value; candApply(); } });
 $("view").addEventListener("change", function (ev) { if (ev.target.hasAttribute("data-cand-fo")) { S.m.candFo = ev.target.value; enhanceSelects(ev.target.parentNode); candApply(); } });
 function mProjectDetail(k) {
-  var l = MR.filter(function (e) { return e.pk === k; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
-  if (!l.length) { S.m.project = null; return mProjects(); }
-  var past = MA.filter(function (a) { return a.pk === k; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
+  var record = myRec(k), aliases = record ? record.keys : [k];
+  var allDates = myEvents(aliases), l = S.m.anTab === "site" ? allDates : allDates.filter(ProjectWorkspace.inPeriod);
+  if (!l.length) return ProjectWorkspace.emptyAnalysis(k, allDates);
+  var past = MA.filter(function (a) { return aliases.indexOf(a.pk) >= 0; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
   var cities = mUniq(l.concat(past), "city"), fmt = mostOf(l, "format"), genre = mostOf(l, "genre");
   var p = { k: k, l: l, cities: cities, format: fmt, genre: genre, title: mostOf(l, "title") };
   var cands = mCandidates(p);
@@ -11439,12 +11443,12 @@ function myApply(op) {  // то же, что сервер, — для прото
     id = myFind(op.key);
     if (!id) { id = op.id; P[id] = { title: op.title || op.key, keys: [op.key], fav: false, note: "", links: [], contacts: "", snap: null, at: now, created: true }; }
     p = P[id];
-    if (op.op === "fav") { p.fav = !!op.fav; if (p.fav) p.snap = { at: now, dates: op.snap || [] }; else if (!myHasData(p) && !myLinked(id)) { delete P[id]; return; } }
+    if (op.op === "fav") { p.fav = !!op.fav; if (p.fav) p.snap = { at: now, dates: op.snap || [] }; }
     else if (op.op === "profile" || op.op === "media" || op.op === "coverpos" || op.op === "rating" || /^site/.test(op.op)) {  // профиль страницы и фото в избранное сами не добавляют
       if (/^site/.test(op.op)) siteApplyOp(p, op, now);
       else if (op.op === "profile") {
         var rf = ((p.profile || {}).riders || []).filter(function (x) { return x.file; });
-        p.profile = { sub: op.sub || "", about: op.about || "", crew: op.crew || "", contact: op.contact || "", phone: op.phone || "", site: op.site || "", vk: op.vk || "", instagram: op.instagram || "", tg: op.tg || "", fee: op.fee || "", riders: (op.riders || []).concat(rf) };
+        p.profile = { sub: op.sub || "", about: op.about || "", crew: op.crew || "", contact: op.contact || "", phone: op.phone || "", site: op.site || "", vk: op.vk || "", instagram: op.instagram || "", tg: op.tg || "", fee: op.fee || "", format: op.format || "", riders: (op.riders || []).concat(rf) };
         p.note = op.note || ""; p.contacts = op.contacts || ""; p.links = op.links || [];
       } else if (op.op === "coverpos") p.cover_y = op.y;
       else if (op.op === "rating") {   // прошлая оценка — в историю (наложить на текущую)
@@ -11452,12 +11456,10 @@ function myApply(op) {  // то же, что сервер, — для прото
         p.rating = { s: op.s.slice(), at: now };
       }
       else { p.media = p.media || {}; if (op.data) p.media[op.kind] = op.data; else delete p.media[op.kind]; }   // сразу видно; сервер вернёт имя файла
-      if (!p.fav && !myHasData(p) && !myLinked(id)) { delete P[id]; return; }
     }
     else {
       p.note = op.note || ""; p.contacts = op.contacts || ""; p.links = op.links || [];
       if (p.created && myHasNotes(p)) { p.fav = true; p.snap = { at: now, dates: op.snap || [] }; }
-      if (!p.fav && !myHasData(p) && !myLinked(id)) { delete P[id]; return; }
     }
     delete p.created;
   } else if (P[id]) {
@@ -11468,26 +11470,35 @@ function myApply(op) {  // то же, что сервер, — для прото
   }
   if (p) p.upd = now;
 }
+var MY_QUEUE = Promise.resolve(), MY_READY = !CAN_SAVE;
 function mySave(op, okMsg) {
-  if (!op.id) op.id = "p" + Date.now().toString(36);
-  myApply(op); V_CACHE.key = null; render();
-  if (S.m.sel != null && $("drawer").classList.contains("open") && !S.m.editing) showDrawer(mDrawer(MR[S.m.sel]));
+  if (!op.id) op.id = "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
   if (!CAN_SAVE) {
-    try { localStorage.setItem(MY_KEY, JSON.stringify(MYP)); } catch (e) { toast("Не сохранено: в браузере не хватило места" + (op.op === "media" ? " для фото — на сайте фото хранятся на сервере" : "")); return; }
-    if (okMsg) toast(okMsg + " — только в этом браузере"); return;
+    myApply(op); V_CACHE.key = null;
+    try { localStorage.setItem(MY_KEY, JSON.stringify(MYP)); } catch (e) { toast("Не сохранено: в браузере не хватило места"); return Promise.resolve(null); }
+    render(); if (okMsg) toast(okMsg + " — только в этом браузере"); return Promise.resolve(MYP);
   }
-  fetch("/api/market/myprojects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(op) })
-    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
-    .then(function (x) {
-      if (!x.ok) { toast("Не сохранено: " + (x.d.error || "ошибка")); myLoad(); return; }
-      MYP = x.d; if (okMsg) toast(okMsg + " · сохранено на этом компьютере");
-    })
-    .catch(function () { toast("Не сохранено: приложение не отвечает — запущен ли python3 app.py?"); });
+  var run = MY_QUEUE.then(async function () {
+    var current = myRec(op.key) || MYP.projects[op.id], beforeRev = current ? current.rev || 0 : 0;
+    if (op.op === "profile") op.expected = ProjectWorkspace.profileVersion(op.key, op.expected);
+    if (current && op.expected == null) op.expected = beforeRev;
+    var r = await fetch("/api/market/myprojects", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(op) });
+    var d = await r.json();
+    if (!r.ok) { var er = new Error(d.error || "Ошибка сохранения"); er.conflict = r.status === 409; throw er; }
+    MYP = d; V_CACHE.key = null;
+    if (/^site/.test(op.op) || op.op === "link") curApply();
+    ProjectWorkspace.saved(op, beforeRev);
+    var y = window.scrollY; render(); window.scrollTo(0, y);
+    if (okMsg) toast(okMsg);
+    return d;
+  });
+  MY_QUEUE = run.catch(function () {});
+  return run.catch(function (e) { ProjectWorkspace.saveError(e); toast("Не сохранено: " + (e.message || "нет связи с сервером")); return null; });
 }
 function myLoad() {
-  if (!CAN_SAVE) return;
-  fetch("/api/market/myprojects").then(function (r) { return r.json(); }).then(function (d) { MYP = d; siteResync(); })   // сайты проектов — в записях
-    .catch(function () { toast("Избранное не загрузилось — приложение не отвечает"); });
+  if (!CAN_SAVE) return Promise.resolve(MYP);
+  return fetch("/api/market/myprojects").then(function (r) { if (!r.ok) throw new Error("Ошибка загрузки"); return r.json(); }).then(function (d) { MYP = d; MY_READY = true; siteResync(); return d; })
+    .catch(function () { toast("Проекты не загрузились — проверьте подключение"); return null; });
 }
 function myToggleFav(k, title) {
   var r = myRec(k), on = !(r && r.fav);
@@ -11938,6 +11949,7 @@ function render() {
   syncMarketView(); S.city = S.m.city;  // раздел — по вкладке «Рынка», если её переключил код; город шапки один на все разделы
   if (location.hash.slice(1) !== viewHash()) history.replaceState(null, "", "#" + viewHash());   // адрес — всегда текущий раздел: его можно скопировать или открыть в новой вкладке
   document.body.classList.toggle("wk-mode", wkOn() || S.view === "availability");
+  document.body.classList.toggle("pw-mode", ProjectWorkspace.active());
   document.body.classList.toggle("wh-mode", (S.view === "wkhome" || S.view === "wkgoals") && !S.wk.wn);   // «Обзор»: серый фон, как в референсах
   document.body.classList.toggle("wkc-mode", S.view === "availability" || S.view === "wkcal" && !S.wk.wn);
   if (WK_OK) wkStagesSync();   // статусы проектов — свои у пользователя   // разделы «Работы» — без верхней панели рынка (город, период, поиск, сбор; решение пользователя 20.10)
@@ -12082,14 +12094,14 @@ var PL_STATUS = ["Черновик", "Планируется", "В процес�
 var PL_DECISION = ["", "В работу", "Отмена", "Замена города", "Перенос месяца", "Замена площадки"];
 function plLoad() {
   if (!CAN_SAVE) return;
-  apiJson("GET", "/api/planning").then(function (x) { if (x.ok) { PLAN = x.d; if (S.view === "planning" || S.view === "venues" || S.view === "route" || wkOn()) render(); } }, function () {});   // «Работа» — блок «Подбор городов»
+  apiJson("GET", "/api/planning").then(function (x) { if (x.ok) { PLAN = x.d; if (S.view === "planning" || S.view === "venues" || S.view === "route" || wkOn() || ProjectWorkspace.active()) render(); } }, function () {});   // «Работа» — блок «Подбор городов»
 }
 function plCfg() {
   var p = PLAN.params || {}, c = Object.assign({}, PLAN_DEFAULTS, p);
   c.weights = Object.assign({}, PLAN_DEFAULTS.weights, p.weights || {});
   return c;
 }
-function plId(prefix) { return prefix + Date.now().toString(36) + Math.floor(Math.random() * 36).toString(36); }
+function plId(prefix) { return prefix + Date.now().toString(36) + crypto.getRandomValues(new Uint32Array(2)).join("").slice(0, 10); }
 // Сохранить запись целиком: сразу на странице, потом на сервер (ошибка — сообщение и перечитать с сервера)
 function plPut(kind, id, data, msg) {
   if (kind === "params") PLAN.params = data; else PLAN[kind][id] = data;
@@ -12408,7 +12420,7 @@ function plTour(id) {
   if (!Object.keys(PLAN.cities).length) hints.push('Организационные затраты и комиссия касс — во вкладке <button class="pj-plain" data-pl="tab" data-tab="cities">«Города»</button>, логистика — в <button class="pj-plain" data-pl="tab" data-tab="regions">«Регионах»</button>.');
   if (!Object.keys(PLAN.venues).length) hints.push('Места в продаже, вал, аренда и пояса зала — в разделе <button class="pj-plain" data-pl="go-venues">«Площадки»</button>.');
   var selectionBar = selection.active ? '<div class="pl-row-selection" role="region" aria-label="Выбранные строки тура"><b>Выбрано: ' + selectedRows.length + '</b><button type="button" class="btn-ghost" data-pl="rows-delete"' + (!selectedRows.length ? ' disabled' : '') + '>Удалить выбранные</button><button type="button" class="pj-plain" data-pl="rows-unselect">Снять выделение</button></div>' : '';
-  return head1 + sum + (hints.length ? plNote(hints.join(" ")) : '') + tools + selectionBar + cityList +
+  return head1 + ProjectWorkspace.relatedLine("tours", id) + sum + (hints.length ? plNote(hints.join(" ")) : '') + tools + selectionBar + cityList +
     '<section class="card pl-card pl-card-fit"><table class="vtable pl-grid pl-tour pl-flat" style="width:' + width + 'px">' + colgroup + th + '<tbody>' + body + '</tbody>' + foot + '</table>' + empty + '</section>' +
     '<div class="pl-under"><button class="btn-dark" data-pl="row-add">+ Город</button>' +
       (rows.length ? '<button class="btn-ghost pl-map-btn" data-pl="map" aria-expanded="' + !!PL_PREFS.map + '" aria-controls="plMapSec">' + PJ_ICON.an_route + (PL_PREFS.map ? 'Скрыть карту' : 'Показать на карте') + '</button>' : '') + '</div>' +
@@ -13108,7 +13120,7 @@ function plBuild() {   // «Подбор городов»: таблица арт
   ixNeedWK();
   return '<div class="tb-head pl-flat tb-ahead">' + back + '<h2 class="tb-atitle">' + esc(L.title) + '</h2><span style="flex-grow:1"></span>' +
       '<button class="btn-ghost" data-pl="tb-edit">Изменить</button><button class="btn-ghost" data-pl="tb-del">Удалить</button></div>' +
-    '<div class="tb-head pl-flat tb-awork">' + ixChips(t.list) + '<span style="flex-grow:1"></span>' +
+    '<div class="tb-head pl-flat tb-awork">' + ProjectWorkspace.relatedLine("lists", t.list) + ixChips(t.list) + '<span style="flex-grow:1"></span>' +
       '<span class="sub2 pl-gm-period" title="Сезон — кнопка «Даты» в шапке: месяц или несколько месяцев подряд">Сезон: <b>' + esc(periodLabel()) + '</b></span></div>' + tbResults(L);
 }
 function tbEditor(d) {
@@ -15144,9 +15156,10 @@ function renderDynamics() {
 }
 var VIEWS = ["availability", "wkhome", "wkgoals", "work", "wkproc", "wkcal", "wktasks", "wkdocs", "wkparties", "wknotes", "overview", "city", "niches", "calendar", "new", "events", "projects", "touring", "favorites", "venues", "operators", "suggest", "pool", "archive", "sales", "dynamics", "settings", "market", "planning", "route"];
 // Адрес раздела — #раздел или #раздел:версия (#venues:book): меню и вкладки — ссылки, каждый раздел открывается в новой вкладке
-function viewHash() { return S.view + (SUBS[S.view] ? ":" + S.sub[S.view] : ""); }
+function viewHash() { return ProjectWorkspace.hash() || S.view + (SUBS[S.view] ? ":" + S.sub[S.view] : ""); }
 function fromHash() {   // раздел из адреса; false — в адресе не раздел
   var p = location.hash.slice(1).split(":");
+  if (ProjectWorkspace.fromHash(p)) return true;
   if (VIEWS.indexOf(p[0]) < 0) return false;
   S.view = p[0];
   if (p[1] && SUBS[p[0]] && SUBS[p[0]].some(function (t) { return t[0] === p[1]; })) S.sub[p[0]] = p[1];
@@ -15165,7 +15178,7 @@ myLoad();  // избранные проекты и записи о них — и
 settingsLoad(); ghRunsLoad();  // настройки этого компьютера и ход сборов на GitHub — только через приложение
 window.addEventListener("hashchange", function () {
   var p = location.hash.slice(1).split(":");
-  if (p[0] === S.view && (!p[1] || p[1] === S.sub[S.view])) return;   // адрес поставил сам сайт — раздел уже показан
+  if (location.hash.slice(1) === viewHash()) return;   // адрес поставил сам сайт — раздел уже показан
   if (fromHash()) { if (REP_SUB[S.view]) repReset(); S.enter = true; closeDrawer(); render(); }
 });
 render();

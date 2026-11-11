@@ -122,7 +122,7 @@ def dump_db(out: Path) -> None:
 
 def pack_data(out: Path) -> None:
     def skip(t: tarfile.TarInfo):
-        return None if any(part in EXCLUDE_DIRS for part in Path(t.name).parts) else t
+        return None if any(part in EXCLUDE_DIRS for part in Path(t.name).parts) or Path(t.name).suffix in (".tmp", ".lock") else t
     with tarfile.open(out, "w:gz", compresslevel=6) as tar:
         for rel in INCLUDE:
             p = ROOT / rel
@@ -142,7 +142,7 @@ def make_config() -> str | None:
     """Настройки (config/) → WORK/config-latest.tar.enc. Отпечаток — если изменились (отметить после удачной отправки:
     mark_config), None — с прошлой отправки ничего не изменилось."""
     import hashlib
-    files = sorted(p for p in (ROOT / "config").rglob("*") if p.is_file())
+    files = sorted(p for p in (ROOT / "config").rglob("*") if p.is_file() and p.suffix not in (".tmp", ".lock"))
     h = hashlib.sha256()
     for p in files:
         h.update(str(p.relative_to(ROOT)).encode())
@@ -153,7 +153,7 @@ def make_config() -> str | None:
     WORK.mkdir(parents=True, exist_ok=True)
     tmp = WORK / "config.tar.gz"
     with tarfile.open(tmp, "w:gz") as tar:
-        tar.add(ROOT / "config", arcname="config")
+        tar.add(ROOT / "config", arcname="config", filter=lambda t: None if Path(t.name).suffix in (".tmp", ".lock") else t)
     encrypt(tmp, WORK / CONFIG_FILE)
     tmp.unlink()
     snapshot_config()
@@ -415,7 +415,7 @@ def check() -> int:
             same = diff = 0
             changed = []
             for f in sorted((ROOT / "config").rglob("*")):
-                if not f.is_file():
+                if not f.is_file() or f.suffix in (".tmp", ".lock"):
                     continue
                 g = tmp / "restored" / f.relative_to(ROOT)
                 if g.is_file() and g.read_bytes() == f.read_bytes():

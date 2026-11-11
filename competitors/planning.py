@@ -46,7 +46,7 @@ import re
 import threading
 from datetime import datetime
 
-from competitors.storage import CONFIG_DIR, load_json, save_json
+from competitors.storage import CONFIG_DIR, JsonLock, load_json, save_json
 
 FILE = CONFIG_DIR / "planning.json"
 KINDS = ("params", "projects", "regions", "cities", "venues", "tours", "lists", "routes")
@@ -57,7 +57,7 @@ SCORES = ("comp", "ads", "attract", "market", "prep")
 STATUSES = ("Черновик", "Планируется", "В процессе", "Подтверждён", "Отменён")
 DECISIONS = ("", "В работу", "Отмена", "Замена города", "Перенос месяца", "Замена площадки")
 MONEY = 1e10
-_lock = threading.Lock()
+_lock = JsonLock(lambda: FILE)
 _ID = re.compile(r"^[a-z0-9]{1,24}$")
 _DATE = re.compile(r"^\d{4}-\d{2}(-\d{2})?$")
 
@@ -293,6 +293,8 @@ def _validate(kind: str, data: dict) -> dict:
     if not isinstance(rows, list) or len(rows) > 300:
         raise PlanningError("тур: до 300 городов")
     out["rows"] = [_row(r) for r in rows]
+    if len({r["id"] for r in out["rows"]}) != len(out["rows"]):
+        raise PlanningError("В туре повторяются номера строк. Обновите данные после восстановления номеров.")
     return out
 
 
@@ -322,3 +324,33 @@ def apply_op(op: dict) -> dict:
             raise PlanningError("неизвестная операция")
         save_json(FILE, data)
         return data
+
+
+def repair_row_ids() -> int:
+    """Одноразовая починка старых id: сохраняет все строки, порядок и суммы. Исходный файл — рядом в history/."""
+    import copy
+    import secrets
+    import shutil
+    with _lock:
+        raw = load_json(FILE, {})
+        data, changed = copy.deepcopy(raw), 0
+        for tour in data.get("tours", {}).values():
+            reserved = {r.get("id") for r in tour.get("rows", [])}
+            seen = set()
+            for row in tour.get("rows", []):
+                rid = row.get("id")
+                if not rid or rid in seen:
+                    while True:
+                        rid = "r" + secrets.token_hex(10)
+                        if rid not in reserved:
+                            break
+                    row["id"] = rid
+                    reserved.add(rid)
+                    changed += 1
+                seen.add(rid)
+        if changed:
+            backup = FILE.parent / "history" / ("planning-before-row-ids-" + datetime.now().strftime("%Y%m%d-%H%M%S") + ".json")
+            backup.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(FILE, backup)
+            save_json(FILE, data)
+        return changed

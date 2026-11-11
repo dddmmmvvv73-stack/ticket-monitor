@@ -397,10 +397,11 @@ def myprojects_media(name):
 @bp.post("/api/market/myprojects")
 def myprojects_post():
     op = request.get_json(silent=True) or {}
-    before = journal.snapshot("projects")
-    try:
-        data, _note = myprojects.apply_op(op)
-    except myprojects.MyProjectsError as e:
-        return jsonify({"error": str(e)}), 400
-    journal.record("projects", before, note=_note)
+    with myprojects._lock:
+        before = journal.snapshot("projects")
+        try:
+            data, _note = myprojects.apply_op(op)
+        except myprojects.MyProjectsError as e:
+            return jsonify({"error": str(e)}), 409 if isinstance(e, myprojects.MyProjectsConflict) else 400
+        journal.record("projects", before, note=_note)
     return jsonify(data)  # не отправляется на GitHub — репозиторий публичный

@@ -18,6 +18,9 @@ config/history/
 config/work.json
 config/work_media/
 config/project_media/
+# Замки и незавершённые атомарные записи пользовательских настроек
+config/*.lock
+config/*.tmp
 # Адрес сервера в Яндекс Облаке и путь к SSH-ключу — только на этом компьютере (репозиторий публичный)
 config/server.json
 service_account.json

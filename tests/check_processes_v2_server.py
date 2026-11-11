@@ -88,15 +88,15 @@ with tempfile.TemporaryDirectory() as tmp:
     assert fails(myprojects.apply_op, dict(op='rider', id='pbravo1', name='вирус.exe', data=pdf))
     assert fails(myprojects.apply_op, dict(op='rider', id='pbravo1', name='r.pdf', data='data:application/pdf;base64,'))
     # правка профиля на странице проекта (ссылки) не теряет райдеры-файлы
-    mp, _ = myprojects.apply_op(dict(op='profile', key='браво группа', fee='700 000', riders=[dict(label='Бытовой', url='https://example.com/r')]))
+    mp, _ = myprojects.apply_op(dict(op='profile', expected=myprojects.load()['projects']['pbravo1'].get('rev',0), key='браво группа', fee='700 000', riders=[dict(label='Бытовой', url='https://example.com/r')]))
     riders = mp['projects']['pbravo1']['profile']['riders']
     assert [r.get('url') or r.get('file') for r in riders] == ['https://example.com/r', rider['file']]
     mp, _ = myprojects.apply_op(dict(op='rider-del', id='pbravo1', file=rider['file']))
-    assert not myprojects.media_file(rider['file']) and len(mp['projects']['pbravo1']['profile']['riders']) == 1
-    mp, _ = myprojects.apply_op(dict(op='profile', key='браво группа'))   # профиль очищен — но карточка связана с воронкой
+    assert myprojects.media_file(rider['file']) and len(mp['projects']['pbravo1']['profile']['riders']) == 1
+    mp, _ = myprojects.apply_op(dict(op='profile', expected=myprojects.load()['projects']['pbravo1'].get('rev',0), key='браво группа'))   # профиль очищен — но карточка связана с воронкой
     assert 'pbravo1' in mp['projects']
     put('leads', 'lead6', dict(work.load()['leads']['lead6'], pj=''))
-    mp, _ = myprojects.apply_op(dict(op='profile', key='браво группа'))   # связь снята — пустая карточка удаляется, как раньше
-    assert 'pbravo1' not in mp['projects']
+    mp, _ = myprojects.apply_op(dict(op='profile', expected=myprojects.load()['projects']['pbravo1'].get('rev',0), key='браво группа'))   # связь снята — заполненная пользователем карточка остаётся в базе
+    assert 'pbravo1' in mp['projects']
     assert fails(myprojects.apply_op, dict(op='fee', id='pmissing', fee='1'))
 print('ok: воронка v2 — этапы, отказ с причиной, перенос, даты и сезон, задачи записи, ответ по городам, «Репертуар»')
