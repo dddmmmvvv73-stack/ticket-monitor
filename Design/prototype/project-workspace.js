@@ -5,7 +5,7 @@
   var editor = null, draftTimer = null, searchTimer = null, draftSession;
   try { draftSession = sessionStorage.getItem('ticketmonitor.projectDraftSession'); if (!draftSession) { draftSession = crypto.randomUUID(); sessionStorage.setItem('ticketmonitor.projectDraftSession', draftSession); } } catch (_) { draftSession = String(Date.now()) + Math.random(); }
   var STAGES = Object.fromEntries(WorkProcesses.stages);
-  function active() { return ['projects', 'touring', 'favorites'].indexOf(S.view) >= 0; }
+  function active() { return S.view === 'projectbase'; }
   function key() { return S.sub.projects === 'tour' ? S.m.project : S.m.vproj; }
   function rec() { return myRec(key()); }
   function button(action, label, cls, attrs) { return '<button type="button" class="' + (cls || 'btn-ghost') + '" data-pw="' + action + '"' + (attrs || '') + '>' + label + '</button>'; }
@@ -14,7 +14,7 @@
   function leads(id) { return Object.keys(WK.leads || {}).map(function (k) { return Object.assign({ id: k }, WK.leads[k]); }).filter(function (r) { return id && r.pj === id; }); }
   function norm(s) { return String(s || '').toLowerCase().replace(/ё/g, 'е'); }
   function redraw() { var y = scrollY; render(); scrollTo(0, y); }
-  function open(k, tab) { state.pending = ''; state.tabs[k] = tab || 'profile'; S.view = 'projects'; S.sub.projects = 'all'; S.m.project = null; S.m.vproj = k; render(); scrollTo(0, 0); }
+  function open(k, tab) { state.pending = ''; state.tabs[k] = tab || 'profile'; S.view = 'projectbase'; S.sub.projects = 'all'; S.m.project = null; S.m.vproj = k; render(); scrollTo(0, 0); }
   function tabOf(k) { return state.tabs[k] || 'profile'; }
   function tabs(k) { var t = tabOf(k); return '<div class="pw-tabs" role="tablist" aria-label="Карточка проекта">' + [['profile', 'Профиль'], ['dates', 'Афиша'], ['analysis', 'Аналитика'], ['work', 'Связанные работы']].map(function (x) { return button('tab', esc(x[1]), 'pw-tab', ' role="tab" data-tab="' + x[0] + '" aria-selected="' + (t === x[0]) + '"'); }).join('') + '</div>'; }
   function header(k, r, title) {
@@ -113,13 +113,13 @@
       var p = x.r && x.r.profile || {}, ls = leads(x.id || myFind(x.k)), ava = pjMedia(x.r, 'avatar'), next = x.dates[0];
       return '<tr><th scope="row"><div class="pw-project-cell"><span class="pw-mini" aria-hidden="true">' + (ava ? '<img src="' + esc(ava) + '" alt="">' : esc(pjInitials(x.title))) + '</span>' + button('open', esc(x.title), 'pj-plain', ' data-key="' + esc(x.k) + '"') + (x.r && x.r.fav ? '<span class="pw-star" title="Избранное">★</span>' + (myDiff(x.r).n ? button('changes', String(myDiff(x.r).n), 'pw-change-count', ' data-key="' + esc(x.k) + '" aria-label="Изменения: ' + myDiff(x.r).n + '"') : '') : '') + '</div>' + (x.fmt ? '<small class="pw-format">' + esc(x.fmt) + '</small>' : '') + '</th><td>' + (market ? mUniq(x.dates, 'city').length : ls.length ? esc(STAGES[ls[0].stage] || ls[0].stage) : '—') + '</td><td>' + val(p.fee) + '</td><td>' + val(p.contact) + '</td><td>' + (next ? human(next.date) + '<small>' + esc(next.city) + '</small>' : '<span class="sub2">Нет текущих дат</span>') + '</td></tr>';
     }).join('') + '</tbody></table></div>' : '<div class="empty"><h2>' + (state.q ? 'Проект не найден' : 'Пока нет проектов') + '</h2><p>Добавьте проект вручную или найдите его в афише.</p>' + button('new', '+ Добавить проект', 'btn-dark') + '</div>';
-    return head(fav ? 'Избранные проекты' : S.view === 'touring' ? 'Гастролирует' : 'Проекты', '', button('new', '+ Добавить проект', 'btn-dark')) + scopeTabs +
+    return head(fav ? 'Избранные проекты' : S.view === 'touring' ? 'Гастролирует' : 'Моя база', '', button('new', '+ Добавить проект', 'btn-dark')) + repSwitch() + scopeTabs +
       '<div class="pw-toolbar"><input class="pl-in pw-search" type="search" data-pw-search aria-label="Найти проект" placeholder="Проект, контакт, телефон" value="' + esc(state.q) + '">' + select('format', state.format, [['', 'Все форматы']].concat(formats.map(function (x) { return [x, x]; })), 'Формат') +
       select('status', state.status, [['', 'Любое сотрудничество']].concat(Object.keys(STAGES).map(function (x) { return [x, STAGES[x]]; })), 'Сотрудничество') + select('only', state.only, [['', 'Все проекты'], ['fav', 'Избранные'], ['incomplete', 'Есть незаполненные поля']], 'Показать') +
       select('order', state.order, [['title', 'По названию'], ['updated', 'Недавно изменённые']], 'Порядок') + button('reset', 'Сбросить', 'pj-plain') + '<span class="sub2">' + items.length + ' из ' + total + '</span></div>' + body + (limited.length < items.length ? button('more', 'Показать ещё', 'btn-ghost pw-more') : '');
   }
   function renderWorkspace() {
-    if (!MY_READY) return head('Проекты', '') + '<p class="sub">Загружаем вашу базу…</p>' + button('reload', 'Повторить загрузку', 'btn-ghost');
+    if (!MY_READY) return head('Моя база', '') + '<p class="sub">Загружаем вашу базу…</p>' + button('reload', 'Повторить загрузку', 'btn-ghost');
     if (state.pending) { var r = MYP.projects[state.pending]; if (r) { S.m.vproj = r.keys[0]; S.m.project = null; S.sub.projects = 'all'; if (state.pendingTab) { state.tabs[r.keys[0]] = state.pendingTab; state.pendingTab = ''; } } else { var id = state.pending; state.pending = ''; return head('Проект не найден', '') + '<p>Карточка ' + esc(id) + ' недоступна.</p>' + button('back', 'Все проекты', 'btn-ghost'); } state.pending = ''; }
     if (S.sub.projects === 'tour' && S.m.project) { state.tabs[S.m.project] = 'analysis'; return mProjectDetail(S.m.project); }
     if (S.m.vproj) return mShowcaseDetail(S.m.vproj);
@@ -167,8 +167,8 @@
   async function action(b) {
     var a = b.dataset.pw, k = key();
     if (a === 'reload') await myLoad();
-    else if (a === 'back') { S.m.vproj = S.m.project = null; S.view = 'projects'; S.sub.projects = 'all'; state.pending = ''; render(); scrollTo(0, 0); }
-    else if (a === 'scope') { state.scope = b.dataset.scope; S.view = 'projects'; S.sub.projects = 'all'; S.m.project = S.m.vproj = null; state.limit = 150; redraw(); }
+    else if (a === 'back') { S.m.vproj = S.m.project = null; S.view = 'projectbase'; S.sub.projects = 'all'; state.pending = ''; render(); scrollTo(0, 0); }
+    else if (a === 'scope') { state.scope = b.dataset.scope; S.view = 'projectbase'; S.sub.projects = 'all'; S.m.project = S.m.vproj = null; state.limit = 150; redraw(); }
     else if (a === 'open') open(b.dataset.key);
     else if (a === 'changes') { open(b.dataset.key, 'dates'); S.m.pjMode = 'chg'; redraw(); }
     else if (a === 'tab') { state.tabs[k] = b.dataset.tab; if (state.tabs[k] === 'analysis' && !S.m.anTab) S.m.anTab = 'route'; redraw(); }
@@ -215,9 +215,9 @@
   });
   window.addEventListener('beforeunload', function (e) { storeDraft(); if (editor && (dirty() || editor.busy)) { e.preventDefault(); e.returnValue = ''; } });
   function relatedLine(kind, id) { var names = Object.keys(MYP.projects).filter(function (pid) { return linkedIds(MYP.projects[pid], kind).indexOf(id) >= 0 || leads(pid).some(function (l) { return kind === 'lists' ? l.list === id : kind === 'work' && l.project === id; }); }).map(function (pid) { var r = MYP.projects[pid]; return button('open', esc(r.title), 'pj-plain', ' data-key="' + esc(r.keys[0]) + '"'); }); return names.length ? '<div class="wk-pick">Репертуар: ' + names.join(' · ') + '</div>' : ''; }
-  g.ProjectWorkspace = { relatedLine: relatedLine, active: active, render: renderWorkspace, card: card, analysis: analysis, emptyAnalysis: emptyAnalysis, inPeriod: inPeriod, periodActive: periodActive, periodLabel: periodLabel, clearPeriod: clearPeriod,
+  g.ProjectWorkspace = { open: open, relatedLine: relatedLine, active: active, render: renderWorkspace, card: card, analysis: analysis, emptyAnalysis: emptyAnalysis, inPeriod: inPeriod, periodActive: periodActive, periodLabel: periodLabel, clearPeriod: clearPeriod,
     editorOpened: editorOpened, editorBusy: function () { return editor && editor.busy; }, editorRevision: function () { return editor ? editor.rev : 0; }, profileVersion: function(k, fallback) { return editor && editor.key === k ? editor.rev : fallback; }, editorSaving: editorSaving, editorDone: editorDone, closeDialog: closeDialog, saved: saved, saveError: saveError,
-    hash: function () { if (!active()) return null; var r = rec(), id = r && myFind(key()); return active() && id ? 'projects:card:' + id + ':' + tabOf(key()) : state.pending ? 'projects:card:' + state.pending + ':' + (state.pendingTab || 'profile') : null; },
-    fromHash: function (parts) { if (parts[0] === 'projects' && parts[1] === 'card' && /^p[a-z0-9]{1,20}$/.test(parts[2] || '')) { S.view = 'projects'; S.sub.projects = 'all'; S.m.vproj = S.m.project = null; state.pending = parts[2]; var r = MYP.projects[parts[2]]; if (r) state.tabs[r.keys[0]] = parts[3] || 'profile'; else state.pendingTab = parts[3] || 'profile'; return true; } state.pending = ''; state.pendingTab = ''; return false; }
+    hash: function () { if (!active()) return null; var r = rec(), id = r && myFind(key()); return active() && id ? 'projectbase:card:' + id + ':' + tabOf(key()) : state.pending ? 'projectbase:card:' + state.pending + ':' + (state.pendingTab || 'profile') : null; },
+    fromHash: function (parts) { if ((parts[0] === 'projectbase' || parts[0] === 'projects') && parts[1] === 'card' && /^p[a-z0-9]{1,20}$/.test(parts[2] || '')) { S.view = 'projectbase'; S.sub.projects = 'all'; S.m.vproj = S.m.project = null; state.pending = parts[2]; state.pendingTab = parts[3] || 'profile'; var r = MYP.projects[parts[2]]; if (r) state.tabs[r.keys[0]] = state.pendingTab; return true; } state.pending = ''; state.pendingTab = ''; return false; }
   };
 })(window);

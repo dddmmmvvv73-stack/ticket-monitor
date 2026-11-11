@@ -103,7 +103,7 @@
   }
   function openPj(pid) {
     var p=MYP.projects[pid]; if(!p) return;
-    closeDrawer(); state.lead=null; goView('projects'); S.m.vproj=S.m.vsel=p.keys[0]; render(); window.scrollTo(0,0);
+    closeDrawer(); state.lead=null; ProjectWorkspace.open(p.keys[0]);
   }
   function riderUrl(x) { return '/api/market/myprojects/media/'+encodeURIComponent(x.file)+'?n='+encodeURIComponent(x.label||x.file); }
 
