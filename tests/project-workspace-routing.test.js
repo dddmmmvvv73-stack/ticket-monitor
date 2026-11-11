@@ -63,3 +63,29 @@ test('возврат по адресу списка закрывает карт�
   c.location.hash='#projectbase:card:ptest:dates'; c.hashchange();
   assert.equal(c.ProjectWorkspace.hash(),'projectbase:card:ptest:dates');
 });
+
+test('все новые вкладки находятся после «О проекте», сохраняя прежние обложку и мероприятия', () => {
+  const c=setup(); Object.assign(c,{esc:String,WK:{leads:{},projects:{}},PLAN:{lists:{},tours:{}},AN_TABS:[['route','Маршрут'],['site','Официальный сайт']]});
+  const o={k:'артист',id:'ptest',rec:c.MYP.projects.ptest,title:'Артист',l:[{}],past:[],
+    hero:'<section class="pj-hero">ORIGINAL COVER</section>',list:'ORIGINAL EVENTS',aside:'<section>ORIGINAL ABOUT</section>'};
+  for (const tab of ['profile','dates','analysis','work']) {
+    c.ProjectWorkspace.open('артист',tab);
+    const html=c.ProjectWorkspace.card(o);
+    assert.ok(html.startsWith(o.hero));
+    assert.match(html,/<div class="pj-main">ORIGINAL EVENTS<\/div>/);
+    assert.ok(html.indexOf('ORIGINAL ABOUT') < html.indexOf('pw-side-tools'));
+    assert.ok(html.indexOf('pw-side-tools') < html.indexOf('role="tablist"'));
+    assert.doesNotMatch(html,/class="pw-hero"/);
+  }
+});
+
+test('подробная аналитика имеет свой адрес и открывается после перезагрузки', () => {
+  const c=setup(); c.ProjectWorkspace.openAnalysis('артист','site');
+  assert.equal(c.ProjectWorkspace.hash(),'projectbase:analysis:ptest:site');
+  const fresh=setup(); fresh.MY_READY=true; fresh.mProjectDetail=k=>'ANALYSIS:'+k;
+  assert.equal(fresh.ProjectWorkspace.fromHash(['projectbase','analysis','ptest','site']),true);
+  assert.equal(fresh.ProjectWorkspace.hash(),'projectbase:analysis:ptest:site');
+  assert.equal(fresh.ProjectWorkspace.render(),'ANALYSIS:артист');
+  assert.equal(fresh.S.m.anTab,'site');
+  assert.equal(fresh.ProjectWorkspace.hash(),'projectbase:analysis:ptest:site');
+});

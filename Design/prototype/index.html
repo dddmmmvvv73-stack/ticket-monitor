@@ -9575,7 +9575,7 @@ function myChangesCard(id, rec) {
 function mShowcaseDetail(k) {
   var id = myFind(k), rec = id ? MYP.projects[id] : null, keys = rec ? rec.keys : [k], l = myEvents(keys);
   if (!l.length && !rec) { S.m.vproj = null; return mProjects(); }
-  var title = l.length ? mostOf(l, "title") : rec.title, fmt = mostOf(l, "format"), genre = mostOf(l, "genre"), cities = mUniq(l, "city");
+  var title = ProjectWorkspace.active() && rec ? rec.title : l.length ? mostOf(l, "title") : rec.title, fmt = mostOf(l, "format"), genre = mostOf(l, "genre"), cities = mUniq(l, "city");
   if (pjNew(title)) return pjPage(k, id, rec, keys, l, title);   // новый вид страницы (как у Яндекс Афиши) — пока на проверке
   var past = MA.filter(function (a) { return keys.indexOf(a.pk) >= 0; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
   var pastCities = mUniq(past.filter(function (a) { return a.status !== "gone"; }), "city");
@@ -9744,8 +9744,8 @@ var PJ_ICON = {
   close: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></svg>'
 };
 function pjPage(k, id, rec, keys, l, title) {
-  var pr = rec && rec.profile || {}, back = REP_TITLE[S.sub.projects];
-  var fmt = mostOf(l, "format"), sph = mostOf(l, "sphere"), gen = mostOf(l, "genre"), tour = l.length && l[0].tour === "tour";
+  var pr = rec && rec.profile || {}, back = ProjectWorkspace.active() ? "Моя база" : REP_TITLE[S.sub.projects];
+  var fmt = ProjectWorkspace.active() && pr.format ? pr.format : mostOf(l, "format"), sph = mostOf(l, "sphere"), gen = mostOf(l, "genre"), tour = l.length && l[0].tour === "tour";
   var past = MA.filter(function (a) { return keys.indexOf(a.pk) >= 0; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; });
   var cities = mUniq(l, "city"), orgs = pjOrgs(l), fills = l.map(pjFill).filter(Boolean);
   var avgFill = fills.length ? Math.round(fills.reduce(function (s, x) { return s + x.f; }, 0) / fills.length) : null;
@@ -9832,7 +9832,7 @@ function pjPage(k, id, rec, keys, l, title) {
         : '<span class="muted">пока пусто — копится с ' + human(MK.first) + '</span>') + '</dd>' +
     '</dl></section>';
 
-  if (workspace) return ProjectWorkspace.card({k:k, id:id, rec:rec, keys:keys, l:l, past:past, title:title, list:list, aside:aside});
+  if (workspace) return ProjectWorkspace.card({k:k, id:id, rec:rec, keys:keys, l:l, past:past, title:title, hero:hero, list:list, aside:aside});
   return hero + '<div class="pj-grid"><div class="pj-main">' + list + '</div><aside class="pj-aside" aria-label="О проекте">' + aside + '</aside></div>';
 }
 
@@ -10857,7 +10857,6 @@ function anPage(k, l, past, p, cands, foN) {
   } else if (tab === "venues") body = '<div class="an-legacy">' + mRouteVenues(l, 8) + '</div>';
   else if (tab === "site") body = siteSection(k, title);
   else body = '<div class="an-legacy">' + mCandTable(cands, foN, l, fmt, genre) + '</div>';
-  if (ProjectWorkspace.active()) return ProjectWorkspace.analysis(k, rec, title, l, body, AN_TABS.map(tabBtn).join(""), tiles);
   return hero + nav + body;
 }
 // Фон шапки «Аналитики» без фото (вариант Б): схема России и маршрут тура — светлыми линиями по тёмному
@@ -15189,7 +15188,7 @@ settingsLoad(); ghRunsLoad();  // настройки этого компьюте
 window.addEventListener("hashchange", function () {
   var p = location.hash.slice(1).split(":");
   if (location.hash.slice(1) === viewHash()) return;   // адрес поставил сам сайт — раздел уже показан
-  if (fromHash()) { if (REP_SUB[S.view] || ProjectWorkspace.active() && p[1] !== "card") repReset(); S.enter = true; closeDrawer(); render(); }
+  if (fromHash()) { if (REP_SUB[S.view] || ProjectWorkspace.active() && p[1] !== "card" && p[1] !== "analysis") repReset(); S.enter = true; closeDrawer(); render(); }
 });
 render();
 </script>

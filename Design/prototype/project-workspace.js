@@ -1,7 +1,7 @@
 /* Постоянная база репертуара. Афиша, архив и сбор сайтов используют прежние данные и обработчики. */
 (function (g) {
   'use strict';
-  var state = { scope: 'mine', q: '', format: '', status: '', only: '', order: 'title', tabs: {}, periods: {}, pending: '', busy: false };
+  var state = { scope: 'mine', q: '', format: '', status: '', only: '', order: 'title', tabs: {}, periods: {}, pending: '', pendingTab: '', pendingAnalysis: '', busy: false };
   var editor = null, draftTimer = null, searchTimer = null, draftSession;
   try { draftSession = sessionStorage.getItem('ticketmonitor.projectDraftSession'); if (!draftSession) { draftSession = crypto.randomUUID(); sessionStorage.setItem('ticketmonitor.projectDraftSession', draftSession); } } catch (_) { draftSession = String(Date.now()) + Math.random(); }
   var STAGES = Object.fromEntries(WorkProcesses.stages);
@@ -14,17 +14,9 @@
   function leads(id) { return Object.keys(WK.leads || {}).map(function (k) { return Object.assign({ id: k }, WK.leads[k]); }).filter(function (r) { return id && r.pj === id; }); }
   function norm(s) { return String(s || '').toLowerCase().replace(/ё/g, 'е'); }
   function redraw() { var y = scrollY; render(); scrollTo(0, y); }
-  function open(k, tab) { state.pending = ''; state.tabs[k] = tab || 'profile'; S.view = 'projectbase'; S.sub.projects = 'all'; S.m.project = null; S.m.vproj = k; render(); scrollTo(0, 0); }
+  function open(k, tab) { state.pending = state.pendingTab = state.pendingAnalysis = ''; state.tabs[k] = tab || 'profile'; S.view = 'projectbase'; S.sub.projects = 'all'; S.m.project = null; S.m.vproj = k; render(); scrollTo(0, 0); }
   function tabOf(k) { return state.tabs[k] || 'profile'; }
   function tabs(k) { var t = tabOf(k); return '<div class="pw-tabs" role="tablist" aria-label="Карточка проекта">' + [['profile', 'Профиль'], ['dates', 'Афиша'], ['analysis', 'Аналитика'], ['work', 'Связанные работы']].map(function (x) { return button('tab', esc(x[1]), 'pw-tab', ' role="tab" data-tab="' + x[0] + '" aria-selected="' + (t === x[0]) + '"'); }).join('') + '</div>'; }
-  function header(k, r, title) {
-    var p = r && r.profile || {}, ava = pjMedia(r, 'avatar'), cover = pjMedia(r, 'cover'), ls = leads(myFind(k)), st = ls.length ? STAGES[ls[0].stage] || ls[0].stage : '';
-    return '<div class="pw-back">' + button('back', '← Все проекты', 'pj-plain') + '</div><section id="pjHero" class="pw-hero"' + (cover ? ' style="--pw-cover:url(\'' + esc(cover) + '\');background-position:center ' + (r.cover_y == null ? 30 : r.cover_y) + '%"' : '') + '>' +
-      '<button class="pw-avatar" data-pj="photo" data-kind="avatar" aria-label="' + (ava ? 'Сменить' : 'Загрузить') + ' фото">' + (ava ? '<img src="' + esc(ava) + '" alt="">' : esc(pjInitials(title))) + '</button>' +
-      '<div class="pw-title"><h1>' + esc(title) + '</h1>' + ((p.format || mostOf(S.pj && S.pj.l || [], 'format')) ? '<span class="pw-format-tag">' + esc(p.format || mostOf(S.pj.l, 'format')) + '</span>' : '') + (p.sub && p.sub !== title ? '<p>' + esc(p.sub) + '</p>' : '') + (st ? '<span class="pw-status">' + esc(st) + '</span>' : '') + '</div>' +
-      '<div class="pw-actions"><button class="btn-ghost" data-fav="' + esc(k) + '" data-title="' + esc(title) + '" aria-pressed="' + !!(r && r.fav) + '" aria-label="' + (r && r.fav ? 'Убрать из избранного' : 'В избранное') + '">' + (r && r.fav ? '★' : '☆') + '</button>' +
-      (!r ? button('register', 'В мою базу', 'btn-ghost') : '') + '<button class="btn-dark" data-pj="edit">Редактировать</button></div></section>' + tabs(k);
-  }
   function currentPeriod() { var k = key() || ''; return state.periods[k] || { from: '', to: '' }; }
   function inPeriod(e) { var p = currentPeriod(); return (!p.from || e.date >= p.from) && (!p.to || e.date <= p.to); }
   function periodActive() { var p = currentPeriod(); return !!(p.from || p.to); }
@@ -53,12 +45,8 @@
   }
   function profile(o) {
     var p = o.rec && o.rec.profile || {}, row = function (label, text) { return '<dt>' + label + '</dt><dd>' + text + '</dd>'; };
-    return '<div class="pw-profile"><div><section class="card pw-box"><div class="pw-section-head"><h2>О проекте</h2><button class="pj-plain" data-pj="edit">Изменить</button></div>' +
-      (p.about ? '<p class="pw-text">' + esc(p.about) + '</p>' : '<p class="sub2">Описание пока не заполнено.</p>') + '<dl class="pj-dl">' + row('Формат', val(p.format || mostOf(o.l, 'format'))) + row('Состав', val(p.crew)) + row('Гонорар', val(p.fee)) + row('Оценка', '<button class="pj-plain" data-pj="rating">' + (pjRating(o.rec) ? esc(ptLabel(ptTypeOf(o.rec.rating.s))) : 'Оценить проект') + '</button>') + '</dl></section>' +
-      riders(o.rec) + aliases(o.rec) + '<section class="card pw-box"><h2>Заметки и ссылки</h2><p class="pw-text">' + val(o.rec && o.rec.note) + '</p>' + linkRows(o.rec && o.rec.links) + '</section></div><div>' +
-      '<section class="card pw-box"><h2>Контакты</h2><dl class="pj-dl">' + row('Контакт', val(p.contact)) + row('Телефон', p.phone ? '<a class="pj-plain" href="tel:' + esc(p.phone.replace(/[^\d+]/g, '')) + '">' + esc(p.phone) + '</a>' : '—') +
-      [['site', 'Сайт'], ['vk', 'ВКонтакте'], ['tg', 'Telegram'], ['instagram', 'Instagram']].map(function (x) { return row(x[1], p[x[0]] ? '<a class="pj-plain" href="' + esc(p[x[0]]) + '" target="_blank" rel="noopener">' + esc(p[x[0]]) + ' ↗</a>' : '—'); }).join('') + '</dl>' + (o.rec && o.rec.contacts ? '<p class="pw-text">' + esc(o.rec.contacts) + '</p>' : '') + '</section>' +
-      WorkProcesses.coop(o.id) + '<section class="card pw-box"><h2>Афиша</h2><p>' + o.l.length + ' текущих · ' + o.past.length + ' архивных дат</p>' + button('tab', 'Открыть афишу →', 'pj-plain', ' data-tab="dates"') + '</section></div></div>';
+    return '<section class="card pw-box"><div class="pw-section-head"><h3>Профиль</h3><button class="pj-plain" data-pj="edit">Редактировать</button></div><dl class="pj-dl">' + row('Гонорар', val(p.fee)) + row('Контакт', val(p.contact)) + row('Телефон', p.phone ? '<a class="pj-plain" href="tel:' + esc(p.phone.replace(/[^\d+]/g, '')) + '">' + esc(p.phone) + '</a>' : '—') + '</dl>' + (o.rec && o.rec.contacts ? '<p class="pw-text">' + esc(o.rec.contacts) + '</p>' : '') + '</section>' +
+      riders(o.rec) + aliases(o.rec) + '<section class="card pw-box"><h3>Заметки и ссылки</h3><p class="pw-text">' + val(o.rec && o.rec.note) + '</p>' + linkRows(o.rec && o.rec.links) + '</section>';
   }
   function linkedIds(r, kind) { return ((r && r.connections || {})[kind] || []).slice(); }
   function connected(o) {
@@ -78,19 +66,25 @@
     });
     return '<div class="pw-connected">' + s + '</div>';
   }
-  function card(o) {
-    var t = tabOf(o.k), main;
-    if (t === 'analysis') return mProjectDetail(o.k);
-    if (t === 'work') main = connected(o);
-    else if (t === 'dates') main = '<div class="pw-date-tools"><button class="btn-ghost" data-pj="orgs">Организаторы</button></div>' + periodBar() + '<div class="pw-dates">' + o.list.replace(/<button class="pj-seg-btn" data-proute=[\s\S]*?<\/button>/g, '') + '</div>';
-    else main = profile(o);
-    return header(o.k, o.rec, o.rec ? o.rec.title : o.title) + main;
+  function analysisTools(o) {
+    return '<p class="sub2">Маршрут, цены, площадки и официальный сайт открываются в привычной аналитике проекта.</p><div class="pw-side-actions">' + AN_TABS.map(function (x) { return button('analysis-open', esc(x[1]), 'btn-ghost', ' data-tab="' + x[0] + '"'); }).join('') + '</div>' +
+      (periodActive() ? '<p class="sub2">Период: ' + esc(periodLabel()) + '</p>' + button('period-clear', 'Все даты', 'pj-plain') : '') +
+      (!o.l.length ? siteSection(o.k, o.title) : '');
   }
-  function analysis(k, r, title, l, body, nav, tiles) { state.tabs[k] = 'analysis'; var site = S.m.anTab === 'site'; return header(k, r, title) + (site ? '' : periodBar()) + '<div class="pw-analysis-tabs" role="tablist" aria-label="Разделы аналитики">' + nav + '</div>' + (site ? '' : '<div class="pw-analysis-summary">' + tiles + '</div>') + body; }
-  function emptyAnalysis(k, allDates) {
-    var r = myRec(k), title = r ? r.title : k; S.pj = { k: k, id: myFind(k), title: title, l: allDates, orgs: pjOrgs(allDates) }; state.tabs[k] = 'analysis';
-    if (S.m.anTab === 'site' || !allDates.length && !periodActive()) return header(k, r, title) + '<div class="pw-analysis-tabs">' + button('site', 'Официальный сайт', 'btn-ghost') + '</div>' + siteSection(k, title);
-    return header(k, r, title) + periodBar() + '<div class="empty"><h2>Нет дат за выбранный период</h2><p>Можно изменить период или подключить афишу официального сайта.</p>' + button('period-clear', 'Все даты', 'btn-ghost') + button('site', 'Официальный сайт', 'btn-ghost') + '</div>';
+  function card(o) {
+    var t = tabOf(o.k), tools;
+    if (t === 'work') tools = connected(o);
+    else if (t === 'dates') tools = periodBar() + '<p class="sub2">' + o.l.length + ' текущих · ' + o.past.length + ' архивных дат. Мероприятия показаны слева.</p><div class="pw-side-actions"><button class="btn-ghost" data-pj="orgs">Организаторы</button></div>';
+    else if (t === 'analysis') tools = analysisTools(o);
+    else tools = profile(o);
+    var extra = '<section class="pw-side-tools" aria-label="Рабочие функции проекта"><h3 class="pj-h4">Работа с проектом</h3>' + (!o.rec ? button('register', 'В мою базу', 'btn-ghost') : '') + tabs(o.k) + '<div class="pw-side-content" role="tabpanel" aria-label="' + ({profile:'Профиль',dates:'Афиша',analysis:'Аналитика',work:'Связанные работы'}[t] || 'Профиль') + '">' + tools + '</div></section>';
+    return o.hero + '<div class="pj-grid"><div class="pj-main">' + o.list + '</div><aside class="pj-aside" aria-label="О проекте">' + o.aside + extra + '</aside></div>';
+  }
+  function openAnalysis(k, tab) {
+    state.tabs[k] = 'analysis'; S.view = 'projectbase'; S.sub.projects = 'tour'; S.m.anFrom = k; S.m.vproj = null; S.m.project = k; S.m.anTab = tab || 'route'; render(); scrollTo(0, 0);
+  }
+  function emptyAnalysis(k) {
+    S.m.project = null; S.m.vproj = k; S.sub.projects = 'all'; state.tabs[k] = 'analysis'; return mShowcaseDetail(k);
   }
   function database() {
     var market = S.view === 'touring' || state.scope === 'market', fav = S.view === 'favorites';
@@ -120,7 +114,7 @@
   }
   function renderWorkspace() {
     if (!MY_READY) return head('Моя база', '') + '<p class="sub">Загружаем вашу базу…</p>' + button('reload', 'Повторить загрузку', 'btn-ghost');
-    if (state.pending) { var r = MYP.projects[state.pending]; if (r) { S.m.vproj = r.keys[0]; S.m.project = null; S.sub.projects = 'all'; if (state.pendingTab) { state.tabs[r.keys[0]] = state.pendingTab; state.pendingTab = ''; } } else { var id = state.pending; state.pending = ''; return head('Проект не найден', '') + '<p>Карточка ' + esc(id) + ' недоступна.</p>' + button('back', 'Все проекты', 'btn-ghost'); } state.pending = ''; }
+    if (state.pending) { var r = MYP.projects[state.pending]; if (r) { S.m.vproj = r.keys[0]; S.m.project = null; S.sub.projects = 'all'; if (state.pendingAnalysis) { S.m.project = r.keys[0]; S.m.vproj = null; S.sub.projects = 'tour'; S.m.anTab = state.pendingAnalysis; state.pendingAnalysis = ''; } if (state.pendingTab) { state.tabs[r.keys[0]] = state.pendingTab; state.pendingTab = ''; } } else { var id = state.pending; state.pending = ''; return head('Проект не найден', '') + '<p>Карточка ' + esc(id) + ' недоступна.</p>' + button('back', 'Все проекты', 'btn-ghost'); } state.pending = ''; }
     if (S.sub.projects === 'tour' && S.m.project) { state.tabs[S.m.project] = 'analysis'; return mProjectDetail(S.m.project); }
     if (S.m.vproj) return mShowcaseDetail(S.m.vproj);
     return database();
@@ -171,8 +165,9 @@
     else if (a === 'scope') { state.scope = b.dataset.scope; S.view = 'projectbase'; S.sub.projects = 'all'; S.m.project = S.m.vproj = null; state.limit = 150; redraw(); }
     else if (a === 'open') open(b.dataset.key);
     else if (a === 'changes') { open(b.dataset.key, 'dates'); S.m.pjMode = 'chg'; redraw(); }
-    else if (a === 'tab') { state.tabs[k] = b.dataset.tab; if (state.tabs[k] === 'analysis' && !S.m.anTab) S.m.anTab = 'route'; redraw(); }
-    else if (a === 'site') { state.tabs[k] = 'analysis'; S.m.anTab = 'site'; redraw(); }
+    else if (a === 'tab') { state.tabs[k] = b.dataset.tab; redraw(); }
+    else if (a === 'analysis-open') openAnalysis(k, b.dataset.tab);
+    else if (a === 'site') openAnalysis(k, 'site');
     else if (a === 'register') await ensureCard();
     else if (a === 'alias-dialog') pjDialog('pj-alias', 'Связать название из афиши', '<input class="pl-in" type="search" data-pw-alias-search aria-label="Название в афише" placeholder="Найти название"><div id="pwAliasOptions">' + aliasOptions(S.pj.title) + '</div>');
     else if (a === 'alias-pick') { var d = await mySave({op:'link',id:myFind(k),key:b.dataset.key}, 'Название связано'); if (d) document.getElementById('pjDlg').close(); }
@@ -215,9 +210,19 @@
   });
   window.addEventListener('beforeunload', function (e) { storeDraft(); if (editor && (dirty() || editor.busy)) { e.preventDefault(); e.returnValue = ''; } });
   function relatedLine(kind, id) { var names = Object.keys(MYP.projects).filter(function (pid) { return linkedIds(MYP.projects[pid], kind).indexOf(id) >= 0 || leads(pid).some(function (l) { return kind === 'lists' ? l.list === id : kind === 'work' && l.project === id; }); }).map(function (pid) { var r = MYP.projects[pid]; return button('open', esc(r.title), 'pj-plain', ' data-key="' + esc(r.keys[0]) + '"'); }); return names.length ? '<div class="wk-pick">Репертуар: ' + names.join(' · ') + '</div>' : ''; }
-  g.ProjectWorkspace = { open: open, relatedLine: relatedLine, active: active, render: renderWorkspace, card: card, analysis: analysis, emptyAnalysis: emptyAnalysis, inPeriod: inPeriod, periodActive: periodActive, periodLabel: periodLabel, clearPeriod: clearPeriod,
+  g.ProjectWorkspace = { open: open, relatedLine: relatedLine, active: active, render: renderWorkspace, card: card, openAnalysis: openAnalysis, emptyAnalysis: emptyAnalysis, inPeriod: inPeriod, periodActive: periodActive, periodLabel: periodLabel, clearPeriod: clearPeriod,
     editorOpened: editorOpened, editorBusy: function () { return editor && editor.busy; }, editorRevision: function () { return editor ? editor.rev : 0; }, profileVersion: function(k, fallback) { return editor && editor.key === k ? editor.rev : fallback; }, editorSaving: editorSaving, editorDone: editorDone, closeDialog: closeDialog, saved: saved, saveError: saveError,
-    hash: function () { if (!active()) return null; var r = rec(), id = r && myFind(key()); return active() && id ? 'projectbase:card:' + id + ':' + tabOf(key()) : state.pending ? 'projectbase:card:' + state.pending + ':' + (state.pendingTab || 'profile') : null; },
-    fromHash: function (parts) { if ((parts[0] === 'projectbase' || parts[0] === 'projects') && parts[1] === 'card' && /^p[a-z0-9]{1,20}$/.test(parts[2] || '')) { S.view = 'projectbase'; S.sub.projects = 'all'; S.m.vproj = S.m.project = null; state.pending = parts[2]; state.pendingTab = parts[3] || 'profile'; var r = MYP.projects[parts[2]]; if (r) state.tabs[r.keys[0]] = state.pendingTab; return true; } state.pending = ''; state.pendingTab = ''; return false; }
+    hash: function () {
+      if (!active()) return null;
+      var r = rec(), id = r && myFind(key());
+      if (id) return S.sub.projects === 'tour' && S.m.project ? 'projectbase:analysis:' + id + ':' + (S.m.anTab || 'route') : 'projectbase:card:' + id + ':' + tabOf(key());
+      return state.pending ? 'projectbase:' + (state.pendingAnalysis ? 'analysis' : 'card') + ':' + state.pending + ':' + (state.pendingAnalysis || state.pendingTab || 'profile') : null;
+    },
+    fromHash: function (parts) {
+      if ((parts[0] === 'projectbase' || parts[0] === 'projects') && (parts[1] === 'card' || parts[0] === 'projectbase' && parts[1] === 'analysis') && /^p[a-z0-9]{1,20}$/.test(parts[2] || '')) {
+        S.view = 'projectbase'; S.sub.projects = 'all'; S.m.vproj = S.m.project = null; state.pending = parts[2]; state.pendingAnalysis = parts[1] === 'analysis' ? parts[3] || 'route' : ''; state.pendingTab = state.pendingAnalysis ? 'analysis' : parts[3] || 'profile'; var r = MYP.projects[parts[2]]; if (r) state.tabs[r.keys[0]] = state.pendingTab; return true;
+      }
+      state.pending = ''; state.pendingTab = ''; state.pendingAnalysis = ''; return false;
+    }
   };
 })(window);

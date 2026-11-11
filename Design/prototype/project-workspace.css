@@ -69,6 +69,28 @@ body.pw-mode:has(#wkTimerDock:not([hidden])) #view { padding-bottom: 230px; }
 .pw-draft { margin-bottom: 18px; }
 .pw-draft button { font-size: inherit; }
 #pj-err button { color: inherit; }
+/* Рабочие функции временно находятся под прежним «О проекте»; сама карточка — общая pjPage. */
+.pw-side-tools > .pj-h4 { margin-bottom: 14px; }
+.pw-side-tools .pw-tabs { margin: 0 0 18px; flex-wrap: wrap; overflow: visible; gap: 0; }
+.pw-side-tools .pw-tab { padding: 9px 10px; font-size: 13px; }
+.pw-side-content, .pw-side-content > *, .pw-side-content .pw-work-row > span { min-width: 0; }
+.pw-side-content .pw-box { padding: 0 0 20px; margin: 0 0 20px; background: transparent; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; box-shadow: none; }
+.pw-side-content .pw-box:last-child { padding-bottom: 0; margin-bottom: 0; border-bottom: 0; }
+.pw-side-content h2, .pw-side-content h3 { font-size: 16px; font-weight: 600; margin: 0 0 14px; }
+.pw-side-content .pw-section-head { margin-bottom: 14px; gap: 10px; }
+.pw-side-content .pw-section-head h2, .pw-side-content .pw-section-head h3 { margin: 0; }
+.pw-side-content .pw-file, .pw-side-content .pw-work-row { flex-wrap: wrap; gap: 10px; padding: 12px 0; overflow-wrap: anywhere; }
+.pw-side-content .pw-file-actions, .pw-side-content .pw-work-row > div { flex-shrink: 1; }
+.pw-side-content .pw-link-form { flex-wrap: wrap; gap: 10px; }
+.pw-side-content .pw-link-form select { flex-basis: 100%; max-width: 100%; }
+.pw-side-content .pw-period { gap: 10px; }
+.pw-side-content .pw-period > span:first-child { width: 100%; }
+.pw-side-content .pw-period label { min-width: 0; }
+.pw-side-content .pw-period input { min-width: 0; max-width: 140px; }
+.pw-side-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 18px; }
+.pw-side-content .site-form-row { flex-wrap: wrap; }
+.pw-side-content .site-form-row input { min-width: 0; max-width: 100%; }
+.pw-side-content .an-sec { overflow-x: auto; padding-top: 18px; }
 @media (max-width: 900px) {
   .pw-profile { grid-template-columns: minmax(0, 1fr); gap: 0; }
   .pw-hero { gap: 16px; padding: 22px; }
