@@ -62,6 +62,7 @@ body.pw-mode:has(#wkTimerDock:not([hidden])) #view { padding-bottom: 230px; }
 .pw-analysis-summary .an-flip-in, .pw-analysis-summary .an-face b { color: var(--ink); }
 .pw-analysis-summary .an-face { background: transparent; border: 0; }
 .pw-analysis-summary .an-face > span:not(.an-tbar) { color: var(--ink-2); }
+.pw-analysis-summary .an-tsub { color: var(--muted) !important; }
 .pw-analysis-summary .an-back { background: #f2f8fc; }
 .pw-analysis-summary .an-flip:focus-visible { outline-color: var(--ink); }
 .pw-analysis-summary .an-strip i { background: var(--ink-2); }
