@@ -4,6 +4,8 @@ var EventReview = (function () {
   var data = null, loading = false, refreshAgain = false, error = "", selected = {}, busy = false;
   var mode = "list", filter = "new", limit = 100, scope = "project", byKey = {}, byId = {}, ruleKeys = {}, ruleNames = {}, ruleArtists = {}, etag = "", poll, snackTimer;
   var batchObserver, mutation = 0;
+  var keepPending = {}, keepQueue = [], keepSending = false, keepTimer;
+  var reviewOrder = [], reviewNext = 0, reviewCount = 0;
   var ICON = {
     keep: '<path d="m3 8 3 3 7-7"/>',
     local: '<path d="M2 6h12L8 2 2 6Zm1 7h10M4 7v4m4-4v4m4-4v4"/>',
@@ -15,7 +17,8 @@ var EventReview = (function () {
   function actions(id, kept) {
     var area = scope === "artist" ? "весь исполнитель" : "все даты проекта";
     return '<span class="er-actions">' + [["keep", "Оставить проект", kept ? " kept" : ""], ["local", "Удалить как местное · " + area, ""], ["uninteresting", "Удалить: неинтересно · " + area, ""]].map(function (x) {
-      return '<button type="button" class="er-icon' + x[2] + '" data-er-action="' + x[0] + '" data-er-id="' + h(id) + '" aria-label="' + x[1] + '" title="' + x[1] + '"' + (busy ? ' disabled' : '') + '>' + icon(x[0]) + '</button>';
+      var saving=keepPending[id] && x[0]==='keep', label=saving ? 'Сохраняем проект…' : x[1];
+      return '<button type="button" class="er-icon' + x[2] + '" data-er-action="' + x[0] + '" data-er-id="' + h(id) + '" aria-label="' + label + '" title="' + label + '"' + (busy || keepPending[id] ? ' disabled' : '') + (saving ? ' aria-busy="true"' : '') + '>' + (saving ? '…' : icon(x[0])) + '</button>';
     }).join("") + '</span>';
   }
   function changed() {
@@ -29,9 +32,10 @@ var EventReview = (function () {
   function refresh() {
     if (!window.ON_APP) return;
     if (loading) { refreshAgain=true;return; }
-    if (busy) { queue(); return; }
+    if (busy || Object.keys(keepPending).length) { queue(); return; }
     loading = true; var started = mutation;
-    fetch("/api/event-review", {cache:"no-store",headers:etag ? {"If-None-Match":etag} : {}}).then(function (r) {
+    var url='/api/event-review' + (data && data.catalogue_version ? '?catalogue_version=' + encodeURIComponent(data.catalogue_version) + '&deleted_count=' + data.deleted.length : '');
+    fetch(url, {cache:"no-store",headers:etag ? {"If-None-Match":etag} : {}}).then(function (r) {
       if(r.status===304) return null;
       return r.json().then(function (d) { if (!r.ok) throw Error(d.error || "Разбор недоступен"); d.versionTag=r.headers.get("ETag")||String(d.rev);return d; });
     }).then(function (d) {
@@ -39,6 +43,16 @@ var EventReview = (function () {
       if(!d) { loading=false;error="";snacks();queue();return; }
       var old = data && (data.content_version || data.versionTag);
       etag=d.versionTag;
+      if(data && !d.groups){
+        data.pending=d.pending;data.clockOffset=Date.now()/1000-d.server_time;
+        data.content_version=d.content_version;data.versionTag=d.versionTag;data.rev=d.rev;data.rule_count=d.rule_count;
+        var journalChanged=d.deleted && d.deleted.length!==data.deleted.length;
+        if(d.deleted) data.deleted=d.deleted;
+        var kept=new Set(d.kept_ids);
+        updateKept(data.groups.filter(function(g){return !!g.kept!==kept.has(g.id);}).map(function(g){return {id:g.id,value:kept.has(g.id)};}));
+        if(journalChanged && document.querySelector('.er-deleted-table'))rerender();
+        loading=false;error='';snacks();queue();return;
+      }
       if(data && old===d.content_version){
         data.pending=d.pending;data.clockOffset=Date.now()/1000-d.server_time;
         data.versionTag=d.versionTag;loading=false;error="";snacks();queue();return;
@@ -94,12 +108,13 @@ var EventReview = (function () {
   }
   function localDate(s) { return s ? s.slice(8,10) + '.' + s.slice(5,7) + '.' + s.slice(0,4) : '—'; }
   function rows() {
+    return data.groups.filter(groupMatches);
+  }
+  function groupMatches(g) {
     var q = typeof S !== "undefined" ? S.q.trim().toLowerCase() : "";
-    return data.groups.filter(function (g) {
-      if (filter === "new" && g.kept || filter === "kept" && !g.kept) return false;
-      return g.events.some(function (e) {
-        return (typeof mInScope !== "function" || mInScope(e)) && (!q || [g.title,e.city,e.venue,e.org,g.genre,g.format].join(" ").toLowerCase().indexOf(q) >= 0);
-      });
+    if (filter === "new" && g.kept || filter === "kept" && !g.kept) return false;
+    return g.events.some(function (e) {
+      return (typeof mInScope !== "function" || mInScope(e)) && (!q || [g.title,e.city,e.venue,e.org,g.genre,g.format].join(" ").toLowerCase().indexOf(q) >= 0);
     });
   }
   function ticketLink(g) {
@@ -107,7 +122,7 @@ var EventReview = (function () {
     return t && /^https?:\/\//i.test(t.url) ? '<a class="er-ticket" href="' + h(t.url) + '" target="_blank" rel="noopener noreferrer" title="Открыть ' + h(g.title) + ' у билетного оператора">' + h(t.label || 'Билеты') + ' ↗</a>' : '<div class="sub2">Нет ссылки</div>';
   }
   function batch() {
-    var ids=Object.keys(selected), disabled=busy || !ids.length ? ' disabled' : '';
+    var ids=Object.keys(selected), disabled=busy || !ids.length || ids.some(function(id){return keepPending[id];}) ? ' disabled' : '';
     return '<b>Выбрано ' + ids.length + '</b><span class="sub2">' + ids.reduce(function(n,id){return n+(byId[id] ? byId[id].events.length : 0);},0) + ' текущих мероприятий · все города и будущие даты</span>' +
       '<button class="btn-ghost" data-er-batch="keep"' + disabled + '>Оставить</button><button class="btn-ghost" data-er-batch="local"' + disabled + '>Удалить: местное</button><button class="btn-ghost" data-er-batch="uninteresting"' + disabled + '>Удалить: неинтересно</button><button class="btn-ghost" data-er-clear' + disabled + '>Снять выбор</button>';
   }
@@ -118,8 +133,8 @@ var EventReview = (function () {
     box.innerHTML=batch();
     var inputs=Array.from(document.querySelectorAll('[data-er-select]'));
     inputs.forEach(function(el){el.checked=!!selected[el.dataset.erSelect];el.closest('tr').classList.toggle('sel',el.checked);});
-    var all=document.querySelector('[data-er-all]'), n=inputs.filter(function(el){return el.checked;}).length;
-    if(all){all.checked=!!inputs.length && n===inputs.length;all.indeterminate=n>0 && n<inputs.length;}
+    var all=document.querySelector('[data-er-all]'), available=inputs.filter(function(el){return !el.disabled;}), n=available.filter(function(el){return el.checked;}).length;
+    if(all){all.checked=!!available.length && n===available.length;all.indeterminate=n>0 && n<available.length;all.disabled=busy || !available.length;}
   }
   function fit() {
     if(batchObserver) batchObserver.disconnect();
@@ -128,7 +143,7 @@ var EventReview = (function () {
     var size=function(){wrap.style.setProperty('--er-batch-h',box.getBoundingClientRect().height+'px');};
     size();
     if(window.ResizeObserver){batchObserver=new ResizeObserver(size);batchObserver.observe(box);}
-    var all=wrap.querySelector('[data-er-all]'), inputs=Array.from(wrap.querySelectorAll('[data-er-select]'));
+    var all=wrap.querySelector('[data-er-all]'), inputs=Array.from(wrap.querySelectorAll('[data-er-select]')).filter(function(el){return !el.disabled;});
     if(all) all.indeterminate=inputs.some(function(el){return el.checked;}) && !all.checked;
   }
   function rerender() {
@@ -137,25 +152,100 @@ var EventReview = (function () {
     wrap=document.querySelector('.er-table-wrap');
     if(wrap){wrap.scrollLeft=x;wrap.scrollTop=top;window.scrollTo(0,y);}
   }
+  function updateKept(changes) {
+    var added=false;
+    changes.forEach(function(change){
+      var g=byId[change.id];
+      if(!g || !!g.kept===change.value)return;
+      var before=mode==='review' && groupMatches(g);
+      g.kept=change.value;data.kept+=change.value ? 1 : -1;
+      if(mode==='review'){
+        var after=groupMatches(g);reviewCount+=Number(after)-Number(before);
+        if(after && !before)added=true;
+      }
+    });
+    var progress=document.querySelector('.er-progress');
+    if(progress)progress.textContent='Оставлено ' + data.kept + ' · исключено проектов ' + data.rule_count;
+    var table=document.querySelector('.er-review-table');
+    if(table && changes.length){
+      if(added){rerender();pendingState();return;}
+      var wrap=table.closest('.er-table-wrap'), top=wrap.scrollTop;
+      table.querySelectorAll('[data-er-row]').forEach(function(row){
+        if(!byId[row.dataset.erRow] || !groupMatches(byId[row.dataset.erRow]))row.remove();
+      });
+      var body=table.querySelector('tbody');
+      while(body.children.length<Math.min(limit,reviewCount) && reviewNext<reviewOrder.length){
+        var next=reviewOrder[reviewNext++];
+        if(groupMatches(next))body.insertAdjacentHTML('beforeend',reviewRow(next));
+      }
+      wrap.scrollTop=top;
+      var total=document.querySelector('[data-er-total]');
+      if(total)total.textContent=count(reviewCount,'проект','проекта','проектов') + ' · сначала предполагаемые местные';
+      var more=document.querySelector('[data-er-more]');
+      if(more)more.hidden=reviewCount<=body.children.length;
+      var empty=wrap.querySelector('.empty');
+      if(!reviewCount && !empty){empty=document.createElement('div');empty.className='empty';empty.textContent='Нет проектов для разбора по выбранным условиям';wrap.appendChild(empty);}
+      else if(reviewCount && empty)empty.remove();
+    }
+    pendingState();
+  }
+  function queueKeep(ids) {
+    if(busy)return;
+    ids.forEach(function(id){
+      if(!byId[id] || byId[id].kept || keepPending[id])return;
+      keepPending[id]=true;keepQueue.push(id);delete selected[id];
+    });
+    mutation++;error='';pendingState();
+    clearTimeout(keepTimer);keepTimer=setTimeout(flushKeeps,40);
+  }
+  function flushKeeps() {
+    if(keepSending || !keepQueue.length)return;
+    var ids=keepQueue.splice(0,500);keepSending=true;
+    fetch('/api/event-review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({op:'keep',ids:ids})}).then(function(r){
+      return r.json().then(function(d){if(!r.ok)throw Error(d.error || 'Не удалось сохранить проект');return d;});
+    }).then(function(){
+      ids.forEach(function(id){delete keepPending[id];});
+      mutation++;
+      updateKept(ids.map(function(id){return {id:id,value:true};}));
+    }).catch(function(e){
+      ids.forEach(function(id){delete keepPending[id];});
+      mutation++;error=e.message;toast(e.message);pendingState();refreshAgain=true;
+    }).then(function(){
+      keepSending=false;
+      if(keepQueue.length)flushKeeps();else queue();
+    });
+  }
   function pendingState() {
-    document.querySelectorAll('[data-er-action],[data-er-select],[data-er-all],[data-er-scope]').forEach(function(el){el.disabled=busy;});
+    document.querySelectorAll('[data-er-action],[data-er-select],[data-er-scope]').forEach(function(el){
+      var id=el.dataset.erId || el.dataset.erSelect;
+      el.disabled=!!(busy || keepPending[id]);
+      if(el.dataset.erAction==='keep'){
+        var saving=!!keepPending[id], label=saving ? 'Сохраняем проект…' : 'Оставить проект';
+        el.classList.toggle('kept',!!(byId[id] && byId[id].kept));
+        el.setAttribute('title',label);el.setAttribute('aria-label',label);
+        if(saving)el.setAttribute('aria-busy','true');else el.removeAttribute('aria-busy');
+        if(el.dataset.erSaving!==String(saving)){el.innerHTML=saving ? '…' : icon('keep');el.dataset.erSaving=String(saving);}
+      }
+    });
     selection();
   }
-  function renderReview() {
-    if (!data) return bar() + '<div class="card card-pad">' + h(error || 'Загружаем список проектов…') + '</div>';
-    if (mode === "deleted") return deleted();
-    var list = rows(), shown = list.slice(0, limit), all = shown.length && shown.every(function (g) { return selected[g.id]; });
-    var tools = '<div class="toolbar er-tools">' + [["new","Не разобраны"],["kept","Оставлены"],["all","Все"]].map(function (x) {
-      return '<button class="chip-btn' + (filter === x[0] ? ' chip-active' : '') + '" data-er-filter="' + x[0] + '">' + x[1] + '</button>';
-    }).join("") + '<span class="sub2">' + count(list.length,'проект','проекта','проектов') + ' · сначала предполагаемые местные</span><label class="er-scope sub2">Область <select data-er-scope aria-label="Область исключения"><option value="project"' + (scope === "project" ? ' selected' : '') + '>Проект / постановка</option><option value="artist"' + (scope === "artist" ? ' selected' : '') + '>Весь исполнитель</option></select></label></div>';
-    var table = '<section class="card ev-card-table er-table-wrap" aria-label="Проекты для разбора"><div class="er-batch">' + batch() + '</div><table class="ev-table er-table er-review-table"><colgroup><col style="width:60px"><col style="width:25%"><col style="width:17%"><col style="width:14%"><col style="width:23%"><col style="width:21%"><col style="width:164px"></colgroup><thead><tr><th><label class="er-select-hit"><input type="checkbox" data-er-all aria-label="Выбрать показанные проекты"' + (all ? ' checked' : '') + '></label></th><th>Проект / постановка</th><th>Тип</th><th>Города</th><th>Площадка</th><th>Даты мероприятий</th><th>Разобрать</th></tr></thead><tbody>';
-    shown.forEach(function (g) {
+  function reviewRow(g) {
       var cities = Array.from(new Set(g.events.map(function (e) { return e.city; }))), venues = new Map();
       g.events.forEach(function(e){venues.set(JSON.stringify([e.city,e.venue]),e);});
       var venueHtml=Array.from(venues.values()).map(function(e){return '<div class="er-venue-item"><div>' + h(e.venue || '—') + '</div><div class="sub2">' + h(e.city) + '</div></div>';}).join('');
       var datesHtml=g.events.map(function(e){return '<div class="er-event-date"><div class="nowrap">' + h(localDate(e.date)) + (e.time ? ' · ' + h(e.time) : '') + '</div>' + (venues.size>1 ? '<div class="sub2">' + h([e.city,e.venue].filter(Boolean).join(' · ')) + '</div>' : '') + '</div>';}).join('');
-      table += '<tr' + (selected[g.id] ? ' class="sel"' : '') + '><td><label class="er-select-hit"><input type="checkbox" data-er-select="' + h(g.id) + '" aria-label="Выбрать ' + h(g.title) + '"' + (selected[g.id] ? ' checked' : '') + '></label></td><td><div class="ev-title">' + h(g.title) + '</div><div class="sub2">' + h(g.format) + (g.genre ? ' · ' + h(g.genre) : '') + '</div></td><td><span class="' + (g.tour === "local" ? 'muted' : 'tb-tour') + '">' + (g.tour === "local" ? 'Предположительно местное' : 'Гастрольное') + '</span><div class="sub2">' + h(g.why) + '</div></td><td><div>' + h(cities.join(', ')) + '</div><div class="sub2">' + count(g.events.length,'дата','даты','дат') + ' · ' + count(venues.size,'площадка','площадки','площадок') + '</div></td><td>' + venueHtml + '</td><td>' + datesHtml + '</td><td>' + actions(g.id,g.kept) + '<div class="sub2">' + (scope === "artist" ? 'все программы исполнителя' : 'все даты проекта') + '</div>' + ticketLink(g) + '</td></tr>';
-    });
+      return '<tr data-er-row="' + h(g.id) + '"' + (selected[g.id] ? ' class="sel"' : '') + '><td><label class="er-select-hit"><input type="checkbox" data-er-select="' + h(g.id) + '" aria-label="Выбрать ' + h(g.title) + '"' + (selected[g.id] ? ' checked' : '') + (busy || keepPending[g.id] ? ' disabled' : '') + '></label></td><td><div class="ev-title">' + h(g.title) + '</div><div class="sub2">' + h(g.format) + (g.genre ? ' · ' + h(g.genre) : '') + '</div></td><td><span class="' + (g.tour === "local" ? 'muted' : 'tb-tour') + '">' + (g.tour === "local" ? 'Предположительно местное' : 'Гастрольное') + '</span><div class="sub2">' + h(g.why) + '</div></td><td><div>' + h(cities.join(', ')) + '</div><div class="sub2">' + count(g.events.length,'дата','даты','дат') + ' · ' + count(venues.size,'площадка','площадки','площадок') + '</div></td><td>' + venueHtml + '</td><td>' + datesHtml + '</td><td>' + actions(g.id,g.kept) + '<div class="sub2">' + (scope === "artist" ? 'все программы исполнителя' : 'все даты проекта') + '</div>' + ticketLink(g) + '</td></tr>';
+  }
+  function renderReview() {
+    if (!data) return bar() + '<div class="card card-pad">' + h(error || 'Загружаем список проектов…') + '</div>';
+    if (mode === "deleted") return deleted();
+    var list = rows(), shown = list.slice(0, limit), available=shown.filter(function(g){return !keepPending[g.id];}), all=available.length && available.every(function(g){return selected[g.id];});
+    reviewOrder=list;reviewNext=shown.length;reviewCount=list.length;
+    var tools = '<div class="toolbar er-tools">' + [["new","Не разобраны"],["kept","Оставлены"],["all","Все"]].map(function (x) {
+      return '<button class="chip-btn' + (filter === x[0] ? ' chip-active' : '') + '" data-er-filter="' + x[0] + '">' + x[1] + '</button>';
+    }).join("") + '<span class="sub2" data-er-total>' + count(list.length,'проект','проекта','проектов') + ' · сначала предполагаемые местные</span><label class="er-scope sub2">Область <select data-er-scope aria-label="Область исключения"><option value="project"' + (scope === "project" ? ' selected' : '') + '>Проект / постановка</option><option value="artist"' + (scope === "artist" ? ' selected' : '') + '>Весь исполнитель</option></select></label></div>';
+    var table = '<section class="card ev-card-table er-table-wrap" aria-label="Проекты для разбора"><div class="er-batch">' + batch() + '</div><table class="ev-table er-table er-review-table"><colgroup><col style="width:60px"><col style="width:25%"><col style="width:17%"><col style="width:14%"><col style="width:23%"><col style="width:21%"><col style="width:164px"></colgroup><thead><tr><th><label class="er-select-hit"><input type="checkbox" data-er-all aria-label="Выбрать показанные проекты"' + (all ? ' checked' : '') + '></label></th><th>Проект / постановка</th><th>Тип</th><th>Города</th><th>Площадка</th><th>Даты мероприятий</th><th>Разобрать</th></tr></thead><tbody>';
+    shown.forEach(function(g){table+=reviewRow(g);});
     table += '</tbody></table>' + (!list.length ? '<div class="empty">Нет проектов для разбора по выбранным условиям</div>' : '') + '</section>';
     return bar() + (error ? '<div class="note">' + h(error) + '</div>' : '') + tools + table + (list.length > shown.length ? '<button class="btn-ghost er-more" data-er-more>Показать ещё 100</button>' : '');
   }
@@ -193,7 +283,8 @@ var EventReview = (function () {
       if (names.some(function(n){return !n;})) { toast("Исполнитель не определён. Выберите область «Проект / постановка»"); return; }
     }
     if (!ids.length) return;
-    send(action === 'keep' ? {op:'keep',ids:ids} : {op:'exclude',ids:ids,reason:action,scope:scope});
+    if(ids.some(function(id){return keepPending[id];})) return;
+    if(action==='keep') queueKeep(ids);else send({op:'exclude',ids:ids,reason:action,scope:scope});
   }
   function snacks() {
     clearTimeout(snackTimer);
@@ -231,7 +322,7 @@ var EventReview = (function () {
   document.addEventListener('change',function (ev) {
     var el=ev.target;
     if (el.hasAttribute('data-er-select')) { if (el.checked) selected[el.dataset.erSelect]=true;else delete selected[el.dataset.erSelect];selection(); }
-    else if (el.hasAttribute('data-er-all')) { document.querySelectorAll('[data-er-select]').forEach(function (input) { if(el.checked)selected[input.dataset.erSelect]=true;else delete selected[input.dataset.erSelect]; });selection(); }
+    else if (el.hasAttribute('data-er-all')) { document.querySelectorAll('[data-er-select]').forEach(function (input) { if(input.disabled)return;if(el.checked)selected[input.dataset.erSelect]=true;else delete selected[input.dataset.erSelect]; });selection(); }
     else if(el.hasAttribute('data-er-scope')) { scope=el.value;rerender(); }
   });
   return {bar:bar,inline:inline,blocked:blocked,render:renderReview,fit:fit,active:function(){return mode!=='list';},refresh:refresh};

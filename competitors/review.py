@@ -292,7 +292,7 @@ def catalogue():
             g["context"]["org"] = g["events"][0]["org"]
         result.append(g)
     result.sort(key=lambda g: (g["tour"] != "local", norm(g["title"]), g["id"]))
-    _cache.update(sig=sig, groups=result)
+    _cache.update(sig=sig, groups=result, index={g["id"]: g for g in result})
     return result
 
 
@@ -303,13 +303,22 @@ def version(include_state=True):
     return hashlib.sha256("|".join(signature).encode()).hexdigest()
 
 
-def view():
+def view(known_catalogue=None, deleted_count=None):
     data = load()
-    # Смена этапа фоновой очистки обновляет уведомления, а не всю таблицу.
-    content = [version(include_state=False), sorted(data["kept"]),
-               [(oid, op["rules"]) for oid, op in data["operations"].items() if op["status"] != "cancelled"], len(data["deleted"])]
-    content_version = hashlib.sha256(json.dumps(content, sort_keys=True).encode()).hexdigest()
-    sig = (str(FILE), content_version)
+    rule_data = [(oid, op["rules"]) for oid, op in data["operations"].items() if op["status"] != "cancelled"]
+    catalogue_version = hashlib.sha256(json.dumps([version(include_state=False), rule_data], sort_keys=True).encode()).hexdigest()
+    content_version = hashlib.sha256(json.dumps([catalogue_version, sorted(data["kept"]), len(data["deleted"])]).encode()).hexdigest()
+    pending = [{"id": oid, "count": len(op["rules"]), "until": op["until"], "status": op["status"], "error": op.get("error", "")}
+               for oid, op in data["operations"].items() if op["status"] in ("pending", "applying", "error")]
+    result = {"rev": data["rev"], "content_version": content_version, "catalogue_version": catalogue_version,
+              "pending": pending, "server_time": time.time(), "rule_count": sum(len(r) for _, r in rule_data)}
+    if deleted_count != len(data["deleted"]):
+        result["deleted"] = data["deleted"]
+    # После «Оставить» меняются только решения. Не строить и не передавать
+    # заново десятки тысяч мероприятий; старые клиенты получают полный ответ.
+    if known_catalogue == catalogue_version:
+        return result | {"kept_ids": list(data["kept"])}
+    sig = (str(FILE), catalogue_version)
     cached = _view_cache.get(sig)
     if cached is None:
         active = rules(data)
@@ -318,22 +327,21 @@ def view():
             if any(blocked(e, active) for e in g["events"]):
                 continue
             groups.append({k: v for k, v in g.items() if k not in ("names", "keys", "pid", "aid", "context", "events", "qualifier")} |
-                          {"kept": g["id"] in data["kept"], "events": [{k: e[k] for k in ("city", "venue", "date", "time", "org", "keys")} for e in g["events"]]})
+                          {"events": [{k: e[k] for k in ("city", "venue", "date", "time", "org", "keys")} for e in g["events"]]})
         _view_cache.clear()
         _view_cache[sig] = (groups, active)
     else:
         groups, active = cached
-    pending = [{"id": oid, "count": len(op["rules"]), "until": op["until"], "status": op["status"], "error": op.get("error", "")}
-               for oid, op in data["operations"].items() if op["status"] in ("pending", "applying", "error")]
-    return {"rev": data["rev"], "content_version": content_version, "groups": groups, "deleted": data["deleted"], "pending": pending, "rules": active,
-            "server_time": time.time(), "kept": sum(g["kept"] for g in groups), "rule_count": len(active)}
+    visible = [g | {"kept": g["id"] in data["kept"]} for g in groups]
+    return result | {"groups": visible, "rules": active, "kept": sum(g["kept"] for g in visible), "deleted": data["deleted"]}
 
 
 def apply(op):
     action = op.get("op")
     # Построение каталога/привязок БД не должно занимать окно отмены соседнего
     # нажатия. Под замком решений остаются проверки состояния и атомарная запись.
-    index = {g["id"]: g for g in catalogue()} if action in ("keep", "exclude") else {}
+    groups = catalogue() if action in ("keep", "exclude") else []
+    index = _cache["index"] if groups is _cache.get("groups") else {g["id"]: g for g in groups}
     by_name = {}
     if action == "exclude":
         for g in index.values():
@@ -363,7 +371,7 @@ def apply(op):
             for g in selected:
                 data["kept"][g["id"]] = {"title": g["title"], "at": stamp()}
             save(data)
-            return {"ok": True}
+            return {"ok": True, "ids": [g["id"] for g in selected]}
         if op.get("reason") not in ("local", "uninteresting"):
             raise ReviewError("Выберите причину удаления")
         kind = op.get("scope", "project")

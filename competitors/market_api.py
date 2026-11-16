@@ -60,7 +60,8 @@ def event_review_get():
         if request.if_none_match.contains(tag):
             response = Response(status=304)
         else:
-            body = json.dumps(review.view(), ensure_ascii=False, separators=(",", ":")).encode()
+            body = json.dumps(review.view(request.args.get("catalogue_version"), request.args.get("deleted_count", type=int)),
+                              ensure_ascii=False, separators=(",", ":")).encode()
             response = Response(mimetype="application/json")
             if request.accept_encodings["gzip"] > 0:
                 response.data = gzip.compress(body, compresslevel=4)

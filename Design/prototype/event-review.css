@@ -31,3 +31,4 @@
 .er-table.er-review-table{min-width:1160px}
 .er-review-table .ev-title{cursor:default}
 .er-venue-item+.er-venue-item,.er-event-date+.er-event-date{margin-top:8px;padding-top:8px;border-top:1px solid var(--line-soft)}
+.er-more[hidden]{display:none}

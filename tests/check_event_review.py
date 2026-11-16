@@ -271,6 +271,38 @@ class ReviewTests(unittest.TestCase):
         self.now+=4;r.finalize_due()
         self.assertNotEqual(r.view()['content_version'],before)
 
+    def test_keep_refresh_only_transfers_decisions_without_building_catalogue(self):
+        first=self.client.get('/api/event-review').json
+        gid=self.group('Музыкант. Весенняя программа')['id']
+        self.assertEqual(self.client.post('/api/event-review',json={'op':'keep','ids':[gid]}).json['ids'],[gid])
+        with patch.object(r,'catalogue',side_effect=AssertionError('must not rebuild catalogue')):
+            response=self.client.get('/api/event-review',query_string={
+                'catalogue_version':first['catalogue_version'],'deleted_count':len(first['deleted'])})
+        self.assertEqual(response.status_code,200)
+        delta=response.json
+        self.assertEqual(delta['kept_ids'],[gid])
+        for field in ('groups','rules','deleted'):self.assertNotIn(field,delta)
+        self.assertNotEqual(delta['content_version'],first['content_version'])
+        self.assertEqual(delta['catalogue_version'],first['catalogue_version'])
+        tag=response.headers['ETag']
+        self.assertEqual(self.client.get('/api/event-review',headers={'If-None-Match':tag}).status_code,304)
+
+    def test_catalogue_changes_fall_back_to_full_response(self):
+        first=self.client.get('/api/event-review').json
+        storage.save_json(self.market,self.rows+[self.e('Новый гастрольный проект','Москва','Зал','k:new')])
+        changed=self.client.get('/api/event-review',query_string={'catalogue_version':first['catalogue_version']}).json
+        self.assertNotEqual(changed['catalogue_version'],first['catalogue_version'])
+        self.assertTrue(any(g['title']=='Новый гастрольный проект' for g in changed['groups']))
+        self.assertIn('rules',changed);self.assertIn('deleted',changed)
+
+    def test_cached_catalogue_keeps_current_decisions_and_previous_response(self):
+        before=r.view();gid=self.group('Музыкант. Весенняя программа')['id']
+        r.apply({'op':'keep','ids':[gid]})
+        after=r.view()
+        self.assertEqual(after['kept'],1)
+        self.assertTrue(next(g for g in after['groups'] if g['id']==gid)['kept'])
+        self.assertFalse(next(g for g in before['groups'] if g['id']==gid)['kept'])
+
     def test_s3_delete_uses_batches_and_reports_partial_errors(self):
         import types
         client=Mock();client.delete_objects.return_value={}
