@@ -259,6 +259,13 @@ def catalogue():
     return result
 
 
+def version():
+    files = [FILE, curation.FILE, ROOT / "data/competitors/market/events.json",
+             ROOT / "data/competitors/events.json", ROOT / "data/competitors/official_sites.json"]
+    signature = [datetime.now().date().isoformat()] + [str((p.stat().st_mtime_ns, p.stat().st_size)) if p.exists() else "0" for p in files]
+    return hashlib.sha256("|".join(signature).encode()).hexdigest()
+
+
 def view():
     data = load()
     active = rules(data)
@@ -267,7 +274,8 @@ def view():
     for g in all_groups:
         if any(blocked(e, active) for e in g["events"]):
             continue
-        groups.append({k: v for k, v in g.items() if k not in ("names", "keys", "pid", "aid", "context")} | {"kept": g["id"] in data["kept"]})
+        groups.append({k: v for k, v in g.items() if k not in ("names", "keys", "pid", "aid", "context", "events", "qualifier")} |
+                      {"kept": g["id"] in data["kept"], "events": [{k: e[k] for k in ("city", "venue", "date", "time", "org", "keys")} for e in g["events"]]})
     pending = [{"id": oid, "count": len(op["rules"]), "until": op["until"], "status": op["status"], "error": op.get("error", "")}
                for oid, op in data["operations"].items() if op["status"] in ("pending", "applying", "error")]
     return {"rev": data["rev"], "groups": groups, "deleted": data["deleted"], "pending": pending, "rules": active,

@@ -179,6 +179,19 @@ class ReviewTests(unittest.TestCase):
             self.exclude(g);self.now+=4;r.finalize_due()
         self.assertEqual(storage.load_json(self.market,[]),[b])
 
+    def test_conditional_and_compressed_api(self):
+        first=self.client.get('/api/event-review',headers={'Accept-Encoding':'gzip'})
+        self.assertEqual(first.headers['Content-Encoding'],'gzip')
+        value=json.loads(gzip.decompress(first.data))
+        self.assertEqual(len(value['groups']),4)
+        self.assertNotIn('title',value['groups'][0]['events'][0])
+        tag=first.headers['ETag']
+        self.assertEqual(self.client.get('/api/event-review',headers={'If-None-Match':tag}).status_code,304)
+        r.apply(dict(op='keep',ids=[self.group('Музыкант. Весенняя программа')['id']]))
+        fresh=self.client.get('/api/event-review',headers={'If-None-Match':tag})
+        self.assertEqual(fresh.status_code,200)
+        self.assertNotEqual(fresh.headers['ETag'],tag)
+
     def test_bulk_validation_and_api(self):
         self.assertEqual(self.client.post('/api/event-review',json={}).status_code,409)
         self.assertEqual(self.client.post('/api/event-review',json=[]).status_code,400)

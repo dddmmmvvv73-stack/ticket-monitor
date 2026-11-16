@@ -2,7 +2,7 @@
 var EventReview = (function () {
   "use strict";
   var data = null, loading = false, error = "", selected = {}, expanded = {}, busy = false;
-  var mode = "list", filter = "new", limit = 100, scope = "project", byKey = {}, byId = {}, ruleKeys = {}, ruleNames = {}, ruleArtists = {}, poll;
+  var mode = "list", filter = "new", limit = 100, scope = "project", byKey = {}, byId = {}, ruleKeys = {}, ruleNames = {}, ruleArtists = {}, etag = "", poll, snackTimer;
   var ICON = {
     keep: '<path d="m3 8 3 3 7-7"/>',
     local: '<path d="M2 6h12L8 2 2 6Zm1 7h10M4 7v4m4-4v4m4-4v4"/>',
@@ -25,10 +25,12 @@ var EventReview = (function () {
   function refresh() {
     if (loading || !window.ON_APP) return;
     loading = true;
-    fetch("/api/event-review", {cache:"no-store"}).then(function (r) {
-      return r.json().then(function (d) { if (!r.ok) throw Error(d.error || "Разбор недоступен"); return d; });
+    fetch("/api/event-review", {cache:"no-store",headers:etag ? {"If-None-Match":etag} : {}}).then(function (r) {
+      if(r.status===304) return null;
+      return r.json().then(function (d) { if (!r.ok) throw Error(d.error || "Разбор недоступен"); etag=r.headers.get("ETag")||"";d.versionTag=etag||String(d.rev);return d; });
     }).then(function (d) {
-      var old = data && JSON.stringify([data.rev,data.groups]);
+      if(!d) { loading=false;error="";snacks();clearTimeout(poll);poll=setTimeout(refresh,data && data.pending.length ? 700 : 15000);return; }
+      var old = data && data.versionTag;
       data = d; data.clockOffset = Date.now() / 1000 - d.server_time;
       loading = false; error = ""; byId = {}; byKey = {};
       ruleKeys={};ruleNames={};ruleArtists={};
@@ -39,7 +41,7 @@ var EventReview = (function () {
       });
       d.groups.forEach(function (g) { byId[g.id] = g; g.events.forEach(function (e) { (e.keys || []).forEach(function (k) { byKey[k] = g; }); }); });
       Object.keys(selected).forEach(function (id) { if (!byId[id]) delete selected[id]; });
-      if (old !== JSON.stringify([d.rev,d.groups]) || old == null) changed(); else snacks();
+      if (old !== d.versionTag || old == null) changed(); else snacks();
       clearTimeout(poll);
       poll = setTimeout(refresh, d.pending.length ? 700 : 15000);
     }).catch(function (e) { loading = false; error = e.message; if (mode !== "list") render(); clearTimeout(poll); poll = setTimeout(refresh, 5000); });
@@ -128,6 +130,7 @@ var EventReview = (function () {
     send(action === 'keep' ? {op:'keep',ids:ids} : {op:'exclude',ids:ids,reason:action,scope:scope});
   }
   function snacks() {
+    clearTimeout(snackTimer);
     var box = document.getElementById('erSnacks');
     if (!box) { box=document.createElement('div');box.id='erSnacks';box.className='er-snacks';box.setAttribute('aria-live','polite');document.body.appendChild(box); }
     var now=Date.now()/1000-(data ? data.clockOffset : 0);
@@ -135,6 +138,8 @@ var EventReview = (function () {
       var left=Math.max(0,p.until-now);
       return '<div class="er-snack" role="status"><span>' + (p.status==='error' ? h(p.error) + ' · повторим автоматически' : left>0 ? 'Удаление: ' + count(p.count,'проект','проекта','проектов') + ' · отмена 4 секунды' : 'Удаляем историю…') + '</span>' + (p.status==='pending' && left>0 ? '<button type="button" data-er-undo="' + h(p.id) + '">Отменить</button><i class="er-snack-progress" style="animation-duration:' + Math.round(left*1000) + 'ms"></i>' : '') + '</div>';
     }).join('');
+    var deadlines=(data ? data.pending : []).filter(function(p){return p.status==='pending' && p.until>now;}).map(function(p){return p.until-now;});
+    if(deadlines.length) snackTimer=setTimeout(snacks,Math.ceil(Math.min.apply(null,deadlines)*1000)+5);
   }
   document.addEventListener('click',function (ev) {
     var b=ev.target.closest('[data-er-mode],[data-er-filter],[data-er-action],[data-er-batch],[data-er-expand],[data-er-clear],[data-er-more],[data-er-undo]');

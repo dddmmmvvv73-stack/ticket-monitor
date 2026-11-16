@@ -29,6 +29,7 @@
 from __future__ import annotations
 
 import json
+import gzip
 import os
 import re
 import shlex
@@ -55,7 +56,21 @@ _cd_cache = {"key": None, "js": ""}
 def event_review_get():
     review.start_worker()
     try:
-        return jsonify(review.view())
+        tag = review.version()
+        if request.if_none_match.contains(tag):
+            response = Response(status=304)
+        else:
+            body = json.dumps(review.view(), ensure_ascii=False, separators=(",", ":")).encode()
+            response = Response(mimetype="application/json")
+            if request.accept_encodings["gzip"] > 0:
+                response.data = gzip.compress(body, compresslevel=4)
+                response.headers["Content-Encoding"] = "gzip"
+            else:
+                response.data = body
+        response.set_etag(tag)
+        response.headers["Cache-Control"] = "private, no-cache"
+        response.headers["Vary"] = "Accept-Encoding"
+        return response
     except Exception:
         # Не подменять недоступную базу пустым списком успешного разбора.
         return jsonify(error="Не удалось загрузить разбор афиши. Проверьте доступность базы."), 503
