@@ -15,6 +15,13 @@
 .ev-table.er-table th:first-child,.ev-table.er-table td:first-child,.ev-table.er-table td:last-child{width:auto}
 .ev-table.er-table td{vertical-align:top;white-space:normal;word-break:normal;overflow-wrap:break-word;border-bottom:1px solid var(--line-soft)}
 .er-review-table td:first-child{text-align:center}
+.er-review-table tbody td:first-child{position:relative;padding:0}
+.er-select-hit{position:absolute;inset:0;display:flex;align-items:flex-start;justify-content:center;padding:12px 8px;cursor:pointer;border-radius:4px}
+.er-review-table thead .er-select-hit{align-items:center;padding:0 8px}
+.er-select-hit:hover{background:rgba(29,111,174,.08)}
+.er-select-hit:focus-within{outline:2px solid var(--data);outline-offset:-3px}
+.er-select-hit input[type=checkbox]{margin:0;flex-shrink:0;cursor:inherit}
+.er-select-hit:has(input:disabled){cursor:wait}
 .er-table .ev-title{max-width:100%;white-space:normal;overflow:visible;overflow-wrap:break-word}
 .er-table.er-deleted-table{min-width:820px}
 .er-deleted-table td:nth-child(n+3){white-space:nowrap}
