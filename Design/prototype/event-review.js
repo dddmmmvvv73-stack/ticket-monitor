@@ -265,9 +265,9 @@ var EventReview = (function () {
       if(data && op.op==='exclude') {
         data.clockOffset=Date.now()/1000-result.server_time;
         data.pending.push({id:result.id,count:op.ids.length,until:result.until,status:'pending'});
-        var artists=op.scope==='artist' ? op.ids.map(function(id){return byId[id] && byId[id].artist;}).filter(Boolean) : [];
+        var removed=new Set(op.ids), artists=new Set(op.scope==='artist' ? op.ids.map(function(id){return byId[id] && byId[id].artist;}).filter(Boolean) : []);
         data.groups=data.groups.filter(function(g){
-          if(op.ids.indexOf(g.id)<0 && artists.indexOf(g.artist)<0) return true;
+          if(!removed.has(g.id) && !artists.has(g.artist)) return true;
           g.events.forEach(function(e){(e.keys||[]).forEach(function(k){ruleKeys[k]=true;});});return false;
         });
         data.rule_count+=op.ids.length;data.versionTag='pending:'+result.id;data.content_version='pending:'+result.id;changed();

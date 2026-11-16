@@ -220,6 +220,65 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(len(r.view()['deleted']),3)
         self.assertEqual(len(storage.load_json(self.market,[])),2)
 
+    def bulk_groups(self, count):
+        rows=[self.e('Массовый проект %d'%i,'Тверь','ДК','k:bulk:%d'%i) for i in range(count)]
+        storage.save_json(self.market,self.rows+rows)
+        return [g['id'] for g in r.catalogue() if g['title'].startswith('Массовый проект ')]
+
+    def test_large_exclusion_is_one_operation_with_one_undo(self):
+        ids=self.bulk_groups(1201)
+        for reason in ('local','uninteresting'):
+            with self.subTest(reason=reason):
+                response=self.client.post('/api/event-review',json={
+                    'op':'exclude','ids':ids,'reason':reason,'scope':'project'})
+                self.assertEqual(response.status_code,200)
+                op=response.json
+                state=r.load()['operations'][op['id']]
+                self.assertEqual(len(state['rules']),1201)
+                self.assertEqual(op['until']-self.now,4)
+                self.assertEqual(len(r.view()['pending']),1)
+                self.assertEqual(len(r.view()['groups']),4)
+                self.now+=3.999
+                self.assertEqual(self.client.post('/api/event-review',json={
+                    'op':'cancel','id':op['id']}).status_code,200)
+                self.now+=1;r.finalize_due()
+                self.assertEqual(r.load()['operations'][op['id']]['status'],'cancelled')
+                self.assertEqual(len(storage.load_json(self.market,[])),1206)
+                self.assertEqual(len(r.view()['groups']),1205)
+                self.assertEqual(r.load()['deleted'],[])
+
+    def test_large_exclusion_finishes_without_duplicates_or_unrelated_deletions(self):
+        ids=self.bulk_groups(1501)
+        response=self.client.post('/api/event-review',json={
+            'op':'exclude','ids':ids+ids[:10],'reason':'local'})
+        self.assertEqual(response.status_code,200)
+        oid=response.json['id']
+        self.assertEqual(len(r.load()['operations'][oid]['rules']),1501)
+        self.now+=3.999;r.finalize_due()
+        self.assertEqual(len(storage.load_json(self.market,[])),1506)
+        self.now+=.001
+        with patch.object(r,'purge',wraps=r.purge) as purge:
+            r.finalize_due()
+        self.assertEqual(purge.call_count,1)
+        self.assertEqual(r.load()['operations'][oid]['status'],'done')
+        self.assertEqual(storage.load_json(self.market,[]),self.rows)
+        self.assertEqual(len(r.load()['deleted']),1501)
+        self.assertTrue(all(e['reason']=='local' for e in r.load()['deleted']))
+        self.assertTrue(r.blocked(self.e('Массовый проект 1500','Орел','Другой ДК','k:new')))
+        r.finalize_due()
+        self.assertEqual(len(r.load()['deleted']),1501)
+
+    def test_large_exclusion_validates_whole_selection_before_writing(self):
+        ids=self.bulk_groups(501)
+        before=r.load()
+        for invalid in (ids+['missing-project'],ids+[None],[],ids[0]):
+            with self.subTest(invalid_type=type(invalid).__name__):
+                response=self.client.post('/api/event-review',json={
+                    'op':'exclude','ids':invalid,'reason':'uninteresting'})
+                self.assertEqual(response.status_code,409)
+                self.assertEqual(r.load(),before)
+        self.assertEqual(len(storage.load_json(self.market,[])),506)
+
     def test_due_operations_share_one_purge_and_keep_reasons(self):
         a=self.exclude(self.group('Музыкант. Весенняя программа'))
         b=r.apply(dict(

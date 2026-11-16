@@ -5,7 +5,7 @@ const vm=require('node:vm');
 const source=fs.readFileSync('Design/prototype/event-review.js','utf8');
 const tick=()=>new Promise(resolve=>setImmediate(resolve));
 
-function setup(){
+function setup(ids=['a','b']){
   const listeners={},timers=new Map(),requests=[],notices=[];let timerId=0,renders=0,applies=0;
   function element(dataset={}){
     const classes=new Set(),attrs={};
@@ -14,8 +14,8 @@ function setup(){
       setAttribute(k,v){attrs[k]=v;},removeAttribute(k){delete attrs[k];},
       hasAttribute(k){return k in attrs;},closest(){return this.row || this;}};
   }
-  const inputs=['a','b'].map(id=>{const el=element({erSelect:id});el.row=element();return el;});
-  const buttons=['a','b'].flatMap(id=>['keep','local','uninteresting'].map(action=>element({erId:id,erAction:action})));
+  const inputs=ids.map(id=>{const el=element({erSelect:id});el.row=element();return el;});
+  const buttons=ids.flatMap(id=>['keep','local','uninteresting'].map(action=>element({erId:id,erAction:action})));
   const all=element(),scope=element(),batch=element(),progress=element(),snacks={children:[]};
   const document={addEventListener(name,fn){listeners[name]=fn;},getElementById:()=>snacks,
     querySelector(s){return ({'.er-batch':batch,'[data-er-all]':all,'.er-progress':progress})[s] || null;},
@@ -30,7 +30,7 @@ function setup(){
   c.window=c;vm.createContext(c);vm.runInContext(source,c);
   const response=(value,ok=true,etag='tag')=>({ok,status:ok?200:409,headers:{get:()=>etag},json:()=>Promise.resolve(value)});
   const data={rev:1,catalogue_version:'catalogue',content_version:'content',server_time:Date.now()/1000,
-    groups:['a','b'].map(id=>({id,title:'Проект '+id,kept:false,events:[{keys:[id],city:'Тверь',venue:'ДК',date:'2099-01-01'}]})),
+    groups:ids.map(id=>({id,title:'Проект '+id,kept:false,events:[{keys:[id],city:'Тверь',venue:'ДК',date:'2099-01-01'}]})),
     pending:[],rules:[],deleted:[],kept:0,rule_count:0};
   function click(dataset){
     const el=element(dataset);el.hasAttribute=k=>Object.hasOwn(dataset,k.replace(/^data-/, '').replace(/-([a-z])/g,(_,x)=>x.toUpperCase()));
@@ -38,10 +38,11 @@ function setup(){
   }
   function action(action,id){click({erAction:action,erId:id});}
   function select(id,value){const el=inputs.find(x=>x.dataset.erSelect===id);el.checked=value;el.hasAttribute=k=>k==='data-er-select';listeners.change({target:el});}
+  function selectAll(){all.checked=true;all.hasAttribute=k=>k==='data-er-all';listeners.change({target:all});}
   function flush(delay=40){const entry=[...timers].find(([,t])=>t.delay===delay);assert.ok(entry,'expected scheduled work');timers.delete(entry[0]);entry[1].fn();}
   async function ready(){c.EventReview.refresh();requests[0].resolve(response(data));await tick();renders=0;applies=0;}
   const keepButton=id=>buttons.find(b=>b.dataset.erId===id && b.dataset.erAction==='keep');
-  return {c,data,requests,buttons,inputs,all,batch,notices,ready,response,action,select,flush,keepButton,
+  return {c,data,requests,buttons,inputs,all,batch,notices,ready,response,action,select,selectAll,click,flush,keepButton,
     counts:()=>({renders,applies})};
 }
 
@@ -98,4 +99,15 @@ test('старый ответ каталога не откатывает уже 
   h.requests[1].resolve(h.response(stale));await tick();
   assert.equal(h.keepButton('a').classList.contains('kept'),true);
   assert.deepEqual(h.counts(),{renders:0,applies:0});
+});
+
+test('массовое удаление отправляет все 1201 выбранный проект одной операцией',async()=>{
+  const ids=Array.from({length:1201},(_,i)=>'project-'+i);
+  for(const reason of ['local','uninteresting']){
+    const h=setup(ids);await h.ready();h.selectAll();
+    assert.match(h.batch.innerHTML,/Выбрано 1201/);
+    h.click({erBatch:reason});
+    assert.equal(h.requests.length,2);
+    assert.deepEqual(JSON.parse(h.requests[1].opts.body),{op:'exclude',ids,reason,scope:'project'});
+  }
 });

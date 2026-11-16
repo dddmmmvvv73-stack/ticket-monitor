@@ -359,8 +359,8 @@ def apply(op):
         if action not in ("keep", "exclude"):
             raise ReviewError("Неизвестное действие")
         ids = op.get("ids")
-        if not isinstance(ids, list) or not ids or len(ids) > 500 or any(not isinstance(i, str) for i in ids):
-            raise ReviewError("Выберите от 1 до 500 проектов")
+        if not isinstance(ids, list) or not ids or any(not isinstance(i, str) for i in ids):
+            raise ReviewError("Выберите проекты из списка")
         if any(i not in index for i in ids):
             raise ReviewError("Афиша изменилась. Обновите список")
         selected = [index[i] for i in dict.fromkeys(ids)]
