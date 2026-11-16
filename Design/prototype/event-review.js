@@ -1,7 +1,7 @@
 // Управление афишей в существующих «Мероприятиях». Источник решений — сервер.
 var EventReview = (function () {
   "use strict";
-  var data = null, loading = false, error = "", selected = {}, expanded = {}, busy = false;
+  var data = null, loading = false, refreshAgain = false, error = "", selected = {}, expanded = {}, busy = false;
   var mode = "list", filter = "new", limit = 100, scope = "project", byKey = {}, byId = {}, ruleKeys = {}, ruleNames = {}, ruleArtists = {}, etag = "", poll, snackTimer;
   var ICON = {
     keep: '<path d="m3 8 3 3 7-7"/>',
@@ -22,14 +22,18 @@ var EventReview = (function () {
     if (typeof render === "function") render();
     snacks();
   }
+  function queue() {
+    clearTimeout(poll);var delay=refreshAgain ? 0 : data && data.pending.length ? 700 : 15000;refreshAgain=false;poll=setTimeout(refresh,delay);
+  }
   function refresh() {
-    if (loading || !window.ON_APP) return;
+    if (!window.ON_APP) return;
+    if (loading) { refreshAgain=true;return; }
     loading = true;
     fetch("/api/event-review", {cache:"no-store",headers:etag ? {"If-None-Match":etag} : {}}).then(function (r) {
       if(r.status===304) return null;
       return r.json().then(function (d) { if (!r.ok) throw Error(d.error || "Разбор недоступен"); etag=r.headers.get("ETag")||"";d.versionTag=etag||String(d.rev);return d; });
     }).then(function (d) {
-      if(!d) { loading=false;error="";snacks();clearTimeout(poll);poll=setTimeout(refresh,data && data.pending.length ? 700 : 15000);return; }
+      if(!d) { loading=false;error="";snacks();queue();return; }
       var old = data && data.versionTag;
       data = d; data.clockOffset = Date.now() / 1000 - d.server_time;
       loading = false; error = ""; byId = {}; byKey = {};
@@ -42,8 +46,7 @@ var EventReview = (function () {
       d.groups.forEach(function (g) { byId[g.id] = g; g.events.forEach(function (e) { (e.keys || []).forEach(function (k) { byKey[k] = g; }); }); });
       Object.keys(selected).forEach(function (id) { if (!byId[id]) delete selected[id]; });
       if (old !== d.versionTag || old == null) changed(); else snacks();
-      clearTimeout(poll);
-      poll = setTimeout(refresh, d.pending.length ? 700 : 15000);
+      queue();
     }).catch(function (e) { loading = false; error = e.message; if (mode !== "list") render(); clearTimeout(poll); poll = setTimeout(refresh, 5000); });
   }
   function ensure() { if (!data && !loading && !error) refresh(); }
@@ -102,7 +105,7 @@ var EventReview = (function () {
     var table = '<section class="card ev-card-table er-table-wrap"><table class="ev-table er-table"><thead><tr><th><input type="checkbox" data-er-all aria-label="Выбрать показанные проекты"' + (all ? ' checked' : '') + '></th><th>Проект / постановка</th><th>Тип</th><th>Города и даты</th><th>Разобрать</th></tr></thead><tbody>';
     shown.forEach(function (g) {
       var cities = Array.from(new Set(g.events.map(function (e) { return e.city; }))), venues = Array.from(new Set(g.events.map(function (e) { return e.venue; })));
-      table += '<tr><td><input type="checkbox" data-er-select="' + h(g.id) + '" aria-label="Выбрать ' + h(g.title) + '"' + (selected[g.id] ? ' checked' : '') + '></td><td><button type="button" class="ev-title" data-er-expand="' + h(g.id) + '" aria-expanded="' + !!expanded[g.id] + '">' + (expanded[g.id] ? '▾ ' : '▸ ') + h(g.title) + '</button><div class="sub2">' + h(g.format) + (g.genre ? ' · ' + h(g.genre) : '') + '</div></td><td><span class="' + (g.tour === "local" ? 'muted' : 'tb-tour') + '">' + (g.tour === "local" ? 'Предположительно местное' : 'Гастрольное') + '</span><div class="sub2">' + h(g.why) + '</div></td><td><div>' + h(cities.slice(0,3).join(', ')) + (cities.length > 3 ? ' и ещё ' + (cities.length-3) : '') + '</div><div class="sub2">' + g.events.length + ' дат · ' + venues.length + ' площадок</div></td><td>' + actions(g.id,g.kept) + '<div class="sub2">' + (scope === "artist" ? 'все программы исполнителя' : 'все даты проекта') + '</div></td></tr>';
+      table += '<tr><td><input type="checkbox" data-er-select="' + h(g.id) + '" aria-label="Выбрать ' + h(g.title) + '"' + (selected[g.id] ? ' checked' : '') + '></td><td><button type="button" class="ev-title" data-er-expand="' + h(g.id) + '" aria-expanded="' + !!expanded[g.id] + '">' + (expanded[g.id] ? '▾ ' : '▸ ') + h(g.title) + '</button><div class="sub2">' + h(g.format) + (g.genre ? ' · ' + h(g.genre) : '') + '</div></td><td><span class="' + (g.tour === "local" ? 'muted' : 'tb-tour') + '">' + (g.tour === "local" ? 'Предположительно местное' : 'Гастрольное') + '</span><div class="sub2">' + h(g.why) + '</div></td><td><div>' + h(cities.slice(0,3).join(', ')) + (cities.length > 3 ? ' и ещё ' + (cities.length-3) : '') + '</div><div class="sub2">' + count(g.events.length,'дата','даты','дат') + ' · ' + count(venues.length,'площадка','площадки','площадок') + '</div></td><td>' + actions(g.id,g.kept) + '<div class="sub2">' + (scope === "artist" ? 'все программы исполнителя' : 'все даты проекта') + '</div></td></tr>';
       if (expanded[g.id]) table += '<tr class="er-details"><td></td><td colspan="4">' + g.events.map(function (e) { return '<div class="er-date"><span>' + localDate(e.date) + '</span><span>' + h(e.city) + ' · ' + h(e.venue) + '</span><span class="sub2">' + h(e.org) + '</span></div>'; }).join("") + '</td></tr>';
     });
     table += '</tbody></table>' + (!list.length ? '<div class="empty">Нет проектов для разбора по выбранным условиям</div>' : '') + '</section>';
@@ -119,7 +122,20 @@ var EventReview = (function () {
     busy = true; error = ""; render();
     fetch('/api/event-review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(op)}).then(function (r) {
       return r.json().then(function (d) { if (!r.ok) throw Error(d.error || 'Не сохранено'); return d; });
-    }).then(function () { busy=false; selected={}; refresh(); }).catch(function (e) { busy=false; error=e.message; toast(e.message); render(); refresh(); });
+    }).then(function (result) {
+      busy=false;selected={};
+      if(data && op.op==='exclude') {
+        data.clockOffset=Date.now()/1000-result.server_time;
+        data.pending.push({id:result.id,count:op.ids.length,until:result.until,status:'pending'});
+        var artists=op.scope==='artist' ? op.ids.map(function(id){return byId[id] && byId[id].artist;}).filter(Boolean) : [];
+        data.groups=data.groups.filter(function(g){
+          if(op.ids.indexOf(g.id)<0 && artists.indexOf(g.artist)<0) return true;
+          g.events.forEach(function(e){(e.keys||[]).forEach(function(k){ruleKeys[k]=true;});});return false;
+        });
+        data.rule_count+=op.ids.length;data.versionTag='pending:'+result.id;changed();
+      }
+      refresh();
+    }).catch(function (e) { busy=false; error=e.message; toast(e.message); render(); refresh(); });
   }
   function act(action, ids) {
     if (scope === "artist" && action !== "keep") {
@@ -134,10 +150,19 @@ var EventReview = (function () {
     var box = document.getElementById('erSnacks');
     if (!box) { box=document.createElement('div');box.id='erSnacks';box.className='er-snacks';box.setAttribute('aria-live','polite');document.body.appendChild(box); }
     var now=Date.now()/1000-(data ? data.clockOffset : 0);
-    box.innerHTML = (data ? data.pending : []).map(function (p) {
-      var left=Math.max(0,p.until-now);
-      return '<div class="er-snack" role="status"><span>' + (p.status==='error' ? h(p.error) + ' · повторим автоматически' : left>0 ? 'Удаление: ' + count(p.count,'проект','проекта','проектов') + ' · отмена 4 секунды' : 'Удаляем историю…') + '</span>' + (p.status==='pending' && left>0 ? '<button type="button" data-er-undo="' + h(p.id) + '">Отменить</button><i class="er-snack-progress" style="animation-duration:' + Math.round(left*1000) + 'ms"></i>' : '') + '</div>';
-    }).join('');
+    var pending=data ? data.pending : [], present={};
+    pending.forEach(function(p){present[p.id]=true;});
+    Array.from(box.children).forEach(function(card){if(!present[card.dataset.erSnackId])card.remove();});
+    pending.forEach(function(p){
+      var left=Math.max(0,p.until-now), phase=p.status+':' +(left>0 ? 'undo':'expired')+':'+p.count+':'+(p.error||'');
+      var card=Array.from(box.children).find(function(el){return el.dataset.erSnackId===p.id;});
+      if(!card) { card=document.createElement('div');card.className='er-snack';card.dataset.erSnackId=p.id;card.setAttribute('role','status');box.appendChild(card); }
+      // Сохранять ту же кнопку между опросами: замена DOM во время нажатия
+      // может сорвать короткое окно отмены.
+      if(card.dataset.phase===phase)return;
+      card.dataset.phase=phase;
+      card.innerHTML='<span>' + (p.status==='error' ? h(p.error) + ' · повторим автоматически' : left>0 ? 'Удаление: ' + count(p.count,'проект','проекта','проектов') + ' · отмена 4 секунды' : 'Удаляем историю…') + '</span>' + (p.status==='pending' && left>0 ? '<button type="button" data-er-undo="' + h(p.id) + '">Отменить</button><i class="er-snack-progress" style="animation-duration:' + Math.round(left*1000) + 'ms"></i>' : '');
+    });
     var deadlines=(data ? data.pending : []).filter(function(p){return p.status==='pending' && p.until>now;}).map(function(p){return p.until-now;});
     if(deadlines.length) snackTimer=setTimeout(snacks,Math.ceil(Math.min.apply(null,deadlines)*1000)+5);
   }

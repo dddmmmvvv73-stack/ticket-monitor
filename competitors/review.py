@@ -284,6 +284,14 @@ def view():
 
 def apply(op):
     action = op.get("op")
+    # Построение каталога/привязок БД не должно занимать окно отмены соседнего
+    # нажатия. Под замком решений остаются проверки состояния и атомарная запись.
+    index = {g["id"]: g for g in catalogue()} if action in ("keep", "exclude") else {}
+    by_name = {}
+    if action == "exclude":
+        for g in index.values():
+            for name in g["names"]:
+                by_name.setdefault(name, []).append(g)
     with STATE_LOCK:
         data = load()
         if action == "cancel":
@@ -298,7 +306,6 @@ def apply(op):
         ids = op.get("ids")
         if not isinstance(ids, list) or not ids or len(ids) > 500 or any(not isinstance(i, str) for i in ids):
             raise ReviewError("Выберите от 1 до 500 проектов")
-        index = {g["id"]: g for g in catalogue()}
         if any(i not in index for i in ids):
             raise ReviewError("Афиша изменилась. Обновите список")
         selected = [index[i] for i in dict.fromkeys(ids)]
@@ -323,7 +330,7 @@ def apply(op):
             if kind == "artist":
                 new_rules[-1]["context"] = {}
             else:
-                new_rules[-1]["protected_keys"] = sorted({k for other in index.values()
+                new_rules[-1]["protected_keys"] = sorted({k for name in g["names"] for other in by_name.get(name, [])
                     if other["id"] != g["id"] and other["pid"] != g["pid"] and set(other["names"]) & set(g["names"])
                     for k in other["keys"]})
         oid = uuid.uuid4().hex
@@ -558,11 +565,11 @@ def finalize_due():
                         op["raw_refs"] = sorted(set(op.get("raw_refs", [])) | set(raw_refs))
                         save(data)
                 targets, _ = purge(active, remember)
+                for ref in load()["operations"][oid].get("raw_refs", []):
+                    _delete_raw(ref)
                 with STATE_LOCK:
                     data = load()
                     op = data["operations"][oid]
-                    for ref in op.get("raw_refs", []):
-                        _delete_raw(ref)
                     have = {(r["title"], r["city"], r["venue"], r["date"]) for r in data["deleted"]}
                     for e in targets + op.get("entries", []):
                         identity = (e["title"], e["city"], e["venue"], e["date"])
