@@ -1,7 +1,7 @@
 // Управление афишей в существующих «Мероприятиях». Источник решений — сервер.
 var EventReview = (function () {
   "use strict";
-  var data = null, loading = false, refreshAgain = false, error = "", selected = {}, expanded = {}, busy = false;
+  var data = null, loading = false, refreshAgain = false, error = "", selected = {}, busy = false;
   var mode = "list", filter = "new", limit = 100, scope = "project", byKey = {}, byId = {}, ruleKeys = {}, ruleNames = {}, ruleArtists = {}, etag = "", poll, snackTimer;
   var batchObserver, mutation = 0;
   var ICON = {
@@ -148,11 +148,13 @@ var EventReview = (function () {
     var tools = '<div class="toolbar er-tools">' + [["new","Не разобраны"],["kept","Оставлены"],["all","Все"]].map(function (x) {
       return '<button class="chip-btn' + (filter === x[0] ? ' chip-active' : '') + '" data-er-filter="' + x[0] + '">' + x[1] + '</button>';
     }).join("") + '<span class="sub2">' + count(list.length,'проект','проекта','проектов') + ' · сначала предполагаемые местные</span><label class="er-scope sub2">Область <select data-er-scope aria-label="Область исключения"><option value="project"' + (scope === "project" ? ' selected' : '') + '>Проект / постановка</option><option value="artist"' + (scope === "artist" ? ' selected' : '') + '>Весь исполнитель</option></select></label></div>';
-    var table = '<section class="card ev-card-table er-table-wrap" aria-label="Проекты для разбора"><div class="er-batch">' + batch() + '</div><table class="ev-table er-table er-review-table"><colgroup><col style="width:60px"><col style="width:34%"><col style="width:21%"><col style="width:24%"><col style="width:164px"></colgroup><thead><tr><th><label class="er-select-hit"><input type="checkbox" data-er-all aria-label="Выбрать показанные проекты"' + (all ? ' checked' : '') + '></label></th><th>Проект / постановка</th><th>Тип</th><th>Города и даты</th><th>Разобрать</th></tr></thead><tbody>';
+    var table = '<section class="card ev-card-table er-table-wrap" aria-label="Проекты для разбора"><div class="er-batch">' + batch() + '</div><table class="ev-table er-table er-review-table"><colgroup><col style="width:60px"><col style="width:25%"><col style="width:17%"><col style="width:14%"><col style="width:23%"><col style="width:21%"><col style="width:164px"></colgroup><thead><tr><th><label class="er-select-hit"><input type="checkbox" data-er-all aria-label="Выбрать показанные проекты"' + (all ? ' checked' : '') + '></label></th><th>Проект / постановка</th><th>Тип</th><th>Города</th><th>Площадка</th><th>Даты мероприятий</th><th>Разобрать</th></tr></thead><tbody>';
     shown.forEach(function (g) {
-      var cities = Array.from(new Set(g.events.map(function (e) { return e.city; }))), venues = Array.from(new Set(g.events.map(function (e) { return e.venue; })));
-      table += '<tr' + (selected[g.id] ? ' class="sel"' : '') + '><td><label class="er-select-hit"><input type="checkbox" data-er-select="' + h(g.id) + '" aria-label="Выбрать ' + h(g.title) + '"' + (selected[g.id] ? ' checked' : '') + '></label></td><td><button type="button" class="ev-title" data-er-expand="' + h(g.id) + '" aria-expanded="' + !!expanded[g.id] + '">' + (expanded[g.id] ? '▾ ' : '▸ ') + h(g.title) + '</button><div class="sub2">' + h(g.format) + (g.genre ? ' · ' + h(g.genre) : '') + '</div></td><td><span class="' + (g.tour === "local" ? 'muted' : 'tb-tour') + '">' + (g.tour === "local" ? 'Предположительно местное' : 'Гастрольное') + '</span><div class="sub2">' + h(g.why) + '</div></td><td><div>' + h(cities.slice(0,3).join(', ')) + (cities.length > 3 ? ' и ещё ' + (cities.length-3) : '') + '</div><div class="sub2">' + count(g.events.length,'дата','даты','дат') + ' · ' + count(venues.length,'площадка','площадки','площадок') + '</div></td><td>' + actions(g.id,g.kept) + '<div class="sub2">' + (scope === "artist" ? 'все программы исполнителя' : 'все даты проекта') + '</div>' + ticketLink(g) + '</td></tr>';
-      if (expanded[g.id]) table += '<tr class="er-details"><td></td><td colspan="4">' + g.events.map(function (e) { return '<div class="er-date"><span>' + localDate(e.date) + '</span><span>' + h(e.city) + ' · ' + h(e.venue) + '</span><span class="sub2">' + h(e.org) + '</span></div>'; }).join("") + '</td></tr>';
+      var cities = Array.from(new Set(g.events.map(function (e) { return e.city; }))), venues = new Map();
+      g.events.forEach(function(e){venues.set(JSON.stringify([e.city,e.venue]),e);});
+      var venueHtml=Array.from(venues.values()).map(function(e){return '<div class="er-venue-item"><div>' + h(e.venue || '—') + '</div><div class="sub2">' + h(e.city) + '</div></div>';}).join('');
+      var datesHtml=g.events.map(function(e){return '<div class="er-event-date"><div class="nowrap">' + h(localDate(e.date)) + (e.time ? ' · ' + h(e.time) : '') + '</div>' + (venues.size>1 ? '<div class="sub2">' + h([e.city,e.venue].filter(Boolean).join(' · ')) + '</div>' : '') + '</div>';}).join('');
+      table += '<tr' + (selected[g.id] ? ' class="sel"' : '') + '><td><label class="er-select-hit"><input type="checkbox" data-er-select="' + h(g.id) + '" aria-label="Выбрать ' + h(g.title) + '"' + (selected[g.id] ? ' checked' : '') + '></label></td><td><div class="ev-title">' + h(g.title) + '</div><div class="sub2">' + h(g.format) + (g.genre ? ' · ' + h(g.genre) : '') + '</div></td><td><span class="' + (g.tour === "local" ? 'muted' : 'tb-tour') + '">' + (g.tour === "local" ? 'Предположительно местное' : 'Гастрольное') + '</span><div class="sub2">' + h(g.why) + '</div></td><td><div>' + h(cities.join(', ')) + '</div><div class="sub2">' + count(g.events.length,'дата','даты','дат') + ' · ' + count(venues.size,'площадка','площадки','площадок') + '</div></td><td>' + venueHtml + '</td><td>' + datesHtml + '</td><td>' + actions(g.id,g.kept) + '<div class="sub2">' + (scope === "artist" ? 'все программы исполнителя' : 'все даты проекта') + '</div>' + ticketLink(g) + '</td></tr>';
     });
     table += '</tbody></table>' + (!list.length ? '<div class="empty">Нет проектов для разбора по выбранным условиям</div>' : '') + '</section>';
     return bar() + (error ? '<div class="note">' + h(error) + '</div>' : '') + tools + table + (list.length > shown.length ? '<button class="btn-ghost er-more" data-er-more>Показать ещё 100</button>' : '');
@@ -215,12 +217,11 @@ var EventReview = (function () {
     if(deadlines.length) snackTimer=setTimeout(snacks,Math.ceil(Math.min.apply(null,deadlines)*1000)+5);
   }
   document.addEventListener('click',function (ev) {
-    var b=ev.target.closest('[data-er-mode],[data-er-filter],[data-er-action],[data-er-batch],[data-er-expand],[data-er-clear],[data-er-more],[data-er-undo]');
+    var b=ev.target.closest('[data-er-mode],[data-er-filter],[data-er-action],[data-er-batch],[data-er-clear],[data-er-more],[data-er-undo]');
     if (!b) return;ev.preventDefault();ev.stopImmediatePropagation();
     if (b.disabled) return;
     if (b.hasAttribute('data-er-mode')) { mode=b.dataset.erMode;if(mode!=="review")scope="project";selected={};limit=100;ensure();render(); }
     else if (b.hasAttribute('data-er-filter')) { filter=b.dataset.erFilter;selected={};limit=100;render(); }
-    else if (b.hasAttribute('data-er-expand')) { var id=b.dataset.erExpand;expanded[id]=!expanded[id];rerender(); }
     else if (b.hasAttribute('data-er-action')) act(b.dataset.erAction,[b.dataset.erId]);
     else if (b.hasAttribute('data-er-batch')) act(b.dataset.erBatch,Object.keys(selected));
     else if (b.hasAttribute('data-er-clear')) { selected={};selection(); }
