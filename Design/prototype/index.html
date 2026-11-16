@@ -12010,6 +12010,7 @@ function render() {
   if (mt) { var mp = mt.parentNode; mp.scrollLeft += mt.getBoundingClientRect().left - mp.getBoundingClientRect().left - 16; }
   renderCal();
   tableFit();
+  EventReview.fit();
   wkTimerDock();
 }
 // Шапка таблицы прилипает ровно под верхней панелью (её высота меняется: строка поиска, перенос на узком экране);

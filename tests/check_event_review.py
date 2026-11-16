@@ -220,4 +220,70 @@ class ReviewTests(unittest.TestCase):
         self.assertEqual(len(r.view()['deleted']),3)
         self.assertEqual(len(storage.load_json(self.market,[])),2)
 
+    def test_due_operations_share_one_purge_and_keep_reasons(self):
+        a=self.exclude(self.group('Музыкант. Весенняя программа'))
+        b=r.apply(dict(
+            op='exclude',ids=[self.group('Музыкант. Осенняя программа')['id']],reason='local'))
+        self.now+=4
+        with patch.object(r,'purge',wraps=r.purge) as purge:
+            r.finalize_due()
+        self.assertEqual(purge.call_count,1)
+        data=r.load()
+        self.assertEqual([data['operations'][x['id']]['status'] for x in (a,b)],['done','done'])
+        self.assertEqual({e['reason'] for e in data['deleted'] if 'Осенняя' in e['title']},{'local'})
+        self.assertEqual({e['reason'] for e in data['deleted'] if 'Весенняя' in e['title']},{'uninteresting'})
+
+    def test_batched_failure_retry_retains_journal_after_files_removed(self):
+        ops=[self.exclude(self.group(t)) for t in ['Музыкант. Весенняя программа','Музыкант. Осенняя программа']]
+        self.now+=4;original=r.purge
+        def interrupted(active,remember):
+            original(active,remember)
+            raise OSError('after file cleanup')
+        with patch.object(r,'purge',interrupted):r.finalize_due()
+        self.assertTrue(all(r.load()['operations'][op['id']]['status']=='error' for op in ops))
+        self.now+=31;r.finalize_due()
+        self.assertTrue(all(r.load()['operations'][op['id']]['status']=='done' for op in ops))
+        self.assertEqual(len(r.load()['deleted']),3)
+
+    def test_unchanged_files_not_rewritten_and_raw_prefix_is_exact(self):
+        folder=self.root/'data/competitors/market'
+        day=folder/'days/2099-01-01.json';seen=folder/'seen.json'
+        storage.save_json(day,{'new':[self.rows[2]],'gone':[]})
+        storage.save_json(seen,{'k:3':'2099-01-01'})
+        raw=self.root/'data/raw_sales/kassir'
+        raw.mkdir(parents=True)
+        removed=raw/'k:1_2099-01-01.json.gz';untouched=raw/'k:10_2099-01-01.json.gz'
+        removed.write_bytes(b'raw');untouched.write_bytes(b'raw')
+        snapshot=self.root/'data/sales_snapshot.json.gz'
+        snapshot.write_bytes(gzip.compress(json.dumps({'at':'original','rows':{'k:1':{},'k:3':{'sold':3}},'finals':{}}).encode()))
+        before=[p.stat().st_mtime_ns for p in (day,seen)]
+        self.exclude(self.group('Музыкант. Весенняя программа'));self.now+=4;r.finalize_due()
+        self.assertEqual([p.stat().st_mtime_ns for p in (day,seen)],before)
+        self.assertFalse(removed.exists());self.assertTrue(untouched.exists())
+        result=json.loads(gzip.decompress(snapshot.read_bytes()))
+        self.assertEqual(result['rows'],{'k:3':{'sold':3}});self.assertEqual(result['at'],'original')
+
+    def test_content_version_does_not_change_for_queue_phase(self):
+        self.exclude(self.group('Музыкант. Весенняя программа'))
+        before=r.view()['content_version']
+        data=r.load();next(iter(data['operations'].values()))['status']='applying';r.save(data)
+        self.assertEqual(r.view()['content_version'],before)
+        self.now+=4;r.finalize_due()
+        self.assertNotEqual(r.view()['content_version'],before)
+
+    def test_s3_delete_uses_batches_and_reports_partial_errors(self):
+        import types
+        client=Mock();client.delete_objects.return_value={}
+        session=Mock();session.client.return_value=client
+        boto=types.SimpleNamespace(session=types.SimpleNamespace(Session=Mock(return_value=session)))
+        modules={'boto3':boto,'botocore.config':types.SimpleNamespace(Config=Mock())}
+        refs=['s3://archive/key%d'%i for i in range(2001)]
+        with patch.dict(sys.modules,modules), patch.dict('os.environ',{'S3_KEY_ID':'test','S3_SECRET':'test'}):
+            r._delete_raw_many(refs+refs)
+            self.assertEqual(client.delete_objects.call_count,3)
+            self.assertEqual(sum(len(c.kwargs['Delete']['Objects']) for c in client.delete_objects.call_args_list),2001)
+            client.close.assert_called_once()
+            client.delete_objects.return_value={'Errors':[{'Code':'AccessDenied'}]}
+            with self.assertRaises(RuntimeError):r._delete_raw_many(refs[:1])
+
 if __name__=='__main__':unittest.main()

@@ -3,6 +3,7 @@ var EventReview = (function () {
   "use strict";
   var data = null, loading = false, refreshAgain = false, error = "", selected = {}, expanded = {}, busy = false;
   var mode = "list", filter = "new", limit = 100, scope = "project", byKey = {}, byId = {}, ruleKeys = {}, ruleNames = {}, ruleArtists = {}, etag = "", poll, snackTimer;
+  var batchObserver, mutation = 0;
   var ICON = {
     keep: '<path d="m3 8 3 3 7-7"/>',
     local: '<path d="M2 6h12L8 2 2 6Zm1 7h10M4 7v4m4-4v4m4-4v4"/>',
@@ -19,7 +20,7 @@ var EventReview = (function () {
   }
   function changed() {
     if (typeof curApply === "function") curApply();
-    if (typeof render === "function") render();
+    if (typeof render === "function") rerender();
     snacks();
   }
   function queue() {
@@ -28,13 +29,20 @@ var EventReview = (function () {
   function refresh() {
     if (!window.ON_APP) return;
     if (loading) { refreshAgain=true;return; }
-    loading = true;
+    if (busy) { queue(); return; }
+    loading = true; var started = mutation;
     fetch("/api/event-review", {cache:"no-store",headers:etag ? {"If-None-Match":etag} : {}}).then(function (r) {
       if(r.status===304) return null;
-      return r.json().then(function (d) { if (!r.ok) throw Error(d.error || "Разбор недоступен"); etag=r.headers.get("ETag")||"";d.versionTag=etag||String(d.rev);return d; });
+      return r.json().then(function (d) { if (!r.ok) throw Error(d.error || "Разбор недоступен"); d.versionTag=r.headers.get("ETag")||String(d.rev);return d; });
     }).then(function (d) {
+      if (started !== mutation) { loading=false;queue();return; }
       if(!d) { loading=false;error="";snacks();queue();return; }
-      var old = data && data.versionTag;
+      var old = data && (data.content_version || data.versionTag);
+      etag=d.versionTag;
+      if(data && old===d.content_version){
+        data.pending=d.pending;data.clockOffset=Date.now()/1000-d.server_time;
+        data.versionTag=d.versionTag;loading=false;error="";snacks();queue();return;
+      }
       data = d; data.clockOffset = Date.now() / 1000 - d.server_time;
       loading = false; error = ""; byId = {}; byKey = {};
       ruleKeys={};ruleNames={};ruleArtists={};
@@ -45,9 +53,9 @@ var EventReview = (function () {
       });
       d.groups.forEach(function (g) { byId[g.id] = g; g.events.forEach(function (e) { (e.keys || []).forEach(function (k) { byKey[k] = g; }); }); });
       Object.keys(selected).forEach(function (id) { if (!byId[id]) delete selected[id]; });
-      if (old !== d.versionTag || old == null) changed(); else snacks();
+      if (old !== (d.content_version || d.versionTag) || old == null) changed(); else snacks();
       queue();
-    }).catch(function (e) { loading = false; error = e.message; if (mode !== "list") render(); clearTimeout(poll); poll = setTimeout(refresh, 5000); });
+    }).catch(function (e) { loading=false;if(started!==mutation){queue();return;}error=e.message;if(mode!=="list")rerender();clearTimeout(poll);poll=setTimeout(refresh,5000); });
   }
   function ensure() { if (!data && !loading && !error) refresh(); }
   function bar() {
@@ -98,32 +106,66 @@ var EventReview = (function () {
     var t=g.ticket;
     return t && /^https?:\/\//i.test(t.url) ? '<a class="er-ticket" href="' + h(t.url) + '" target="_blank" rel="noopener noreferrer" title="Открыть ' + h(g.title) + ' у билетного оператора">' + h(t.label || 'Билеты') + ' ↗</a>' : '<div class="sub2">Нет ссылки</div>';
   }
+  function batch() {
+    var ids=Object.keys(selected), disabled=busy || !ids.length ? ' disabled' : '';
+    return '<b>Выбрано ' + ids.length + '</b><span class="sub2">' + ids.reduce(function(n,id){return n+(byId[id] ? byId[id].events.length : 0);},0) + ' текущих мероприятий · все города и будущие даты</span>' +
+      '<button class="btn-ghost" data-er-batch="keep"' + disabled + '>Оставить</button><button class="btn-ghost" data-er-batch="local"' + disabled + '>Удалить: местное</button><button class="btn-ghost" data-er-batch="uninteresting"' + disabled + '>Удалить: неинтересно</button><button class="btn-ghost" data-er-clear' + disabled + '>Снять выбор</button>';
+  }
+  // Выбор меняет только чекбоксы и панель: строки, фокус и прокрутка сохраняются.
+  function selection() {
+    var box=document.querySelector('.er-batch');
+    if (!box) return;
+    box.innerHTML=batch();
+    var inputs=Array.from(document.querySelectorAll('[data-er-select]'));
+    inputs.forEach(function(el){el.checked=!!selected[el.dataset.erSelect];el.closest('tr').classList.toggle('sel',el.checked);});
+    var all=document.querySelector('[data-er-all]'), n=inputs.filter(function(el){return el.checked;}).length;
+    if(all){all.checked=!!inputs.length && n===inputs.length;all.indeterminate=n>0 && n<inputs.length;}
+  }
+  function fit() {
+    if(batchObserver) batchObserver.disconnect();
+    var box=document.querySelector('.er-batch'), wrap=document.querySelector('.er-table-wrap');
+    if(!box || !wrap) return;
+    var size=function(){wrap.style.setProperty('--er-batch-h',box.getBoundingClientRect().height+'px');};
+    size();
+    if(window.ResizeObserver){batchObserver=new ResizeObserver(size);batchObserver.observe(box);}
+    var all=wrap.querySelector('[data-er-all]'), inputs=Array.from(wrap.querySelectorAll('[data-er-select]'));
+    if(all) all.indeterminate=inputs.some(function(el){return el.checked;}) && !all.checked;
+  }
+  function rerender() {
+    var wrap=document.querySelector('.er-table-wrap'), y=window.scrollY, x=wrap ? wrap.scrollLeft : 0, top=wrap ? wrap.scrollTop : 0;
+    render();
+    wrap=document.querySelector('.er-table-wrap');
+    if(wrap){wrap.scrollLeft=x;wrap.scrollTop=top;window.scrollTo(0,y);}
+  }
+  function pendingState() {
+    document.querySelectorAll('[data-er-action],[data-er-select],[data-er-all],[data-er-scope]').forEach(function(el){el.disabled=busy;});
+    selection();
+  }
   function renderReview() {
     if (!data) return bar() + '<div class="card card-pad">' + h(error || 'Загружаем список проектов…') + '</div>';
     if (mode === "deleted") return deleted();
-    var list = rows(), shown = list.slice(0, limit), ids = Object.keys(selected), all = shown.length && shown.every(function (g) { return selected[g.id]; });
+    var list = rows(), shown = list.slice(0, limit), all = shown.length && shown.every(function (g) { return selected[g.id]; });
     var tools = '<div class="toolbar er-tools">' + [["new","Не разобраны"],["kept","Оставлены"],["all","Все"]].map(function (x) {
       return '<button class="chip-btn' + (filter === x[0] ? ' chip-active' : '') + '" data-er-filter="' + x[0] + '">' + x[1] + '</button>';
     }).join("") + '<span class="sub2">' + count(list.length,'проект','проекта','проектов') + ' · сначала предполагаемые местные</span><label class="er-scope sub2">Область <select data-er-scope aria-label="Область исключения"><option value="project"' + (scope === "project" ? ' selected' : '') + '>Проект / постановка</option><option value="artist"' + (scope === "artist" ? ' selected' : '') + '>Весь исполнитель</option></select></label></div>';
-    var batch = ids.length ? '<div class="er-batch"><b>Выбрано ' + ids.length + '</b><span class="sub2">' + ids.reduce(function (n,id) { return n + (byId[id] ? byId[id].events.length : 0); },0) + ' текущих мероприятий · все города и будущие даты</span><button class="btn-ghost" data-er-batch="keep">Оставить</button><button class="btn-ghost" data-er-batch="local">Удалить: местное</button><button class="btn-ghost" data-er-batch="uninteresting">Удалить: неинтересно</button><button class="btn-ghost" data-er-clear>Снять выбор</button></div>' : '';
-    var table = '<section class="card ev-card-table er-table-wrap"><table class="ev-table er-table"><thead><tr><th><input type="checkbox" data-er-all aria-label="Выбрать показанные проекты"' + (all ? ' checked' : '') + '></th><th>Проект / постановка</th><th>Тип</th><th>Города и даты</th><th>Разобрать</th></tr></thead><tbody>';
+    var table = '<section class="card ev-card-table er-table-wrap" aria-label="Проекты для разбора"><div class="er-batch">' + batch() + '</div><table class="ev-table er-table er-review-table"><colgroup><col style="width:40px"><col style="width:34%"><col style="width:21%"><col style="width:24%"><col style="width:164px"></colgroup><thead><tr><th><input type="checkbox" data-er-all aria-label="Выбрать показанные проекты"' + (all ? ' checked' : '') + '></th><th>Проект / постановка</th><th>Тип</th><th>Города и даты</th><th>Разобрать</th></tr></thead><tbody>';
     shown.forEach(function (g) {
       var cities = Array.from(new Set(g.events.map(function (e) { return e.city; }))), venues = Array.from(new Set(g.events.map(function (e) { return e.venue; })));
-      table += '<tr><td><input type="checkbox" data-er-select="' + h(g.id) + '" aria-label="Выбрать ' + h(g.title) + '"' + (selected[g.id] ? ' checked' : '') + '></td><td><button type="button" class="ev-title" data-er-expand="' + h(g.id) + '" aria-expanded="' + !!expanded[g.id] + '">' + (expanded[g.id] ? '▾ ' : '▸ ') + h(g.title) + '</button><div class="sub2">' + h(g.format) + (g.genre ? ' · ' + h(g.genre) : '') + '</div></td><td><span class="' + (g.tour === "local" ? 'muted' : 'tb-tour') + '">' + (g.tour === "local" ? 'Предположительно местное' : 'Гастрольное') + '</span><div class="sub2">' + h(g.why) + '</div></td><td><div>' + h(cities.slice(0,3).join(', ')) + (cities.length > 3 ? ' и ещё ' + (cities.length-3) : '') + '</div><div class="sub2">' + count(g.events.length,'дата','даты','дат') + ' · ' + count(venues.length,'площадка','площадки','площадок') + '</div></td><td>' + actions(g.id,g.kept) + '<div class="sub2">' + (scope === "artist" ? 'все программы исполнителя' : 'все даты проекта') + '</div>' + ticketLink(g) + '</td></tr>';
+      table += '<tr' + (selected[g.id] ? ' class="sel"' : '') + '><td><input type="checkbox" data-er-select="' + h(g.id) + '" aria-label="Выбрать ' + h(g.title) + '"' + (selected[g.id] ? ' checked' : '') + '></td><td><button type="button" class="ev-title" data-er-expand="' + h(g.id) + '" aria-expanded="' + !!expanded[g.id] + '">' + (expanded[g.id] ? '▾ ' : '▸ ') + h(g.title) + '</button><div class="sub2">' + h(g.format) + (g.genre ? ' · ' + h(g.genre) : '') + '</div></td><td><span class="' + (g.tour === "local" ? 'muted' : 'tb-tour') + '">' + (g.tour === "local" ? 'Предположительно местное' : 'Гастрольное') + '</span><div class="sub2">' + h(g.why) + '</div></td><td><div>' + h(cities.slice(0,3).join(', ')) + (cities.length > 3 ? ' и ещё ' + (cities.length-3) : '') + '</div><div class="sub2">' + count(g.events.length,'дата','даты','дат') + ' · ' + count(venues.length,'площадка','площадки','площадок') + '</div></td><td>' + actions(g.id,g.kept) + '<div class="sub2">' + (scope === "artist" ? 'все программы исполнителя' : 'все даты проекта') + '</div>' + ticketLink(g) + '</td></tr>';
       if (expanded[g.id]) table += '<tr class="er-details"><td></td><td colspan="4">' + g.events.map(function (e) { return '<div class="er-date"><span>' + localDate(e.date) + '</span><span>' + h(e.city) + ' · ' + h(e.venue) + '</span><span class="sub2">' + h(e.org) + '</span></div>'; }).join("") + '</td></tr>';
     });
     table += '</tbody></table>' + (!list.length ? '<div class="empty">Нет проектов для разбора по выбранным условиям</div>' : '') + '</section>';
-    return bar() + (error ? '<div class="note">' + h(error) + '</div>' : '') + tools + batch + table + (list.length > shown.length ? '<button class="btn-ghost er-more" data-er-more>Показать ещё 100</button>' : '');
+    return bar() + (error ? '<div class="note">' + h(error) + '</div>' : '') + tools + table + (list.length > shown.length ? '<button class="btn-ghost er-more" data-er-more>Показать ещё 100</button>' : '');
   }
   function deleted() {
     var q = S.q.trim().toLowerCase(), list = data.deleted.filter(function (e) { return !q || [e.title,e.city,e.venue].join(' ').toLowerCase().indexOf(q)>=0; }).slice().reverse();
-    return bar() + '<section class="card ev-card-table er-table-wrap"><table class="ev-table er-table"><thead><tr><th>Мероприятие</th><th>Город / площадка</th><th>Дата</th><th>Причина</th><th>Удалено</th></tr></thead><tbody>' + list.slice(0,limit).map(function (e) {
+    return bar() + '<section class="card ev-card-table er-table-wrap" aria-label="Удалённые мероприятия"><table class="ev-table er-table er-deleted-table"><colgroup><col style="width:36%"><col style="width:28%"><col style="width:110px"><col style="width:120px"><col style="width:142px"></colgroup><thead><tr><th>Мероприятие</th><th>Город / площадка</th><th>Дата</th><th>Причина</th><th>Удалено</th></tr></thead><tbody>' + list.slice(0,limit).map(function (e) {
       return '<tr><td>' + h(e.title) + '</td><td>' + h(e.city) + '<div class="sub2">' + h(e.venue) + '</div></td><td>' + localDate(e.date) + '</td><td>' + (e.reason === "local" ? 'Местное' : 'Неинтересно') + '</td><td>' + localDate(e.at) + ' ' + h(e.at.slice(11,16)) + '</td></tr>';
     }).join('') + '</tbody></table>' + (!list.length ? '<div class="empty">Удалённых мероприятий пока нет</div>' : '') + '</section>' + (list.length>limit ? '<button class="btn-ghost er-more" data-er-more>Показать ещё 100</button>' : '');
   }
   function send(op) {
     if (busy) return;
-    busy = true; error = ""; render();
+    busy = true; mutation++; error = ""; pendingState();
     fetch('/api/event-review',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(op)}).then(function (r) {
       return r.json().then(function (d) { if (!r.ok) throw Error(d.error || 'Не сохранено'); return d; });
     }).then(function (result) {
@@ -136,10 +178,12 @@ var EventReview = (function () {
           if(op.ids.indexOf(g.id)<0 && artists.indexOf(g.artist)<0) return true;
           g.events.forEach(function(e){(e.keys||[]).forEach(function(k){ruleKeys[k]=true;});});return false;
         });
-        data.rule_count+=op.ids.length;data.versionTag='pending:'+result.id;changed();
+        data.rule_count+=op.ids.length;data.versionTag='pending:'+result.id;data.content_version='pending:'+result.id;changed();
       }
+      pendingState();
+      etag='';refreshAgain=true;
       refresh();
-    }).catch(function (e) { busy=false; error=e.message; toast(e.message); render(); refresh(); });
+    }).catch(function (e) { busy=false; error=e.message; toast(e.message); pendingState(); refresh(); });
   }
   function act(action, ids) {
     if (scope === "artist" && action !== "keep") {
@@ -165,7 +209,7 @@ var EventReview = (function () {
       // может сорвать короткое окно отмены.
       if(card.dataset.phase===phase)return;
       card.dataset.phase=phase;
-      card.innerHTML='<span>' + (p.status==='error' ? h(p.error) + ' · повторим автоматически' : left>0 ? 'Удаление: ' + count(p.count,'проект','проекта','проектов') + ' · отмена 4 секунды' : 'Удаляем историю…') + '</span>' + (p.status==='pending' && left>0 ? '<button type="button" data-er-undo="' + h(p.id) + '">Отменить</button><i class="er-snack-progress" style="animation-duration:' + Math.round(left*1000) + 'ms"></i>' : '');
+      card.innerHTML='<span>' + (p.status==='error' ? h(p.error) + ' · повторим автоматически' : left>0 ? 'Удаление: ' + count(p.count,'проект','проекта','проектов') + ' · отмена 4 секунды' : p.status==='pending' ? 'В очереди на очистку · ' + count(p.count,'проект','проекта','проектов') : 'Удаляем историю · ' + count(p.count,'проект','проекта','проектов') + '…') + '</span>' + (p.status==='pending' && left>0 ? '<button type="button" data-er-undo="' + h(p.id) + '">Отменить</button><i class="er-snack-progress" style="animation-duration:' + Math.round(left*1000) + 'ms"></i>' : '');
     });
     var deadlines=(data ? data.pending : []).filter(function(p){return p.status==='pending' && p.until>now;}).map(function(p){return p.until-now;});
     if(deadlines.length) snackTimer=setTimeout(snacks,Math.ceil(Math.min.apply(null,deadlines)*1000)+5);
@@ -173,20 +217,21 @@ var EventReview = (function () {
   document.addEventListener('click',function (ev) {
     var b=ev.target.closest('[data-er-mode],[data-er-filter],[data-er-action],[data-er-batch],[data-er-expand],[data-er-clear],[data-er-more],[data-er-undo]');
     if (!b) return;ev.preventDefault();ev.stopImmediatePropagation();
+    if (b.disabled) return;
     if (b.hasAttribute('data-er-mode')) { mode=b.dataset.erMode;if(mode!=="review")scope="project";selected={};limit=100;ensure();render(); }
     else if (b.hasAttribute('data-er-filter')) { filter=b.dataset.erFilter;selected={};limit=100;render(); }
-    else if (b.hasAttribute('data-er-expand')) { var id=b.dataset.erExpand;expanded[id]=!expanded[id];render(); }
+    else if (b.hasAttribute('data-er-expand')) { var id=b.dataset.erExpand;expanded[id]=!expanded[id];rerender(); }
     else if (b.hasAttribute('data-er-action')) act(b.dataset.erAction,[b.dataset.erId]);
     else if (b.hasAttribute('data-er-batch')) act(b.dataset.erBatch,Object.keys(selected));
-    else if (b.hasAttribute('data-er-clear')) { selected={};render(); }
-    else if (b.hasAttribute('data-er-more')) { limit+=100;render(); }
+    else if (b.hasAttribute('data-er-clear')) { selected={};selection(); }
+    else if (b.hasAttribute('data-er-more')) { limit+=100;rerender(); }
     else if (b.hasAttribute('data-er-undo')) send({op:'cancel',id:b.dataset.erUndo});
   },true);
   document.addEventListener('change',function (ev) {
     var el=ev.target;
-    if (el.hasAttribute('data-er-select')) { if (el.checked) selected[el.dataset.erSelect]=true;else delete selected[el.dataset.erSelect];render(); }
-    else if (el.hasAttribute('data-er-all')) { rows().slice(0,limit).forEach(function (g) { if(el.checked)selected[g.id]=true;else delete selected[g.id]; });render(); }
-    else if(el.hasAttribute('data-er-scope')) { scope=el.value;render(); }
+    if (el.hasAttribute('data-er-select')) { if (el.checked) selected[el.dataset.erSelect]=true;else delete selected[el.dataset.erSelect];selection(); }
+    else if (el.hasAttribute('data-er-all')) { document.querySelectorAll('[data-er-select]').forEach(function (input) { if(el.checked)selected[input.dataset.erSelect]=true;else delete selected[input.dataset.erSelect]; });selection(); }
+    else if(el.hasAttribute('data-er-scope')) { scope=el.value;rerender(); }
   });
-  return {bar:bar,inline:inline,blocked:blocked,render:renderReview,active:function(){return mode!=='list';},refresh:refresh};
+  return {bar:bar,inline:inline,blocked:blocked,render:renderReview,fit:fit,active:function(){return mode!=='list';},refresh:refresh};
 })();

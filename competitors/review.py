@@ -12,7 +12,7 @@ import re
 import threading
 import time
 import uuid
-from functools import wraps
+from functools import lru_cache, wraps
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from urllib.parse import urlsplit
@@ -30,6 +30,7 @@ _worker_lock = threading.Lock()
 _cache = {}
 _cur_cache = {}
 _rules_cache = {}
+_view_cache = {}
 
 
 class ReviewError(ValueError):
@@ -66,6 +67,7 @@ class RuleSet(list):
     """Индексы: разбор тысяч строк не перебирает весь накопленный список запретов."""
     def __init__(self, values):
         super().__init__(values)
+        self.curation = current_curation()
         self.index = {}
         for r in self:
             tokens = [("key", k) for k in r.get("keys", [])]
@@ -81,7 +83,7 @@ class RuleSet(list):
         pk = key(e["title"])
         tokens = [("key", k) for k in e["keys"]]
         tokens += [("pid", e["pid"]), ("aid", e["aid"]), ("name", pk),
-                   ("name", curation.canonical(current_curation(), pk)),
+                   ("name", curation.canonical(self.curation, pk)),
                    ("artist", pk), ("artist", key(curation.artist_part(e["title"])))]
         seen = set()
         for token in tokens:
@@ -93,6 +95,7 @@ class RuleSet(list):
 
 def _cached_rules():
     sig = (str(FILE), FILE.stat().st_mtime_ns, FILE.stat().st_size) if FILE.exists() else (str(FILE), 0, 0)
+    sig += (str(curation.FILE), curation.FILE.stat().st_mtime_ns if curation.FILE.exists() else 0)
     if _rules_cache.get("sig") != sig:
         data = load()
         _rules_cache.update(sig=sig, active=RuleSet(r for op in data["operations"].values() if op["status"] != "cancelled" for r in op["rules"]),
@@ -110,6 +113,7 @@ def permanent_rules():
     return _cached_rules()["permanent"]
 
 
+@lru_cache(maxsize=65536)
 def key(title):
     return curation.project_key(str(title or ""))
 
@@ -143,7 +147,7 @@ def event(row):
             "pid": row.get("pid"), "aid": row.get("aid")}
 
 
-def matches(row, rule):
+def matches(row, rule, cur=None):
     e = event(row)
     if rule["kind"] == "project" and set(e["keys"]) & set(rule.get("protected_keys", [])):
         return False
@@ -161,7 +165,7 @@ def matches(row, rule):
         if e.get("aid") is not None and rule.get("aid") is not None:
             return e["aid"] == rule["aid"]
         return key(e["title"]) == rule["artist_key"] or key(curation.artist_part(e["title"]) or "") == rule["artist_key"]
-    cur = current_curation()
+    cur = current_curation() if cur is None else cur
     return curation.canonical(cur, key(e["title"])) in rule["names"] or key(e["title"]) in rule["names"]
 
 
@@ -169,7 +173,9 @@ def blocked(row, active=None):
     active = rules() if active is None else active
     if not active:
         return False
-    return any(matches(row, r) for r in (active.candidates(event(row)) if isinstance(active, RuleSet) else active))
+    if isinstance(active, RuleSet):
+        return any(matches(row, r, active.curation) for r in active.candidates(event(row)))
+    return any(matches(row, r) for r in active)
 
 
 def filter_rows(rows, permanent=False):
@@ -290,8 +296,8 @@ def catalogue():
     return result
 
 
-def version():
-    files = [FILE, curation.FILE, ROOT / "data/competitors/market/events.json",
+def version(include_state=True):
+    files = ([FILE] if include_state else []) + [curation.FILE, ROOT / "data/competitors/market/events.json",
              ROOT / "data/competitors/events.json", ROOT / "data/competitors/official_sites.json"]
     signature = [datetime.now().date().isoformat()] + [str((p.stat().st_mtime_ns, p.stat().st_size)) if p.exists() else "0" for p in files]
     return hashlib.sha256("|".join(signature).encode()).hexdigest()
@@ -299,17 +305,27 @@ def version():
 
 def view():
     data = load()
-    active = rules(data)
-    all_groups = catalogue()
-    groups = []
-    for g in all_groups:
-        if any(blocked(e, active) for e in g["events"]):
-            continue
-        groups.append({k: v for k, v in g.items() if k not in ("names", "keys", "pid", "aid", "context", "events", "qualifier")} |
-                      {"kept": g["id"] in data["kept"], "events": [{k: e[k] for k in ("city", "venue", "date", "time", "org", "keys")} for e in g["events"]]})
+    # Смена этапа фоновой очистки обновляет уведомления, а не всю таблицу.
+    content = [version(include_state=False), sorted(data["kept"]),
+               [(oid, op["rules"]) for oid, op in data["operations"].items() if op["status"] != "cancelled"], len(data["deleted"])]
+    content_version = hashlib.sha256(json.dumps(content, sort_keys=True).encode()).hexdigest()
+    sig = (str(FILE), content_version)
+    cached = _view_cache.get(sig)
+    if cached is None:
+        active = rules(data)
+        groups = []
+        for g in catalogue():
+            if any(blocked(e, active) for e in g["events"]):
+                continue
+            groups.append({k: v for k, v in g.items() if k not in ("names", "keys", "pid", "aid", "context", "events", "qualifier")} |
+                          {"kept": g["id"] in data["kept"], "events": [{k: e[k] for k in ("city", "venue", "date", "time", "org", "keys")} for e in g["events"]]})
+        _view_cache.clear()
+        _view_cache[sig] = (groups, active)
+    else:
+        groups, active = cached
     pending = [{"id": oid, "count": len(op["rules"]), "until": op["until"], "status": op["status"], "error": op.get("error", "")}
                for oid, op in data["operations"].items() if op["status"] in ("pending", "applying", "error")]
-    return {"rev": data["rev"], "groups": groups, "deleted": data["deleted"], "pending": pending, "rules": active,
+    return {"rev": data["rev"], "content_version": content_version, "groups": groups, "deleted": data["deleted"], "pending": pending, "rules": active,
             "server_time": time.time(), "kept": sum(g["kept"] for g in groups), "rule_count": len(active)}
 
 
@@ -340,7 +356,8 @@ def apply(op):
         if any(i not in index for i in ids):
             raise ReviewError("Афиша изменилась. Обновите список")
         selected = [index[i] for i in dict.fromkeys(ids)]
-        if any(blocked(e, rules(data)) for g in selected for e in g["events"]):
+        active = rules(data)
+        if any(blocked(e, active) for g in selected for e in g["events"]):
             raise ReviewError("Проект уже исключён. Обновите список")
         if action == "keep":
             for g in selected:
@@ -408,61 +425,102 @@ def enforce_db(conn, active=None):
 
 def _delete_raw(ref):
     if ref.startswith("s3://"):
-        import os
-        import boto3
-        bucket, path = ref[5:].split("/", 1)
-        client = boto3.session.Session().client("s3", endpoint_url="https://storage.yandexcloud.net",
-                    aws_access_key_id=os.environ["S3_KEY_ID"], aws_secret_access_key=os.environ["S3_SECRET"])
-        client.delete_object(Bucket=bucket, Key=path)
+        _delete_raw_many([ref])
         return
     path = (ROOT / ref).resolve()
     if path.is_relative_to(ROOT.resolve() / "data"):
         path.unlink(missing_ok=True)
 
 
+def _delete_raw_many(refs):
+    """Один клиент и до 1000 объектов на S3-запрос вместо соединения на каждый файл."""
+    buckets = {}
+    for ref in set(refs):
+        if ref.startswith("s3://"):
+            bucket, path = ref[5:].split("/", 1)
+            buckets.setdefault(bucket, []).append({"Key": path})
+        else:
+            _delete_raw(ref)
+    if not buckets:
+        return
+    import os
+    import boto3
+    from botocore.config import Config
+    client = boto3.session.Session().client("s3", endpoint_url="https://storage.yandexcloud.net",
+                aws_access_key_id=os.environ["S3_KEY_ID"], aws_secret_access_key=os.environ["S3_SECRET"],
+                config=Config(connect_timeout=5, read_timeout=20, retries={"max_attempts": 2}))
+    try:
+        for bucket, objects in buckets.items():
+            for i in range(0, len(objects), 1000):
+                result = client.delete_objects(Bucket=bucket, Delete={"Objects": objects[i:i + 1000], "Quiet": True})
+                if result.get("Errors"):
+                    raise RuntimeError("Не удалось удалить часть облачного архива")
+    finally:
+        client.close()
+
+
 def purge(active, remember=None):
     """Идемпотентная очистка рабочих файлов/БД. Внешние резервные копии не переписывает."""
     from competitors.storage import ON_SERVER
     targets, raw_refs = [], []
+    active = RuleSet(active)
     conn = db_connection() if ON_SERVER else None
     try:
         if conn:
             targets, raw_refs = enforce_db(conn, active)
             # Ссылки сохраняем до удаления БД: сбой сырья допускает повтор операции.
+            keys = {id(rule): set(rule["keys"]) for rule in active}
+            for e in targets:
+                for rule in active.candidates(event(e)):
+                    if matches(e, rule, active.curation):
+                        keys[id(rule)].update(e["keys"])
             for rule in active:
-                rule["keys"] = sorted(set(rule["keys"]) | {k for e in targets if matches(e, rule) for k in e["keys"]})
+                rule["keys"] = sorted(keys[id(rule)])
         active = RuleSet(active)
         source_keys = {k for r in active for k in r["keys"]} | {k for e in targets for k in e["keys"]}
         folder = ROOT / "data/competitors"
         current = folder / "market/events.json"
         direct = folder / "events.json"
-        # До разрушительных действий сохраняем минимальный журнал и все известные
-        # ключи. Повтор после аварии не потеряет названия уже удалённых сеансов.
+        # Один проход чтения и сопоставления. Снимки держим до записи журнала:
+        # повтор после аварии не потеряет названия уже удалённых сеансов.
+        files = []
         for path in (current, folder / "market/archive.json", direct):
             value = load_json(path, [] if path == current else {})
-            candidates = value if isinstance(value, list) else [dict(v, keys=v.get("keys") or [k]) for k, v in value.items()]
-            targets.extend(event(e) for e in candidates if blocked(e, active))
+            sequence = isinstance(value, list)
+            kept, removed = ([] if sequence else {}), []
+            for k, row in enumerate(value) if sequence else value.items():
+                candidate = row if sequence else dict(row, keys=row.get("keys") or [k])
+                if blocked(candidate, active):
+                    removed.append(candidate)
+                elif sequence:
+                    kept.append(row)
+                else:
+                    kept[k] = row
+            targets.extend(event(e) for e in removed)
+            if removed:
+                files.append((path, kept))
+        source_keys |= {k for e in targets for k in e.get("keys", [])}
+        # Имя сырья = ключ + дата. Построить множество префиксов один раз,
+        # вместо сравнения каждого из десятков тысяч файлов со всеми ключами.
+        raw_prefixes = {k.replace("/", "_") for k in source_keys}
+        for path in (ROOT / "data/raw_sales").rglob("*.gz"):
+            if any(path.name[:i] in raw_prefixes for i, char in enumerate(path.name) if char == "_"):
+                raw_refs.append(str(path.relative_to(ROOT)))
         if remember:
             remember(targets, raw_refs)
-        source_keys |= {k for e in targets for k in e.get("keys", [])}
-        for path in [current, folder / "market/archive.json", direct]:
-            value = load_json(path, [] if path == current else {})
-            if isinstance(value, list):
-                removed = [e for e in value if blocked(e, active)]
-                kept = [e for e in value if not blocked(e, active)]
-            else:
-                removed = [dict(e, keys=e.get("keys") or [k]) for k, e in value.items() if blocked(dict(e, keys=e.get("keys") or [k]), active)]
-                kept = {k: e for k, e in value.items() if not blocked(dict(e, keys=e.get("keys") or [k]), active)}
-            targets.extend(event(e) for e in removed)
-            for e in removed:
-                source_keys.update(e.get("keys") or ([e["uid"]] if e.get("uid") else []))
-            if path.exists() and kept != value:
-                save_json(path, kept)
+        for path, kept in files:
+            save_json(path, kept)
         for path in (folder / "market/days").glob("*.json"):
             value = load_json(path, {})
+            changed = False
             for field in ("new", "gone"):
-                value[field] = [e for e in value.get(field, []) if not blocked(e, active) and not set(e.get("keys", [])) & source_keys]
-            save_json(path, value)
+                before = value.get(field, [])
+                after = [e for e in before if not set(e.get("keys", [])) & source_keys and not blocked(e, active)]
+                if len(after) != len(before):
+                    value[field] = after
+                    changed = True
+            if changed:
+                save_json(path, value)
         for sub in ("history", "seats"):
             for k in source_keys:
                 if not k.startswith(("k:", "y:", "q:")):
@@ -470,16 +528,16 @@ def purge(active, remember=None):
         seen_path = folder / "market/seen.json"
         if seen_path.exists():
             seen = load_json(seen_path, {})
-            save_json(seen_path, {k: v for k, v in seen.items() if k not in source_keys})
-        # Схемы Кассира сохранялись отдельно от raw_ref. Удаляем файлы именно этих карточек.
-        for path in (ROOT / "data/raw_sales").rglob("*.gz"):
-            if any(path.name.startswith(k.replace("/", "_") + "_") for k in source_keys):
-                raw_refs.append(str(path.relative_to(ROOT)))
-        for ref in set(raw_refs):
-            _delete_raw(ref)
+            kept_seen = {k: v for k, v in seen.items() if k not in source_keys}
+            if len(kept_seen) != len(seen):
+                save_json(seen_path, kept_seen)
+        _delete_raw_many(raw_refs)
         site_file = folder / "official_sites.json"
         if site_file.exists():
-            save_json(site_file, clean_sites(load_json(site_file, {}), active))
+            sites = load_json(site_file, {})
+            kept_sites = clean_sites(sites, active)
+            if kept_sites != sites:
+                save_json(site_file, kept_sites)
         # Снимки дат в «Моей базе» — производные от афиши. Профиль, контакты,
         # файлы и собственные рабочие записи пользователя не удаляем.
         from competitors import myprojects
@@ -518,11 +576,9 @@ def purge(active, remember=None):
             save_json(legacy_path, kept_legacy)
         snapshot = ROOT / "data/sales_snapshot.json.gz"
         if snapshot.exists():
-            if conn:
-                from sales import export as sales_export
-                value = sales_export.build(conn)
-            else:
-                value = json.loads(gzip.decompress(snapshot.read_bytes()))
+            # Удаление нескольких карточек не требует расчёта всех продаж в БД.
+            # Остальные цифры остаются последним опубликованным снимком.
+            value = json.loads(gzip.decompress(snapshot.read_bytes()))
             value["rows"] = {k: v for k, v in value.get("rows", {}).items() if k not in source_keys}
             gone = {(e["city"], e["date"]) for e in targets}
             for k, entries in list(value.get("finals", {}).items()):
@@ -563,62 +619,80 @@ def clean_sites(data, active=None):
 
 
 def finalize_due():
-    # Очистка может занять дольше окна отмены другого нажатия. Замок очереди
-    # освобождаем на время очистки: отмена соседней операции остаётся доступной.
-    with STATE_LOCK:
-        due = [oid for oid, op in load()["operations"].items()
-               if op["status"] in ("pending", "error", "applying") and op["until"] <= time.time()
-               and op.get("retry_at", 0) <= time.time()]
-    for oid in due:
-        # Единственный исполнитель очистки, включая несколько web-процессов.
-        with LOCK:
-            with STATE_LOCK:
-                data = load()
-                op = data["operations"][oid]
-                if op["status"] not in ("pending", "error", "applying") or op.get("retry_at", 0) > time.time():
-                    continue
+    def ready(op):
+        return (op["status"] in ("pending", "error", "applying") and op["until"] <= time.time()
+                and op.get("retry_at", 0) <= time.time())
+
+    if not any(ready(op) for op in load()["operations"].values()):
+        return
+    # Все готовые удаления выполняются за один проход БД и файлов. Новые
+    # нажатия и отмена своих четырёх секунд не ждут длительную очистку.
+    with LOCK:
+        with STATE_LOCK:
+            data = load()
+            batch = {oid: op for oid, op in data["operations"].items() if ready(op)}
+            if not batch:
+                return
+            for op in batch.values():
                 op["status"] = "applying"
-                save(data)
-                active = op["rules"]
-            try:
-                def remember(targets, raw_refs):
-                    with STATE_LOCK:
-                        data = load()
+            save(data)
+        active = RuleSet(r for op in batch.values() for r in op["rules"])
+        owners = {id(rule): oid for oid, op in batch.items() for rule in op["rules"]}
+        previous_raw = {ref for op in batch.values() for ref in op.get("raw_refs", [])}
+        try:
+            def remember(targets, raw_refs):
+                entries = {oid: [] for oid in batch}
+                keys = {id(r): set(r["keys"]) for r in active}
+                for e in targets:
+                    matched = set()
+                    for rule in active.candidates(event(e)):
+                        if matches(e, rule):
+                            keys[id(rule)].update(e.get("keys", []))
+                            matched.add(owners[id(rule)])
+                    for oid in matched:
+                        entries[oid].append(e)
+                with STATE_LOCK:
+                    data = load()
+                    for oid in batch:
                         op = data["operations"][oid]
                         have = {(e["title"], e["city"], e["venue"], e["date"]) for e in op.get("entries", [])}
-                        for e in targets:
+                        for e in entries[oid]:
                             identity = (e["title"], e["city"], e["venue"], e["date"])
                             if identity not in have:
                                 op.setdefault("entries", []).append({k: e[k] for k in ("title", "city", "venue", "date")})
                                 have.add(identity)
-                        for r in op["rules"]:
-                            r["keys"] = sorted(set(r["keys"]) | {k for e in targets if matches(e, r) for k in e.get("keys", [])})
-                        op["raw_refs"] = sorted(set(op.get("raw_refs", [])) | set(raw_refs))
-                        save(data)
-                targets, _ = purge(active, remember)
-                for ref in load()["operations"][oid].get("raw_refs", []):
-                    _delete_raw(ref)
-                with STATE_LOCK:
-                    data = load()
+                        for saved, rule in zip(op["rules"], batch[oid]["rules"]):
+                            saved["keys"] = sorted(keys[id(rule)])
+                    # Общий журнал сырья нужен до коммита БД и переживает сбой.
+                    first = data["operations"][next(iter(batch))]
+                    first["raw_refs"] = sorted(previous_raw | set(raw_refs))
+                    save(data)
+            purge(active, remember)
+            _delete_raw_many(previous_raw)
+            with STATE_LOCK:
+                data = load()
+                have = {(r["title"], r["city"], r["venue"], r["date"]) for r in data["deleted"]}
+                for oid in batch:
                     op = data["operations"][oid]
-                    have = {(r["title"], r["city"], r["venue"], r["date"]) for r in data["deleted"]}
-                    for e in targets + op.get("entries", []):
+                    op_rules = RuleSet(op["rules"])
+                    for e in op.get("entries", []):
                         identity = (e["title"], e["city"], e["venue"], e["date"])
                         if identity in have:
                             continue
                         have.add(identity)
-                        r = next((r for r in op["rules"] if matches(e, r)), op["rules"][0])
+                        rule = next((r for r in op_rules.candidates(event(e)) if matches(e, r)), op["rules"][0])
                         data["deleted"].append({k: e[k] for k in ("title", "city", "venue", "date")} |
-                                               {"reason": r["reason"], "at": stamp()})
+                                               {"reason": rule["reason"], "at": stamp()})
                     op["status"] = "done"
                     for k in ("entries", "error", "raw_refs", "retry_at"):
                         op.pop(k, None)
-                    save(data)
-            except Exception as exc:
-                with STATE_LOCK:
-                    data = load()
+                save(data)
+        except Exception as exc:
+            with STATE_LOCK:
+                data = load()
+                for oid in batch:
                     data["operations"][oid].update(status="error", error="Очистка не завершена: " + type(exc).__name__, retry_at=time.time() + 30)
-                    save(data)
+                save(data)
 
 
 def start_worker():
