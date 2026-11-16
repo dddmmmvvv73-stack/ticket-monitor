@@ -7,6 +7,7 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link rel="stylesheet" href="work-calendar.css">
 <link rel="stylesheet" href="availability.css">
+<link rel="stylesheet" href="event-review.css">
 <link rel="stylesheet" href="work-home.css">
 <link rel="stylesheet" href="work-processes.css">
 <link rel="stylesheet" href="work-notes.css">
@@ -2754,6 +2755,7 @@ details.how[data-how="psegs"] > summary:hover { color: var(--ink-2); }
 <script src="venue-cap.js"></script>
 <script src="venue-book.js"></script>
 <script src="project-workspace.js"></script>
+<script src="event-review.js"></script>
 <script>
 // ---------------------------------------------------------------- данные конкурентов
 // competitors-data.js (CD): через приложение (/proto/) собирается из data/competitors при каждом открытии —
@@ -8364,7 +8366,8 @@ function renderOperators() {
 }
 
 function renderMarket() {
-  if (!MR.length) return head("Рынок", "Снимок афиши не загружен") + '<div class="empty"><h2>Нет файла market-data.js</h2><p style="margin:0">Он лежит рядом с index.html.</p></div>';
+  if (S.view === "events" && EventReview.active()) return head("Мероприятия · " + mScopeLabel(), "") + EventReview.render();
+  if (!MR.length && S.view !== "events") return head("Рынок", "Снимок афиши не загружен") + '<div class="empty"><h2>Нет файла market-data.js</h2><p style="margin:0">Он лежит рядом с index.html.</p></div>';
   mVisible(); M_COUNT = null;
   var detail = function () { return S.sub.projects === "tour" ? S.m.project : S.m.vproj; };
   if (S.m.tab === "projects" && detail()) {  // страница проекта: без заголовка раздела, строки фильтров и счётчика
@@ -8442,7 +8445,7 @@ var M_CELL = {
   title: function (e) {
     var b = (CUR.filters.show === "all" && e.tour === "tour" ? '<span class="badge-new">гастроль</span>' : '') + (mIsNew(e, 1) ? '<span class="badge-new">новое</span>' : '') + (e.pushkin ? '<span class="badge-new">Пушкинская карта</span>' : '') + moreBadge(e);
     if (e.st) b = archBadge(e.st) + b;  // архив: прошло / снято до даты
-    return '<button class="ev-title" data-mopen="' + e.i + '">' + esc(e.title) + '</button>' + (b ? '<div class="ev-badges">' + b + '</div>' : '');
+    return '<button class="ev-title" data-mopen="' + e.i + '">' + esc(e.title) + '</button>' + (b ? '<div class="ev-badges">' + b + '</div>' : '') + (!ARCH_ON ? EventReview.inline(e) : '');
   },
   niche: function (e) { return '<div style="font-size:13px;line-height:1.35">' + esc(e.sphere || "Сфера не определена") + '</div><div class="sub2">' + esc(e.format) + (e.genre ? ' · ' + esc(e.genre) : ' · жанр не определён') + '</div>'; },
   prices: function (e) { return e.pmin ? '<span class="num nowrap">' + prices(e) + '</span>' : '<span class="muted">—</span>'; },
@@ -8575,6 +8578,7 @@ function mSortKey(e) {
   return s === "pmin" ? (e.pmin || -1) : s === "city" ? e.city + e.date + e.time : s === "seen" ? e.seen + e.date : e.date + (e.time || "99");
 }
 function mTable() {
+  if (!ARCH_ON && EventReview.active()) return EventReview.render();
   var base = mBase();
   var list = base.filter(M_FILTERS[S.m.filter]).sort(function (a, b) { var x = mSortKey(a), y = mSortKey(b); return (x < y ? -1 : x > y ? 1 : 0) * (S.m.desc ? -1 : 1); });
   var shown = list.slice(0, S.m.limit), cols = mVisibleCols(), fitW = mFitted(cols), totalW = cols.reduce(function (s, c) { return s + fitW[c.id]; }, 0);
@@ -8586,15 +8590,15 @@ function mTable() {
   }).join("");
   var mobile = shown.map(function (e) {
     var d = dparts(e.date);
-    return '<button class="m-item" data-mopen="' + e.i + '"><div class="d-sub"><span class="' + (d.weekend ? "wknd" : "") + '">' + d.day + ' ' + d.mon + ', ' + d.wd + '</span>' + timeText(e) + ' · ' + esc(e.city) + '</div>' +
-      '<div style="font-weight:500;margin:2px 0 4px">' + esc(e.title) + '</div><div class="sub2">' + esc(e.venue) + ' · ' + esc(e.format) + (e.pmin ? ' · ' + prices(e) : '') + '</div></button>';
+    return '<div class="er-mobile-item"><button class="m-item" data-mopen="' + e.i + '"><div class="d-sub"><span class="' + (d.weekend ? "wknd" : "") + '">' + d.day + ' ' + d.mon + ', ' + d.wd + '</span>' + timeText(e) + ' · ' + esc(e.city) + '</div>' +
+      '<div style="font-weight:500;margin:2px 0 4px">' + esc(e.title) + '</div><div class="sub2">' + esc(e.venue) + ' · ' + esc(e.format) + (e.pmin ? ' · ' + prices(e) : '') + '</div></button>' + (!ARCH_ON ? EventReview.inline(e) : '') + '</div>';
   }).join("");
   var noNew = (S.m.filter === "new1" || S.m.filter === "new7") && MR_LAST === MK.first;
   var empty = !list.length ? '<div class="empty" style="border:0"><h2>' + (noNew ? "Новых мероприятий пока нет" : "Ничего не найдено") + '</h2><p style="margin:0 auto;max-width:560px">' +
     (noNew ? "Сбор " + human(MK.first) + " — первый: всё, что было в продаже, стало точкой отсчёта. Новые — это мероприятия, которых не было в прошлом сборе; первые появятся после сбора " + human(addDays(MK.first, 1)) + " в 21:00." : "Измените город, даты, фильтры или поиск.") + '</p></div>' : "";
   var activeChip = function (key, label) { return S.m[key] ? '<button class="chip-btn chip-active" data-mclear="' + key + '" aria-label="Убрать фильтр: ' + label.toLowerCase() + '">' + label + ': ' + esc(S.m[key]) + ' ✕</button>' : ''; };
   var venueChip = activeChip("venue", "Площадка") + activeChip("genre", "Жанр");
-  return '<div class="toolbar mtools">' + mNicheSelects(mBase({ noVenue: true })) +
+  return (!ARCH_ON ? EventReview.bar() : '') + '<div class="toolbar mtools">' + mNicheSelects(mBase({ noVenue: true })) +
       '<select class="flat-select" data-flat-label="Источник" data-msel="src" aria-label="Источник"><option value="">Все</option>' +
         [["k", "Только Кассир"], ["y", "Только Яндекс"], ["q", "Только Qtickets"], ["qa", "Qtickets — все"], ["ky", "На нескольких сайтах"], ["s", "Официальные сайты проектов"], ["d", "Площадки прямого сбора — все"]].concat(
           DIRECT_OPS.map(function (o) { return ["op:" + o.id, o.name]; })).map(function (o) { return '<option value="' + o[0] + '"' + (S.m.src === o[0] ? " selected" : "") + '>' + o[1] + '</option>'; }).join("") + '</select>' +
@@ -11361,6 +11365,7 @@ function mClassify() {
 }
 // Что попадает в аналитику: тип и цены из фильтра раздела
 function mPass(e) {
+  if (EventReview.blocked(e)) return false;
   var f = CUR.filters;
   if (e.offList) return false;   // город вне списка рынка (дата с сайта проекта, например Москва) — только на страницах проекта
   if (f.show !== "all" && e.tour !== f.show) return false;

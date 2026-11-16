@@ -53,6 +53,9 @@ app.register_blueprint(tour_export_api)  # рабочие сметы туров 
 app.register_blueprint(availability_api)  # общие свободные даты площадок, прозвон, резервы и брони
 
 ON_SERVER = os.environ.get("TM_ON_SERVER") == "1"
+if ON_SERVER:
+    from competitors import review
+    review.start_worker()
 
 
 @app.before_request

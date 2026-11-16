@@ -147,7 +147,10 @@ def collect_hall(source: dict, log: Log) -> list[dict]:
     events = list_events(hall)
     log(f"орелконцерт / {source.get('name') or name}: найдено {len(events)} мероприятий, разбираю схемы залов…")
     rows = []
+    from competitors import review
     for ev in events:
+        if review.blocked({"title": ev["title"], "city": city, "venue": name}):
+            continue
         if not ev["date"] or "сертификат" in ev["title"].lower():
             continue
         seats = None

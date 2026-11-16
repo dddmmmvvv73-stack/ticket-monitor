@@ -1029,6 +1029,7 @@ def _ai_settings() -> dict | None:
 
 
 def run() -> bool:
+    from competitors import review
     started = time.time()
     now = datetime.now()
     today, now_iso = now.strftime("%Y-%m-%d"), now.isoformat(timespec="seconds")
@@ -1068,6 +1069,9 @@ def run() -> bool:
                 log(f"{SOURCE_NAMES[s]}: перенесено из прошлого сбора {carried} мероприятий")
             if "q" not in missing:   # перенесённые строки Кассира / Яндекса — тоже кандидаты для склейки с Qtickets
                 rows = merge_extra([r for r in rows if r["src"] != "q"], [r for r in rows if r["src"] == "q"], aliases)
+        rows = review.filter_rows(rows, permanent=True)
+        previous = review.filter_rows(previous, permanent=True)
+        conflicts = [(a, b) for a, b in conflicts if not review.blocked(a) and not review.blocked(b)]
         if "k" not in missing:
             rows = resolve_kassir_titles(rows, conflicts, today)
             try:
@@ -1113,19 +1117,25 @@ def run() -> bool:
         gone = [p for p in previous if p["date"] >= today
                 and not any(k in now_keys or ("@" not in k and k in now_legacy) for k in p["keys"])]
 
-        _save_lines(EVENTS_FILE, rows)
-        _save_lines(SEEN_FILE, seen)
-        save_json(VENUE_ALIASES_FILE, aliases.dump())
-        archived = update_archive(rows, cur, today)
-        brief = lambda r: {k: r.get(k) for k in ("keys", "city", "venue", "title", "date", "time", "format", "sphere", "genre",
-                                                 "pmin", "pmax", "url_k", "url_y", "url_q")}
-        # Если за день сбор был не один (запуск вручную), списки дня дополняются, а не перезаписываются
-        day = load_json(DAYS_DIR / f"{today}.json", {"new": [], "gone": []})
-        for part, found in (("new", new_rows), ("gone", gone)):
-            have = {x["keys"][0] for x in day[part]}
-            day[part] += [brief(r) for r in found if r["keys"][0] not in have]
-        day["at"] = now_iso
-        save_json(DAYS_DIR / f"{today}.json", day)
+        with review.guard():
+            rows = review.filter_rows(rows, permanent=True)
+            new_rows = review.filter_rows(new_rows, permanent=True)
+            gone = review.filter_rows(gone, permanent=True)
+            denied = {k for r in review.permanent_rules() for k in r["keys"]}
+            seen = {k: v for k, v in seen.items() if k not in denied}
+            _save_lines(EVENTS_FILE, rows)
+            _save_lines(SEEN_FILE, seen)
+            save_json(VENUE_ALIASES_FILE, aliases.dump())
+            archived = update_archive(rows, cur, today)
+            brief = lambda r: {k: r.get(k) for k in ("keys", "city", "venue", "title", "date", "time", "format", "sphere", "genre",
+                                                     "pmin", "pmax", "url_k", "url_y", "url_q")}
+            # Если за день сбор был не один (запуск вручную), списки дня дополняются, а не перезаписываются
+            day = load_json(DAYS_DIR / f"{today}.json", {"new": [], "gone": []})
+            for part, found in (("new", new_rows), ("gone", gone)):
+                have = {x["keys"][0] for x in day[part]}
+                day[part] += [brief(r) for r in found if r["keys"][0] not in have]
+            day["at"] = now_iso
+            save_json(DAYS_DIR / f"{today}.json", day)
         took = time.time() - started
         no_data = [c for c in cities if c not in {r["city"] for r in rows}]
         tours = sum(r["tour"] == "tour" for r in rows)
@@ -1190,7 +1200,9 @@ def _next_day(iso: str) -> str:
 def update_archive(rows: list[dict], cur: dict, today: str) -> int:
     """Архив гастролей: каждое гастрольное выступление остаётся навсегда — с последними ценами и тем,
     чем закончилось: «прошло» (дата наступила) или «снято» (пропало из продажи до даты: распродано или отменено)."""
-    arch = load_json(ARCHIVE_FILE, {})
+    from competitors import review
+    active = review.permanent_rules()
+    arch = {k: e for k, e in load_json(ARCHIVE_FILE, {}).items() if not review.blocked(dict(e, keys=[k]), active)}
     now = set()
     for r in rows:
         if r.get("tour") != "tour":
@@ -1236,8 +1248,9 @@ def _arch_now(e: dict) -> dict:
 def export_js() -> str:
     """Снимок для прототипа (market-data.js): афиша, архив гастролей. Правки и разметку прототип
     накладывает сам из config/market_curation.json — поэтому здесь данные парсера (до правок)."""
-    rows, status = load_json(EVENTS_FILE, []), load_json(STATUS_FILE, {})
-    if not rows:
+    from competitors import review
+    rows, status = review.filter_rows(load_json(EVENTS_FILE, []), permanent=True), load_json(STATUS_FILE, {})
+    if not EVENTS_FILE.exists():
         raise RuntimeError("Нет данных рынка — сначала ./pull_data.sh или сбор")
     cfg = load_json(CITIES_FILE, {})
     all_cities, fo = cfg.get("cities", []), cfg.get("fo", {})
@@ -1275,9 +1288,10 @@ def export_js() -> str:
                        r["pmin"] or 0, r["pmax"] or 0, 1 if r["pushkin"] else 0, r["src"], r["url_k"] or "", r["url_y"] or "",
                        r["more"] or 0, r["until"] or "", r["first_seen"], r["age"] or "", 1 if r.get("ytour") else 0, _row_key(r),
                        r.get("org") or "", best_sales(r["keys"]) or 0, direct.get(i, ""), r["keys"], r.get("url_q") or ""])
+    active_exclusions = review.permanent_rules()
     arch = [[e["city"], e["venue"], e["title"], e["date"], e.get("format") or "", e.get("genre") or "", e.get("pmin") or 0,
              e.get("pmax") or 0, e["status"], e.get("first_seen") or "", e.get("last_seen") or "", e.get("url_y") or e.get("url_k") or e.get("url_q") or ""]
-            for e in (_arch_now(x) for x in load_json(ARCHIVE_FILE, {}).values()) if e["status"] != "on_sale"]
+            for e in (_arch_now(x) for x in load_json(ARCHIVE_FILE, {}).values()) if e["status"] != "on_sale" and not review.blocked(e, active_exclusions)]
     at = datetime.fromisoformat(status["last_run_at"])
     months = ["янв.", "февр.", "мар.", "апр.", "мая", "июн.", "июл.", "авг.", "сент.", "окт.", "нояб.", "дек."]
     label = f"{at.day} {months[at.month - 1]}, {at:%H:%M}"

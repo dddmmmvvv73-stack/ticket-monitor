@@ -39,7 +39,7 @@ from datetime import datetime
 
 from flask import Blueprint, Response, jsonify, redirect, request, send_file, send_from_directory
 
-from competitors import collector, curation, docpreview, edits, journal, market, myprojects, officialsite, planning, protodata, sync, venuebook, venuecap, work
+from competitors import collector, curation, docpreview, edits, journal, market, myprojects, officialsite, planning, protodata, review, sync, venuebook, venuecap, work
 from competitors.classifier import FORMATS, GENRES, SPHERES
 from competitors.storage import BASE_DIR, ON_SERVER, load_json
 
@@ -49,6 +49,29 @@ _KEY = re.compile(r"^[kyd]:[\w:.@\-]{1,120}$")
 PROTOTYPE_DIR = BASE_DIR / "Design" / "prototype"
 _cache = {"key": None, "js": ""}
 _cd_cache = {"key": None, "js": ""}
+
+
+@bp.get("/api/event-review")
+def event_review_get():
+    review.start_worker()
+    try:
+        return jsonify(review.view())
+    except Exception:
+        # Не подменять недоступную базу пустым списком успешного разбора.
+        return jsonify(error="Не удалось загрузить разбор афиши. Проверьте доступность базы."), 503
+
+
+@bp.post("/api/event-review")
+def event_review_post():
+    op = request.get_json(silent=True)
+    if not isinstance(op, dict):
+        return jsonify(error="Неверный запрос"), 400
+    try:
+        return jsonify(review.apply(op))
+    except review.ReviewError as exc:
+        return jsonify(error=str(exc)), 409
+    except Exception:
+        return jsonify(error="Не удалось сохранить решение. Обновите список и проверьте состояние операции."), 503
 
 
 @bp.get("/proto")
@@ -64,7 +87,7 @@ def proto_index():
 @bp.get("/proto/market-data.js")
 def proto_market_data():
     # Свежие данные после ./pull_data.sh без отдельной команды экспорта; пересобираем, только если данные изменились
-    files = [market.EVENTS_FILE, market.STATUS_FILE, market.ARCHIVE_FILE, market.SALES_SNAPSHOT, collector.EVENTS_FILE]
+    files = [review.FILE, market.EVENTS_FILE, market.STATUS_FILE, market.ARCHIVE_FILE, market.SALES_SNAPSHOT, collector.EVENTS_FILE]
     key = tuple(f.stat().st_mtime if f.exists() else 0 for f in files)
     if _cache["key"] != key:
         try:
@@ -77,7 +100,7 @@ def proto_market_data():
 @bp.get("/proto/competitors-data.js")
 def proto_competitors_data():
     # Как и рынок: после ./pull_data.sh страница показывает свежий сбор, пересобираем только при изменениях
-    files = [collector.EVENTS_FILE, collector.STATUS_FILE, collector.HALLS_FILE, collector.LOG_FILE, edits.EDITS_FILE]
+    files = [review.FILE, collector.EVENTS_FILE, collector.STATUS_FILE, collector.HALLS_FILE, collector.LOG_FILE, edits.EDITS_FILE]
     stamp = lambda: tuple(f.stat().st_mtime if f.exists() else 0 for f in files)
     key = stamp()
     if _cd_cache["key"] != key:
@@ -281,7 +304,7 @@ def sales_feed():
     """Продажи по кассам (sales.feed): на сервере — из базы, на ноутбуке разработки — с сервера по SSH. Кэш — 5 минут."""
     days = request.args.get("days", "14")
     days = int(days) if days.isdigit() and 1 <= int(days) <= 120 else 14
-    key = (days, datetime.now().strftime("%Y-%m-%d %H:") + str(datetime.now().minute // 5))
+    key = (review.FILE.stat().st_mtime_ns if review.FILE.exists() else 0, days, datetime.now().strftime("%Y-%m-%d %H:") + str(datetime.now().minute // 5))
     if key in _feed_cache:
         return Response(_feed_cache[key], mimetype="application/json")
     if ON_SERVER:
@@ -316,7 +339,7 @@ def archive_rows():
     frm, to, city = request.args.get("from", ""), request.args.get("to", ""), (request.args.get("city") or "").strip()
     if not (re.match(r"^\d{4}-\d{2}-\d{2}$", frm) and re.match(r"^\d{4}-\d{2}-\d{2}$", to)) or len(city) > 60 or re.search(r"[\x00-\x1f]", city):
         return jsonify(error="период — from/to ГГГГ-ММ-ДД, город — название"), 400
-    key = (frm, to, city, datetime.now().strftime("%Y-%m-%d %H"))  # итоги фиксируются раз в час — кэш на час
+    key = (review.FILE.stat().st_mtime_ns if review.FILE.exists() else 0, frm, to, city, datetime.now().strftime("%Y-%m-%d %H"))  # итоги фиксируются раз в час — кэш на час
     if key in _arch_cache:
         return Response(_arch_cache[key], mimetype="application/json")
     if ON_SERVER:

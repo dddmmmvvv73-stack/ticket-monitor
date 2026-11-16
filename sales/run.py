@@ -15,6 +15,8 @@ Qtickets — страница покупки в браузере (sales/qtickets
 
 from __future__ import annotations
 
+from competitors import review
+
 import argparse
 import hashlib
 import json
@@ -71,10 +73,15 @@ def _yandex_job(conn, net: Net, items: list, stats: Counter) -> None:
     cur = conn.cursor()
     pages, wcookie = {}, [False]
     for (sid, d, t, city, venue, _op, key, url, _hy, _ext, _ynt, _ym) in items:
+        if review.blocked_key(key):
+            continue
         if net.time_left() < 30:
             break
         now = datetime.now().astimezone()
         p = store.pool(cur, "yandex", key, sid)
+        if not p:
+            conn.rollback()
+            continue
         try:
             skey = p["ext"].get("key")
             if skey:
@@ -141,6 +148,8 @@ def _kassir_job(conn, net: Net, items: list, stats: Counter) -> None:
     cur = conn.cursor()
     pages = {}
     for (sid, d, t, city, venue, _op, key, url, has_yandex, ext, y_nt, y_measured), prio in items:
+        if review.blocked_key(key):
+            continue
         if net.time_left() < 30:
             break
         if MARKET_RUNNING.exists():  # идёт афиша рынка — она тоже ходит к Кассиру с этого адреса; Кассир — в следующем прогоне
@@ -151,6 +160,9 @@ def _kassir_job(conn, net: Net, items: list, stats: Counter) -> None:
             continue
         now = datetime.now().astimezone()
         p = store.pool(cur, "kassir", key, sid)
+        if not p:
+            conn.rollback()
+            continue
         if prio == "shared":
             stats["кассир: общий запас с Яндексом — пропуск"] += 1   # хватает Яндекса; перепроверка — через неделю
             store.schedule(cur, p["id"], d, now)
@@ -209,6 +221,7 @@ def _kassir_job(conn, net: Net, items: list, stats: Counter) -> None:
 
 def _qtickets_job(conn, br: qtickets.Browser, items: list, stats: Counter) -> None:
     """Страница покупки каждого сеанса — в браузере; снимок пишется, если что-то изменилось (store.record)."""
+    items = [r for r in items if not review.blocked_key(r[6])]
     if not items:
         return
     cur = conn.cursor()
@@ -219,6 +232,8 @@ def _qtickets_job(conn, br: qtickets.Browser, items: list, stats: Counter) -> No
         return
     try:
         for (sid, d, t, city, venue, _op, key, url, *_rest) in items:
+            if review.blocked_key(key):
+                continue
             if br.time_left() < 60:
                 break
             if MARKET_RUNNING.exists():  # идёт афиша рынка — она тоже ходит на Qtickets
@@ -226,6 +241,9 @@ def _qtickets_job(conn, br: qtickets.Browser, items: list, stats: Counter) -> No
                 break
             now = datetime.now().astimezone()
             p = store.pool(cur, "qtickets", key, sid)
+            if not p:
+                conn.rollback()
+                continue
             try:
                 snap = br.snapshot(key.split(":", 1)[1], d, t)
             except Stopped:

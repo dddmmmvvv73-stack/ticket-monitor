@@ -93,7 +93,7 @@ def _links(v) -> list[dict]:
     return out
 
 
-def _snap(v) -> dict:
+def _snap(v, title="") -> dict:
     if not isinstance(v, list) or len(v) > LIMITS["dates"]:
         raise MyProjectsError("снимок дат: неверный формат")
     dates = []
@@ -102,6 +102,10 @@ def _snap(v) -> dict:
             raise MyProjectsError("снимок дат: неверная строка")
         price = lambda p: p if isinstance(p, (int, float)) and not isinstance(p, bool) and p >= 0 else None
         dates.append([d[0], str(d[1])[:100], str(d[2])[:200], price(d[3]), price(d[4])])
+    if title:
+        from competitors import review
+        active = review.permanent_rules()
+        dates = [d for d in dates if not review.blocked({"title": title, "date": d[0], "city": d[1], "venue": d[2]}, active)]
     return {"at": _now(), "dates": dates}
 
 
@@ -263,7 +267,7 @@ def _apply_op(op: dict) -> tuple[dict, str]:
         if kind == "fav":
             p["fav"] = bool(op.get("fav"))
             if p["fav"]:
-                p["snap"] = _snap(op.get("snap") or [])
+                p["snap"] = _snap(op.get("snap") or [], p["title"])
             note = f"«{p['title']}» — " + ("в избранном" if p["fav"] else "убрано из избранного")
         elif kind in ("profile", "media", "coverpos", "rating", "site", "siteconfirm", "sitepick", "siteoff"):
             if kind.startswith("site"):
@@ -312,7 +316,7 @@ def _apply_op(op: dict) -> tuple[dict, str]:
             p["links"] = _links(op.get("links") or [])
             if created and not _empty(p):  # начали записи о проекте — он сам попадает в избранное
                 p["fav"] = True
-                p["snap"] = _snap(op.get("snap") or [])
+                p["snap"] = _snap(op.get("snap") or [], p["title"])
             note = f"«{p['title']}» — записи сохранены"
     elif kind == "create":   # из воронки или непосредственно из «Моей базы»
         from competitors.curation import project_key
@@ -392,7 +396,7 @@ def _apply_op(op: dict) -> tuple[dict, str]:
             raise MyProjectsError("нет такой записи")
         p = projects[pid]
         if kind == "seen":
-            p["snap"] = _snap(op.get("snap") or [])
+            p["snap"] = _snap(op.get("snap") or [], p["title"])
             note = f"«{p['title']}» — просмотрено"
         elif kind == "skip":  # подсказка «похоже» оказалась не тем проектом — больше не предлагать
             key = _key(op.get("key"))

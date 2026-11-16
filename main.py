@@ -33,6 +33,7 @@ from datetime import datetime
 from pathlib import Path
 
 from alerts import check_alerts
+from competitors import review
 from processor import process_snapshot
 from scraper import fetch_hallplan
 from geometry import fetch_venue_geometry, parse_geometry
@@ -144,7 +145,10 @@ def get_or_fetch_geometry(event_id: str, event_url: str) -> dict | None:
     return parsed
 
 
+@review.synchronized
 def run_event(event: dict, exclusions_all: dict) -> None:
+    if review.blocked(event):
+        return
     event_id = event["id"]
     venue = event.get("venue", "")
     exclusions = exclusions_all.get(venue, {})

@@ -14,7 +14,12 @@ ROOT = Path(__file__).resolve().parent.parent
 _s3 = None
 
 
+from competitors import review
+
+
 def save(operator: str, kind: str, ident: str, body: bytes) -> str:
+    if review.blocked_key(ident):
+        return None
     now = datetime.now()
     key = "raw/%s/%s/%s/%s_%s.json.gz" % (now.strftime("%Y/%m/%d"), operator, kind, ident.replace("/", "_"), now.strftime("%H%M%S"))
     data = gzip.compress(body)
@@ -25,8 +30,14 @@ def save(operator: str, kind: str, ident: str, body: bytes) -> str:
             _s3 = boto3.session.Session().client("s3", endpoint_url="https://storage.yandexcloud.net", region_name="ru-central1",
                                                  aws_access_key_id=os.environ["S3_KEY_ID"], aws_secret_access_key=os.environ["S3_SECRET"])
         _s3.put_object(Bucket=os.environ["S3_BUCKET"], Key=key, Body=data)
+        if review.blocked_key(ident):
+            _s3.delete_object(Bucket=os.environ["S3_BUCKET"], Key=key)
+            return None
         return "s3://%s/%s" % (os.environ["S3_BUCKET"], key)
     path = ROOT / "data" / "raw_sales" / key[4:]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data)
+    if review.blocked_key(ident):
+        path.unlink(missing_ok=True)
+        return None
     return str(path.relative_to(ROOT))

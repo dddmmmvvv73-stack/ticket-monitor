@@ -150,6 +150,8 @@ def collect(log: Log) -> list[dict]:
     log(f"odk33.ru: {len(cards)} мероприятий на {total_pages} стр. афиши, "
         f"подтягиваю схемы залов с vladimirkoncert.ru…")
 
+    from competitors import review
+    cards = {k: c for k, c in cards.items() if not review.blocked(c)}
     site_types = _site_types_by_show(log)
     for card in cards.values():
         if card["buy_url"] and vk.is_vk_url(card["buy_url"]):

@@ -226,7 +226,10 @@ def collect_venue(venue_id: str, venue_name: str, log: Log, city: str = CITY_BY_
     log(f"{site.split('.')[0]} / {venue_name}: найдено {len(shows)} мероприятий, разбираю сеансы…")
 
     rows: dict[str, dict] = {}
+    from competitors import review
     for show in shows:
+        if review.blocked({"title": show["title"], "city": city, "venue": venue_name}):
+            continue
         try:
             info = parse_show_page(show["show_url"])
         except Exception as e:
@@ -263,7 +266,7 @@ def collect_venue(venue_id: str, venue_name: str, log: Log, city: str = CITY_BY_
         for event_url in info["event_urls"]:
             event_id = event_id_from_url(event_url)
             uid = f"{prefix}:{event_id}"
-            if uid in rows:
+            if uid in rows or review.blocked_key(uid):
                 continue
             try:
                 ev = parse_event_page(event_url)

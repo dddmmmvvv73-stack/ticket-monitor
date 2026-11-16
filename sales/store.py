@@ -12,6 +12,7 @@ from datetime import date, datetime, timedelta
 from psycopg2.extras import Json, execute_values
 
 from competitors.seatmap import is_flip
+from competitors import review
 
 # Частота по близости даты (решение 04.10): до 7 дней — 3 раза в день, 8–30 — раз в день, 31–90 — раз в 3 дня, дальше — раз в неделю
 TIERS = [(7, timedelta(hours=8)), (30, timedelta(hours=24)), (90, timedelta(hours=72))]
@@ -25,7 +26,10 @@ def interval(local_date: date, today: date) -> timedelta:
     return next((iv for limit, iv in TIERS if days <= limit), FAR)
 
 
+@review.synchronized
 def pool(cur, operator: str, listing_key: str, session_id: int | None) -> dict:
+    if review.blocked_key(listing_key):
+        return None
     cur.execute("SELECT id, ext, next_check FROM pools WHERE source = 'live' AND operator_id = %s AND listing_key = %s AND service = ''",
                 (operator, listing_key))
     row = cur.fetchone()
@@ -64,6 +68,10 @@ def record(cur, pool_id: int, now: datetime, *, free: int | None, by_price: dict
     Пишет наблюдение, если что-то изменилось, и продажи с прошлого нормального наблюдения.
     seats — свободные места схемы {место: цена} (если скачана); by_price — свободно по ценам.
     """
+    cur.execute("SELECT listing_key FROM pools WHERE id=%s", (pool_id,))
+    listing = cur.fetchone()
+    if not listing or review.blocked_key(listing[0]):
+        return {"changed": False}
     if seats is not None and by_price is None:
         by_price = {str(p): n for p, n in Counter(seats.values()).items()}
     if seats is not None and free is None:

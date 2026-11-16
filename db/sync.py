@@ -22,7 +22,7 @@ from datetime import date, datetime, timedelta
 
 from psycopg2.extras import Json, execute_values
 
-from competitors import collector, curation, direct_match, market, officialsite, protodata, seatmap
+from competitors import review, collector, curation, direct_match, market, officialsite, protodata, seatmap
 from competitors.storage import load_json
 from db import connect
 from db.migrate import MARKET, OPERATORS, Migration, _op, _starts, listing_url, verify
@@ -460,10 +460,11 @@ class Sync(Migration):
                        [(_op(k), k, d) for k, d in seen.items()], page_size=5000)
 
     # ------------------------------------------------------------ всё вместе
+    @review.synchronized
     def run(self):
         self.cur.execute("SET lock_timeout = '30s'")
         self.cur_marks = curation.load()
-        rows = load_json(MARKET / "events.json", [])
+        rows = review.filter_rows(load_json(MARKET / "events.json", []), permanent=True)
         curation.apply_edits(rows, self.cur_marks)
         # Даты с официальных сайтов проектов: «только на сайте» — строки-сеансы, совпавшие с кассой — карточки к её сеансу
         site_rows, site_attach, site_fresh = officialsite.db_rows(rows, self.cur_marks)
@@ -472,7 +473,7 @@ class Sync(Migration):
         live_keys = {k for r in rows for k in r["keys"]}
         arch_rows = [{**a, "keys": [k], "_status": "done" if a["status"] == "past" else "removed", "pushkin": False, "age": None}
                      for k, a in archive.items() if a.get("status") in ("past", "gone") and k not in live_keys]
-        all_rows = rows + arch_rows
+        all_rows = review.filter_rows(rows + arch_rows, permanent=True)
         self.operators()
         self.load_cities({r["city"] for r in all_rows} | {e.get("city") for e in collector.load_events().values() if e.get("city")})
         self.load_venues()
@@ -501,6 +502,7 @@ class Sync(Migration):
         self.rep["пустых проектов удалено"] = self.cur.rowcount
         # С первого пополнения база главная: пересборка с нуля (db.migrate) больше невозможна
         self.cur.execute("INSERT INTO settings (key, value) VALUES ('db_authoritative', 'true') ON CONFLICT (key) DO UPDATE SET value = 'true'")
+        review.enforce_db(self.conn, review.permanent_rules())
         self.report = dict(self.rep)
         self.cur.execute("INSERT INTO migrations_log (step, report) VALUES ('json_sync', %s)", (Json(self.report),))
         self.conn.commit()

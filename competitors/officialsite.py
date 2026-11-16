@@ -55,6 +55,7 @@ from datetime import date, datetime, timedelta
 
 from competitors import blocks, collector, curation, myprojects
 from competitors.fetch import USER_AGENT
+from competitors import review
 from competitors.storage import BASE_DIR, CONFIG_DIR, DATA_DIR, load_json, save_json
 
 FILE = DATA_DIR / "official_sites.json"
@@ -122,7 +123,7 @@ def configs() -> dict[str, dict]:
         s = p.get("site") or {}
         if s.get("url") and s.get("key"):
             out[s["key"]] = {**s, "keys": p.get("keys") or [s["key"]], "title": s.get("title") or p.get("title") or s["key"]}
-    return out
+    return {k: v for k, v in out.items() if not review.blocked({"title": v["title"]})}
 
 
 # ---------------------------------------------------------------- города: список рынка, карта прототипа, OpenStreetMap
@@ -637,11 +638,15 @@ def run(only: str | None = None, force: bool = False, log=_log) -> dict:
         for k in todo:
             log(f"«{cfgs[k].get('title') or k}» — {cfgs[k]['url']}")
             check(k, cfgs[k], data, log)
-            save_json(FILE, data)   # после каждого — чтобы сайт видел результат сразу
+            with review.guard():
+                data = review.clean_sites(data, review.permanent_rules())
+                save_json(FILE, data)   # после каждого — чтобы сайт видел результат сразу
         for k in data:
             if k not in todo:
                 _age_rows(data[k])
-        save_json(FILE, data)
+        with review.guard():
+            data = review.clean_sites(data, review.permanent_rules())
+            save_json(FILE, data)
         return data
 
 
@@ -649,7 +654,7 @@ def run(only: str | None = None, force: bool = False, log=_log) -> dict:
 
 def export(data: dict | None = None) -> dict:
     """Для прототипа: MSITE (как site-data.js) и координаты городов, которых нет на карте (x, y досчитывает прототип)."""
-    data = load_json(FILE, {}) if data is None else data
+    data = review.clean_sites(load_json(FILE, {}) if data is None else data, review.permanent_rules())
     g = load_json(GEO_FILE, {})
     cities = {r["city"] for e in data.values() for part in ("rows", "gone", "past") for r in e.get(part, [])}
     mgeo = _mgeo_names()
@@ -738,7 +743,7 @@ def db_rows(market_rows: list[dict], cur: dict) -> tuple[list[dict], list[dict],
                               "keys": [ek], "url_s": card["url"], "pmin": r.get("pmin"), "pmax": r.get("pmin"),
                               "format": top("format"), "sphere": top("sphere"), "genre": top("genre"),
                               "first_seen": r.get("first_seen"), "last_seen": r.get("last_seen"), "site": True})
-    return extra, attach, fresh
+    return review.filter_rows(extra, permanent=True), attach, fresh
 
 
 def main(argv: list[str]) -> None:

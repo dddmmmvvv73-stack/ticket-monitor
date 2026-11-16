@@ -36,6 +36,7 @@ from competitors import seatmap
 from competitors import orelkoncert
 from competitors import vladimirkoncert as vk
 from competitors.classifier import FIELDS, classify_rows, title_key
+from competitors import review
 from competitors.storage import BASE_DIR, CONFIG_DIR, DATA_DIR, load_json, save_json
 
 
@@ -113,7 +114,8 @@ def save_settings(changes: dict) -> dict:
 
 
 def load_events() -> dict[str, dict]:
-    return load_json(EVENTS_FILE, {})
+    active = review.permanent_rules()
+    return {k: e for k, e in load_json(EVENTS_FILE, {}).items() if not review.blocked(dict(e, keys=[k]), active)}
 
 
 def load_status() -> dict:
@@ -275,6 +277,7 @@ def load_seat_states() -> dict[str, dict]:
     return states
 
 
+@review.synchronized
 def recompute_money() -> None:
     """
     Пересчитывает вал / выручку всех событий по сохранённым схемам залов:
@@ -390,6 +393,7 @@ def _append_history(uid: str, row: dict, now_iso: str) -> None:
 
 
 def run_collection(trigger: str = "manual") -> bool:
+    from competitors import review
     """Полный цикл сбора. Возвращает False, если сбор уже идёт."""
     if not _run_lock.acquire(blocking=False):
         return False
@@ -414,7 +418,7 @@ def run_collection(trigger: str = "manual") -> bool:
                 failed.append(source["name"])
                 log(f"✖ {source['name']}: ошибка сбора — {e}")
 
-        rows = _merge_duplicates(rows)
+        rows = review.filter_rows(_merge_duplicates(rows), permanent=True)
         classify_rows(
             rows,
             overrides=load_json(OVERRIDES_FILE, {}),
@@ -426,24 +430,26 @@ def run_collection(trigger: str = "manual") -> bool:
         now_iso = datetime.now().isoformat(timespec="seconds")
         for row in rows:
             row["date"] = row["date"].isoformat() if isinstance(row.get("date"), date) else row.get("date")
-        _repair_flips_once()
-        _update_seat_states(rows, now_iso)
+        with review.guard():
+            rows = review.filter_rows(rows, permanent=True)
+            _repair_flips_once()
+            _update_seat_states(rows, now_iso)
 
-        events = load_events()
-        new_count = 0
-        for row in rows:
-            previous = events.get(row["uid"])
-            if previous is None:
-                new_count += 1
-            row["first_seen"] = previous["first_seen"] if previous else now_iso
-            row["last_seen"] = now_iso
-            events[row["uid"]] = row
-        save_json(EVENTS_FILE, events)
+            events = load_events()
+            new_count = 0
+            for row in rows:
+                previous = events.get(row["uid"])
+                if previous is None:
+                    new_count += 1
+                row["first_seen"] = previous["first_seen"] if previous else now_iso
+                row["last_seen"] = now_iso
+                events[row["uid"]] = row
+            save_json(EVENTS_FILE, events)
 
-        recompute_money()  # вал, выручка, бронь — по схемам залов
-        events = load_events()
-        for row in rows:
-            _append_history(row["uid"], events[row["uid"]], now_iso)
+            recompute_money()  # вал, выручка, бронь — по схемам залов
+            events = load_events()
+            for row in rows:
+                _append_history(row["uid"], events[row["uid"]], now_iso)
 
         took = time.time() - started
         summary = f"найдено {len(rows)} мероприятий, новых {new_count}, за {took:.0f} с"
@@ -525,6 +531,7 @@ def status_snapshot() -> dict:
 
 # ---------------------------------------------------------------- ручные правки
 
+@review.synchronized
 def set_override(title: str, values: dict) -> None:
     """Сохраняет ручную классификацию для названия и сразу применяет её к таблице."""
     overrides = load_json(OVERRIDES_FILE, {})
@@ -553,7 +560,9 @@ def _reclassify() -> None:
         rows = list(load_events().values())
         classify_rows(rows, load_json(OVERRIDES_FILE, {}), AI_CACHE_FILE,
                       ai=ai_settings(load_settings()), log=log)
-        save_json(EVENTS_FILE, {r["uid"]: r for r in rows})
+        with review.guard():
+            rows = review.filter_rows(rows, permanent=True)
+            save_json(EVENTS_FILE, {r["uid"]: r for r in rows})
         empty = sum(1 for r in rows if not all(r.get(f) for f in FIELDS))
         log(f"=== Доклассификация завершена, без полной классификации осталось: {empty} ===")
     except Exception as e:

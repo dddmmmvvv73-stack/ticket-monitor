@@ -166,6 +166,10 @@ def suggestions(conn) -> list:
             for t, tt, m, r, sc in cur.fetchall()]
 
 
+from competitors import review
+
+
+@review.synchronized
 def main() -> None:
     data = build(connect.connect())
     OUT.parent.mkdir(parents=True, exist_ok=True)
