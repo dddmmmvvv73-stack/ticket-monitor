@@ -94,6 +94,10 @@ var EventReview = (function () {
       });
     });
   }
+  function ticketLink(g) {
+    var t=g.ticket;
+    return t && /^https?:\/\//i.test(t.url) ? '<a class="er-ticket" href="' + h(t.url) + '" target="_blank" rel="noopener noreferrer" title="Открыть ' + h(g.title) + ' у билетного оператора">' + h(t.label || 'Билеты') + ' ↗</a>' : '<div class="sub2">Нет ссылки</div>';
+  }
   function renderReview() {
     if (!data) return bar() + '<div class="card card-pad">' + h(error || 'Загружаем список проектов…') + '</div>';
     if (mode === "deleted") return deleted();
@@ -105,7 +109,7 @@ var EventReview = (function () {
     var table = '<section class="card ev-card-table er-table-wrap"><table class="ev-table er-table"><thead><tr><th><input type="checkbox" data-er-all aria-label="Выбрать показанные проекты"' + (all ? ' checked' : '') + '></th><th>Проект / постановка</th><th>Тип</th><th>Города и даты</th><th>Разобрать</th></tr></thead><tbody>';
     shown.forEach(function (g) {
       var cities = Array.from(new Set(g.events.map(function (e) { return e.city; }))), venues = Array.from(new Set(g.events.map(function (e) { return e.venue; })));
-      table += '<tr><td><input type="checkbox" data-er-select="' + h(g.id) + '" aria-label="Выбрать ' + h(g.title) + '"' + (selected[g.id] ? ' checked' : '') + '></td><td><button type="button" class="ev-title" data-er-expand="' + h(g.id) + '" aria-expanded="' + !!expanded[g.id] + '">' + (expanded[g.id] ? '▾ ' : '▸ ') + h(g.title) + '</button><div class="sub2">' + h(g.format) + (g.genre ? ' · ' + h(g.genre) : '') + '</div></td><td><span class="' + (g.tour === "local" ? 'muted' : 'tb-tour') + '">' + (g.tour === "local" ? 'Предположительно местное' : 'Гастрольное') + '</span><div class="sub2">' + h(g.why) + '</div></td><td><div>' + h(cities.slice(0,3).join(', ')) + (cities.length > 3 ? ' и ещё ' + (cities.length-3) : '') + '</div><div class="sub2">' + count(g.events.length,'дата','даты','дат') + ' · ' + count(venues.length,'площадка','площадки','площадок') + '</div></td><td>' + actions(g.id,g.kept) + '<div class="sub2">' + (scope === "artist" ? 'все программы исполнителя' : 'все даты проекта') + '</div></td></tr>';
+      table += '<tr><td><input type="checkbox" data-er-select="' + h(g.id) + '" aria-label="Выбрать ' + h(g.title) + '"' + (selected[g.id] ? ' checked' : '') + '></td><td><button type="button" class="ev-title" data-er-expand="' + h(g.id) + '" aria-expanded="' + !!expanded[g.id] + '">' + (expanded[g.id] ? '▾ ' : '▸ ') + h(g.title) + '</button><div class="sub2">' + h(g.format) + (g.genre ? ' · ' + h(g.genre) : '') + '</div></td><td><span class="' + (g.tour === "local" ? 'muted' : 'tb-tour') + '">' + (g.tour === "local" ? 'Предположительно местное' : 'Гастрольное') + '</span><div class="sub2">' + h(g.why) + '</div></td><td><div>' + h(cities.slice(0,3).join(', ')) + (cities.length > 3 ? ' и ещё ' + (cities.length-3) : '') + '</div><div class="sub2">' + count(g.events.length,'дата','даты','дат') + ' · ' + count(venues.length,'площадка','площадки','площадок') + '</div></td><td>' + actions(g.id,g.kept) + '<div class="sub2">' + (scope === "artist" ? 'все программы исполнителя' : 'все даты проекта') + '</div>' + ticketLink(g) + '</td></tr>';
       if (expanded[g.id]) table += '<tr class="er-details"><td></td><td colspan="4">' + g.events.map(function (e) { return '<div class="er-date"><span>' + localDate(e.date) + '</span><span>' + h(e.city) + ' · ' + h(e.venue) + '</span><span class="sub2">' + h(e.org) + '</span></div>'; }).join("") + '</td></tr>';
     });
     table += '</tbody></table>' + (!list.length ? '<div class="empty">Нет проектов для разбора по выбранным условиям</div>' : '') + '</section>';

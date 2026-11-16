@@ -179,6 +179,23 @@ class ReviewTests(unittest.TestCase):
             self.exclude(g);self.now+=4;r.finalize_due()
         self.assertEqual(storage.load_json(self.market,[]),[b])
 
+    def test_ticket_link_survives_grouping_and_duplicate_sources(self):
+        self.rows[1]['date']='2099-12-02'
+        self.rows[1]['url_y']='https://afisha.yandex.ru/orel/concert/example'
+        self.rows[2]['url_q']='https://example.qtickets.ru/event/123'
+        storage.save_json(self.market,self.rows)
+        direct=dict(self.rows[0],uid='vk:link',buy_url='https://tver.kassir.ru/concert/example')
+        storage.save_json(self.direct,{'vk:link':direct})
+        groups=self.client.get('/api/event-review').json['groups']
+        spring=next(g for g in groups if g['title']=='Музыкант. Весенняя программа')
+        self.assertEqual(len(spring['events']),2)
+        self.assertEqual(spring['ticket'],{'url':direct['buy_url'],'label':'Кассир'})
+        autumn=next(g for g in groups if g['title']=='Музыкант. Осенняя программа')
+        self.assertEqual(autumn['ticket']['label'],'Qtickets')
+        self.assertTrue(any(g['ticket'] is None for g in groups))
+        self.assertEqual(r.ticket_link({'url_k':'javascript:alert(1)','url_y':self.rows[1]['url_y']})['label'],'Яндекс Афиша')
+        self.assertIsNone(r.ticket_link({'url':'javascript:alert(1)'}))
+
     def test_conditional_and_compressed_api(self):
         first=self.client.get('/api/event-review',headers={'Accept-Encoding':'gzip'})
         self.assertEqual(first.headers['Content-Encoding'],'gzip')

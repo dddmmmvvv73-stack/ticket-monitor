@@ -15,6 +15,7 @@ import uuid
 from functools import wraps
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from competitors import curation
 from competitors.storage import BASE_DIR, CONFIG_DIR, JsonLock, load_json, save_json
@@ -206,6 +207,30 @@ def registry():
         conn.close()
 
 
+def ticket_link(row):
+    """Сохранённая ссылка на продажу; никаких запросов к оператору при разборе."""
+    for field, fallback in (("url_k", "Кассир"), ("url_y", "Яндекс Афиша"),
+                            ("url_q", "Qtickets"), ("buy_url", "Билеты"),
+                            ("buy", "Билеты"), ("url", "Сайт мероприятия")):
+        url = str(row.get(field) or "").strip()
+        if not url or any(c in url for c in "\r\n\t"):
+            continue
+        try:
+            parsed = urlsplit(url)
+            host = (parsed.hostname or "").lower()
+        except ValueError:
+            continue
+        if parsed.scheme.lower() not in ("https", "http") or not host:
+            continue
+        label = fallback
+        for domain, name in (("kassir.ru", "Кассир"), ("yandex.ru", "Яндекс Афиша"), ("qtickets.ru", "Qtickets")):
+            if host == domain or host.endswith("." + domain):
+                label = name
+                break
+        return {"url": url, "label": label}
+    return None
+
+
 def catalogue():
     files = [ROOT / "data/competitors/market/events.json", ROOT / "data/competitors/events.json", curation.FILE,
              ROOT / "data/competitors/official_sites.json"]
@@ -218,7 +243,8 @@ def catalogue():
     raw += [dict(v, uid=k) for k, v in direct.items()]
     for entry in load_json(ROOT / "data/competitors/official_sites.json", {}).values():
         raw += [dict(r, title=entry.get("title", "")) for r in entry.get("rows", [])]
-    rows = [event(r) for r in raw if str(r.get("date") or "")[:10] >= datetime.now().strftime("%Y-%m-%d")]
+    rows = [dict(event(r), ticket=ticket_link(r)) for r in raw
+            if str(r.get("date") or "")[:10] >= datetime.now().strftime("%Y-%m-%d")]
     # Ничего не пишем в исходные файлы, даже при ручной классификации.
     curation.classify(rows, cur)
     lookup, db_names, artists = registry()
@@ -244,12 +270,17 @@ def catalogue():
         g = groups[gid]
         g["names"].add(pk)
         g["keys"].update(e["keys"])
-        if not any((x["city"], x["venue"], x["date"], x["time"]) == (e["city"], e["venue"], e["date"], e["time"]) for x in g["events"]):
+        same = next((x for x in g["events"] if (x["city"], x["venue"], x["date"], x["time"]) ==
+                     (e["city"], e["venue"], e["date"], e["time"])), None)
+        if same is None:
             g["events"].append(e)
+        elif not same["ticket"]:
+            same["ticket"] = e["ticket"]
     result = []
     for g in groups.values():
         g["names"], g["keys"] = sorted(g["names"]), sorted(g["keys"])
         g["events"].sort(key=lambda e: (e["date"], e["city"]))
+        g["ticket"] = next((e["ticket"] for e in g["events"] if e["ticket"]), None)
         orgs = {norm(e["org"]) for e in g["events"]}
         if g["context"].get("venue") and len(orgs) == 1 and "" not in orgs:
             g["context"]["org"] = g["events"][0]["org"]
