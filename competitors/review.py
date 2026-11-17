@@ -551,6 +551,8 @@ def purge(active, remember=None):
                     if matches(e, rule, active.curation):
                         keys[id(rule)].update(e["keys"])
             for rule in active:
+                if rule["kind"] == "project":
+                    rule["protected_keys"] = sorted(set(rule.get("protected_keys", [])) | (keys[id(rule)] & active.spared_keys))
                 keys[id(rule)] -= active.spared_keys
                 rule["keys"] = sorted(keys[id(rule)])
         source_keys = ({k for r in active for k in r["keys"]} | {k for e in targets for k in e.get("keys", [])}) - getattr(active, "spared_keys", set())
@@ -722,6 +724,8 @@ def finalize_due():
                                 have.add(identity)
                         for saved, rule in zip(op["rules"], batch[oid]["rules"]):
                             saved["keys"] = sorted(keys[id(rule)])
+                            if rule.get("protected_keys"):
+                                saved["protected_keys"] = rule["protected_keys"]
                     # Общий журнал сырья нужен до коммита БД и переживает сбой.
                     first = data["operations"][next(iter(batch))]
                     first["raw_refs"] = sorted(previous_raw | set(raw_refs))

@@ -90,6 +90,7 @@ try:
             state=review.load();op=state['operations']['integrity']
             assert op['status']=='done',op
             assert op['rules'][0]['keys']==['k:target']
+            assert 'k:foreign' in op['rules'][0]['protected_keys']
             assert storage.load_json(market,[])==rows[1:]
             assert not review.blocked_key('k:kept') and not review.blocked_key('k:foreign')
             cur.execute('SELECT ext_key FROM listings ORDER BY ext_key')
