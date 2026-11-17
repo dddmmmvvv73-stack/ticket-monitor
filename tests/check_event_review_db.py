@@ -63,5 +63,38 @@ try:
             assert not raw_file.exists()
             assert storage.load_json(root/'data/competitors/market/events.json',[])==[]
             assert json.loads(gzip.decompress(snap.read_bytes()))['rows']=={}
-    print('PostgreSQL: project isolation, cascades, listings cleanup, idempotence, artist scope OK')
+    # Shared pid, kept version and keys accidentally inherited from another pid.
+    cur.execute("INSERT INTO cities(name) VALUES('Орел') RETURNING id");city2=cur.fetchone()[0]
+    cur.execute("INSERT INTO venues(city_id,name,name_key) VALUES(%s,'Театр','театр') RETURNING id",(city2,));venue2=cur.fetchone()[0]
+    cur.execute("INSERT INTO projects(title) VALUES('Гамлет') RETURNING id");shared=cur.fetchone()[0]
+    cur.execute("INSERT INTO projects(title) VALUES('Гамлет') RETURNING id");foreign=cur.fetchone()[0]
+    for key,pid,vid in [('k:target',shared,venue),('k:kept',shared,venue2),('k:foreign',foreign,venue)]:
+        cur.execute("INSERT INTO sessions(project_id,venue_id,local_date,title,status) VALUES(%s,%s,'2099-01-01','Гамлет','on_sale') RETURNING id",(pid,vid));sid=cur.fetchone()[0]
+        cur.execute("INSERT INTO listings(session_id,operator_id,ext_key,title) VALUES(%s,'kassir',%s,'Гамлет')",(sid,key))
+        cur.execute("INSERT INTO pools(session_id,operator_id,listing_key) VALUES(%s,'kassir',%s) RETURNING id",(sid,key));pool=cur.fetchone()[0]
+        cur.execute("INSERT INTO observations(pool_id,ts,free) VALUES(%s,now(),10)",(pool,))
+    conn.commit()
+    keep=dict(kind='project',title='Гамлет',group='kept',pid=shared,aid=None,context={'city':'Орел','venue':'Театр'},
+              keys=['k:kept'],names=[review.key('Гамлет')],qualifier=[])
+    excluded=dict(keep,group='target',context={'city':'Тверь','venue':'ДК'},reason='local',keys=['k:target','k:kept','k:foreign'])
+    with tempfile.TemporaryDirectory() as tmp:
+        root=pathlib.Path(tmp)
+        market=root/'data/competitors/market/events.json'
+        rows=[dict(title='Гамлет',city=city,venue=venue,date='2099-01-01',keys=[key]) for key,city,venue in
+              [('k:target','Тверь','ДК'),('k:kept','Орел','Театр'),('k:foreign','Тверь','ДК')]]
+        storage.save_json(market,rows)
+        with patch.object(review,'ROOT',root),patch.object(review,'FILE',root/'config/event_review.json'),patch.object(storage,'ON_SERVER',True),patch.object(curation,'FILE',root/'config/market_curation.json'),patch.object(review,'db_connection',side_effect=lambda:psycopg2.connect(url)):
+            state=review.load();state['kept']['kept']={'title':'Гамлет','rule':keep}
+            state['operations']['integrity']={'status':'pending','until':0,'rules':[excluded],'at':review.stamp(),'entries':[]}
+            review.save(state);review.finalize_due()
+            state=review.load();op=state['operations']['integrity']
+            assert op['status']=='done',op
+            assert op['rules'][0]['keys']==['k:target']
+            assert storage.load_json(market,[])==rows[1:]
+            assert not review.blocked_key('k:kept') and not review.blocked_key('k:foreign')
+            cur.execute('SELECT ext_key FROM listings ORDER BY ext_key')
+            assert [x[0] for x in cur.fetchall()]==['k:foreign','k:kept']
+            cur.execute('SELECT count(*) FROM observations');assert cur.fetchone()[0]==2
+            assert not [e for e in review._session_rows(conn) if review.blocked(e,review.rules())]
+    print('PostgreSQL: cascades, retry, shared pid context, keep protection and foreign key isolation OK')
 finally:conn.close()

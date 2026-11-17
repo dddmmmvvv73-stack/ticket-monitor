@@ -377,4 +377,58 @@ class ReviewTests(unittest.TestCase):
             client.delete_objects.return_value={'Errors':[{'Code':'AccessDenied'}]}
             with self.assertRaises(RuntimeError):r._delete_raw_many(refs[:1])
 
+    def test_context_applies_even_with_shared_database_project_id(self):
+        lookup={k:(41,'',None) for k in ('k:4','k:5')}
+        with patch.object(r,'registry',return_value=(lookup,{},{})):
+            g=self.group('Гамлет','Тверь');self.exclude(g)
+            other=dict(self.rows[4],pid=41,aid=None)
+            self.assertFalse(r.blocked(other))
+            self.now+=4;r.finalize_due()
+        self.assertIn(self.rows[4],storage.load_json(self.market,[]))
+
+    def test_keep_protects_a_version_from_a_global_homonym_rule(self):
+        cur=curation.load()
+        cur['venues'][curation.venue_key('Орел','Театр драмы')]={'type':'rental'}
+        storage.save_json(curation.FILE,cur)
+        lookup={k:(41,'',None) for k in ('k:4','k:5')}
+        with patch.object(r,'registry',return_value=(lookup,{},{})):
+            kept=self.group('Гамлет','Тверь');other=self.group('Гамлет','Орел')
+            self.assertEqual(other['context'],{})
+            r.apply({'op':'keep','ids':[kept['id']]})
+            self.exclude(other);self.now+=4;r.finalize_due()
+            self.assertFalse(r.blocked(dict(self.rows[3],pid=41)))
+            self.assertFalse(r.blocked_key('k:4'))
+            self.assertTrue(r.blocked_key('k:5'))
+            self.assertIn(self.rows[3],storage.load_json(self.market,[]))
+            self.assertNotIn(self.rows[4],storage.load_json(self.market,[]))
+            fresh=dict(self.rows[3],date='2099-12-31',keys=['k:fresh'])
+            self.assertFalse(r.blocked(fresh))
+            self.assertEqual(r.view()['kept'],1)
+
+    def test_explicit_delete_of_kept_group_can_be_cancelled_and_kept_restored(self):
+        g=self.group('Музыкант. Весенняя программа')
+        r.apply({'op':'keep','ids':[g['id']]})
+        op=self.exclude(g)
+        self.assertNotIn(g['id'],r.load()['kept'])
+        self.assertTrue(r.blocked(self.rows[0]))
+        r.apply({'op':'cancel','id':op['id']})
+        self.assertIn(g['id'],r.load()['kept'])
+        self.assertTrue(r.load()['kept'][g['id']]['rule'])
+        self.assertFalse(r.blocked(self.rows[0]))
+
+    def test_known_different_project_cannot_be_deleted_via_polluted_key(self):
+        rule={'kind':'project','pid':1,'keys':['k:other'],'names':[r.key('Гамлет')],
+              'context':{},'qualifier':[]}
+        self.assertFalse(r.matches(dict(self.rows[3],pid=2,keys=['k:other']),rule))
+
+    def test_artist_exclusion_preserves_explicitly_kept_other_program(self):
+        lookup={k:(11 if k!='k:3' else 12,'',7) for k in ['k:1','k:2','k:3']}
+        with patch.object(r,'registry',return_value=(lookup,{}, {7:'Музыкант'})):
+            kept=self.group('Музыкант. Осенняя программа')
+            r.apply({'op':'keep','ids':[kept['id']]})
+            self.exclude(self.group('Музыкант. Весенняя программа'),scope='artist')
+            self.now+=4;r.finalize_due()
+            self.assertIn(self.rows[2],storage.load_json(self.market,[]))
+            self.assertFalse(r.blocked_key('k:3'))
+
 if __name__=='__main__':unittest.main()

@@ -44,7 +44,7 @@ var EventReview = (function () {
       var old = data && (data.content_version || data.versionTag);
       etag=d.versionTag;
       if(data && !d.groups){
-        data.pending=d.pending;data.clockOffset=Date.now()/1000-d.server_time;
+        data.pending=d.pending;data.protections=d.protections || [];data.clockOffset=Date.now()/1000-d.server_time;
         data.content_version=d.content_version;data.versionTag=d.versionTag;data.rev=d.rev;data.rule_count=d.rule_count;
         var journalChanged=d.deleted && d.deleted.length!==data.deleted.length;
         if(d.deleted) data.deleted=d.deleted;
@@ -61,7 +61,7 @@ var EventReview = (function () {
       loading = false; error = ""; byId = {}; byKey = {};
       ruleKeys={};ruleNames={};ruleArtists={};
       d.rules.forEach(function(r){
-        r.keys.forEach(function(k){ruleKeys[k]=true;});
+        r.keys.forEach(function(k){(ruleKeys[k]=ruleKeys[k]||[]).push(r);});
         if(r.kind==="artist") (ruleArtists[r.artist_key]=ruleArtists[r.artist_key]||[]).push(r);
         else r.names.forEach(function(k){(ruleNames[k]=ruleNames[k]||[]).push(r);});
       });
@@ -92,10 +92,11 @@ var EventReview = (function () {
     if (!data) return false;
     var keys = (e.keys || []).concat([e.duid, e.uid, e.key]).filter(Boolean), pk = typeof projKey === "function" ? projKey(e.title) : "";
     var norm = function (s) { return String(s || "").toLowerCase().replace(/ё/g,"е").replace(/\s+/g," ").trim(); };
-    if(keys.some(function(k){return ruleKeys[k];})) return true;
+    var group=groupOf(e);
+    if(group && group.kept)return false;
     var ak=typeof artistPart === "function" ? projKey(artistPart(e.title)||"") : "";
     var candidates=(ruleNames[pk]||[]).concat(ruleNames[e.pk]||[],ruleArtists[pk]||[],ruleArtists[ak]||[]);
-    return candidates.some(function (r) {
+    function matches(r) {
       if(r.kind==="project" && keys.some(function(k){return (r.protected_keys||[]).indexOf(k)>=0;})) return false;
       if (Object.keys(r.context || {}).some(function (k) { return norm(e[k]) !== norm(r.context[k]); })) return false;
       if (r.kind === "artist") return pk === r.artist_key || (typeof artistPart === "function" && projKey(artistPart(e.title) || "") === r.artist_key);
@@ -103,8 +104,14 @@ var EventReview = (function () {
         var qual = Array.from(new Set(String(e.title || "").toLowerCase().replace(/ё/g,"е").replace(/\([^)]*\)/g," ").split(/[^a-zа-я0-9]+/).filter(function(w){return w.length===1 && ["и","в","с","к","у","о","г"].indexOf(w)<0;}))).sort();
         if (JSON.stringify(qual)!==JSON.stringify(r.qualifier)) return false;
       }
+      if(r.kind==='project' && e.pid!=null && r.pid!=null)return e.pid===r.pid;
+      if(keys.some(function(k){return r.keys.indexOf(k)>=0;}))return true;
       return r.names.indexOf(pk) >= 0 || (e.pk && r.names.indexOf(e.pk) >= 0);
-    });
+    }
+    if((data.protections || []).some(matches))return false;
+    if(keys.some(function(k){return ruleKeys[k]===true;}))return true;
+    keys.forEach(function(k){if(Array.isArray(ruleKeys[k]))candidates=candidates.concat(ruleKeys[k]);});
+    return candidates.some(matches);
   }
   function localDate(s) { return s ? s.slice(8,10) + '.' + s.slice(5,7) + '.' + s.slice(0,4) : '—'; }
   function rows() {
@@ -266,7 +273,9 @@ var EventReview = (function () {
         data.clockOffset=Date.now()/1000-result.server_time;
         data.pending.push({id:result.id,count:op.ids.length,until:result.until,status:'pending'});
         var removed=new Set(op.ids), artists=new Set(op.scope==='artist' ? op.ids.map(function(id){return byId[id] && byId[id].artist;}).filter(Boolean) : []);
+        op.ids.forEach(function(id){if(byId[id])byId[id].kept=false;});
         data.groups=data.groups.filter(function(g){
+          if(g.kept && !removed.has(g.id))return true;
           if(!removed.has(g.id) && !artists.has(g.artist)) return true;
           g.events.forEach(function(e){(e.keys||[]).forEach(function(k){ruleKeys[k]=true;});});return false;
         });

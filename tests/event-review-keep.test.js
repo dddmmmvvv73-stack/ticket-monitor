@@ -24,7 +24,7 @@ function setup(ids=['a','b']){
       if(s==='[data-er-action],[data-er-select],[data-er-scope]')return [...buttons,...inputs,scope];
       return [];
     }};
-  const c={document,ON_APP:true,S:{q:''},fetch(url,opts){return new Promise((resolve,reject)=>requests.push({url,opts,resolve,reject}));},
+  const c={document,ON_APP:true,S:{q:''},projKey:s=>String(s).toLowerCase(),fetch(url,opts){return new Promise((resolve,reject)=>requests.push({url,opts,resolve,reject}));},
     setTimeout(fn,delay){timers.set(++timerId,{fn,delay});return timerId;},clearTimeout(id){timers.delete(id);},
     render(){renders++;},curApply(){applies++;},toast:s=>notices.push(s),scrollY:0,scrollTo(){}};
   c.window=c;vm.createContext(c);vm.runInContext(source,c);
@@ -110,4 +110,23 @@ test('массовое удаление отправляет все 1201 выб�
     assert.equal(h.requests.length,2);
     assert.deepEqual(JSON.parse(h.requests[1].opts.body),{op:'exclude',ids,reason,scope:'project'});
   }
+});
+
+test('запрет по ключу не обходит город и защиту оставленной версии',async()=>{
+  const h=setup();
+  h.data.rules=[{kind:'project',keys:['a','b'],names:['проект a','проект b'],context:{city:'Москва'},qualifier:['a']}];
+  await h.ready();
+  assert.equal(h.c.EventReview.blocked({title:'Проект a',keys:['a'],city:'Тверь'}),false);
+  assert.equal(h.c.EventReview.blocked({title:'Проект a',keys:['a'],city:'Москва'}),true);
+  h.data.groups[1].kept=true;
+  assert.equal(h.c.EventReview.blocked({title:'Проект b',keys:['b'],city:'Москва'}),false);
+});
+
+test('защита постановки действует и для новой даты с новым ключом',async()=>{
+  const h=setup();
+  h.data.rules=[{kind:'project',keys:['a'],names:['проект a'],context:{},qualifier:['a']}];
+  h.data.protections=[{kind:'project',keys:['protected'],names:['проект a'],context:{city:'Тверь'},qualifier:['a']}];
+  await h.ready();
+  assert.equal(h.c.EventReview.blocked({title:'Проект a',keys:['new'],city:'Тверь'}),false);
+  assert.equal(h.c.EventReview.blocked({title:'Проект a',keys:['new'],city:'Москва'}),true);
 });

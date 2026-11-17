@@ -65,8 +65,11 @@ def synchronized(fn):
 
 class RuleSet(list):
     """Индексы: разбор тысяч строк не перебирает весь накопленный список запретов."""
-    def __init__(self, values):
+    def __init__(self, values, protected=None):
         super().__init__(values)
+        if protected is None:
+            protected = getattr(values, "protected", ())
+        self.protected = RuleSet(protected, ()) if protected else ()
         self.curation = current_curation()
         self.index = {}
         for r in self:
@@ -98,15 +101,30 @@ def _cached_rules():
     sig += (str(curation.FILE), curation.FILE.stat().st_mtime_ns if curation.FILE.exists() else 0)
     if _rules_cache.get("sig") != sig:
         data = load()
-        _rules_cache.update(sig=sig, active=RuleSet(r for op in data["operations"].values() if op["status"] != "cancelled" for r in op["rules"]),
-                            permanent=RuleSet(r for op in data["operations"].values() if op["status"] in ("applying", "done", "error") for r in op["rules"]))
+        protected = kept_rules(data)
+        _rules_cache.update(sig=sig, active=RuleSet((r for op in data["operations"].values() if op["status"] != "cancelled" for r in op["rules"]), protected),
+                            permanent=RuleSet((r for op in data["operations"].values() if op["status"] in ("applying", "done", "error") for r in op["rules"]), protected))
     return _rules_cache
 
 
 def rules(data=None):
     if data is None:
         return _cached_rules()["active"]
-    return RuleSet(r for op in data["operations"].values() if op["status"] != "cancelled" for r in op["rules"])
+    return RuleSet((r for op in data["operations"].values() if op["status"] != "cancelled" for r in op["rules"]), kept_rules(data))
+
+
+def kept_rules(data):
+    return [v["rule"] for v in data["kept"].values() if v.get("rule")]
+
+
+def group_rule(g):
+    return {k: g[k] for k in ("title", "pid", "aid", "context", "names", "keys", "qualifier")} | {"kind": "project", "group": g["id"]}
+
+
+def hydrate_kept(data, groups):
+    for g in groups:
+        if g["id"] in data["kept"] and not data["kept"][g["id"]].get("rule"):
+            data["kept"][g["id"]]["rule"] = group_rule(g)
 
 
 def permanent_rules():
@@ -149,18 +167,19 @@ def event(row):
 
 def matches(row, rule, cur=None):
     e = event(row)
+    # Контекст постановки обязателен даже при общем ошибочном project_id.
+    ctx = rule.get("context") or {}
+    if any(norm(e.get(k)) != norm(v) for k, v in ctx.items()):
+        return False
     if rule["kind"] == "project" and set(e["keys"]) & set(rule.get("protected_keys", [])):
         return False
-    if set(e["keys"]) & set(rule.get("keys", [])):
-        return True
     if rule["kind"] == "project":
         if "qualifier" in rule and qualifier(e["title"]) != rule["qualifier"]:
             return False
         if e.get("pid") is not None and rule.get("pid") is not None:
             return e["pid"] == rule["pid"]
-    ctx = rule.get("context") or {}
-    if any(norm(e.get(k)) != norm(v) for k, v in ctx.items()):
-        return False
+    if set(e["keys"]) & set(rule.get("keys", [])):
+        return True
     if rule["kind"] == "artist":
         if e.get("aid") is not None and rule.get("aid") is not None:
             return e["aid"] == rule["aid"]
@@ -174,6 +193,8 @@ def blocked(row, active=None):
     if not active:
         return False
     if isinstance(active, RuleSet):
+        if active.protected and any(matches(row, r, active.curation) for r in active.protected.candidates(event(row))):
+            return False
         return any(matches(row, r, active.curation) for r in active.candidates(event(row)))
     return any(matches(row, r) for r in active)
 
@@ -184,7 +205,8 @@ def filter_rows(rows, permanent=False):
 
 
 def blocked_key(listing_key):
-    return bool(rules().index.get(("key", listing_key)))
+    active = rules()
+    return bool(active.index.get(("key", listing_key))) and not (active.protected and active.protected.index.get(("key", listing_key)))
 
 
 def db_connection():
@@ -311,6 +333,7 @@ def view(known_catalogue=None, deleted_count=None):
     pending = [{"id": oid, "count": len(op["rules"]), "until": op["until"], "status": op["status"], "error": op.get("error", "")}
                for oid, op in data["operations"].items() if op["status"] in ("pending", "applying", "error")]
     result = {"rev": data["rev"], "content_version": content_version, "catalogue_version": catalogue_version,
+              "protections": kept_rules(data),
               "pending": pending, "server_time": time.time(), "rule_count": sum(len(r) for _, r in rule_data)}
     if deleted_count != len(data["deleted"]):
         result["deleted"] = data["deleted"]
@@ -354,6 +377,8 @@ def apply(op):
             if not item or item["status"] != "pending" or time.time() >= item["until"]:
                 raise ReviewError("Четыре секунды истекли — отмена уже недоступна")
             item["status"] = "cancelled"
+            for gid, value in item.get("previous_kept", {}).items():
+                data["kept"].setdefault(gid, value)
             save(data)
             return {"ok": True}
         if action not in ("keep", "exclude"):
@@ -364,12 +389,13 @@ def apply(op):
         if any(i not in index for i in ids):
             raise ReviewError("Афиша изменилась. Обновите список")
         selected = [index[i] for i in dict.fromkeys(ids)]
+        hydrate_kept(data, groups)
         active = rules(data)
         if any(blocked(e, active) for g in selected for e in g["events"]):
             raise ReviewError("Проект уже исключён. Обновите список")
         if action == "keep":
             for g in selected:
-                data["kept"][g["id"]] = {"title": g["title"], "at": stamp()}
+                data["kept"][g["id"]] = {"title": g["title"], "at": stamp(), "rule": group_rule(g)}
             save(data)
             return {"ok": True, "ids": [g["id"] for g in selected]}
         if op.get("reason") not in ("local", "uninteresting"):
@@ -390,9 +416,11 @@ def apply(op):
                     if other["id"] != g["id"] and other["pid"] != g["pid"] and set(other["names"]) & set(g["names"])
                     for k in other["keys"]})
         oid = uuid.uuid4().hex
+        previous_kept = {g["id"]: data["kept"].pop(g["id"]) for g in selected if g["id"] in data["kept"]}
         until = time.time() + UNDO_SECONDS
         entries = [{k: e[k] for k in ("title", "city", "venue", "date")} for g in selected for e in g["events"]]
-        data["operations"][oid] = {"status": "pending", "at": stamp(), "until": until, "rules": new_rules, "entries": entries}
+        data["operations"][oid] = {"status": "pending", "at": stamp(), "until": until, "rules": new_rules, "entries": entries,
+                                  "previous_kept": previous_kept}
         save(data)
     start_worker()
     return {"ok": True, "id": oid, "until": until, "server_time": time.time()}
@@ -409,15 +437,19 @@ def _session_rows(conn):
              "date": str(d), "keys": keys, "org": org or ""} for sid, pid, aid, title, city, venue, d, keys, org in cur.fetchall()]
 
 
-def enforce_db(conn, active=None):
+def enforce_db(conn, active=None, rows=None):
     """Удалить запрещённые сеансы в текущей транзакции. Коммит выполняет вызывающий."""
     active = rules() if active is None else active
     active = active if isinstance(active, RuleSet) else RuleSet(active)
     if not active:
         return [], []
-    targets = [r for r in _session_rows(conn) if blocked(r, active)]
+    rows = _session_rows(conn) if rows is None else rows
+    targets = [r for r in rows if blocked(r, active)]
     ids = [r["sid"] for r in targets]
-    keys = list({k for e in targets for k in e["keys"]} | {k for r in active for k in r["keys"]})
+    wanted = set(ids)
+    active.spared_keys = {k for e in rows if e["sid"] not in wanted for k in e["keys"]}
+    active.spared_keys |= {k for r in active.protected for k in r["keys"]}
+    keys = list(({k for e in targets for k in e["keys"]} | {k for r in active for k in r["keys"]}) - active.spared_keys)
     cur = conn.cursor()
     cur.execute("SELECT o.raw_ref FROM observations o JOIN pools p ON p.id=o.pool_id WHERE (p.session_id=ANY(%s) OR p.listing_key=ANY(%s)) AND o.raw_ref IS NOT NULL", (ids, keys))
     raw = [r[0] for r in cur.fetchall()]
@@ -474,18 +506,8 @@ def purge(active, remember=None):
     active = RuleSet(active)
     conn = db_connection() if ON_SERVER else None
     try:
-        if conn:
-            targets, raw_refs = enforce_db(conn, active)
-            # Ссылки сохраняем до удаления БД: сбой сырья допускает повтор операции.
-            keys = {id(rule): set(rule["keys"]) for rule in active}
-            for e in targets:
-                for rule in active.candidates(event(e)):
-                    if matches(e, rule, active.curation):
-                        keys[id(rule)].update(e["keys"])
-            for rule in active:
-                rule["keys"] = sorted(keys[id(rule)])
-        active = RuleSet(active)
-        source_keys = {k for r in active for k in r["keys"]} | {k for e in targets for k in e["keys"]}
+        db_rows = _session_rows(conn) if conn else []
+        identities = {k: e for e in db_rows for k in e["keys"]}
         folder = ROOT / "data/competitors"
         current = folder / "market/events.json"
         direct = folder / "events.json"
@@ -498,6 +520,9 @@ def purge(active, remember=None):
             kept, removed = ([] if sequence else {}), []
             for k, row in enumerate(value) if sequence else value.items():
                 candidate = row if sequence else dict(row, keys=row.get("keys") or [k])
+                known = next((identities[k] for k in candidate.get("keys", []) if k in identities), None)
+                if known:
+                    candidate = dict(candidate, pid=known["pid"], aid=known["aid"])
                 if blocked(candidate, active):
                     removed.append(candidate)
                 elif sequence:
@@ -507,7 +532,29 @@ def purge(active, remember=None):
             targets.extend(event(e) for e in removed)
             if removed:
                 files.append((path, kept))
-        source_keys |= {k for e in targets for k in e.get("keys", [])}
+        # Сначала собрать полный набор ключей, затем применить к БД. Известные
+        # разные pid и оставленные версии не превращаются в запрет через алиас.
+        keys = {id(rule): set(rule["keys"]) for rule in active}
+        for e in targets:
+            for rule in active.candidates(event(e)):
+                if matches(e, rule, active.curation):
+                    keys[id(rule)].update(e.get("keys", []))
+        for rule in active:
+            rule["keys"] = sorted(keys[id(rule)])
+        active = RuleSet(active)
+        if conn:
+            db_targets, raw_refs = enforce_db(conn, active, db_rows)
+            targets.extend(db_targets)
+            # Ключи новых сеансов того же проекта также сохраняются для retry.
+            for e in db_targets:
+                for rule in active.candidates(event(e)):
+                    if matches(e, rule, active.curation):
+                        keys[id(rule)].update(e["keys"])
+            for rule in active:
+                keys[id(rule)] -= active.spared_keys
+                rule["keys"] = sorted(keys[id(rule)])
+        source_keys = ({k for r in active for k in r["keys"]} | {k for e in targets for k in e.get("keys", [])}) - getattr(active, "spared_keys", set())
+        source_keys -= {k for rule in active.protected for k in rule["keys"]}
         # Имя сырья = ключ + дата. Построить множество префиксов один раз,
         # вместо сравнения каждого из десятков тысяч файлов со всеми ключами.
         raw_prefixes = {k.replace("/", "_") for k in source_keys}
@@ -603,6 +650,10 @@ def purge(active, remember=None):
             finally:
                 Path(tmp).unlink(missing_ok=True)
         if conn:
+            # done означает отсутствие подходящих сеансов, а не только успешный
+            # проход файлов. Не коммитить неполную очистку.
+            if any(blocked(e, active) for e in _session_rows(conn)):
+                raise RuntimeError("Очистка БД не завершена")
             conn.commit()
         _cache.clear()
         return targets, source_keys
@@ -644,7 +695,7 @@ def finalize_due():
             for op in batch.values():
                 op["status"] = "applying"
             save(data)
-        active = RuleSet(r for op in batch.values() for r in op["rules"])
+        active = RuleSet((r for op in batch.values() for r in op["rules"]), kept_rules(data))
         owners = {id(rule): oid for oid, op in batch.items() for rule in op["rules"]}
         previous_raw = {ref for op in batch.values() for ref in op.get("raw_refs", [])}
         try:
@@ -692,7 +743,7 @@ def finalize_due():
                         data["deleted"].append({k: e[k] for k in ("title", "city", "venue", "date")} |
                                                {"reason": rule["reason"], "at": stamp()})
                     op["status"] = "done"
-                    for k in ("entries", "error", "raw_refs", "retry_at"):
+                    for k in ("entries", "error", "raw_refs", "retry_at", "previous_kept"):
                         op.pop(k, None)
                 save(data)
         except Exception as exc:
